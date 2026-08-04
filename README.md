@@ -75,8 +75,12 @@ const dictionary = await loadDictionary(source, "full");
 
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
-convert(dictionary, "我要去北京。"); // "wǒ yào qù Běijīng。"
+convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 ```
+
+A sentence comes back punctuated and capitalised as a sentence, and a word
+quoted on its own does not — `银行` is `yínháng`, not `Yínháng`. The source's own
+punctuation is the signal, since nothing else distinguishes the two.
 
 In a browser, serve the `data/` directory and fetch it:
 
@@ -98,7 +102,38 @@ convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 convert(dictionary, "银行", { notation: "numbers" }); // "yin2hang2"
 convert(dictionary, "银行", { notation: "none" }); // "yinhang"
 convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
+convert(dictionary, "西安"); // "Xī'ān"
+convert(dictionary, "海鸥", { apostrophe: "standard" }); // "hǎiōu"
+convert(dictionary, "北京。", { punctuation: "keep" }); // "Běijīng。"
+convert(dictionary, "北京。", { capitals: "none" }); // "běijīng."
 ```
+
+### Orthography
+
+The 隔音符号 goes before any syllable of a word that begins with `a`, `o` or `e`
+and is not the first: 西安 is `Xī'ān`, 天安门 is `Tiān'ānmén`, 女儿 is `nǚ'ér`.
+`i`, `u` and `ü` surface as `y` and `w` and so can never need one.
+
+GB/T 16159 technically conditions the mark on ambiguity —
+如果音节的界限发生混淆 — but essentially every style guide writes it regardless,
+which is the `always` default. `apostrophe: "standard"` applies the standard's
+own condition instead, by asking the parser whether the run reads back as
+itself: `Xīān` reads as the single syllable `xian` so the mark stays, while
+`hǎiōu` cannot be read any other way so it goes.
+
+Chinese punctuation with an exact Latin equivalent is rewritten — `。，、；：？！`
+— and takes the space its full-width glyph carried, so 你好，世界 is
+`nǐ hǎo, shìjiè` rather than `nǐ hǎo,shìjiè`. Brackets and quotation marks are
+left alone: 《》 marks a title, which the Latin script sets in italics rather
+than with a bracket.
+
+Note that a comma is not evidence of a sentence, so that example is not
+capitalised. Only `.!?。！？` start a sentence, deliberately: the alternative is
+capitalising every fragment somebody looks up.
+
+**Word grouping is not built yet.** Spacing is one gap per decoded word, so
+他看了 comes back `tā kàn le` where GB/T 16159 wants `tā kànle`. That is the
+next piece of work.
 
 Text that is not Han passes through untouched — punctuation, Latin letters and
 digits are left exactly as written, because reading numbers aloud is a separate

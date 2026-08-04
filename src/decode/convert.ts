@@ -1,4 +1,15 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { type ApostropheStyle, joinWord } from "../orthography/apostrophe.js";
+import {
+  capitaliseSentences,
+  capitaliseWord,
+  type CapitalStyle,
+  isSentence,
+} from "../orthography/capitals.js";
+import {
+  type PunctuationStyle,
+  toLatinPunctuation,
+} from "../orthography/punctuation.js";
 import type { Locale } from "../script/script.js";
 import {
   type Syllable,
@@ -21,13 +32,21 @@ export interface ConvertOptions {
   readonly notation?: ToneNotation;
   /** Which tone sandhi to apply. */
   readonly sandhi?: SandhiOptions;
+  /** When the 隔音符号 is written. Defaults to `always`. */
+  readonly apostrophe?: ApostropheStyle;
+  /** Which capitals are written. Defaults to `auto`. */
+  readonly capitals?: CapitalStyle;
+  /** Whether Chinese punctuation is rewritten. Defaults to `latin`. */
+  readonly punctuation?: PunctuationStyle;
 }
 
 /**
- * Capitalise the first letter of a syllable.
+ * The orthographic choices a conversion has settled, rather than defaulted.
  */
-function capitalise(text: string): string {
-  return text.slice(0, 1).toUpperCase() + text.slice(1);
+interface Written {
+  readonly notation: ToneNotation;
+  readonly apostrophe: ApostropheStyle;
+  readonly capitals: CapitalStyle;
 }
 
 /**
@@ -56,14 +75,23 @@ function readingFor(
 function writeWord(
   reading: readonly Syllable[],
   word: DecodedWord,
-  notation: ToneNotation,
+  written: Written,
 ): string {
   if (reading.length === 0) {
     return word.text;
   }
-  const written = reading.map((syllable) => writeSyllable(syllable, notation));
-  const joined = written.join("");
-  return word.isProperNoun ? capitalise(joined) : joined;
+  const syllables = reading.map((syllable) =>
+    writeSyllable(syllable, written.notation),
+  );
+  // A tone number already ends its syllable, so `xi1an1` cannot be misread and
+  // the 隔音符号 would only be noise.
+  const joined = joinWord(
+    syllables,
+    written.notation === "numbers" ? "never" : written.apostrophe,
+  );
+  return word.isProperNoun && written.capitals !== "none"
+    ? capitaliseWord(joined)
+    : joined;
 }
 
 /**
@@ -77,24 +105,24 @@ type Decode = (dictionary: Dictionary, run: string) => readonly DecodedWord[];
 function writeRun(
   dictionary: Dictionary,
   words: readonly DecodedWord[],
-  options: Required<Pick<ConvertOptions, "locale" | "notation">> &
-    ConvertOptions,
+  locale: Locale,
+  written: Written,
+  sandhi: SandhiOptions | undefined,
 ): string {
-  const { locale, notation, sandhi } = options;
   // Sandhi runs across the whole run rather than within a word, since 不 in one
   // word assimilates to the tone starting the next.
   const readings = words.map((word) => readingFor(dictionary, word, locale));
   const flattened = applySandhi(readings.flat(), sandhi);
 
   let at = 0;
-  const written: string[] = [];
+  const parts: string[] = [];
   for (const [index, word] of words.entries()) {
     /* c8 ignore next -- readings is built by mapping over these same words */
     const length = readings[index]?.length ?? 0;
-    written.push(writeWord(flattened.slice(at, at + length), word, notation));
+    parts.push(writeWord(flattened.slice(at, at + length), word, written));
     at += length;
   }
-  return written.join(" ");
+  return parts.join(" ");
 }
 
 /**
@@ -106,20 +134,36 @@ function convertWith(
   text: string,
   options: ConvertOptions,
 ): string {
-  const { locale = "zh-CN", notation = "marks", ...rest } = options;
+  const {
+    locale = "zh-CN",
+    notation = "marks",
+    apostrophe = "always",
+    capitals = "auto",
+    punctuation = "latin",
+    sandhi,
+  } = options;
+  const written: Written = { notation, apostrophe, capitals };
   let converted = "";
 
   for (const run of splitRuns(text)) {
     converted += run.isHan
-      ? writeRun(dictionary, decode(dictionary, run.text), {
-          ...rest,
+      ? writeRun(
+          dictionary,
+          decode(dictionary, run.text),
           locale,
-          notation,
-        })
+          written,
+          sandhi,
+        )
       : run.text;
   }
 
-  return converted;
+  // Both of these read the whole conversion rather than one run: a sentence
+  // capital belongs to whichever run happens to start the sentence, and a mark
+  // needs to know whether anything follows it before it takes a space.
+  if (capitals === "auto" && isSentence(text)) {
+    converted = capitaliseSentences(converted);
+  }
+  return punctuation === "latin" ? toLatinPunctuation(converted) : converted;
 }
 
 /**
