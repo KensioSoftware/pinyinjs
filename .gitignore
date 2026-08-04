@@ -309,3 +309,6 @@ tmp/
 
 # Video demo project (see .claude/video/HOUSE-STYLE.md)
 /yulin-demo/
+
+# Cached upstream source data, fetched by scripts/build-data
+.cache/
