@@ -444,6 +444,76 @@ describe("merging the sources", () => {
       });
       assertIdentical(byWord.get("大夫")?.hant, "大夫");
     });
+
+    it("keeps every spelling of a word written more than one way", () => {
+      // 台湾 is 臺灣 and 台灣, both current and both read the same. Keeping only
+      // the first leaves the other converting character by character.
+      const { byWord, result } = merge({
+        unihanReadings: CHARACTERS,
+        phrase: new Map([["台湾", ["tái", "wān"]]]),
+        cedict: [
+          cedictEntry("台灣", "台湾", "Tai2 wan1"),
+          cedictEntry("臺灣", "台湾", "Tai2 wan1"),
+        ],
+      });
+      assertIdentical(byWord.get("台湾")?.hant, "台灣");
+      assertArrayEquals(byWord.get("台湾")?.hantVariants ?? [], ["臺灣"]);
+      assertIdentical(result.stats.variantSpellings, 1);
+    });
+
+    it("keeps only the spellings belonging to the chosen reading", () => {
+      // 万 read wàn is 萬; the 万 spelling belongs to mò, a different word, and
+      // must not be dragged in as a second spelling of this one.
+      const { byWord, result } = merge({
+        unihanReadings: CHARACTERS,
+        unihanVariants: VARIANTS,
+        cedict: [
+          cedictEntry("万", "万", "Mo4"),
+          cedictEntry("萬", "万", "wan4"),
+        ],
+      });
+      assertIdentical(byWord.get("万")?.hant, "萬");
+      assertUndefined(byWord.get("万")?.hantVariants);
+      assertIdentical(result.stats.variantSpellings, 0);
+    });
+
+    it("records a spelling once however many senses write it", () => {
+      const { byWord } = merge({
+        phrase: new Map([["银行", ["yín", "háng"]]]),
+        cedict: [
+          cedictEntry("銀行", "银行", "yin2 hang2"),
+          cedictEntry("銀行", "银行", "yin2 hang2"),
+        ],
+      });
+      assertUndefined(byWord.get("银行")?.hantVariants);
+    });
+
+    it("guesses no second spelling when no sense could be measured", () => {
+      // Readings of a different length describe a different pronunciation, so
+      // there is nothing to say the two spellings are the same word.
+      const { byWord } = merge({
+        unihanReadings: CHARACTERS,
+        phrase: new Map([["台湾", ["tái", "wān"]]]),
+        cedict: [
+          cedictEntry("台灣", "台湾", "Tai2"),
+          cedictEntry("臺灣", "台湾", "Tai2"),
+        ],
+      });
+      assertIdentical(byWord.get("台湾")?.hant, "台灣");
+      assertUndefined(byWord.get("台湾")?.hantVariants);
+    });
+
+    it("does not record a spelling that is already the 简体 form", () => {
+      const { byWord } = merge({
+        unihanReadings: CHARACTERS,
+        cedict: [
+          cedictEntry("臺", "台", "tai2"),
+          cedictEntry("台", "台", "tai2"),
+        ],
+      });
+      assertIdentical(byWord.get("台")?.hant, "臺");
+      assertUndefined(byWord.get("台")?.hantVariants);
+    });
   });
 
   describe("zh-TW readings", () => {

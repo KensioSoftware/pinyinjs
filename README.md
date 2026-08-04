@@ -23,7 +23,9 @@ Two things make it different from the usual approach:
   first. That shortcut destroys information: 发 is a polyphone (`fā` or `fà`)
   precisely because simplification merged 發 and 髮, neither of which is
   ambiguous. 806 simplified characters merge more than one traditional
-  character, and for 70 of them the readings differ.
+  character, and for 70 of them the readings differ. Where a word has more than
+  one current traditional spelling, every one of them is a key: 臺灣 and 台灣
+  both find `Táiwān`.
 - **Accuracy is measured, not asserted.** Every change is scored against a gold
   corpus, and readings and spacing are scored separately, because a wrong
   reading is an error while wrong spacing is merely untidy.
@@ -148,7 +150,7 @@ and improve as the rest arrives.
 | Tier       | Entries | Download (brotli) | Covers                        |
 | ---------- | ------: | ----------------: | ----------------------------- |
 | `core`     |  16,730 |             70 KB | single characters only        |
-| `standard` |  66,730 |            375 KB | 97.9% of exception token mass |
+| `standard` |  66,730 |            376 KB | 97.9% of exception token mass |
 | `full`     | 461,623 |          2,381 KB | everything                    |
 
 "Exception token mass" is the share of running text where a word's reading
@@ -168,6 +170,7 @@ entry?.isProperNoun; // false
 entry?.partOfSpeech; // "n"
 
 dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
+dictionary.lookup("臺灣")?.reading; // 臺灣 and 台灣 are both keys for 台湾
 dictionary.hasPrefix("银"); // true
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng — every reading, likeliest first
 ```

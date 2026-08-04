@@ -124,6 +124,15 @@ describe("the committed dictionary", () => {
       assertIdentical(full.reading("銀行"), "yín háng");
     });
 
+    it("keys every 繁體 spelling a source writes, not just the first", () => {
+      // 台湾 is written both ways and both are current; so is 下面, where the
+      // second spelling is the noodles rather than the surface.
+      assertIdentical(full.reading("臺灣"), "tái wān");
+      assertIdentical(full.reading("台灣"), "tái wān");
+      assertIdentical(full.reading("下麵"), "xià miàn");
+      assertIdentical(full.reading("下面"), "xià miàn");
+    });
+
     it("marks a proper noun from jieba's tag", () => {
       const columns = full.columns("北京");
       assertNonNullable(columns);

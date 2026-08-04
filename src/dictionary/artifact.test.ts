@@ -219,6 +219,36 @@ describe("dictionary artifacts", () => {
       );
     });
 
+    it("keys a second 繁體 spelling on the same entry", () => {
+      const artifact = buildArtifact([
+        ...ENTRIES,
+        entry("台湾", "tái wān", { hant: "台灣", hantVariants: ["臺灣"] }),
+      ]);
+      assertIdentical(
+        encodeReading(entryFor(artifact, "臺灣").readings.cn),
+        "tai2 wan1",
+      );
+      assertIdentical(
+        encodeReading(entryFor(artifact, "台灣").readings.cn),
+        "tai2 wan1",
+      );
+    });
+
+    it("lets an entry keep its own key against a second spelling", () => {
+      // A variant spelling reaches a key sideways just as a 繁體 form does, so
+      // it must not displace the entry that key names.
+      const both: readonly DictionaryEntry[] = [
+        entry("干", "gān", {
+          hant: "乾",
+          hantVariants: ["幹"],
+          frequency: 9000,
+        }),
+        entry("幹", "gàn"),
+      ];
+      const found = entryFor(buildArtifact(both), "幹");
+      assertIdentical(encodeReading(found.readings.cn), "gan4");
+    });
+
     it("prefers the commoner entry when neither owns the key", () => {
       const aliases: readonly DictionaryEntry[] = [
         entry("甲", "jiǎ", { hant: "共", frequency: 10 }),
