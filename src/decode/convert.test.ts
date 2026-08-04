@@ -1,11 +1,24 @@
-import { sampleDictionary } from "#test/fixtures/decoder-dictionary.js";
-import { assertIdentical } from "@kensio/smartass";
+import {
+  dictionaryOf,
+  entry,
+  reading,
+  sampleDictionary,
+} from "#test/fixtures/decoder-dictionary.js";
+import {
+  assertArrayEquals,
+  assertArrayLength,
+  assertIdentical,
+  assertTrue,
+  assertUndefined,
+} from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import {
   convert as convert_,
   convertGreedily,
+  convertPieces,
   type ConvertOptions,
+  joinPieces,
 } from "./convert.js";
 
 const dictionary = sampleDictionary();
@@ -197,5 +210,94 @@ describe("word grouping", () => {
 
   it("leaves the grouping alone when asked", () => {
     assertIdentical(lattice("北京市", { grouping: false }), "Běijīngshì");
+  });
+});
+
+describe("converting to pieces", () => {
+  it("joins back to exactly what convert writes", () => {
+    for (const text of [
+      "银行",
+      "北京市",
+      "我是银行。",
+      "3D银行",
+      "西安",
+      "玩儿",
+    ]) {
+      assertIdentical(
+        joinPieces(convertPieces(dictionary, text)),
+        convert_(dictionary, text),
+      );
+    }
+  });
+
+  it("keeps one piece per syllable, with the syllable beside it", () => {
+    const pieces = convertPieces(dictionary, "银行");
+    assertArrayEquals(
+      pieces.map((piece) => piece.text),
+      ["yín", "háng"],
+    );
+    assertIdentical(pieces[0]?.syllable?.final, "in");
+  });
+
+  it("writes the text between the syllables as pieces of its own", () => {
+    assertArrayEquals(
+      convertPieces(dictionary, "北京银行").map((piece) => piece.text),
+      ["Běi", "jīng", " ", "yín", "háng"],
+    );
+  });
+
+  it("reports no syllable for text that was never Han", () => {
+    const pieces = convertPieces(dictionary, "3D银行");
+    assertUndefined(pieces[0]?.syllable);
+    assertIdentical(pieces[0]?.text, "3D");
+  });
+
+  it("reports what each syllable was chosen over", () => {
+    const pieces = convertPieces(dictionary, "银行");
+    assertTrue(pieces[0]?.confidence?.isLocked ?? false);
+    assertArrayLength(pieces[1]?.confidence?.alternatives ?? [], 2);
+  });
+
+  it("keeps confidence beside the syllable through the orthography", () => {
+    // 北京市 is regrouped into two words and capitalised, and the pieces still
+    // line up with the readings they were decoded from.
+    const pieces = convertPieces(dictionary, "北京市");
+    assertArrayEquals(
+      pieces.map((piece) => piece.text),
+      ["Běi", "jīng", " ", "Shì"],
+    );
+    assertTrue(
+      pieces.every(
+        (piece) => piece.syllable !== undefined || piece.text === " ",
+      ),
+    );
+  });
+
+  it("keeps confidence for a locale reading that lines up", () => {
+    const pieces = convertPieces(dictionary, "垃圾", { locale: "zh-TW" });
+    assertArrayEquals(
+      pieces.map((piece) => piece.text),
+      ["lè", "sè"],
+    );
+    assertTrue(pieces.every((piece) => piece.confidence !== undefined));
+  });
+
+  it("reports no confidence for a locale reading of a different length", () => {
+    // 那儿 read as one syllable in one locale and two in the other: there is
+    // no syllable of the 國語 reading to hang the 普通话 decode's choice on.
+    const split = dictionaryOf([
+      entry("那", "nà"),
+      entry("儿", "ér"),
+      entry("那儿", "nàr", {
+        readings: { cn: reading("nàr"), tw: reading("nà ér") },
+        frequency: 500,
+      }),
+    ]);
+    const pieces = convertPieces(split, "那儿", { locale: "zh-TW" });
+    assertArrayEquals(
+      pieces.map((piece) => piece.text),
+      ["nà", "'ér"],
+    );
+    assertTrue(pieces.every((piece) => piece.confidence === undefined));
   });
 });

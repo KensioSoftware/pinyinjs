@@ -19,11 +19,14 @@ import {
   scoreCase,
 } from "./accuracy/score.js";
 import { GOLD_CASES } from "#test/fixtures/gold/gold-cases.js";
+import { isUncertain } from "./decode/confidence.js";
 import {
   convert,
   convertGreedily,
+  convertPieces,
   type ConvertOptions,
 } from "./decode/convert.js";
+import { convertToHtml } from "./format/html.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
@@ -101,6 +104,10 @@ describe("the examples in README.md", () => {
         "yin2hang2",
       );
       assertIdentical(
+        convert(dictionary, "银行", { notation: "superscript" }),
+        "yin²hang²",
+      );
+      assertIdentical(
         convert(dictionary, "银行", { notation: "none" }),
         "yinhang",
       );
@@ -159,6 +166,42 @@ describe("the examples in README.md", () => {
 
     it("leaves non-Han text exactly as written", () => {
       assertIdentical(convert(dictionary, "3D银行"), "3Dyínháng");
+    });
+  });
+
+  describe("confidence, and what was rejected", () => {
+    it("reports the pieces and the alternatives shown for 银行", () => {
+      const pieces = convertPieces(dictionary, "银行");
+      assertArrayEquals(
+        pieces.map((piece) => piece.text),
+        ["yín", "háng"],
+      );
+      assertTrue(pieces[0]?.confidence?.isLocked ?? false);
+      assertArrayEquals(
+        (pieces[1]?.confidence?.alternatives ?? []).map((found) =>
+          written(found.reading),
+        ),
+        ["xíng", "héng", "hàng"],
+      );
+    });
+
+    it("calls 行 in 银行 backed by a word, and 行 alone a guess", () => {
+      const inWord = convertPieces(dictionary, "银行")[1]?.confidence;
+      assertNonNullable(inWord);
+      assertFalse(inWord.isLocked);
+      assertFalse(isUncertain(inWord));
+
+      const alone = convertPieces(dictionary, "行")[0]?.confidence;
+      assertNonNullable(alone);
+      assertTrue(isUncertain(alone));
+    });
+
+    it("marks up 行 exactly as the HTML section shows", () => {
+      assertIdentical(
+        convertToHtml(dictionary, "行"),
+        '<span class="py-syllable py-tone-2 py-uncertain" ' +
+          'data-alternatives="háng héng hàng">xíng</span>',
+      );
     });
   });
 
@@ -241,6 +284,7 @@ describe("the examples in README.md", () => {
       const jiu: Syllable = { initial: "j", final: "iou", tone: 4 };
       assertIdentical(writeSyllable(jiu), "jiù");
       assertIdentical(writeSyllable(jiu, "numbers"), "jiu4");
+      assertIdentical(writeSyllable(jiu, "superscript"), "jiu⁴");
       assertIdentical(writeSyllable(jiu, "none"), "jiu");
     });
 

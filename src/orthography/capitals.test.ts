@@ -1,7 +1,17 @@
-import { assertFalse, assertIdentical, assertTrue } from "@kensio/smartass";
+import {
+  assertArrayEquals,
+  assertFalse,
+  assertIdentical,
+  assertTrue,
+} from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { capitaliseSentences, capitaliseWord, isSentence } from "./capitals.js";
+import {
+  capitaliseSentenceParts,
+  capitaliseSentences,
+  capitaliseWord,
+  isSentence,
+} from "./capitals.js";
 
 describe("capitalisation", () => {
   describe("isSentence", () => {
@@ -60,5 +70,27 @@ describe("capitalisation", () => {
       assertIdentical(capitaliseSentences("囧。"), "囧。");
       assertIdentical(capitaliseSentences(""), "");
     });
+  });
+});
+
+describe("capitalising sentences across separate parts", () => {
+  it("capitalises the first letter, wherever it falls", () => {
+    assertArrayEquals(capitaliseSentenceParts(["zhè", " ", "shì"]), [
+      "Zhè",
+      " ",
+      "shì",
+    ]);
+  });
+
+  it("finds the next sentence in a later part", () => {
+    assertArrayEquals(capitaliseSentenceParts(["hǎo", ". ", "zhè"]), [
+      "Hǎo",
+      ". ",
+      "Zhè",
+    ]);
+  });
+
+  it("passes over a part that has no letter in it at all", () => {
+    assertArrayEquals(capitaliseSentenceParts(["“", "hǎo"]), ["“", "Hǎo"]);
   });
 });

@@ -1,7 +1,7 @@
-import { assertIdentical } from "@kensio/smartass";
+import { assertArrayEquals, assertIdentical } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { joinWord } from "./apostrophe.js";
+import { joinWord, markWord } from "./apostrophe.js";
 
 describe("joining a word's syllables", () => {
   it("writes the 隔音符号 before a syllable beginning with a, o or e", () => {
@@ -49,5 +49,31 @@ describe("joining a word's syllables", () => {
     // `standard` asks the splitter to read the join back; a word it cannot
     // parse falls through to writing the mark.
     assertIdentical(joinWord(["zzz", "ān"], "standard"), "zzz'ān");
+  });
+});
+
+describe("marking a word's syllables one by one", () => {
+  it("keeps the mark on the syllable it belongs to", () => {
+    assertArrayEquals(markWord(["Xī", "ān"]), ["Xī", "'ān"]);
+    assertArrayEquals(markWord(["Tiān", "ān", "mén"]), ["Tiān", "'ān", "mén"]);
+  });
+
+  it("leaves a word that needs no mark exactly as it was", () => {
+    assertArrayEquals(markWord(["yín", "háng"]), ["yín", "háng"]);
+  });
+
+  it("honours the style it is given", () => {
+    assertArrayEquals(markWord(["Xī", "ān"], "never"), ["Xī", "ān"]);
+    assertArrayEquals(markWord(["hǎi", "ōu"], "standard"), ["hǎi", "ōu"]);
+    assertArrayEquals(markWord(["Xī", "ān"], "standard"), ["Xī", "'ān"]);
+  });
+
+  it("joins to exactly what joinWord writes", () => {
+    for (const style of ["always", "standard", "never"] as const) {
+      assertIdentical(
+        markWord(["Xī", "ān"], style).join(""),
+        joinWord(["Xī", "ān"], style),
+      );
+    }
   });
 });

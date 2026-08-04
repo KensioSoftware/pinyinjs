@@ -38,7 +38,7 @@ export interface ReadingProjection {
  * 玩儿 as `wánr` and 玩 as `wán` followed by 儿 as `ér` do not agree, so a
  * position either of them covers is not locked.
  */
-function unitKey(unit: ReadingUnit): string {
+export function unitKey(unit: ReadingUnit): string {
   const written = unit.reading
     .map((syllable) => writeSyllable(syllable))
     .join(" ");
@@ -121,4 +121,42 @@ export function projectReadings(lattice: Lattice): ReadingProjection {
     lockedPositions: locked.filter((unit) => unit !== undefined).length,
     positions,
   };
+}
+
+/**
+ * Whether every position in a stretch is locked.
+ */
+export function isSettled(
+  projection: ReadingProjection,
+  from: number,
+  to: number,
+): boolean {
+  for (let at = from; at < to; at++) {
+    if (projection.locked[at] === undefined) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * The units a settled stretch reads as, taken straight from the locks.
+ */
+export function settledUnits(
+  projection: ReadingProjection,
+  from: number,
+  to: number,
+): readonly ReadingUnit[] {
+  const units: ReadingUnit[] = [];
+  let at = from;
+  while (at < to) {
+    const unit = projection.locked[at];
+    /* c8 ignore next 3 -- the caller has checked every position is locked */
+    if (unit === undefined) {
+      break;
+    }
+    units.push(unit);
+    at = unit.to;
+  }
+  return units;
 }

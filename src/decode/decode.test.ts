@@ -15,7 +15,12 @@ import {
 import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
-import { decodeReadings, decodeRun, decodeSpacing } from "./decode.js";
+import {
+  decodeReadings,
+  decodeRun,
+  decodeRunScored,
+  decodeSpacing,
+} from "./decode.js";
 import { buildLattice } from "./lattice.js";
 import { projectReadings } from "./locking.js";
 
@@ -140,5 +145,51 @@ describe("the spacing decode", () => {
     // wanted to split 玩 from 儿 could not be allowed to.
     assertArrayEquals(words("玩儿"), ["玩儿"]);
     assertArrayLength(decodeRun(dictionary, "玩儿")[0]?.reading ?? [], 1);
+  });
+});
+
+describe("the scored decode", () => {
+  it("decodes the same words as the plain decode", () => {
+    assertArrayEquals(
+      decodeRunScored(dictionary, "北京银行").map((scored) => scored.word.text),
+      words("北京银行"),
+    );
+  });
+
+  it("reports confidence for every syllable of a word", () => {
+    const scored = decodeRunScored(dictionary, "银行");
+    assertNonNullable(scored[0]);
+    assertArrayLength(scored[0].confidence, scored[0].word.reading.length);
+  });
+
+  it("reports a settled word as locked throughout", () => {
+    const scored = decodeRunScored(dictionary, "北京");
+    assertNonNullable(scored[0]);
+    assertTrue(scored[0].confidence.every((spot) => spot.isLocked));
+  });
+
+  it("reports the reading a polyphone was chosen over", () => {
+    const scored = decodeRunScored(dictionary, "银行");
+    assertNonNullable(scored[0]);
+    assertNonNullable(scored[0].confidence[1]);
+    assertArrayEquals(
+      scored[0].confidence[1].alternatives.map((alternative) =>
+        alternative.reading.map((syllable) => writeSyllable(syllable)).join(""),
+      ),
+      ["xíng", "héng"],
+    );
+  });
+
+  it("reports one entry per syllable, not per character", () => {
+    // 玩儿 is two characters and one syllable.
+    const scored = decodeRunScored(dictionary, "玩儿");
+    assertNonNullable(scored[0]);
+    assertArrayLength(scored[0].confidence, 1);
+  });
+
+  it("reports nothing for a character it has no reading for", () => {
+    const scored = decodeRunScored(dictionary, "囧");
+    assertNonNullable(scored[0]);
+    assertArrayLength(scored[0].confidence, 0);
   });
 });
