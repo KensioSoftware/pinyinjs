@@ -115,8 +115,18 @@ describe("FrequencyTable", () => {
     });
 
     it("charges the most for an entry it does not know", () => {
-      const table = FrequencyTable.build([1_000_000]);
-      assertIdentical(table.costOf(99), FREQUENCY_BUCKETS);
+      const table = FrequencyTable.build([1, 1_000_000]);
+      assertTrue(table.costOf(99) >= table.costOf(0));
+      assertTrue(table.costOf(99) > table.costOf(1));
+    });
+
+    it("charges enough per word to keep 还给 from splitting", () => {
+      // Real counts from the shipped corpus: 了 as the most frequent word it
+      // holds, then 还, 给 and 还给. At the per-word charge of 1 this table
+      // started with, 还 + 给 came to less than 还给 and the decoder read the
+      // word as `hái gěi`. See WORD_CHARGE for where 4.62 comes from.
+      const table = FrequencyTable.build([883_634, 157_058, 69_480, 269]);
+      assertTrue(table.costOf(3) < table.costOf(1) + table.costOf(2));
     });
   });
 });

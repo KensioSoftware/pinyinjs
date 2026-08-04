@@ -74,11 +74,23 @@ export {
 } from "./dictionary/source.js";
 export type { DictionarySource } from "./dictionary/source.js";
 
-export { convertGreedily } from "./decode/convert.js";
+export { convert, convertGreedily } from "./decode/convert.js";
 export type { ConvertOptions } from "./decode/convert.js";
 
+export { decodeReadings, decodeRun, decodeSpacing } from "./decode/decode.js";
+
 export { decodeGreedily } from "./decode/greedy.js";
-export type { DecodedWord } from "./decode/greedy.js";
+
+export { allEdges, buildLattice, cutPoints } from "./decode/lattice.js";
+export type { Lattice, LatticeEdge } from "./decode/lattice.js";
+
+export { projectReadings, unitsOf } from "./decode/locking.js";
+export type { ReadingProjection, ReadingUnit } from "./decode/locking.js";
+
+export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
+export type { CostOf } from "./decode/viterbi.js";
+
+export type { DecodedWord } from "./decode/word.js";
 
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";

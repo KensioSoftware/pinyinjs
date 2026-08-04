@@ -2,7 +2,11 @@ import { sampleDictionary } from "#test/fixtures/decoder-dictionary.js";
 import { assertIdentical } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { convertGreedily, type ConvertOptions } from "./convert.js";
+import {
+  convert as convert_,
+  convertGreedily,
+  type ConvertOptions,
+} from "./convert.js";
 
 const dictionary = sampleDictionary();
 
@@ -86,5 +90,52 @@ describe("converting with the greedy baseline", () => {
 
   it("converts empty text to nothing", () => {
     assertIdentical(convert(""), "");
+  });
+});
+
+/**
+ * Convert with the lattice decoder and the shared test dictionary.
+ */
+function lattice(text: string, options?: ConvertOptions): string {
+  return convert_(dictionary, text, options);
+}
+
+describe("converting with the lattice", () => {
+  it("writes a word's reading with tone marks", () => {
+    assertIdentical(lattice("银行"), "yínháng");
+  });
+
+  it("separates the words it decoded", () => {
+    assertIdentical(lattice("北京银行"), "Běijīng yínháng");
+  });
+
+  it("capitalises a proper noun", () => {
+    assertIdentical(lattice("北京"), "Běijīng");
+  });
+
+  it("passes non-Han text through untouched", () => {
+    assertIdentical(lattice("3D银行"), "3Dyínháng");
+    assertIdentical(lattice("《北京》"), "《Běijīng》");
+  });
+
+  it("applies sandhi across the words it decoded", () => {
+    assertIdentical(lattice("一天"), "yì tiān");
+    assertIdentical(lattice("不是"), "bú shì");
+  });
+
+  it("takes the zh-TW reading where one differs", () => {
+    assertIdentical(lattice("垃圾", { locale: "zh-TW" }), "lèsè");
+  });
+
+  it("reads 儿化 as one syllable", () => {
+    assertIdentical(lattice("玩儿"), "wánr");
+  });
+
+  it("keeps a character it cannot read, rather than dropping it", () => {
+    assertIdentical(lattice("囧"), "囧");
+  });
+
+  it("converts empty text to nothing", () => {
+    assertIdentical(lattice(""), "");
   });
 });
