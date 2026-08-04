@@ -243,10 +243,10 @@ Script and locale are independent axes, and conflating them would be wrong:
 Taiwan writes `Hant` with `zh-TW` readings, but mainland editions of classical
 texts use `Hant` with `zh-CN` readings, and Singapore uses `Hans`.
 
-| Axis   | Values           | What differs                 |
-| ------ | ---------------- | ---------------------------- |
-| Script | `Hans` / `Hant`  | which characters are written |
-| Locale | `zh-CN` /`zh-TW` | how they are read            |
+| Axis   | Values            | What differs                 |
+| ------ | ----------------- | ---------------------------- |
+| Script | `Hans` / `Hant`   | which characters are written |
+| Locale | `zh-CN` / `zh-TW` | how they are read            |
 
 Both scripts are keys in the same dictionary, so nothing is converted at lookup
 time. `zh-TW` is stored as a delta over `zh-CN`, since only a few hundred words
@@ -280,7 +280,7 @@ pnpm accuracy
 Scores the current decoder against the gold corpus, readings and spacing
 separately, broken down by category.
 
-|                              | Greedy baseline |
+| Metric                       | Greedy baseline |
 | ---------------------------- | --------------: |
 | Reading accuracy (with tone) |       **93.7%** |
 | Reading accuracy (toneless)  |           95.0% |
