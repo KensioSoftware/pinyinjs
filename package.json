@@ -31,6 +31,8 @@
     "fmt": "eslint --fix . && prettier --write .",
     "lint": "eslint . && prettier --check .",
     "fta": "./scripts/sh/fta.sh",
+    "build:data": "node --import jiti/register scripts/build-data/build.ts",
+    "fetch:data": "node --import jiti/register scripts/build-data/fetch.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm test:coverage"

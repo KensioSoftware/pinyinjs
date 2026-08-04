@@ -7,12 +7,69 @@
  */
 
 export {
+  buildArtifact,
+  decodeReading,
+  encodeReading,
+  findRoundTripFailure,
+  readArtifact,
+} from "./dictionary/artifact.js";
+export type { DictionaryArtifact } from "./dictionary/artifact.js";
+
+export {
+  BUILD_ASSERTIONS,
+  BuiltDictionary,
+  checkBuild,
+} from "./dictionary/assertions.js";
+export type { BuildAssertion } from "./dictionary/assertions.js";
+
+export { isSameReading, isSameSyllable } from "./dictionary/entry.js";
+export type { DictionaryEntry, EntryReadings } from "./dictionary/entry.js";
+
+export {
+  attachErhua,
+  isErFinal,
+  NON_ERHUA_ER_WORDS,
+  withErhua,
+} from "./dictionary/erhua.js";
+
+export {
   FREQUENCY_BUCKETS,
   FrequencyTable,
 } from "./dictionary/frequency-table.js";
 
 export { KeyIndex } from "./dictionary/key-index.js";
 export type { KeyLookup } from "./dictionary/key-index.js";
+
+export { mergeSources } from "./dictionary/merge.js";
+export type {
+  MergeResult,
+  MergeSources,
+  MergeStats,
+} from "./dictionary/merge.js";
+
+export {
+  OVERRIDE_READINGS,
+  READING_OVERRIDES,
+  readOverrideReading,
+} from "./dictionary/overrides.js";
+export type { ReadingOverride } from "./dictionary/overrides.js";
+
+export {
+  readAlignedReading,
+  readDictionaryReading,
+} from "./dictionary/reading.js";
+export type { ReadCharacters } from "./dictionary/reading.js";
+
+export { pairScripts, TraditionalTable } from "./dictionary/traditional.js";
+export type { ScriptPairing } from "./dictionary/traditional.js";
+
+export {
+  DEFAULT_TIER,
+  selectTier,
+  STANDARD_TIER_WORDS,
+  TIERS,
+} from "./dictionary/tiers.js";
+export type { Tier } from "./dictionary/tiers.js";
 
 export {
   detectScript,
@@ -23,6 +80,12 @@ export {
   SCRIPTS,
 } from "./script/script.js";
 export type { Locale, Script } from "./script/script.js";
+
+export {
+  ATTESTED_SYLLABLES,
+  DICTIONARY_SYLLABLES,
+  RARE_SYLLABLES,
+} from "./syllable/inventory.js";
 
 export {
   FINALS,
