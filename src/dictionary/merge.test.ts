@@ -78,21 +78,59 @@ function reading(
 }
 
 /**
+ * A Unihan entry, with the per-field detail the merge reads.
+ *
+ * Readings are attributed to `kTGHZ2013` by default, which is the ordinary
+ * case: only `kHanyuPinlu` ever omits a tone mark, so a character with no
+ * frequency-field reading needs no tone resolved.
+ */
+function unihan(
+  readings: readonly string[],
+  extra: Partial<UnihanReadings> = {},
+): UnihanReadings {
+  return {
+    readings,
+    fields: new Map([["kTGHZ2013", readings]]),
+    ...extra,
+  };
+}
+
+/**
+ * A character as Unihan really records it: the frequency field first, the
+ * dictionary fields after.
+ *
+ * Only `kHanyuPinlu` ever omits a tone mark, so this is the shape the tone
+ * resolution has to reason about.
+ */
+function withFrequencyField(
+  frequency: readonly string[],
+  dictionaries: readonly string[],
+): UnihanReadings {
+  return {
+    readings: [...new Set([...frequency, ...dictionaries])],
+    fields: new Map([
+      ["kHanyuPinlu", frequency],
+      ["kTGHZ2013", dictionaries],
+    ]),
+  };
+}
+
+/**
  * Unihan readings for the characters the tests use.
  */
 const CHARACTERS: ReadonlyMap<string, UnihanReadings> = new Map([
-  ["银", { readings: ["yín"] }],
-  ["行", { readings: ["xíng", "háng", "héng"] }],
-  ["头", { readings: ["tóu"] }],
-  ["发", { readings: ["fā", "fà"] }],
-  ["还", { readings: ["hái", "huán"] }],
-  ["是", { readings: ["shì"] }],
-  ["玩", { readings: ["wán"] }],
-  ["儿", { readings: ["ér"] }],
-  ["女", { readings: ["nǚ"] }],
-  ["大", { readings: ["dà"] }],
-  ["夫", { readings: ["fū"] }],
-  ["万", { readings: ["wàn", "mò"], taiwanReading: "mò" }],
+  ["银", unihan(["yín"])],
+  ["行", unihan(["xíng", "háng", "héng"])],
+  ["头", unihan(["tóu"])],
+  ["发", unihan(["fā", "fà"])],
+  ["还", unihan(["hái", "huán"])],
+  ["是", unihan(["shì"])],
+  ["玩", unihan(["wán"])],
+  ["儿", unihan(["ér"])],
+  ["女", unihan(["nǚ"])],
+  ["大", unihan(["dà"])],
+  ["夫", unihan(["fū"])],
+  ["万", unihan(["wàn", "mò"], { taiwanReading: "mò" })],
 ]);
 
 const VARIANTS: UnihanVariants = {
@@ -158,6 +196,66 @@ describe("merging the sources", () => {
       assertUndefined(byWord.get("3D打印"));
       assertMapSize(result.rejected, 1);
       assertIdentical(result.stats.rejected, 1);
+    });
+  });
+
+  describe("tones kHanyuPinlu leaves off", () => {
+    it("restores a tone the frequency field omitted", () => {
+      // 李 is `li(36)` in kHanyuPinlu and `lǐ` everywhere else. Read as 轻声,
+      // 李华 comes out `Li Huá`.
+      const { byWord } = merge({
+        unihanReadings: new Map([["李", withFrequencyField(["li"], ["lǐ"])]]),
+      });
+      assertIdentical(reading(byWord, "李"), "lǐ");
+    });
+
+    it("leaves a genuine 轻声 alone", () => {
+      // 们 is bare in every field, so the neutral tone is real.
+      const { byWord } = merge({
+        unihanReadings: new Map([
+          ["们", withFrequencyField(["men"], ["men", "mén"])],
+        ]),
+      });
+      assertIdentical(reading(byWord, "们"), "men");
+    });
+
+    it("trusts a frequency field that marks any tone at all", () => {
+      // 个 lists gè and ge side by side, so the bare one means 轻声 and the
+      // field is evidently marking tones where it means to.
+      const { byWord } = merge({
+        unihanReadings: new Map([
+          ["个", withFrequencyField(["gè", "ge"], ["gè"])],
+        ]),
+      });
+      assertIdentical(reading(byWord, "个"), "gè");
+      assertIdentical(
+        (byWord.get("个")?.alternates ?? [])
+          .map((alternate) => alternate.map((s) => writeSyllable(s)).join(""))
+          .join(","),
+        "ge",
+      );
+    });
+
+    it("leaves a character with no frequency reading untouched", () => {
+      const { byWord } = merge({
+        unihanReadings: new Map([
+          [
+            "囧",
+            {
+              readings: ["jiǒng"],
+              fields: new Map([["kTGHZ2013", ["jiǒng"]]]),
+            },
+          ],
+        ]),
+      });
+      assertIdentical(reading(byWord, "囧"), "jiǒng");
+    });
+
+    it("keeps a bare reading no other field writes with a tone", () => {
+      const { byWord } = merge({
+        unihanReadings: new Map([["噢", withFrequencyField(["o"], [])]]),
+      });
+      assertIdentical(reading(byWord, "噢"), "o");
     });
   });
 
@@ -314,9 +412,9 @@ describe("merging the sources", () => {
       const { byWord, result } = merge({
         unihanReadings: new Map([
           ...CHARACTERS,
-          ["發", { readings: ["fā", "fà"] }],
-          ["髮", { readings: ["fà"] }],
-          ["頭", { readings: ["tóu"] }],
+          ["發", unihan(["fā", "fà"])],
+          ["髮", unihan(["fà"])],
+          ["頭", unihan(["tóu"])],
         ]),
         unihanVariants: VARIANTS,
         phrase: new Map([["头发", ["tóu", "fà"]]]),

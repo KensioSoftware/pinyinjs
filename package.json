@@ -37,7 +37,8 @@
     "fetch:data": "node --import jiti/register scripts/build-data/fetch.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm test:coverage"
+    "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm test:coverage",
+    "accuracy": "node --import jiti/register scripts/build-data/accuracy.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

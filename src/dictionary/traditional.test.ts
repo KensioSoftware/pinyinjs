@@ -23,14 +23,28 @@ import {
  * Real values: 髮 reads only `fà`, whereas 發 reads `fā` first and `fà` only as
  * a rarer variant, which is what lets the reading separate them.
  */
+/**
+ * A Unihan entry with the per-field detail the merge reads.
+ */
+function unihan(
+  readings: readonly string[],
+  extra: Partial<UnihanReadings> = {},
+): UnihanReadings {
+  return {
+    readings,
+    fields: new Map([["kTGHZ2013", readings]]),
+    ...extra,
+  };
+}
+
 const UNIHAN_READINGS: ReadonlyMap<string, UnihanReadings> = new Map([
-  ["发", { readings: ["fā", "fa", "fà"] }],
-  ["發", { readings: ["fā", "fa", "fà"] }],
-  ["髮", { readings: ["fà"], taiwanReading: "fǎ" }],
-  ["头", { readings: ["tóu", "tou"] }],
-  ["頭", { readings: ["tóu", "tou"] }],
-  ["万", { readings: ["wàn", "mò"] }],
-  ["萬", { readings: ["wàn"] }],
+  ["发", unihan(["fā", "fa", "fà"])],
+  ["發", unihan(["fā", "fa", "fà"])],
+  ["髮", unihan(["fà"], { taiwanReading: "fǎ" })],
+  ["头", unihan(["tóu", "tou"])],
+  ["頭", unihan(["tóu", "tou"])],
+  ["万", unihan(["wàn", "mò"])],
+  ["萬", unihan(["wàn"])],
 ]);
 
 const UNIHAN_VARIANTS: UnihanVariants = {
@@ -124,7 +138,7 @@ describe("deriving 繁體 forms", () => {
       const table = TraditionalTable.build(
         [],
         { simplified: new Map(), traditional: new Map([["发", ["發", "髮"]]]) },
-        new Map([["髮", { readings: ["fà"] }]]),
+        new Map([["髮", unihan(["fà"])]]),
       );
       // 發 has no reading list at all here, so 髮 is the only candidate that
       // Unihan can say anything about.
@@ -136,8 +150,8 @@ describe("deriving 繁體 forms", () => {
         [],
         { simplified: new Map(), traditional: new Map([["发", ["發", "髮"]]]) },
         new Map([
-          ["發", { readings: ["not-a-syllable", "fā"] }],
-          ["髮", { readings: ["fà"] }],
+          ["發", unihan(["not-a-syllable", "fā"])],
+          ["髮", unihan(["fà"])],
         ]),
       );
       assertIdentical(table.convertCharacter("发", syllable("fā")), "發");
@@ -146,20 +160,16 @@ describe("deriving 繁體 forms", () => {
     it("matches on the syllable when no candidate matches the tone", () => {
       // fǎ is nobody's listed reading here, but 髮 at least reads that
       // syllable, which beats 發 not matching at all.
-      assertIdentical(
-        TraditionalTable.build(
-          [],
-          {
-            simplified: new Map(),
-            traditional: new Map([["发", ["發", "髮"]]]),
-          },
-          new Map([
-            ["發", { readings: ["bō"] }],
-            ["髮", { readings: ["fà"] }],
-          ]),
-        ).convertCharacter("发", syllable("fǎ")),
-        "髮",
+      const readings = new Map([
+        ["發", unihan(["bō"])],
+        ["髮", unihan(["fà"])],
+      ]);
+      const table = TraditionalTable.build(
+        [],
+        { simplified: new Map(), traditional: new Map([["发", ["發", "髮"]]]) },
+        readings,
       );
+      assertIdentical(table.convertCharacter("发", syllable("fǎ")), "髮");
     });
   });
 
@@ -180,8 +190,10 @@ describe("deriving 繁體 forms", () => {
         UNIHAN_VARIANTS,
         UNIHAN_READINGS,
       );
-      assertIdentical(table.convertCharacter("干", syllable("gān")), "干");
-      assertIdentical(table.convertCharacter("干", syllable("gàn")), "幹");
+      const neutralGan = table.convertCharacter("干", syllable("gān"));
+      const fallingGan = table.convertCharacter("干", syllable("gàn"));
+      assertIdentical(neutralGan, "干");
+      assertIdentical(fallingGan, "幹");
     });
 
     it("falls back to the commonest variant at any reading", () => {
@@ -243,7 +255,7 @@ describe("deriving 繁體 forms", () => {
             ["玩", ["玩"]],
           ]),
         },
-        new Map([["兒", { readings: ["ér"] }]]),
+        new Map([["兒", unihan(["ér"])]]),
       );
       // 玩儿 is one syllable over two characters; the syllable describes the
       // first of them only.

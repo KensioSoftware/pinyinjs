@@ -11,6 +11,16 @@ export interface UnihanReadings {
    */
   readonly readings: readonly string[];
   /**
+   * The readings each field gave, before they were merged into one order.
+   *
+   * Kept because which field a reading came from carries meaning that the
+   * merged list cannot: `kHanyuPinlu` writes 李 as `li(36)` with no tone mark,
+   * where every dictionary field writes `lǐ`. Whether an unmarked reading means
+   * 轻声 or merely an unmarked tone can only be decided by comparing the
+   * fields, and that decision belongs to the merge rather than here.
+   */
+  readonly fields: ReadonlyMap<ReadingField, readonly string[]>;
+  /**
    * The zh-TW reading, when `kMandarin` gives one that differs from zh-CN.
    *
    * Unihan writes the two as a space-separated pair with zh-Hans first, so
@@ -38,14 +48,26 @@ const READING_WITH_COUNT = /^(.+)\((\d+)\)$/u;
  * next as the current mainland standard, then `kMandarin` for the characters
  * neither covers, and `kXHC1983` last to catch anything still missing.
  */
-const READING_FIELDS = [
+export const READING_FIELDS = [
   "kHanyuPinlu",
   "kTGHZ2013",
   "kMandarin",
   "kXHC1983",
 ] as const;
 
-type ReadingField = (typeof READING_FIELDS)[number];
+/**
+ * One of the Unihan fields this package reads readings from.
+ */
+export type ReadingField = (typeof READING_FIELDS)[number];
+
+/**
+ * The field whose readings are ranked by corpus frequency.
+ *
+ * The one field that ranks a polyphone's readings, and the one that sometimes
+ * omits a tone mark — the two facts that make it both the most useful and the
+ * most careful to read.
+ */
+export const FREQUENCY_FIELD = "kHanyuPinlu" satisfies ReadingField;
 
 /**
  * Pull the readings out of one field's value.
@@ -137,6 +159,7 @@ export function parseUnihanReadings(text: string): Map<string, UnihanReadings> {
     const taiwanReading = taiwanReadings.get(character);
     parsed.set(character, {
       readings: ordered,
+      fields,
       ...(taiwanReading !== undefined && { taiwanReading }),
     });
   }

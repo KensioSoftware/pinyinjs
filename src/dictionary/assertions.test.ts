@@ -63,6 +63,8 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("头发", "tóu fa", { hant: "頭髮" }),
   entry("还是", "hái shi", { hant: "還是" }),
   entry("北京", "běi jīng", { isProperNoun: true, partOfSpeech: "ns" }),
+  entry("李", "lǐ"),
+  entry("们", "men"),
 ];
 
 describe("build assertions", () => {
