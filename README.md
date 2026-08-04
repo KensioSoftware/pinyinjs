@@ -5,17 +5,22 @@ validates and writes pinyin syllables on their own, with no dictionary.
 
 [https://pinyinjs.dev](https://pinyinjs.dev "PinyinJS docs website")
 
-> **Not released yet**, so not on npm — clone the repo until it is. Wade-Giles,
-> Bopomofo, Yale and IPA, and reading numbers aloud, are not built. Everything
-> below works and is tested, but the API will change before 1.0.
+> **Beta.** Published under the `beta` tag, so a plain `pnpm add
+@kensio/pinyinjs` will not find it until 1.0. Wade-Giles, Bopomofo, Yale and
+> IPA, and reading numbers aloud, are not built. Everything below works and is
+> tested, but the API will change before 1.0.
 
 ## Install
 
 ```bash
-pnpm add @kensio/pinyinjs
+pnpm add @kensio/pinyinjs@beta
 ```
 
-Node 24+, or any browser. The core imports no Node built-ins.
+Node 24+, or any browser. The core imports no Node built-ins, and the package is
+ESM only.
+
+The dictionaries ship inside the package, which is what makes it a 4 MB
+download: `data/` is 10 MB of artifacts and the point of the whole thing.
 
 ## Command line
 
@@ -471,6 +476,7 @@ the inventory knows, and every tier reads back exactly as it was built.
 
 ## Licence
 
-Apache-2.0 for the code. Because CC-CEDICT is CC BY-SA 4.0, the compiled
-dictionaries in `data/` are share-alike. See [LICENSE](LICENSE) and
-[NOTICE](NOTICE).
+`Apache-2.0 AND CC-BY-SA-4.0`, because the package is two things: the code is
+Apache-2.0, and the compiled dictionaries in `data/` are share-alike, CC-CEDICT
+being CC BY-SA 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE), which is
+generated from the sources the pipeline actually fetched.
