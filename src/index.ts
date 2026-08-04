@@ -116,6 +116,15 @@ export {
 } from "./orthography/capitals.js";
 export type { CapitalStyle } from "./orthography/capitals.js";
 
+export {
+  applyGrouping,
+  ASPECT_PARTICLES,
+  GROUPING_RULES,
+  PLACE_GENERICS,
+  SUFFIXES,
+} from "./orthography/grouping.js";
+export type { GroupingRule } from "./orthography/grouping.js";
+
 export { toLatinPunctuation } from "./orthography/punctuation.js";
 export type { PunctuationStyle } from "./orthography/punctuation.js";
 

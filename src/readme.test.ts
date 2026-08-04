@@ -120,8 +120,15 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
       assertIdentical(convert(dictionary, "女儿"), "nǚ'ér");
       assertIdentical(convert(dictionary, "你好，世界"), "nǐ hǎo, shìjiè");
-      // Not built yet, and documented as not built.
-      assertIdentical(convert(dictionary, "他看了"), "tā kàn le");
+      assertIdentical(convert(dictionary, "他看了"), "tā kànle");
+      assertIdentical(convert(dictionary, "作者"), "zuòzhě");
+      assertIdentical(convert(dictionary, "南京市"), "Nánjīng Shì");
+      assertIdentical(
+        convert(dictionary, "南京市", { grouping: false }),
+        "Nánjīngshì",
+      );
+      // Documented as not built: needs a curated 正词法 list.
+      assertIdentical(convert(dictionary, "不是"), "búshì");
     });
 
     it("leaves non-Han text exactly as written", () => {
