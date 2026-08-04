@@ -63,6 +63,29 @@ export type { ReadCharacters } from "./dictionary/reading.js";
 export { pairScripts, TraditionalTable } from "./dictionary/traditional.js";
 export type { ScriptPairing } from "./dictionary/traditional.js";
 
+export { Dictionary } from "./dictionary/dictionary.js";
+export type { WordEntry } from "./dictionary/dictionary.js";
+
+export {
+  fetchSource,
+  loadArtifact,
+  loadDictionary,
+  tierFiles,
+} from "./dictionary/source.js";
+export type { DictionarySource } from "./dictionary/source.js";
+
+export { convertGreedily } from "./decode/convert.js";
+export type { ConvertOptions } from "./decode/convert.js";
+
+export { decodeGreedily } from "./decode/greedy.js";
+export type { DecodedWord } from "./decode/greedy.js";
+
+export { splitRuns } from "./decode/runs.js";
+export type { TextRun } from "./decode/runs.js";
+
+export { applySandhi } from "./decode/sandhi.js";
+export type { SandhiOptions } from "./decode/sandhi.js";
+
 export {
   DEFAULT_TIER,
   selectTier,

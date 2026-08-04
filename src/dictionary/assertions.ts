@@ -120,6 +120,13 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("头发", "tóu fa", "CC-CEDICT wins on the neutral tone"),
   reads("还是", "hái shi", "CC-CEDICT wins on the neutral tone"),
   reads("頭髮", "tóu fa", "繁體 derived using the reading, and keyed directly"),
+  // kHanyuPinlu writes 李 as `li(36)`, with no tone mark. Read as 轻声 — which
+  // is what an unmarked reading means everywhere else in source data — 李华
+  // comes out `Li Huá`. The other Unihan fields all write `lǐ`, and that is
+  // what settles it. 们 is the control: genuinely neutral, and written bare by
+  // the other fields too, so it must not be "corrected".
+  reads("李", "lǐ", "a tone kHanyuPinlu left off is restored"),
+  reads("们", "men", "a genuine 轻声 is not given a tone it never had"),
   {
     description: "北京 is a proper noun (jieba POS carried through)",
     check: (dictionary: BuiltDictionary): string | undefined =>

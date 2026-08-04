@@ -1,7 +1,11 @@
 import { isSingleCharacter } from "../script/characters.js";
 import type { CedictEntry } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
-import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
+import {
+  FREQUENCY_FIELD,
+  type UnihanReadings,
+  type UnihanVariants,
+} from "../sources/unihan.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
@@ -241,6 +245,64 @@ function cedictReadingsOf(
 }
 
 /**
+ * Strip the tone marks from a reading, for comparing two spellings.
+ */
+function tonelessReading(reading: string): string {
+  return reading.normalize("NFD").replaceAll(/[̀́̄̌]/gu, "").normalize("NFC");
+}
+
+/**
+ * Whether a reading carries a tone mark.
+ */
+function isToneMarked(reading: string): boolean {
+  return tonelessReading(reading) !== reading;
+}
+
+/**
+ * Put back a tone that `kHanyuPinlu` left off.
+ *
+ * The frequency field writes some readings without their tone mark: 李 is
+ * `li(36)` there where every dictionary field writes `lǐ`. Read as 轻声 — which
+ * is what an unmarked reading means in source data — that makes 李华 come out
+ * `Li Huá`, and it is the only Unihan field this happens in.
+ *
+ * The other fields settle which it is. If they also write the spelling bare,
+ * the neutral tone is real and 么, 们, 吧, 裳 keep it. If every one of them
+ * writes it with a tone, the frequency field simply omitted the mark, and the
+ * tone is taken back. Measured over the real file, 3,799 characters have a
+ * `kHanyuPinlu` entry, 60 of those have only unmarked readings, and the split
+ * is 45 that should carry a tone against 15 genuine 轻声.
+ */
+function resolveFrequencyTones(unihan: UnihanReadings): readonly string[] {
+  const frequencyReadings = unihan.fields.get(FREQUENCY_FIELD) ?? [];
+  // A character whose frequency field marks any tone is already trustworthy:
+  // there the unmarked readings sit alongside marked ones and mean 轻声.
+  if (
+    frequencyReadings.length === 0 ||
+    frequencyReadings.some((reading) => isToneMarked(reading))
+  ) {
+    return unihan.readings;
+  }
+
+  const elsewhere = [...unihan.fields]
+    .filter(([field]) => field !== FREQUENCY_FIELD)
+    .flatMap(([, readings]) => readings);
+
+  return unihan.readings.map((reading) => {
+    if (isToneMarked(reading)) {
+      return reading;
+    }
+    const sameSpelling = elsewhere.filter(
+      (other) => tonelessReading(other) === reading,
+    );
+    if (sameSpelling.length === 0 || sameSpelling.includes(reading)) {
+      return reading;
+    }
+    return sameSpelling.find((other) => isToneMarked(other)) ?? reading;
+  });
+}
+
+/**
  * Parse a Unihan reading string for one character.
  *
  * Goes through the dictionary reader so that a Unihan reading gets the same
@@ -270,7 +332,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // ── Character defaults, which every later step leans on ────
   const defaults = new Map<string, readonly Syllable[]>();
   for (const [character, readings] of unihanReadings) {
-    const parsed = readings.readings
+    const parsed = resolveFrequencyTones(readings)
       .map((reading) => characterSyllable(character, reading))
       .filter((syllable) => syllable !== undefined);
     if (parsed.length > 0) {
