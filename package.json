@@ -14,8 +14,10 @@
   },
   "files": [
     "dist",
+    "data",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "sideEffects": false,
   "imports": {

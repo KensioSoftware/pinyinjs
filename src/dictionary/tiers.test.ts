@@ -102,18 +102,30 @@ describe("dictionary tiers", () => {
       assertArrayIncludes(keysOf("standard"), "银行");
     });
 
-    it("keeps the commonest words first when the tail is cut", () => {
-      const words = Array.from({ length: STANDARD_TIER_WORDS + 10 }, (_, at) =>
-        entry(`词${String(at)}`, at),
-      );
-      const selected = selectTier(words, "standard");
-      assertArrayLength(selected, STANDARD_TIER_WORDS);
-      // The rarest ten are the ones dropped.
-      assertFalse(selected.some((held) => held.hans === "词0"));
-      assertTrue(
-        selected.some((held) => held.hans === `词${String(words.length - 1)}`),
-      );
-    });
+    // The 2s budget is deliberate: this builds more than the real cut size,
+    // since a cut only exercised below 50,000 words would test nothing, and
+    // sorting that many entries does not fit the 100 ms the rest are held to.
+    const OVER_THE_CUT_TIMEOUT = 2000;
+
+    it(
+      "keeps the commonest words first when the tail is cut",
+      () => {
+        const words = Array.from(
+          { length: STANDARD_TIER_WORDS + 10 },
+          (_, at) => entry(`词${String(at)}`, at),
+        );
+        const selected = selectTier(words, "standard");
+        assertArrayLength(selected, STANDARD_TIER_WORDS);
+        // The rarest ten are the ones dropped.
+        assertFalse(selected.some((held) => held.hans === "词0"));
+        assertTrue(
+          selected.some(
+            (held) => held.hans === `词${String(words.length - 1)}`,
+          ),
+        );
+      },
+      OVER_THE_CUT_TIMEOUT,
+    );
 
     it("cuts the tail at the documented size", () => {
       assertIdentical(STANDARD_TIER_WORDS, 50_000);
