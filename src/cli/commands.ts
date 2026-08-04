@@ -1,0 +1,451 @@
+import { isUncertain } from "../decode/confidence.js";
+import {
+  convert,
+  convertGreedily,
+  convertPieces,
+  type ConvertedPiece,
+} from "../decode/convert.js";
+import { applySandhi } from "../decode/sandhi.js";
+import type { Dictionary } from "../dictionary/dictionary.js";
+import { convertToHtml } from "../format/html.js";
+import {
+  ATTESTED_SYLLABLES,
+  DICTIONARY_SYLLABLES,
+} from "../syllable/inventory.js";
+import { readWord, splitSyllables } from "../syllable/split.js";
+import {
+  readSyllable,
+  type Syllable,
+  writeSyllable,
+  writeSyllableSpelling,
+} from "../syllable/syllable.js";
+import {
+  convertOptions,
+  CONVERT_FLAGS,
+  type DictionaryChoice,
+  type Flags,
+  type FlagName,
+  htmlOptions,
+  UsageError,
+} from "./arguments.js";
+
+/**
+ * What a command is given to work with.
+ */
+export interface CommandInput {
+  /** The words, phrases or texts to act on, one per line of output. */
+  readonly texts: readonly string[];
+  readonly flags: Flags;
+  /** Loaded for the commands that declare they need one. */
+  readonly dictionary: Dictionary | undefined;
+  readonly choice: DictionaryChoice;
+}
+
+/**
+ * One answer, in both the forms the CLI can write it.
+ *
+ * Every command reports both rather than one being derived from the other: the
+ * lines are for a person reading them and the data is for `jq`, and a person's
+ * columns are a poor thing to parse. Keeping them side by side in each command
+ * is what stops them drifting apart.
+ */
+export interface Reported {
+  readonly lines: readonly string[];
+  /** Written as one JSON document per answer, for `--json`. */
+  readonly data: unknown;
+}
+
+/**
+ * One subcommand.
+ */
+export interface Command {
+  readonly name: string;
+  /** One line, for the command list in the help. */
+  readonly summary: string;
+  /** What follows the command name, for its own help. */
+  readonly argument: string;
+  /** The flags it takes, beyond the global ones. */
+  readonly flags: readonly FlagName[];
+  /**
+   * Whether it reads the dictionary.
+   *
+   * The syllable layer needs no data at all, and a command that only uses it
+   * should not wait for 2.4 MB to load.
+   */
+  readonly needsDictionary: boolean;
+  readonly run: (input: CommandInput) => readonly Reported[];
+}
+
+/**
+ * The dictionary a command declared it needs.
+ */
+function dictionaryOf(input: CommandInput): Dictionary {
+  /* c8 ignore next 3 -- loaded for every command that declares it needs one */
+  if (input.dictionary === undefined) {
+    throw new UsageError("no dictionary was loaded");
+  }
+  return input.dictionary;
+}
+
+/**
+ * Pad a column so that what follows it lines up.
+ */
+function column(text: string, width: number): string {
+  return text.padEnd(width);
+}
+
+/**
+ * A reading written out, syllable by syllable.
+ */
+function written(reading: readonly Syllable[]): string {
+  return reading.map((syllable) => writeSyllable(syllable)).join(" ");
+}
+
+/**
+ * How settled a decoded syllable was, in one word.
+ *
+ * `locked` means no other reading was on offer, `word` that taking one would
+ * have meant breaking a dictionary word apart, and `guess` that another reading
+ * of the same characters was there for the taking. See ROADMAP.md for how often
+ * each turns out to be wrong.
+ */
+function stateOf(piece: ConvertedPiece): string {
+  const { confidence } = piece;
+  if (confidence === undefined || confidence.isLocked) {
+    return "locked";
+  }
+  return isUncertain(confidence) ? "guess" : "word";
+}
+
+/**
+ * What a decode rejected at one syllable, and what rejecting it saved.
+ */
+function alternativesOf(
+  piece: ConvertedPiece,
+  flags: Flags,
+): readonly { readonly reading: string; readonly cost: number }[] {
+  const { notation } = convertOptions(flags);
+  return (piece.confidence?.alternatives ?? []).map((alternative) => ({
+    reading: alternative.reading
+      .map((syllable) => writeSyllable(syllable, notation))
+      .join(""),
+    // Rounded because a cost is a sum of frequency buckets and a per-word
+    // charge of 4.62, which lands on 24.620000000000005 often enough to be
+    // worth not putting in front of anybody.
+    cost: Math.round(alternative.cost * 100) / 100,
+  }));
+}
+
+/**
+ * Convert each text, one line in and one line out.
+ */
+const CONVERT: Command = {
+  name: "convert",
+  summary: "hanzi to pinyin",
+  argument: "[text...]",
+  flags: [...CONVERT_FLAGS, "greedy"],
+  needsDictionary: true,
+  run: (input) => {
+    const decode = input.flags.greedy === true ? convertGreedily : convert;
+    const options = convertOptions(input.flags);
+    return input.texts.map((text) => {
+      const pinyin = decode(dictionaryOf(input), text, options);
+      return { lines: [pinyin], data: { text, pinyin } };
+    });
+  },
+};
+
+/**
+ * Convert each text to HTML, one element per syllable.
+ */
+const HTML: Command = {
+  name: "html",
+  summary: "hanzi to pinyin as HTML, one element per syllable",
+  argument: "[text...]",
+  flags: [...CONVERT_FLAGS, "no-tone-classes", "no-uncertain"],
+  needsDictionary: true,
+  run: (input) => {
+    const options = htmlOptions(input.flags);
+    return input.texts.map((text) => {
+      const html = convertToHtml(dictionaryOf(input), text, options);
+      return { lines: [html], data: { text, html } };
+    });
+  },
+};
+
+/**
+ * One decoded syllable, as `explain` reports it.
+ */
+function explainSyllable(
+  piece: ConvertedPiece,
+  flags: Flags,
+): { readonly line: string; readonly data: unknown } {
+  const state = stateOf(piece);
+  const alternatives = alternativesOf(piece, flags);
+  const beaten = alternatives
+    .map(
+      (alternative) => `${alternative.reading} +${alternative.cost.toFixed(1)}`,
+    )
+    .join("  ");
+
+  return {
+    line: `  ${column(piece.text, 8)}${column(state, 8)}${beaten}`.trimEnd(),
+    data: {
+      text: piece.text,
+      state,
+      ...(piece.syllable?.tone !== undefined && { tone: piece.syllable.tone }),
+      alternatives,
+    },
+  };
+}
+
+/**
+ * Show what the decoder chose, syllable by syllable, and what it rejected.
+ */
+const EXPLAIN: Command = {
+  name: "explain",
+  summary: "show each syllable, how settled it was, and what it beat",
+  argument: "[text...]",
+  flags: [...CONVERT_FLAGS],
+  needsDictionary: true,
+  run: (input) => {
+    const dictionary = dictionaryOf(input);
+    const options = convertOptions(input.flags);
+
+    return input.texts.map((text) => {
+      const pieces = convertPieces(dictionary, text, options);
+      const pinyin = pieces.map((piece) => piece.text).join("");
+      const syllables = pieces
+        .filter((piece) => piece.syllable !== undefined)
+        .map((piece) => explainSyllable(piece, input.flags));
+
+      return {
+        lines: [
+          `${text}  ${pinyin}`,
+          ...syllables.map((syllable) => syllable.line),
+        ],
+        data: {
+          text,
+          pinyin,
+          syllables: syllables.map((syllable) => syllable.data),
+        },
+      };
+    });
+  },
+};
+
+/**
+ * What the dictionary holds for a word.
+ */
+function entryFound(dictionary: Dictionary, word: string): Reported {
+  const entry = dictionary.lookup(word);
+  if (entry === undefined) {
+    return {
+      lines: [`${word}  not in the dictionary`],
+      data: { word, found: false },
+    };
+  }
+
+  const tags = [
+    entry.partOfSpeech,
+    entry.isProperNoun ? "proper noun" : "",
+  ].filter((tag) => tag !== "");
+  const others = dictionary.readingsOf(word).slice(1);
+
+  return {
+    lines: [
+      `${word}  ${written(entry.reading)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
+      ...(entry.taiwanReading === undefined
+        ? []
+        : [`  zh-TW  ${written(entry.taiwanReading)}`]),
+      ...(others.length > 0
+        ? [`  also   ${others.map((reading) => written(reading)).join(", ")}`]
+        : []),
+    ],
+    data: {
+      word,
+      found: true,
+      reading: written(entry.reading),
+      partOfSpeech: entry.partOfSpeech,
+      isProperNoun: entry.isProperNoun,
+      ...(entry.taiwanReading !== undefined && {
+        taiwanReading: written(entry.taiwanReading),
+      }),
+      otherReadings: others.map((reading) => written(reading)),
+    },
+  };
+}
+
+/**
+ * Look words up in the dictionary.
+ */
+const LOOKUP: Command = {
+  name: "lookup",
+  summary: "what the dictionary holds for a word",
+  argument: "<word...>",
+  flags: [],
+  needsDictionary: true,
+  run: (input) =>
+    input.texts.map((word) => entryFound(dictionaryOf(input), word)),
+};
+
+/**
+ * One written syllable, taken apart.
+ */
+function syllableTaken(spelling: string): {
+  readonly line: string;
+  readonly data: unknown;
+} {
+  const syllable = readSyllable(spelling);
+  /* c8 ignore next 6 -- splitSyllables only ever emits syllables that read */
+  if (syllable === undefined) {
+    return {
+      line: `  ${column(spelling, 10)}not a syllable`,
+      data: { spelling },
+    };
+  }
+
+  const isAttested = DICTIONARY_SYLLABLES.has(
+    writeSyllableSpelling({ ...syllable, erhua: false }),
+  );
+  const parts = [
+    `${syllable.initial === "" ? "∅" : syllable.initial} + ${syllable.final}`,
+    syllable.tone === undefined ? "no tone" : `tone ${String(syllable.tone)}`,
+    ...(syllable.erhua === true ? ["儿化"] : []),
+  ];
+  const notations = {
+    marks: writeSyllable(syllable),
+    numbers: writeSyllable(syllable, "numbers"),
+    superscript: writeSyllable(syllable, "superscript"),
+  };
+
+  return {
+    line: `  ${column(spelling, 10)}${column(parts.join(", "), 22)}${column(
+      Object.values(notations).join("  "),
+      22,
+    )}${isAttested ? "" : "not attested"}`.trimEnd(),
+    data: {
+      spelling,
+      initial: syllable.initial,
+      final: syllable.final,
+      ...(syllable.tone !== undefined && { tone: syllable.tone }),
+      erhua: syllable.erhua === true,
+      isAttested,
+      ...notations,
+    },
+  };
+}
+
+/**
+ * Take written pinyin apart, with no dictionary at all.
+ */
+const SYLLABLE: Command = {
+  name: "syllable",
+  summary: "take written pinyin apart, with no dictionary",
+  argument: "<pinyin...>",
+  flags: [],
+  needsDictionary: false,
+  run: (input) =>
+    input.texts.map((text) => {
+      const split = splitSyllables(text);
+      if (split === undefined) {
+        return {
+          lines: [`${text}  not readable as pinyin`],
+          data: { text, read: false },
+        };
+      }
+      const taken = split.map((spelling) => syllableTaken(spelling));
+      return {
+        lines: [
+          `${text}  ${split.join(" ")}`,
+          ...taken.map((syllable) => syllable.line),
+        ],
+        data: {
+          text,
+          read: true,
+          syllables: taken.map((syllable) => syllable.data),
+        },
+      };
+    }),
+};
+
+/**
+ * Apply sandhi to written pinyin, with no dictionary at all.
+ */
+const SANDHI: Command = {
+  name: "sandhi",
+  summary: "apply tone sandhi to written pinyin",
+  argument: "<pinyin...>",
+  flags: ["third-tone", "no-sandhi"],
+  needsDictionary: false,
+  run: (input) => {
+    const options = convertOptions(input.flags).sandhi;
+    return input.texts.map((text) => {
+      const word = readWord(text);
+      if (word === undefined) {
+        return {
+          lines: [`${text}  not readable as pinyin`],
+          data: { text, read: false },
+        };
+      }
+      const pinyin = written(applySandhi(word, options));
+      return {
+        lines: [`${text}  ${pinyin}`],
+        data: { text, read: true, pinyin },
+      };
+    });
+  },
+};
+
+/**
+ * Report what is loaded, which is the first thing to check when output looks
+ * wrong.
+ */
+const INFO: Command = {
+  name: "info",
+  summary: "which dictionary is loaded, and how big it is",
+  argument: "",
+  flags: [],
+  needsDictionary: true,
+  run: (input) => {
+    const keys = dictionaryOf(input).size;
+    const directory = input.choice.directory;
+    return [
+      {
+        lines: [
+          `tier       ${input.choice.tier}`,
+          `data       ${directory ?? "the artifacts that shipped"}`,
+          `keys       ${keys.toLocaleString("en-GB")}`,
+          `syllables  ${String(ATTESTED_SYLLABLES.length)} attested, ${String(DICTIONARY_SYLLABLES.size)} spellings in the inventory`,
+        ],
+        data: {
+          tier: input.choice.tier,
+          ...(directory !== undefined && { data: directory }),
+          keys,
+          attestedSyllables: ATTESTED_SYLLABLES.length,
+          inventorySpellings: DICTIONARY_SYLLABLES.size,
+        },
+      },
+    ];
+  },
+};
+
+/**
+ * Every subcommand, in the order the help lists them.
+ */
+export const COMMANDS: readonly Command[] = [
+  CONVERT,
+  HTML,
+  EXPLAIN,
+  LOOKUP,
+  SYLLABLE,
+  SANDHI,
+  INFO,
+];
+
+/**
+ * The command of a given name.
+ */
+export function commandNamed(name: string): Command | undefined {
+  return COMMANDS.find((command) => command.name === name);
+}

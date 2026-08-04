@@ -7,6 +7,7 @@ import {
   assertIdentical,
   assertNonNullable,
   assertObjectEquals,
+  assertStringIncludes,
   assertTrue,
   assertUndefined,
 } from "@kensio/smartass";
@@ -14,6 +15,7 @@ import { describe, it } from "vitest";
 
 import { isUncertain } from "./decode/confidence.js";
 import { convert, convertPieces, joinPieces } from "./decode/convert.js";
+import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToHtml } from "./format/html.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { Dictionary } from "./dictionary/dictionary.js";
@@ -53,6 +55,24 @@ import { NEUTRAL_TONE } from "./tone/tone.js";
  */
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
+
+/**
+ * The CLI, against the same committed dictionary and a fixed version.
+ */
+const environment: CliEnvironment = {
+  version: "0.0.0",
+  readInput: () => Promise.resolve(""),
+  loadDictionary: () => Promise.resolve(dictionary),
+};
+
+/**
+ * Run the CLI as the README shows it being run.
+ */
+async function cli(...argv: readonly string[]): Promise<readonly string[]> {
+  const result = await runCli(argv, environment);
+  assertIdentical(result.status, 0, result.errors.join("\n"));
+  return result.output;
+}
 
 /**
  * The pieces of a conversion the decoder was guessing at, as the README filters
@@ -168,6 +188,89 @@ describe("the examples in README.md", () => {
 
     it("leaves non-Han text exactly as written", () => {
       assertIdentical(convert(dictionary, "3D银行"), "3Dyínháng");
+    });
+  });
+
+  describe("the command line", () => {
+    it("converts as the README shows", async () => {
+      assertArrayEquals(await cli("convert", "我要去北京。"), [
+        "Wǒ yào qù Běijīng.",
+      ]);
+      assertArrayEquals(await cli("convert", "--notation", "numbers", "银行"), [
+        "yin2hang2",
+      ]);
+    });
+
+    it("explains as the README shows", async () => {
+      assertArrayEquals(await cli("explain", "银行"), [
+        "银行  yínháng",
+        "  yín     locked",
+        "  háng    word    xíng +24.6  héng +26.6  hàng +27.6",
+      ]);
+    });
+
+    it("looks a word up as the README shows", async () => {
+      assertArrayEquals(await cli("lookup", "头发"), ["头发  tóu fa  n"]);
+    });
+
+    it("takes a syllable apart as the README shows", async () => {
+      assertArrayEquals(await cli("syllable", "nǐhǎo"), [
+        "nǐhǎo  nǐ hǎo",
+        "  nǐ        n + i, tone 3         nǐ  ni3  ni³",
+        "  hǎo       h + ao, tone 3        hǎo  hao3  hao³",
+      ]);
+    });
+
+    it("writes the JSON the README pipes into jq", async () => {
+      const explained = await cli("explain", "长江大桥", "--json");
+      assertArrayLength(explained, 1);
+      assertObjectEquals(JSON.parse(explained[0]), {
+        text: "长江大桥",
+        pinyin: "Cháng Jiāng Dàqiáo",
+        syllables: [
+          {
+            text: "Cháng",
+            state: "word",
+            tone: 2,
+            alternatives: [{ reading: "zhǎng", cost: 24.62 }],
+          },
+          { text: "Jiāng", state: "locked", tone: 1, alternatives: [] },
+          {
+            text: "Dà",
+            state: "word",
+            tone: 4,
+            alternatives: [{ reading: "dài", cost: 22.62 }],
+          },
+          { text: "qiáo", state: "locked", tone: 2, alternatives: [] },
+        ],
+      });
+
+      const looked = await cli("lookup", "垃圾", "--json");
+      assertArrayLength(looked, 1);
+      assertObjectEquals(JSON.parse(looked[0]), {
+        word: "垃圾",
+        found: true,
+        reading: "lā jī",
+        partOfSpeech: "n",
+        isProperNoun: false,
+        taiwanReading: "lè sè",
+        otherReadings: [],
+      });
+    });
+
+    it("has every command the README lists", async () => {
+      const help = await cli();
+      for (const command of [
+        "convert",
+        "html",
+        "explain",
+        "lookup",
+        "syllable",
+        "sandhi",
+        "info",
+      ]) {
+        assertStringIncludes(help.join("\n"), command);
+      }
     });
   });
 

@@ -6,8 +6,9 @@ import type { DictionarySource } from "./source.js";
 /**
  * Read the files off disk, which is the Node path.
  *
- * **This is the only module in the package that imports a Node built-in**, and
- * it is deliberately not re-exported from the entry point: pulling it in from
+ * **This is the only module in the library that imports a Node built-in** —
+ * `src/cli/` aside, which is Node by definition and is not importable from the
+ * entry point either. It is deliberately not re-exported: pulling it in from
  * the core would put `node:fs` in front of every bundler. Import it directly,
  * or leave it to the `node` export condition once the package is split.
  */

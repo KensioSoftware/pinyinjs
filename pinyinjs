@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+#
+# Run the CLI straight from the TypeScript sources, with no build step.
+#
+# `pnpm cli` does the same thing but prints the command line it ran first,
+# which gets in the way when the output is the point. Installed users get the
+# `pinyinjs` binary from `package.json`; this is the same command line for
+# anyone working in the repo.
+
+exec node --import jiti/register "$(dirname "$0")/src/cli/main.ts" "$@"
