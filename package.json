@@ -4,6 +4,7 @@
   "description": "Chinese hanzi to pinyin conversion",
   "repository": "https://github.com/KensioSoftware/pinyinjs",
   "homepage": "https://pinyinjs.dev",
+  "bugs": "https://github.com/KensioSoftware/pinyinjs/issues",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -28,7 +29,9 @@
     "LICENSE",
     "NOTICE"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/cli/main.js"
+  ],
   "imports": {
     "#test/*": "./test/*"
   },
@@ -38,6 +41,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
     "cli": "node --import jiti/register src/cli/main.ts",
     "build:check": "tsc -p tsconfig.json --noEmit",
     "fmt": "eslint --fix . && prettier --write .",
@@ -84,6 +88,6 @@
     "access": "public"
   },
   "author": "Kensio Software",
-  "license": "Apache-2.0",
+  "license": "Apache-2.0 AND CC-BY-SA-4.0",
   "type": "module"
 }
