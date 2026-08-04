@@ -1,0 +1,15 @@
+tmp/
+.tmp/
+# Generated output, committed on purpose. The generators format it as they
+# write it, reading whatever configuration applies where it lands, so what a
+# fixture looks like is decided there rather than by a `pnpm fmt` over this
+# repository.
+fixtures/
+dist/
+coverage/
+test/.coverage/
+node_modules/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.claude/
+CLAUDE.md
