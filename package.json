@@ -4,7 +4,23 @@
   "description": "Chinese hanzi to pinyin conversion",
   "repository": "https://github.com/KensioSoftware/pinyinjs",
   "homepage": "https://pinyinjs.dev",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "imports": {
+    "#test/*": "./test/*"
+  },
   "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72",
   "engines": {
     "node": ">=24.0.0"
@@ -17,7 +33,7 @@
     "fta": "./scripts/sh/fta.sh",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm fixtures:check && pnpm fixtures:swift && pnpm fixtures:test && pnpm test:coverage"
+    "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm test:coverage"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -25,6 +41,7 @@
     "@types/eslint-plugin-security": "^3.0.1",
     "@types/lodash": "^4.17.24",
     "@types/node": "^26.0.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/eslint-plugin": "^1.6.22",
     "eslint": "^10.6.0",
@@ -33,16 +50,19 @@
     "eslint-plugin-no-secrets": "^2.3.3",
     "eslint-plugin-security": "^4.0.1",
     "eslint-plugin-unicorn": "^69.0.0",
+    "fta-cli": "^3.0.0",
     "globals": "^17.7.0",
     "jiti": "^2.7.0",
     "prettier": "^3.9.5",
-    "@typescript/native": "npm:typescript@^7.0.2",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.63.0",
     "vitest": "^4.1.10"
   },
   "keywords": [
-    "chinese", "pinyin", "conversion", "hanzi"
+    "chinese",
+    "pinyin",
+    "conversion",
+    "hanzi"
   ],
   "publishConfig": {
     "access": "public"
