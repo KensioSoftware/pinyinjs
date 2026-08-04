@@ -18,6 +18,7 @@ Wǒ yào qù Běijīng.
 | `lookup`   | what the dictionary holds for a word                |
 | `syllable` | take written pinyin apart                           |
 | `sandhi`   | apply tone sandhi to written pinyin                 |
+| `number`   | read a number as Chinese numerals                   |
 | `info`     | which dictionary is loaded, and how big it is       |
 
 Run `pinyinjs <command> --help` for what a command takes.
@@ -97,6 +98,27 @@ nǐhǎo  ní hǎo
 
 Also needs no dictionary. See [sandhi](../sandhi/).
 
+### number
+
+```console
+$ pinyinjs number 2026
+2026        两千零二十六            liǎng qiān líng èr shí liù
+
+$ pinyinjs number --digits 2026
+2026        二〇二六              èr líng èr liù
+
+$ pinyinjs number --digits --yao 110
+110         一一〇               yāo yāo líng
+
+$ pinyinjs number --percent 95
+95          百分之九十五            bǎi fēn zhī jiǔ shí wǔ
+```
+
+`--digits` spells the number out instead of counting it, which is the
+difference between 2026年 and 2026个; `--yao` reads 一 as `yāo`, as a phone
+number does; `--no-liang` writes 二千 rather than 两千. Needs no dictionary
+either. See [numbers](../numerals/).
+
 ### html
 
 ```console
@@ -132,13 +154,15 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 | `--capitals <value>`    | `capitals`                    |
 | `--punctuation <value>` | `punctuation`                 |
 | `--no-grouping`         | `grouping: false`             |
+| `--keep-numbers`        | `numbers: "keep"`             |
 | `--third-tone`          | `sandhi: { thirdTone: true }` |
 | `--no-sandhi`           | `sandhi: { yiBu: false }`     |
 
 `convert` also takes `--greedy`, which decodes with the old longest-match
 baseline instead of the lattice — see [converting](../converting/#the-greedy-baseline).
 `html` also takes `--no-tone-classes` and `--no-uncertain`. `sandhi` takes
-`--third-tone` and `--no-sandhi`.
+`--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
+`--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
 
 [Options](../options/) documents what each value does.
 

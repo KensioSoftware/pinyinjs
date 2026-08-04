@@ -293,6 +293,72 @@ describe("the sandhi command", () => {
   });
 });
 
+describe("the number command", () => {
+  it("counts by default and spells out with --digits", async () => {
+    assertArrayEquals(await cli("number", "2026"), [
+      "2026        两千零二十六            liǎng qiān líng èr shí liù",
+    ]);
+    assertArrayEquals(await cli("number", "--digits", "2026"), [
+      "2026        二〇二六              èr líng èr liù",
+    ]);
+  });
+
+  it("sandhis a quantity and leaves a spelled-out digit alone", async () => {
+    // 一百 is said `yìbǎi`; 110 read out is `yāo yāo líng`, never `yì yì líng`.
+    assertArrayEquals(await cli("number", "100"), [
+      "100         一百                yì bǎi",
+    ]);
+    assertArrayEquals(await cli("number", "--digits", "--yao", "110"), [
+      "110         一一〇               yāo yāo líng",
+    ]);
+  });
+
+  it("stops the sandhi at the decimal point", async () => {
+    assertArrayEquals(await cli("number", "3.14"), [
+      "3.14        三点一四              sān diǎn yī sì",
+    ]);
+  });
+
+  it("reverses a percentage", async () => {
+    assertArrayEquals(await cli("number", "--percent", "95"), [
+      "95          百分之九十五            bǎi fēn zhī jiǔ shí wǔ",
+    ]);
+  });
+
+  it("writes 二 for 两 when asked", async () => {
+    assertArrayEquals(await cli("number", "--no-liang", "2000"), [
+      "2000        二千                èr qiān",
+    ]);
+  });
+
+  it("says so when it is not a number", async () => {
+    assertArrayEquals(await cli("number", "3D"), ["3D  not a number"]);
+    assertObjectEquals(await json("number", "3D"), { text: "3D", read: false });
+  });
+
+  it("reports the reading as data", async () => {
+    assertObjectEquals(await json("number", "--digits", "2019"), {
+      text: "2019",
+      hanzi: "二〇一九",
+      pinyin: "èr líng yī jiǔ",
+      style: "digits",
+    });
+  });
+
+  it("loads no dictionary, since reading a number needs none", async () => {
+    let loaded = 0;
+    const counted = {
+      ...environment,
+      loadDictionary: () => {
+        loaded += 1;
+        return Promise.resolve(dictionary);
+      },
+    };
+    await runCli(["number", "2026"], counted);
+    assertIdentical(loaded, 0);
+  });
+});
+
 describe("the info command", () => {
   it("reports what is loaded", async () => {
     const lines = await cli("info");

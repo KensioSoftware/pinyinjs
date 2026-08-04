@@ -23,6 +23,13 @@ import {
   joinPieces,
 } from "./decode/convert.js";
 import { applySandhi } from "./decode/sandhi.js";
+import {
+  fractionHanzi,
+  numeralHanzi,
+  type NumeralOptions,
+  percentHanzi,
+  readNumeral,
+} from "./numerals/numerals.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
@@ -83,6 +90,17 @@ function alternatives(text: string, index: number): readonly string[] {
   );
 }
 
+/**
+ * A number read out, as the numbers page reads it.
+ */
+function said(value: string | number, options: NumeralOptions = {}): string {
+  return (
+    readNumeral(value, options)
+      ?.map((syllable) => writeSyllable(syllable))
+      .join(" ") ?? ""
+  );
+}
+
 describe("the examples in docs/", () => {
   describe("getting-started", () => {
     it("converts the four texts the page opens on", () => {
@@ -92,7 +110,7 @@ describe("the examples in docs/", () => {
         convert(dictionary, "我要去北京。"),
         "Wǒ yào qù Běijīng.",
       );
-      assertIdentical(convert(dictionary, "3D银行"), "3Dyínháng");
+      assertIdentical(convert(dictionary, "3D银行"), "sān D yínháng");
     });
   });
 
@@ -294,10 +312,11 @@ describe("the examples in docs/", () => {
       );
     });
 
-    it("escapes non-Han text rather than marking it up", () => {
+    it("marks up a read number and escapes the rest", () => {
       assertIdentical(
         convertToHtml(dictionary, "3D银行"),
-        '3D<span class="py-syllable py-tone-2">yín</span>' +
+        '<span class="py-syllable py-tone-1">sān</span> D ' +
+          '<span class="py-syllable py-tone-2">yín</span>' +
           '<span class="py-syllable py-tone-2">háng</span>',
       );
     });
@@ -482,6 +501,85 @@ describe("the examples in docs/", () => {
       assertNonNullable(first);
       assertNonNullable(second);
       assertIdentical(written(first.reading), written(second.reading));
+    });
+  });
+
+  describe("numerals", () => {
+    it("counts and spells out the examples the page shows", () => {
+      assertIdentical(numeralHanzi(12_345), "一万两千三百四十五");
+      assertIdentical(numeralHanzi(2026), "两千零二十六");
+      assertIdentical(numeralHanzi(2026, { style: "digits" }), "二〇二六");
+      assertIdentical(numeralHanzi(10), "十");
+      assertIdentical(numeralHanzi(115), "一百一十五");
+      assertIdentical(numeralHanzi(1005), "一千零五");
+      assertIdentical(numeralHanzi(1500), "一千五百");
+      assertIdentical(numeralHanzi(25_000), "两万五千");
+      assertIdentical(numeralHanzi(20_050), "两万零五十");
+      assertIdentical(numeralHanzi(100_000_005), "一亿零五");
+    });
+
+    it("keeps the digits of a string and not of a number", () => {
+      assertIdentical(numeralHanzi("007", { style: "digits" }), "〇〇七");
+      assertIdentical(numeralHanzi("007"), "七");
+      assertIdentical(
+        numeralHanzi(2019, { style: "digits", zero: "零" }),
+        "二零一九",
+      );
+    });
+
+    it("reads them as the page reads them", () => {
+      assertIdentical(said(2026), "liǎng qiān líng èr shí liù");
+      assertIdentical(said(2026, { style: "digits" }), "èr líng èr liù");
+      assertIdentical(
+        said(110, { style: "digits", yao: true }),
+        "yāo yāo líng",
+      );
+      assertIdentical(said("3.14"), "sān diǎn yī sì");
+      assertIdentical(said(-40), "fù sì shí");
+    });
+
+    it("puts the sandhi back where the page says to", () => {
+      assertIdentical(
+        applySandhi(readNumeral(100) ?? [])
+          .map((syllable) => writeSyllable(syllable))
+          .join(" "),
+        "yì bǎi",
+      );
+    });
+
+    it("reverses a percentage and a fraction", () => {
+      assertIdentical(percentHanzi(95), "百分之九十五");
+      assertIdentical(fractionHanzi(3, 4), "四分之三");
+    });
+
+    it("reads the numbers in text the way the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "我有3个苹果。"),
+        "Wǒ yǒu sān gè píngguǒ.",
+      );
+      assertIdentical(
+        convert(dictionary, "1988年之后"),
+        "yī jiǔ bā bā nián zhīhòu",
+      );
+      assertIdentical(
+        convert(dictionary, "95%的人"),
+        "bǎifēnzhījiǔshíwǔ de rén",
+      );
+      assertIdentical(convert(dictionary, "3D打印"), "sān D dǎyìn");
+      assertIdentical(
+        convert(dictionary, "我有3个", { numbers: "keep" }),
+        "wǒ yǒu3gè",
+      );
+    });
+
+    it("leaves an identifier as written, as the page says", () => {
+      assertIdentical(convert(dictionary, "6:30起床"), "6:30qǐchuáng");
+    });
+
+    it("writes a counted number as one word and spells a year out", () => {
+      assertIdentical(convert(dictionary, "25个"), "èrshíwǔ gè");
+      assertIdentical(convert(dictionary, "1997年"), "yī jiǔ jiǔ qī nián");
+      assertIdentical(convert(dictionary, "1个"), "yí gè");
     });
   });
 

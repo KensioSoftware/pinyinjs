@@ -62,6 +62,21 @@ The rules that run over the lattice are exported with them — `READING_RULES`,
 an application with its own vocabulary may want to add to it, or pass `[]` to
 decode with none.
 
+## Numbers
+
+See [numbers](../numerals/).
+
+| Export                                                | Is                              |
+| ----------------------------------------------------- | ------------------------------- |
+| `numeralHanzi`                                        | number → 汉字                   |
+| `readNumeral`                                         | number → syllables              |
+| `readNumeralHanzi`                                    | written numerals → syllables    |
+| `percentHanzi`, `fractionHanzi`                       | 百分之九十五, 四分之三          |
+| `cardinalHanzi`                                       | the counting half on its own    |
+| `numeralSyllable`, `yaoSyllable`                      | one numeral character's reading |
+| `DIGIT_CHARACTERS`, `UNIT_VALUES`, `LARGEST_CARDINAL` | the tables                      |
+| `NumeralOptions`, `NumeralStyle`, `CardinalOptions`   | types                           |
+
 ## HTML
 
 See [HTML output](../html/).

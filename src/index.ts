@@ -136,6 +136,25 @@ export type { CostOf } from "./decode/viterbi.js";
 
 export type { DecodedWord, ScoredWord, WordSeparator } from "./decode/word.js";
 
+export { cardinalHanzi, LARGEST_CARDINAL } from "./numerals/cardinal.js";
+export type { CardinalOptions } from "./numerals/cardinal.js";
+
+export {
+  DIGIT_CHARACTERS,
+  numeralSyllable,
+  UNIT_VALUES,
+  yaoSyllable,
+} from "./numerals/characters.js";
+
+export {
+  fractionHanzi,
+  numeralHanzi,
+  percentHanzi,
+  readNumeral,
+  readNumeralHanzi,
+} from "./numerals/numerals.js";
+export type { NumeralOptions, NumeralStyle } from "./numerals/numerals.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 

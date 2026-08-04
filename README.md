@@ -140,7 +140,7 @@ first, convert with it, and reload as `full` arrives.
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "3Dyínháng" — non-Han text is left as written
+convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
 ```
 
 A reading the dictionary cannot settle on its own is settled by context, with
@@ -168,6 +168,8 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `capitals`    | `"auto"`                           | `"auto"`, `"proper"`, `"none"`                    |
 | `punctuation` | `"latin"`                          | `"latin"`, `"keep"`                               |
 | `grouping`    | `true`                             | `false` turns off GB/T 16159 word spacing         |
+| `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
+| `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
 ```ts
@@ -246,8 +248,18 @@ convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
 convert(dictionary, "不亦乐乎"); // "búyìlèhū" — cannot be halved
 ```
 
-**Non-Han text** — digits, Latin letters, punctuation — passes through exactly
-as written. Reading numbers aloud is a separate package, not yet built.
+**Digits are read**, and the rest of a non-Han run passes through exactly as
+written:
+
+```ts
+convert(dictionary, "我有3个苹果。"); // "Wǒ yǒu sān gè píngguǒ."
+convert(dictionary, "1988年之后"); // "yī jiǔ bā bā nián zhīhòu"
+convert(dictionary, "95%的人"); // "bǎifēnzhījiǔshíwǔ de rén"
+convert(dictionary, "3D打印"); // "sān D dǎyìn"
+convert(dictionary, "6:30起床"); // "6:30qǐchuáng" — a time is not a quantity
+```
+
+`numbers: "keep"` leaves every digit alone. See [numbers](docs/numerals/).
 
 ## Syllable by syllable
 
@@ -411,6 +423,31 @@ toneFromMarks("hǎo"); // 3
 `Syllable.tone` is `Tone | undefined`, and undefined is not the neutral tone: the
 `de` in 我的 is neutral (5), whereas the `bei` in a typed `beijing` has no tone
 written at all.
+
+## Numbers
+
+Reading a number needs no dictionary — arithmetic and about twenty readings —
+so this works with nothing loaded.
+
+```ts
+import { numeralHanzi, percentHanzi, readNumeral } from "@kensio/pinyinjs";
+
+numeralHanzi(12345); // "一万两千三百四十五"
+numeralHanzi(1005); // "一千零五" — a skipped place is spoken
+numeralHanzi(2000); // "两千" — a leading lone 2 before a big unit
+percentHanzi(95); // "百分之九十五" — the order reverses
+```
+
+The same digits are read two ways and nothing in the number says which — 2026年
+is spelled out and 2026个 is counted — so the style is the caller's:
+
+```ts
+numeralHanzi(2026); // "两千零二十六"
+numeralHanzi(2026, { style: "digits" }); // "二〇二六"
+readNumeral(110, { style: "digits", yao: true }); // yāo yāo líng
+```
+
+More in [numbers](docs/numerals/).
 
 ## Sandhi
 
