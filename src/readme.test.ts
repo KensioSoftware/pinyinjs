@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -7,25 +6,14 @@ import {
   assertFalse,
   assertIdentical,
   assertNonNullable,
+  assertObjectEquals,
   assertTrue,
   assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import {
-  type AccuracyReport,
-  emptyTally,
-  report,
-  scoreCase,
-} from "./accuracy/score.js";
-import { GOLD_CASES } from "#test/fixtures/gold/gold-cases.js";
 import { isUncertain } from "./decode/confidence.js";
-import {
-  convert,
-  convertGreedily,
-  convertPieces,
-  type ConvertOptions,
-} from "./decode/convert.js";
+import { convert, convertPieces, joinPieces } from "./decode/convert.js";
 import { convertToHtml } from "./format/html.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { Dictionary } from "./dictionary/dictionary.js";
@@ -59,11 +47,25 @@ import { NEUTRAL_TONE } from "./tone/tone.js";
  * soon as behaviour changes underneath it.
  *
  * **Update this file and the README together.** A failure here means one of
- * them is now lying to somebody.
+ * them is now lying to somebody. The README quotes no accuracy figures any
+ * more — `pnpm accuracy` and `pnpm polyphones` report them, and ROADMAP.md
+ * records them — so what is guarded here is every example it shows.
  */
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
-const readmePath = fileURLToPath(new URL("../README.md", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
+
+/**
+ * The pieces of a conversion the decoder was guessing at, as the README filters
+ * for them.
+ */
+function guesses(text: string): readonly string[] {
+  return convertPieces(dictionary, text)
+    .filter(
+      (piece) =>
+        piece.confidence !== undefined && isUncertain(piece.confidence),
+    )
+    .map((piece) => piece.text);
+}
 
 /**
  * A reading written out, for readable expectations.
@@ -176,24 +178,35 @@ describe("the examples in README.md", () => {
         pieces.map((piece) => piece.text),
         ["yín", "háng"],
       );
-      assertTrue(pieces[0]?.confidence?.isLocked ?? false);
+      assertIdentical(joinPieces(pieces), convert(dictionary, "银行"));
+
+      const [yin, hang] = pieces;
+      assertNonNullable(yin);
+      assertNonNullable(hang);
+      assertObjectEquals(hang.syllable, {
+        initial: "h",
+        final: "ang",
+        tone: 2,
+      });
+      assertTrue(yin.confidence?.isLocked ?? false);
       assertArrayEquals(
-        (pieces[1]?.confidence?.alternatives ?? []).map((found) =>
+        (hang.confidence?.alternatives ?? []).map((found) =>
           written(found.reading),
         ),
         ["xíng", "héng", "hàng"],
       );
     });
 
-    it("calls 行 in 银行 backed by a word, and 行 alone a guess", () => {
+    it("finds the guesses the README's filter finds", () => {
+      assertArrayEquals(guesses("行"), ["xíng"]);
+      assertArrayLength(guesses("银行"), 0);
+    });
+
+    it("calls 行 in 银行 backed by a word rather than locked", () => {
       const inWord = convertPieces(dictionary, "银行")[1]?.confidence;
       assertNonNullable(inWord);
       assertFalse(inWord.isLocked);
       assertFalse(isUncertain(inWord));
-
-      const alone = convertPieces(dictionary, "行")[0]?.confidence;
-      assertNonNullable(alone);
-      assertTrue(isUncertain(alone));
     });
 
     it("marks up 行 exactly as the HTML section shows", () => {
@@ -343,75 +356,5 @@ describe("the examples in README.md", () => {
       });
       assertIdentical(empty.size, 0);
     });
-  });
-});
-
-/**
- * The percentage the README's accuracy table gives for a row and column.
- *
- * Read out of the file rather than compared as formatted text, so that
- * reformatting the table cannot make the check pass vacuously — which is
- * exactly how these figures went stale through two releases.
- */
-function quoted(readme: string, metric: string, column: number): number {
-  const row = new RegExp(
-    String.raw`\|\s*${metric}[^|]*\|([^|]*)\|([^|]*)\|`,
-    "u",
-  ).exec(readme);
-  assertNonNullable(row);
-  const cell = row[column];
-  assertNonNullable(cell);
-  const percent = /(\d+\.\d+)%/u.exec(cell);
-  assertNonNullable(percent);
-  return Number(percent[1]);
-}
-
-/**
- * Score a decoder over the whole gold corpus, as `pnpm accuracy` does.
- */
-function measure(
-  convertWith: (
-    dictionary: Dictionary,
-    text: string,
-    options: ConvertOptions,
-  ) => string,
-): AccuracyReport {
-  const tally = emptyTally();
-  for (const goldCase of GOLD_CASES) {
-    scoreCase(
-      goldCase.pinyin,
-      convertWith(dictionary, goldCase.hanzi, {
-        ...(goldCase.locale !== undefined && { locale: goldCase.locale }),
-      }),
-      tally,
-    );
-  }
-  return report(tally);
-}
-
-describe("the accuracy figures in README.md", () => {
-  it("quotes what the scorer actually produces", async () => {
-    const readme = await readFile(readmePath, "utf8");
-    const scored = {
-      greedy: measure(convertGreedily),
-      lattice: measure(convert),
-    };
-    const rows: readonly (readonly [string, keyof AccuracyReport])[] = [
-      [String.raw`Reading accuracy \(with tone\)`, "readings"],
-      [String.raw`Reading accuracy \(toneless\)`, "bases"],
-      ["Exact match", "exact"],
-      [String.raw`Spacing \(F1\)`, "spacing"],
-      ["Capitalisation", "capitals"],
-    ];
-    for (const [metric, key] of rows) {
-      assertIdentical(
-        quoted(readme, metric, 1),
-        Number(scored.greedy[key].toFixed(1)),
-      );
-      assertIdentical(
-        quoted(readme, metric, 2),
-        Number(scored.lattice[key].toFixed(1)),
-      );
-    }
   });
 });
