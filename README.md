@@ -238,6 +238,14 @@ convert(dictionary, "研究研究"); // "yánjiū-yánjiū"
 convert(dictionary, "爸爸妈妈"); // "bàba māma" — that shape, but two words
 ```
 
+**A 成语 that can be read as two disyllables** takes the same hyphen, from a
+curated list of 117; the rest are written solid, as the standard writes them.
+
+```ts
+convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
+convert(dictionary, "不亦乐乎"); // "búyìlèhū" — cannot be halved
+```
+
 **Non-Han text** — digits, Latin letters, punctuation — passes through exactly
 as written. Reading numbers aloud is a separate package, not yet built.
 

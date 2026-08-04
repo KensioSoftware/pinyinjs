@@ -248,10 +248,17 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "看看"), "kànkan");
     });
 
+    it("hyphenates a listed 成语 and leaves the rest solid", () => {
+      assertIdentical(convert(dictionary, "风平浪静"), "fēngpíng-làngjìng");
+      assertIdentical(convert(dictionary, "層出不窮"), "céngchū-bùqióng");
+      // Not on the list, and not two disyllables either.
+      assertIdentical(convert(dictionary, "不亦乐乎"), "búyìlèhū");
+      assertIdentical(convert(dictionary, "目不转睛"), "mùbùzhuǎnjīng");
+    });
+
     it("writes the gaps the page admits to", () => {
       // jieba tags 无缝钢管 nz, so it capitalises where it should not.
       assertIdentical(convert(dictionary, "无缝钢管"), "Wúfènggāngguǎn");
-      assertIdentical(convert(dictionary, "风平浪静"), "fēngpínglàngjìng");
       assertIdentical(convert(dictionary, "老王"), "lǎo Wáng");
     });
   });

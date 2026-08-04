@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import {
+  assertArrayEquals,
   assertArrayIncludes,
   assertArrayLength,
   assertFalse,
@@ -16,6 +17,7 @@ import { writeSyllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
 import { toCharacters } from "../script/characters.js";
 import { KeyIndex } from "./key-index.js";
+import { HYPHENATED_IDIOMS } from "../orthography/idiom-list.js";
 import { TIERS } from "./tiers.js";
 
 /**
@@ -174,6 +176,36 @@ describe("the committed dictionary", () => {
     it("holds the whole merge", () => {
       // Both scripts of 461,623 entries, minus the ones whose scripts agree.
       assertNumberBetween(full.index.size, 700_000, 750_000);
+    });
+  });
+
+  describe("the curated 成语 list", () => {
+    it("lists only words the dictionary holds, in both scripts", () => {
+      // A hand-written 繁體 spelling that is not a real word would simply never
+      // fire, and nothing else would notice.
+      assertArrayEquals(
+        HYPHENATED_IDIOMS.filter(
+          (idiom) => !full.index.has(idiom.hans) || !full.index.has(idiom.hant),
+        ).map((idiom) => `${idiom.hans}/${idiom.hant}`),
+        [],
+      );
+    });
+
+    it("pairs each 简体 entry with the 繁體 one that reads the same", () => {
+      for (const idiom of HYPHENATED_IDIOMS) {
+        assertIdentical(full.reading(idiom.hant), full.reading(idiom.hans));
+      }
+    });
+
+    it("lists nothing whose reading is not four syllables", () => {
+      // The hyphen is written between the second and third, so a reading that
+      // is not one syllable per character cannot take one.
+      assertArrayEquals(
+        HYPHENATED_IDIOMS.filter(
+          (idiom) => (full.reading(idiom.hans) ?? "").split(" ").length !== 4,
+        ).map((idiom) => idiom.hans),
+        [],
+      );
     });
   });
 
