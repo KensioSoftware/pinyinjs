@@ -1,6 +1,6 @@
 import type { DecodedWord } from "../decode/word.js";
 import { toCharacters } from "../script/characters.js";
-import { type GroupingRule, splitAt } from "./rule.js";
+import { type GroupingRule, hyphenate } from "./rule.js";
 
 /**
  * Whether four characters repeat as AABB, with A and B different.
@@ -49,17 +49,11 @@ function isAabb(characters: readonly string[]): boolean {
 export const AABB_REDUPLICATION: GroupingRule = {
   name: "aabb-reduplication",
   apply: (words) =>
-    words.flatMap((word) => {
-      if (word.isProperNoun || !isAabb(toCharacters(word.text))) {
-        return [word];
-      }
-      const split = splitAt(word, 2);
-      if (split === undefined) {
-        return [word];
-      }
-      const [head, tail] = split;
-      return [head, { ...tail, separator: "-" as const }];
-    }),
+    words.flatMap((word) =>
+      word.isProperNoun || !isAabb(toCharacters(word.text))
+        ? [word]
+        : hyphenate(word, 2),
+    ),
 };
 
 /**

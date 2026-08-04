@@ -122,6 +122,35 @@ are both words and so are 匆忙 and 爸妈. The cost is measurable: of 43 AABB
 spans arriving as two words, about 16 are reduplications the decoder split, and
 those keep their space.
 
+### 成语, from a list
+
+The same hyphen goes down the middle of a four-syllable 成语 — but only one that
+can be read as two disyllables. The rest are written solid, and which is which
+comes from a curated list:
+
+```ts
+convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
+convert(dictionary, "千军万马"); // "qiānjūn-wànmǎ"
+convert(dictionary, "層出不窮"); // "céngchū-bùqióng" — either script
+convert(dictionary, "不亦乐乎"); // "búyìlèhū" — cannot be halved
+convert(dictionary, "目不转睛"); // "mùbùzhuǎnjīng" — 目 ｜ 不转睛
+```
+
+No rule reaches this. Conditioning on both halves being dictionary words fires
+on 10,202 of the 22,192 four-character idioms and is uncorrelated with the
+standard's criterion: it fires on 层出不穷 and not on 风平浪静, which are the
+standard's own two examples of the same rule, and it fires on 精神文明 and
+凯旋归来, which want a space. No source carries hyphenated pinyin either, so
+unlike everything else here a rule could not even be scored.
+
+The list holds 117 idioms in both scripts — the ones whose two halves are each a
+self-contained disyllable, where 2+2 is beyond doubt. Measured on Tatoeba and
+zh.wikipedia it covers 15.2% of the four-character idioms that actually turn up;
+most of the remainder are either genuinely not 2+2 (据我所知, 心不在焉) or not
+成语 at all (非常感谢, 可口可乐). An idiom the list does not carry is written the
+way it was before, which is also what the standard does with the ones it cannot
+halve.
+
 ## Capitals
 
 ```ts
@@ -197,17 +226,9 @@ something readable rather than something wrong:
 
 | GB/T 16159 says                                           | What happens now                           |
 | --------------------------------------------------------- | ------------------------------------------ |
-| 成语 hyphenate 2+2: 风平浪静 → `fēngpíng-làngjìng`        | `fēngpínglàngjìng`, no hyphen              |
 | 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit                  |
 | 老王 → `Lǎo Wáng`                                         | `lǎo Wáng` — 老 is not treated as a prefix |
-
-成语 is the one worth explaining, because it looks like the reduplication rule
-and is not. The standard hyphenates a four-syllable idiom that can be read as
-two disyllables and writes the rest solid, and no property of the dictionary
-tracks that: conditioning on both halves being words fires on 10,202 of the
-22,192 four-character idioms and gets 层出不穷 right while missing 风平浪静,
-which are the standard's own two examples of the same rule. That is a curated
-list or a source that marks the structure, not a rule.
+| 成语 outside the curated list                             | written solid, no hyphen                   |
 
 A coverage caveat worth knowing before expecting more from the tag-conditioned
 rules: 487,552 of 721,718 Han words carry no part-of-speech tag at all, since

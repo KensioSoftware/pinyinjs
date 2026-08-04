@@ -166,6 +166,11 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "爸爸妈妈"), "bàba māma");
     });
 
+    it("hyphenates a listed 成语 and leaves the rest solid", () => {
+      assertIdentical(convert(dictionary, "风平浪静"), "fēngpíng-làngjìng");
+      assertIdentical(convert(dictionary, "不亦乐乎"), "búyìlèhū");
+    });
+
     it("writes the orthography options shown", () => {
       assertIdentical(convert(dictionary, "西安"), "Xī'ān");
       assertIdentical(

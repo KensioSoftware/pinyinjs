@@ -112,6 +112,15 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "形形色色", pinyin: "xíngxíng-sèsè", script: "Hans", tags: ["orthography", "hyphen"] },
   { hanzi: "研究研究", pinyin: "yánjiū-yánjiū", script: "Hans", tags: ["orthography", "hyphen"] },
   { hanzi: "休息休息", pinyin: "xiūxi-xiūxi", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
+  // 成语 that can be read as two disyllables, from the curated list.
+  { hanzi: "风平浪静", pinyin: "fēngpíng-làngjìng", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "千军万马", pinyin: "qiānjūn-wànmǎ", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "小心翼翼", pinyin: "xiǎoxīn-yìyì", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "層出不窮", pinyin: "céngchū-bùqióng", script: "Hant", tags: ["orthography", "hyphen", "traditional"] },
+  // Not on the list and not 2+2: the standard writes these solid.
+  { hanzi: "不亦乐乎", pinyin: "búyìlèhū", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "目不转睛", pinyin: "mùbùzhuǎnjīng", script: "Hans", tags: ["orthography", "hyphen"] },
+
   // 爸爸妈妈 is that shape and is two words, so the hyphen must not reach it.
   { hanzi: "爸爸妈妈", pinyin: "bàba māma", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
   // 看看 is a repeat too, and is written solid with a neutral second syllable.

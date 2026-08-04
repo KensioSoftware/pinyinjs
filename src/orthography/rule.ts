@@ -35,6 +35,26 @@ export function join(head: DecodedWord, tail: DecodedWord): DecodedWord {
 }
 
 /**
+ * Write a word as two halves with a hyphen between them.
+ *
+ * The 重叠 and 成语 hyphens are the same operation on different evidence: cut
+ * the word, mark the second half, and leave the reading exactly as it was. The
+ * word is returned untouched where its reading cannot be cut — 儿化 has no
+ * halves.
+ */
+export function hyphenate(
+  word: DecodedWord,
+  at: number,
+): readonly DecodedWord[] {
+  const split = splitAt(word, at);
+  if (split === undefined) {
+    return [word];
+  }
+  const [head, tail] = split;
+  return [head, { ...tail, separator: "-" }];
+}
+
+/**
  * Split a decoded word into two at a character offset.
  *
  * Only possible where the reading has one syllable per character, which 儿化

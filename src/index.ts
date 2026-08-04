@@ -175,6 +175,13 @@ export {
   ABAB_REDUPLICATION,
 } from "./orthography/reduplication.js";
 
+export { IDIOM_HYPHENS } from "./orthography/idioms.js";
+
+export {
+  HYPHENATED_IDIOM_FORMS,
+  HYPHENATED_IDIOMS,
+} from "./orthography/idiom-list.js";
+
 export type { GroupingRule } from "./orthography/rule.js";
 
 export {

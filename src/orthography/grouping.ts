@@ -1,6 +1,7 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import type { DecodedWord } from "../decode/word.js";
 import { characterCount, toCharacters } from "../script/characters.js";
+import { IDIOM_HYPHENS } from "./idioms.js";
 import { AABB_REDUPLICATION, ABAB_REDUPLICATION } from "./reduplication.js";
 import { type GroupingRule, join, splitAt } from "./rule.js";
 import { LONGEST_SPACED_WORD, SPACED_WORD_FORMS } from "./word-list.js";
@@ -257,6 +258,7 @@ export const GROUPING_RULES: readonly GroupingRule[] = [
   SPACED_WORD_LIST,
   AABB_REDUPLICATION,
   ABAB_REDUPLICATION,
+  IDIOM_HYPHENS,
 ];
 
 /**
