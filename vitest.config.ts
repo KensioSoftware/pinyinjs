@@ -27,6 +27,10 @@ export default defineConfig({
       },
     },
     restoreMocks: true,
-    testTimeout: 100,
+    // Long enough that a heavy import is not mistaken for a hanging test, and
+    // short enough to still catch one. At 100 ms it flaked on roughly one test
+    // per run at random: vitest charges a file's import cost to the first test
+    // in it, and loading the 2.4 MB dictionary costs more than that on its own.
+    testTimeout: 1000,
   },
 });

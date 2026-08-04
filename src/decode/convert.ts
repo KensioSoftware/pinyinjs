@@ -6,6 +6,7 @@ import {
   type CapitalStyle,
   isSentence,
 } from "../orthography/capitals.js";
+import { applyGrouping } from "../orthography/grouping.js";
 import {
   type PunctuationStyle,
   toLatinPunctuation,
@@ -38,6 +39,8 @@ export interface ConvertOptions {
   readonly capitals?: CapitalStyle;
   /** Whether Chinese punctuation is rewritten. Defaults to `latin`. */
   readonly punctuation?: PunctuationStyle;
+  /** Whether GB/T 16159 word grouping is applied. Defaults to true. */
+  readonly grouping?: boolean;
 }
 
 /**
@@ -140,21 +143,20 @@ function convertWith(
     apostrophe = "always",
     capitals = "auto",
     punctuation = "latin",
+    grouping = true,
     sandhi,
   } = options;
   const written: Written = { notation, apostrophe, capitals };
   let converted = "";
 
   for (const run of splitRuns(text)) {
-    converted += run.isHan
-      ? writeRun(
-          dictionary,
-          decode(dictionary, run.text),
-          locale,
-          written,
-          sandhi,
-        )
-      : run.text;
+    if (!run.isHan) {
+      converted += run.text;
+      continue;
+    }
+    const decoded = decode(dictionary, run.text);
+    const words = grouping ? applyGrouping(decoded, dictionary) : decoded;
+    converted += writeRun(dictionary, words, locale, written, sandhi);
   }
 
   // Both of these read the whole conversion rather than one run: a sentence

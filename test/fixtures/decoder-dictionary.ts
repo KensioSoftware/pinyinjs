@@ -77,6 +77,7 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
   entry("安", "ān"),
   entry("海", "hǎi"),
   entry("鸥", "ōu"),
+  entry("市", "shì"),
   entry("银行", "yín háng", { hant: "銀行", frequency: 7684 }),
   entry("行长", "háng zhǎng", { hant: "行長", frequency: 419 }),
   entry("长大", "zhǎng dà", { frequency: 1498 }),
@@ -88,6 +89,11 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
   entry("玩儿", "wánr", { hant: "玩兒", frequency: 220 }),
   entry("西安", "xī ān", { isProperNoun: true, partOfSpeech: "ns", frequency: 2731 }),
   entry("海鸥", "hǎi ōu", { frequency: 233 }),
+  entry("北京市", "běi jīng shì", {
+    isProperNoun: true,
+    partOfSpeech: "ns",
+    frequency: 1806,
+  }),
   entry("垃圾", "lā jī", {
     readings: { cn: reading("lā jī"), tw: reading("lè sè") },
     frequency: 1165,

@@ -189,3 +189,13 @@ describe("the orthography options", () => {
     assertIdentical(lattice("北京。", { punctuation: "keep" }), "Běijīng。");
   });
 });
+
+describe("word grouping", () => {
+  it("writes the generic half of a place name separately", () => {
+    assertIdentical(lattice("北京市"), "Běijīng Shì");
+  });
+
+  it("leaves the grouping alone when asked", () => {
+    assertIdentical(lattice("北京市", { grouping: false }), "Běijīngshì");
+  });
+});

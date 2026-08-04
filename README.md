@@ -133,8 +133,17 @@ Note that a comma is not evidence of a sentence, so that example is not
 capitalised. Only `.!?。！？` start a sentence, deliberately: the alternative is
 capitalising every fragment somebody looks up.
 
-**Word grouping is not built yet.** Spacing is one gap per decoded word, so
-他看了 comes back `tā kàn le` where GB/T 16159 wants `tā kànle`. That is the
+Three 分词连写 rules are applied, each a typed rule over the decoded words
+rather than a regex over the output: the aspect particles 了/着/过 attach to the
+verb (他看了 → `tā kànle`), a suffix attaches to its stem (作者 → `zuòzhě`), and
+the generic half of an administrative place name is written separately and
+capitalised (南京市 → `Nánjīng Shì`). Pass `grouping: false` to turn them off.
+
+The rest of GB/T 16159 is **not** built, and measuring says why: the remaining
+rules cannot be derived from part-of-speech tags. jieba tags 不是 and 不但 both
+`c`, but the standard writes `bú shì` and `bùdàn`; 大米 and 一天 are both a
+numeral-ish character plus a 量词, but only one of them separates. Those need a
+curated 正词法 list built from the standard's own worked examples, which is the
 next piece of work.
 
 Text that is not Han passes through untouched — punctuation, Latin letters and
