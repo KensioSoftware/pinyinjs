@@ -10,7 +10,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./node": {
+      "types": "./dist/dictionary/node-source.d.ts",
+      "import": "./dist/dictionary/node-source.js"
+    },
+    "./data/*": "./data/*",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
