@@ -101,8 +101,11 @@ export default defineConfig(
           format: ["PascalCase"],
         },
         {
+          // UPPER_CASE reads best for the constant lookup tables this package
+          // is full of (syllable inventories, tone diacritics), whether or not
+          // they happen to be exported.
           selector: "variable",
-          modifiers: ["const", "exported"],
+          modifiers: ["const"],
           format: ["camelCase", "UPPER_CASE"],
         },
       ],
