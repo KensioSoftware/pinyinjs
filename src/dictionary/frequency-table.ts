@@ -29,7 +29,15 @@ export class FrequencyTable {
    * impossible.
    */
   static build(frequencies: readonly number[]): FrequencyTable {
-    const highest = Math.max(0, ...frequencies);
+    // Looped rather than `Math.max(0, ...frequencies)`, which passes one
+    // argument per entry and overflows the call stack somewhere above a hundred
+    // thousand of them — well short of the 461,623 the full dictionary holds.
+    let highest = 0;
+    for (const frequency of frequencies) {
+      if (frequency > highest) {
+        highest = frequency;
+      }
+    }
     const scale = highest === 0 ? 0 : MAX_BUCKET / Math.log1p(highest);
 
     const packed = new Uint8Array(Math.ceil(frequencies.length / 2));

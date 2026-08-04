@@ -1,0 +1,35 @@
+{
+  "tiers": {
+    "core": {
+      "entries": 16730,
+      "keys": "core.keys",
+      "readings": "core.entries",
+      "frequencies": "core.freq",
+      "bytes": 218217,
+      "compressedBytes": 71385
+    },
+    "standard": {
+      "entries": 66730,
+      "keys": "standard.keys",
+      "readings": "standard.entries",
+      "frequencies": "standard.freq",
+      "bytes": 1404374,
+      "compressedBytes": 385070
+    },
+    "full": {
+      "entries": 461623,
+      "keys": "full.keys",
+      "readings": "full.entries",
+      "frequencies": "full.freq",
+      "bytes": 9390366,
+      "compressedBytes": 2447847
+    }
+  },
+  "sources": [
+    "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
+    "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
+    "https://raw.githubusercontent.com/mozillazg/phrase-pinyin-data/master/large_pinyin.txt",
+    "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt"
+  ],
+  "rejected": 137
+}

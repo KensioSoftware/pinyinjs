@@ -10,7 +10,7 @@ import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
-import { readDictionaryReading } from "./reading.js";
+import { readAlignedReading, readDictionaryReading } from "./reading.js";
 
 /**
  * The reading written back as tone-marked pinyin, for readable expectations.
@@ -120,6 +120,52 @@ describe("reading source dictionary entries", () => {
     });
   });
 
+  describe("punctuation inside a headword", () => {
+    it("consumes a comma that the source gives a reading for", () => {
+      // Two-clause proverbs record the comma as a reading of its own. 642
+      // entries depend on this, almost all of them 谚语.
+      assertArrayEquals(
+        written("一不做，二不休", [
+          "yi1",
+          "bu4",
+          "zuo4",
+          ",",
+          "er4",
+          "bu4",
+          "xiu1",
+        ]) ?? [],
+        ["yī", "bù", "zuò", "èr", "bù", "xiū"],
+      );
+    });
+
+    it("skips punctuation the source gives no reading for", () => {
+      // The · separating the parts of a transliterated name is unread, so the
+      // eight characters of 亞西爾·阿拉法特 carry seven syllables.
+      const syllables = readDictionaryReading("亞西爾·阿拉法特", [
+        "Ya4",
+        "xi1",
+        "er3",
+        "A1",
+        "la1",
+        "fa3",
+        "te4",
+      ]);
+      assertNonNullable(syllables);
+      assertArrayLength(syllables, 7);
+    });
+
+    it("skips unread punctuation at the end of a headword", () => {
+      assertArrayEquals(written("银行·", ["yin2", "hang2"]) ?? [], [
+        "yín",
+        "háng",
+      ]);
+    });
+
+    it("rejects a punctuation reading against a character that is not punctuation", () => {
+      assertUndefined(readDictionaryReading("银行", ["yin2", ","]));
+    });
+  });
+
   describe("what it rejects", () => {
     it("rejects a token that is not a syllable", () => {
       assertUndefined(readDictionaryReading("银行", ["yin2", "zzz"]));
@@ -159,6 +205,74 @@ describe("reading source dictionary entries", () => {
       // not: the tone does not separate the two cases either, since 这儿 is
       // given as `zhè ér` and is also erhua.
       assertArrayEquals(written("玩儿", ["wán", "er"]) ?? [], ["wán", "er"]);
+    });
+  });
+
+  describe("alignment against the word's characters", () => {
+    it("pairs each syllable with the character it reads", () => {
+      const aligned = readAlignedReading("银行", ["yin2", "hang2"]);
+      assertNonNullable(aligned);
+      assertArrayEquals(
+        aligned.map((read) => read.characters),
+        ["银", "行"],
+      );
+    });
+
+    it("gives 儿化 both of its characters and one syllable", () => {
+      // Which is what lets the 繁體 derivation convert the 儿 of 玩儿 to 兒
+      // while still knowing the word is one syllable.
+      const aligned = readAlignedReading("玩儿", ["wan2", "r5"]);
+      assertNonNullable(aligned);
+      assertArrayLength(aligned, 1);
+      assertIdentical(aligned[0].characters, "玩儿");
+      const [first] = aligned;
+      assertNonNullable(first.syllable);
+      assertIdentical(writeSyllable(first.syllable), "wánr");
+    });
+
+    it("keeps punctuation as a character with no syllable", () => {
+      const aligned = readAlignedReading("一不做，二不休", [
+        "yi1",
+        "bu4",
+        "zuo4",
+        ",",
+        "er4",
+        "bu4",
+        "xiu1",
+      ]);
+      assertNonNullable(aligned);
+      assertArrayLength(aligned, 7);
+      assertIdentical(aligned[3].characters, "，");
+      assertUndefined(aligned[3].syllable);
+    });
+
+    it("keeps unread punctuation too", () => {
+      // 亚西尔·阿拉法特 is eight characters read as seven syllables; the
+      // separator has no reading of its own.
+      const aligned = readAlignedReading("亚西尔·阿拉法特", [
+        "Ya4",
+        "xi1",
+        "er3",
+        "A1",
+        "la1",
+        "fa3",
+        "te4",
+      ]);
+      assertNonNullable(aligned);
+      assertArrayLength(aligned, 8);
+      assertUndefined(aligned[3].syllable);
+    });
+
+    it("rejects a second r5 on a syllable already carrying one", () => {
+      assertUndefined(readAlignedReading("玩儿儿", ["wan2", "r5", "r5"]));
+    });
+
+    it("rejects an r5 with no syllable before it", () => {
+      assertUndefined(readAlignedReading("儿", ["r5"]));
+    });
+
+    it("rejects a reading that is nothing but punctuation", () => {
+      assertUndefined(readAlignedReading("，", [","]));
     });
   });
 });

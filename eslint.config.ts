@@ -27,7 +27,9 @@ export default defineConfig(
       "coverage/",
       "test/.coverage/",
       "node_modules/",
-      "scripts/",
+      "scripts/sh/",
+      "data/",
+      ".cache/",
       "**/*.config.ts",
     ],
   },
@@ -129,6 +131,16 @@ export default defineConfig(
   // ── Unicorn (modern JS best practices) ──────────────────
   // https://github.com/sindresorhus/eslint-plugin-unicorn?tab=readme-ov-file#recommended-config
   unicorn.configs.recommended,
+  {
+    rules: {
+      // Both rules ask for methods that do not exist in the ES2023 lib this
+      // package targets: `Iterator#toArray` and `Set#difference` landed in
+      // ES2024/ES2025 and are not in the browser baseline a first-class
+      // browser target has to hold to. Revisit when the target moves.
+      "unicorn/prefer-iterator-to-array": "off",
+      "unicorn/prefer-set-methods": "off",
+    },
+  },
 
   // ── Vitest (test files only) ────────────────────────────
   {
@@ -164,6 +176,17 @@ export default defineConfig(
   {
     files: ["src/cli/**/*.ts"],
     rules: {
+      "no-console": "off",
+    },
+  },
+
+  // ── Build scripts (Node-only, and file paths are the job)
+  {
+    files: ["scripts/**/*.ts"],
+    rules: {
+      // Reading and writing computed paths is what a build pipeline does; the
+      // paths come from this repo's own source table, never from user input.
+      "security/detect-non-literal-fs-filename": "off",
       "no-console": "off",
     },
   },
