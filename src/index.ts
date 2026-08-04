@@ -121,9 +121,17 @@ export {
   ASPECT_PARTICLES,
   GROUPING_RULES,
   PLACE_GENERICS,
+  SPACED_WORD_LIST,
   SUFFIXES,
 } from "./orthography/grouping.js";
 export type { GroupingRule } from "./orthography/grouping.js";
+
+export {
+  LONGEST_SPACED_WORD,
+  SPACED_WORD_FORMS,
+  SPACED_WORDS,
+} from "./orthography/word-list.js";
+export type { SpacedWord } from "./orthography/word-list.js";
 
 export { toLatinPunctuation } from "./orthography/punctuation.js";
 export type { PunctuationStyle } from "./orthography/punctuation.js";

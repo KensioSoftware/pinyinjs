@@ -113,6 +113,17 @@ describe("the examples in README.md", () => {
       );
     });
 
+    it("writes the curated 正词法 list examples", () => {
+      assertIdentical(convert(dictionary, "不是"), "bú shì");
+      assertIdentical(convert(dictionary, "一个"), "yí gè");
+      assertIdentical(convert(dictionary, "黄河"), "Huáng Hé");
+      assertIdentical(convert(dictionary, "中国人"), "Zhōngguórén");
+      // The counterparts the list deliberately leaves out.
+      assertIdentical(convert(dictionary, "不但"), "búdàn");
+      assertIdentical(convert(dictionary, "大米"), "dàmǐ");
+      assertIdentical(convert(dictionary, "青海"), "Qīnghǎi");
+    });
+
     it("writes the orthography options shown", () => {
       assertIdentical(convert(dictionary, "西安"), "Xī'ān");
       assertIdentical(
@@ -140,8 +151,10 @@ describe("the examples in README.md", () => {
         convert(dictionary, "南京市", { grouping: false }),
         "Nánjīngshì",
       );
-      // Documented as not built: needs a curated 正词法 list.
-      assertIdentical(convert(dictionary, "不是"), "búshì");
+      assertIdentical(
+        convert(dictionary, "我还给你了。"),
+        "Wǒ huán gěi nǐ le.",
+      );
     });
 
     it("leaves non-Han text exactly as written", () => {

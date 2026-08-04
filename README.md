@@ -5,10 +5,10 @@ validation, normalisation and formatting.
 
 [https://pinyinjs.dev](https://pinyinjs.dev "PinyinJS docs website")
 
-> **Not released yet.** The syllable layer and the dictionary are done and
-> tested; the decoder is currently a deliberate baseline and the orthography
-> layer does not exist. See [Status](#status) for exactly what works. The API
-> below is real and tested, but it will change before 1.0.
+> **Not released yet.** The syllable layer, the dictionary, the decoder and the
+> orthography pass are done and tested; romanisation and numerals are not
+> started. See [Status](#status) for exactly what works. The API below is real
+> and tested, but it will change before 1.0.
 
 ## What it is
 
@@ -32,15 +32,16 @@ Two things make it different from the usual approach:
 
 ## Status
 
-| Feature                                                    | State                                               |
-| ---------------------------------------------------------- | --------------------------------------------------- |
-| Syllable parsing, tones, validation                        | **works**                                           |
-| Dictionary: 461,623 entries, both scripts, zh-CN and zh-TW | **works**                                           |
-| Tone sandhi (一, 不, optional 3-3)                         | **works**                                           |
-| Hanzi → pinyin conversion                                  | **works** — lattice decoder, 96.2% reading accuracy |
-| Orthographic spacing, apostrophes, capitalisation          | not built                                           |
-| Wade-Giles, Bopomofo, Yale, IPA                            | not built                                           |
-| Numbers, dates, currency                                   | not built                                           |
+| Feature                                                    | State                                   |
+| ---------------------------------------------------------- | --------------------------------------- |
+| Syllable parsing, tones, validation                        | **works**                               |
+| Dictionary: 461,623 entries, both scripts, zh-CN and zh-TW | **works**                               |
+| Tone sandhi (一, 不, optional 3-3)                         | **works**                               |
+| Hanzi → pinyin conversion                                  | **works** — lattice decoder             |
+| Apostrophes, sentence capitals, punctuation                | **works**                               |
+| Word grouping (GB/T 16159 分词连写)                        | **partial** — rules plus a curated list |
+| Wade-Giles, Bopomofo, Yale, IPA                            | not built                               |
+| Numbers, dates, currency                                   | not built                               |
 
 `convert` decodes over a lattice: every dictionary match at every position
 becomes an edge, positions that read the same way on every path are locked
@@ -48,10 +49,11 @@ outright, and only what is left is scored. `convertGreedily` is the _old_
 algorithm — forward longest-match, no scoring, no backtracking — kept so that
 every claim about the new one has a measured baseline behind it. Use `convert`.
 
-On the 71-case gold corpus the two read identically (96.2%); the lattice's win
-is spacing, 89.7% → 91.5% F1, and exact match, 67.6% → 70.4%. Both figures for
-readings are held back by orthography rather than by decoding: every remaining
-reading miss is a missing apostrophe or one source-data defect.
+On the 71-case gold corpus both decoders now read every syllable correctly, so
+the corpus can no longer tell them apart on readings; the lattice's win is
+spacing, where it is exact against greedy's 98.0% F1. See
+[Accuracy](#accuracy) — those figures are asserted by a test, not quoted by
+hand.
 
 ## Install
 
@@ -133,18 +135,32 @@ Note that a comma is not evidence of a sentence, so that example is not
 capitalised. Only `.!?。！？` start a sentence, deliberately: the alternative is
 capitalising every fragment somebody looks up.
 
-Three 分词连写 rules are applied, each a typed rule over the decoded words
-rather than a regex over the output: the aspect particles 了/着/过 attach to the
-verb (他看了 → `tā kànle`), a suffix attaches to its stem (作者 → `zuòzhě`), and
-the generic half of an administrative place name is written separately and
+分词连写 is applied as typed rules over the decoded words rather than regexes
+over the output. The aspect particles 了/着/过 attach to a verb or adjective
+(他看了 → `tā kànle`, but 我还给你了。 → `Wǒ huán gěi nǐ le.`, where the 了
+closes the sentence instead), a suffix attaches to its stem (作者 → `zuòzhě`), and the
+generic half of an administrative place name is written separately and
 capitalised (南京市 → `Nánjīng Shì`). Pass `grouping: false` to turn them off.
 
-The rest of GB/T 16159 is **not** built, and measuring says why: the remaining
-rules cannot be derived from part-of-speech tags. jieba tags 不是 and 不但 both
-`c`, but the standard writes `bú shì` and `bùdàn`; 大米 and 一天 are both a
-numeral-ish character plus a 量词, but only one of them separates. Those need a
-curated 正词法 list built from the standard's own worked examples, which is the
-next piece of work.
+Beside them sits a small **curated list** of words the standard writes in a way
+no rule reaches, each carrying the clause it comes from:
+
+```ts
+convert(dictionary, "不是"); // "bú shì" — negative adverb written apart
+convert(dictionary, "一个"); // "yí gè"  — numeral and measure word
+convert(dictionary, "黄河"); // "Huáng Hé" — proper name and generic term
+convert(dictionary, "中国人"); // "Zhōngguórén" — nationality written as one
+```
+
+The list exists because measuring says these cannot be rules. jieba tags 不是
+and 不但 both `c`, but the standard writes `bú shì` and `bùdàn`; of 247
+two-character numeral+量词 candidates a large share are lexicalised, so 大米
+stays `dàmǐ` while 一天 separates; and 黄河 is `Huáng Hé` where 青海 is
+`Qīnghǎi`, with nothing in the data to tell them apart.
+
+It is deliberately **not** a complete 正词法 implementation. It holds the cases
+this package has a reason for, and grows as cases arrive rather than by guessing
+at them.
 
 Text that is not Han passes through untouched — punctuation, Latin letters and
 digits are left exactly as written, because reading numbers aloud is a separate
@@ -341,23 +357,26 @@ Scores both decoders against the gold corpus, readings and spacing separately,
 broken down by category, and reports how much of the corpus the reading
 projection locks.
 
-| Metric                       | Greedy baseline |   Lattice |
-| ---------------------------- | --------------: | --------: |
-| Reading accuracy (with tone) |           98.7% | **98.7%** |
-| Reading accuracy (toneless)  |          100.0% |    100.0% |
-| Exact match                  |           83.1% |     84.5% |
-| Spacing (F1)                 |           93.8% |     95.4% |
-| Capitalisation               |           97.5% |     97.5% |
+| Metric                       | Greedy baseline |    Lattice |
+| ---------------------------- | --------------: | ---------: |
+| Reading accuracy (with tone) |          100.0% | **100.0%** |
+| Reading accuracy (toneless)  |          100.0% |     100.0% |
+| Exact match                  |           94.4% |      97.2% |
+| Spacing (F1)                 |           98.0% |     100.0% |
+| Capitalisation               |           98.7% |      98.7% |
 
-The two decoders read identically, and that is the honest result rather than a
-disappointing one: the corpus has no reading headroom left to distinguish them
-by. Every base reading is correct, and the one reading error left is 一个,
-stored with a neutral 个 that the gold wants toned. The lattice's measurable win
-is spacing.
+Every reading in the corpus is now correct, for both decoders. That is a
+statement about the corpus as much as about the code: 71 cases and 159
+syllables have no reading headroom left, so they can no longer tell the two
+decoders apart. The lattice's measurable win is spacing, where it is exact.
 
-Eleven of the 71 cases still miss on exact match. Most need a curated 正词法
-list; two are 你好 and 谢谢, which the corpus capitalises as bare greetings with
-no punctuation to signal one.
+**These figures are asserted, not quoted.** `src/readme.test.ts` parses this
+table and checks every number against the scorer, because they went stale
+through two releases before anything noticed.
+
+Two of the 71 cases still miss, both the same one: 你好 and 谢谢 are expected
+capitalised as greetings, and there is no punctuation in a bare word to signal
+that it is an utterance rather than a citation.
 
 ## Data sources
 
