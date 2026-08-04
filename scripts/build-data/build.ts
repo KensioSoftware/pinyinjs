@@ -172,11 +172,11 @@ const manifestJson = JSON.stringify(
  */
 const TESTED_AGAINST = [
   {
-    name: "Comparison of Chinese transcription systems (Wikipedia)",
-    url: "https://en.wikipedia.org/wiki/Comparison_of_Chinese_transcription_systems",
+    name: "Comparison of Standard Chinese transcription systems (Wikipedia)",
+    url: "https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcription_systems",
     licence: "CC BY-SA 4.0",
     provides:
-      "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo and Wade-Giles tables are checked against",
+      "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo, Wade-Giles, Yale and IPA tables are checked against",
     note: "used by the tests only; nothing in data/ is derived from it",
   },
 ] as const;

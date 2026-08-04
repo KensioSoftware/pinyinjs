@@ -24,11 +24,21 @@ import {
   writeBopomofo,
 } from "../../src/romanization/bopomofo.js";
 import {
+  readIpa,
+  writeIpa,
+  writeIpaSymbols,
+} from "../../src/romanization/ipa.js";
+import {
   readWadeGiles,
   readWadeGilesLoosely,
   writeWadeGiles,
   writeWadeGilesSpelling,
 } from "../../src/romanization/wade-giles.js";
+import {
+  readYale,
+  writeYale,
+  writeYaleSpelling,
+} from "../../src/romanization/yale.js";
 import { parsePhrasePinyin } from "../../src/sources/phrase-pinyin.js";
 import { DICTIONARY_SYLLABLES } from "../../src/syllable/inventory.js";
 import {
@@ -36,7 +46,7 @@ import {
   type Syllable,
   writeSyllableSpelling,
 } from "../../src/syllable/syllable.js";
-import { type Tone, TONES } from "../../src/tone/tone.js";
+import { NEUTRAL_TONE, type Tone, TONES } from "../../src/tone/tone.js";
 import { readSource, SOURCE_FILES } from "./sources.js";
 
 /**
@@ -80,6 +90,12 @@ const FORMS: readonly Syllable[] = SYLLABLES.flatMap((syllable) =>
   ),
 );
 
+/**
+ * How a syllable is written in pinyin, for reporting.
+ */
+const written = (syllable: Syllable): string =>
+  writeSyllableSpelling({ ...syllable, erhua: false });
+
 const lines: string[] = [];
 
 const say = (text = ""): void => {
@@ -96,35 +112,97 @@ say("──────────");
 count("syllables in the inventory", SYLLABLES.length);
 count("forms (syllable × tone × 儿化)", FORMS.length);
 
-const bopomofoMisses = FORMS.filter((form) => {
-  const read = readBopomofo(writeBopomofo(form));
-  return read === undefined || !isSame(read, form);
-});
-count("bopomofo read back exactly", FORMS.length - bopomofoMisses.length);
-count(
-  "  of which the tone was unwritten",
-  bopomofoMisses.filter((form) => form.tone === undefined).length,
-);
-count(
-  "  anything else",
-  bopomofoMisses.filter((form) => form.tone !== undefined).length,
-);
+/**
+ * One system, in both directions, as the round trip needs it.
+ *
+ * `spell` is the toneless spelling, which is what the ambiguity count is over:
+ * a system that writes the tone can always tell two syllables apart by it, and
+ * that is not the question being asked.
+ */
+interface System {
+  readonly name: string;
+  readonly write: (syllable: Syllable) => string;
+  readonly read: (text: string) => readonly Syllable[];
+  readonly spell: (syllable: Syllable) => string;
+}
 
-const wadeMisses = FORMS.filter((form) => {
-  const read = readWadeGiles(writeWadeGiles(form));
-  return read.every((candidate) => !isSame(candidate, form));
-});
-count("Wade-Giles read back exactly", FORMS.length - wadeMisses.length);
-count("  missed", wadeMisses.length);
+const SYSTEMS: readonly System[] = [
+  {
+    name: "bopomofo",
+    write: (syllable) => writeBopomofo(syllable),
+    read: (text): readonly Syllable[] => {
+      const read = readBopomofo(text);
+      return read === undefined ? [] : [read];
+    },
+    spell: (syllable) => writeBopomofo(syllable),
+  },
+  {
+    name: "Wade-Giles",
+    write: (syllable) => writeWadeGiles(syllable),
+    read: (text) => readWadeGiles(text),
+    spell: (syllable) => writeWadeGilesSpelling(syllable),
+  },
+  {
+    name: "Yale",
+    write: (syllable) => writeYale(syllable),
+    read: (text) => readYale(text),
+    spell: (syllable) => writeYaleSpelling(syllable),
+  },
+  {
+    // The same table with the tone written as a digit rather than as a mark,
+    // which is the only difference between 4,240 and 5,088 for this system.
+    name: "Yale, numbered",
+    write: (syllable) => writeYale(syllable, { tones: "numbers" }),
+    read: (text) => readYale(text),
+    spell: (syllable) => writeYaleSpelling(syllable),
+  },
+  {
+    name: "IPA",
+    write: (syllable) => writeIpa(syllable),
+    read: (text) => readIpa(text),
+    spell: (syllable) => writeIpaSymbols(syllable),
+  },
+];
 
-const distinctBopomofo = new Set(
-  SYLLABLES.map((syllable) => writeBopomofo(syllable)),
+for (const system of SYSTEMS) {
+  const misses = FORMS.filter((form) =>
+    system.read(system.write(form)).every((found) => !isSame(found, form)),
+  );
+  count(`${system.name} read back exactly`, FORMS.length - misses.length);
+  const unwritten = misses.filter((form) => form.tone === undefined).length;
+  const neutral = misses.filter((form) => form.tone === NEUTRAL_TONE).length;
+  if (unwritten > 0) {
+    count("  of which the tone was unwritten", unwritten);
+  }
+  if (neutral > 0) {
+    count("  of which the tone was neutral", neutral);
+  }
+  const other = misses.length - unwritten - neutral;
+  if (other > 0) {
+    count("  anything else", other);
+    for (const form of misses.slice(0, 8)) {
+      say(`    ${written(form)}${form.erhua === true ? "r" : ""}`);
+    }
+  }
+}
+
+say();
+// Yale is counted once: the numbered variant is the same spelling table.
+const DISTINCT_SYSTEMS = SYSTEMS.filter(
+  (system) => system.name !== "Yale, numbered",
 );
-const distinctWade = new Set(
-  SYLLABLES.map((syllable) => writeWadeGilesSpelling(syllable)),
-);
-count("distinct bopomofo spellings", distinctBopomofo.size);
-count("distinct Wade-Giles spellings", distinctWade.size);
+for (const system of DISTINCT_SYSTEMS) {
+  const spellings = new Map<string, string[]>();
+  for (const syllable of SYLLABLES) {
+    const key = system.spell(syllable);
+    spellings.set(key, [...(spellings.get(key) ?? []), written(syllable)]);
+  }
+  const shared = [...spellings].filter(([, pinyin]) => pinyin.length > 1);
+  count(`distinct ${system.name} spellings`, spellings.size);
+  for (const [spelling, pinyin] of shared) {
+    say(`  ${spelling.padEnd(10)}${pinyin.join(", ")}`);
+  }
+}
 
 // ── What one Wade-Giles spelling can stand for ──────────────
 //
@@ -132,12 +210,6 @@ count("distinct Wade-Giles spellings", distinctWade.size);
 say();
 say("Wade-Giles read back");
 say("────────────────────");
-
-/**
- * How a syllable is written in pinyin, for reporting.
- */
-const written = (syllable: Syllable): string =>
-  writeSyllableSpelling({ ...syllable, erhua: false });
 
 /**
  * What each droppable mark looks like once it has been dropped.

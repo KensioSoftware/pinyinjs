@@ -34,6 +34,7 @@ import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
 import { readBopomofo, writeBopomofo } from "./romanization/bopomofo.js";
+import { readIpa, writeIpa, writeIpaSymbols } from "./romanization/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
@@ -41,6 +42,7 @@ import {
   writeWadeGilesSpelling,
   writeWadeGilesWord,
 } from "./romanization/wade-giles.js";
+import { readYale, writeYale, writeYaleSpelling } from "./romanization/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -96,6 +98,13 @@ function alternatives(text: string, index: number): readonly string[] {
   return piece.confidence.alternatives.map((found) =>
     found.reading.map((syllable) => writeSyllable(syllable)).join(""),
   );
+}
+
+/**
+ * How many distinct spellings a system gives the whole inventory.
+ */
+function distinct(spell: (pinyin: string) => string): number {
+  return new Set([...DICTIONARY_SYLLABLES].map((pinyin) => spell(pinyin))).size;
 }
 
 /**
@@ -619,9 +628,11 @@ describe("the examples in docs/", () => {
   });
 
   describe("romanization", () => {
-    it("writes the syllable the page opens on in both systems", () => {
+    it("writes the syllable the page opens on in every system", () => {
       assertIdentical(writeBopomofo(one("jiù")), "ㄐㄧㄡˋ");
       assertIdentical(writeWadeGiles(one("jiù")), "chiu⁴");
+      assertIdentical(writeYale(one("jiù")), "jyòu");
+      assertIdentical(writeIpa(one("jiù")), "tɕiou˥˩");
     });
 
     it("writes the bopomofo the page shows", () => {
@@ -703,10 +714,13 @@ describe("the examples in docs/", () => {
       assertArrayLength(believed, 312);
     });
 
-    it("round-trips every form except the tone bopomofo cannot write", () => {
+    it("round-trips every form except the tone each system cannot write", () => {
       let forms = 0;
       let bopomofo = 0;
       let wade = 0;
+      let yale = 0;
+      let yaleNumbered = 0;
+      let ipa = 0;
       for (const pinyin of DICTIONARY_SYLLABLES) {
         for (const tone of [undefined, ...TONES]) {
           for (const erhua of [false, true]) {
@@ -728,12 +742,88 @@ describe("the examples in docs/", () => {
             ) {
               wade += 1;
             }
+            if (
+              readYale(writeYale(form)).some(
+                (found) =>
+                  found.final === form.final && found.tone === form.tone,
+              )
+            ) {
+              yale += 1;
+            }
+            if (
+              readYale(writeYale(form, { tones: "numbers" })).some(
+                (found) =>
+                  found.final === form.final && found.tone === form.tone,
+              )
+            ) {
+              yaleNumbered += 1;
+            }
+            if (
+              readIpa(writeIpa(form)).some(
+                (found) =>
+                  found.final === form.final && found.tone === form.tone,
+              )
+            ) {
+              ipa += 1;
+            }
           }
         }
       }
       assertIdentical(forms, 5088);
       assertIdentical(wade, 5088);
       assertIdentical(bopomofo, 4240);
+      assertIdentical(yale, 4240);
+      assertIdentical(yaleNumbered, 5088);
+      assertIdentical(ipa, 4240);
+    });
+
+    it("writes the Yale the page shows", () => {
+      assertIdentical(writeYaleSpelling(one("xī")), "syi");
+      assertIdentical(writeYaleSpelling(one("zhī")), "jr");
+      assertIdentical(writeYaleSpelling(one("rì")), "r");
+      assertIdentical(writeYaleSpelling(one("bō")), "bwo");
+      assertIdentical(writeYaleSpelling(one("dūn")), "dwun");
+      assertIdentical(writeYaleSpelling(one("wén")), "wen");
+      assertIdentical(writeYaleSpelling(one("jiā")), "jya");
+      assertIdentical(writeYaleSpelling(one("ya")), "ya");
+      assertIdentical(writeYale(one("zhī")), "jr̄");
+      assertIdentical(writeYale(one("zì")), "dz̀");
+      // The r suffix is a letter the system already uses, so it collides.
+      assertArrayEquals(
+        readYale("ér").map((syllable) => writeSyllable(syllable)),
+        ["ér", "ér", "ếr"],
+      );
+    });
+
+    it("transcribes the IPA the page shows", () => {
+      assertIdentical(writeIpaSymbols(one("yī")), "i");
+      assertIdentical(writeIpaSymbols(one("wén")), "uən");
+      assertIdentical(writeIpaSymbols(one("dūn")), "tuən");
+      assertIdentical(writeIpaSymbols(one("tiān")), "tʰiɛn");
+      assertIdentical(writeIpaSymbols(one("zhī")), "ʈʂɨ");
+      assertIdentical(writeIpa(one("mǎ")), "ma˨˩˦");
+      assertIdentical(writeIpa(one("mǎ"), { tones: "numbers" }), "ma214");
+      assertIdentical(writeIpaSymbols(one("bō")), "puo");
+      assertIdentical(writeIpaSymbols(one("lo")), "lɔ");
+    });
+
+    it("counts how many syllables each system can tell apart", () => {
+      assertIdentical(
+        distinct((pinyin) => writeBopomofo(one(pinyin))),
+        424,
+      );
+      assertIdentical(
+        distinct((pinyin) => writeIpaSymbols(one(pinyin))),
+        424,
+      );
+      assertIdentical(
+        distinct((pinyin) => writeWadeGilesSpelling(one(pinyin))),
+        423,
+      );
+      assertIdentical(
+        distinct((pinyin) => writeYaleSpelling(one(pinyin))),
+        423,
+      );
     });
   });
 
@@ -779,13 +869,16 @@ describe("the examples in docs/", () => {
 
     it("romanises pinyin and reads sloppy Wade-Giles back", async () => {
       assertArrayEquals(await cli("romanize", "běijīng"), [
-        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹",
+        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥",
       ]);
       assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
-        "chu¹        zhū       ㄓㄨ          chu¹",
-        "            chū       ㄔㄨ          ch'u¹     marks restored",
-        "            jū        ㄐㄩ          chü¹      marks restored",
-        "            qū        ㄑㄩ          ch'ü¹     marks restored",
+        "chu¹        zhū       ㄓㄨ          chu¹        jū        ʈʂu˥",
+        "            chū       ㄔㄨ          ch'u¹       chū       ʈʂʰu˥       marks restored",
+        "            jū        ㄐㄩ          chü¹        jyū       tɕy˥        marks restored",
+        "            qū        ㄑㄩ          ch'ü¹       chyū      tɕʰy˥       marks restored",
+      ]);
+      assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
+        "syī         xī        ㄒㄧ          hsi¹        syī       ɕi˥",
       ]);
     });
 

@@ -48,7 +48,7 @@ nǐhǎo  nǐ hǎo
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
 
 $ pinyinjs romanize běijīng
-běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥
 ```
 
 | Command    | Does                                                |
@@ -452,7 +452,7 @@ readNumeral(110, { style: "digits", yao: true }); // yāo yāo líng
 
 More in [numbers](docs/numerals/).
 
-## Bopomofo and Wade-Giles
+## Bopomofo, Wade-Giles, Yale and IPA
 
 Also dictionary-free: a romanisation is a mapping over about 420 syllables, so
 hanzi → Wade-Giles is hanzi → pinyin → Wade-Giles.
@@ -462,12 +462,16 @@ import {
   readSyllable,
   readWadeGilesLoosely,
   writeBopomofo,
+  writeIpa,
   writeWadeGiles,
+  writeYale,
 } from "@kensio/pinyinjs";
 
 const jiu = readSyllable("jiù");
 writeBopomofo(jiu); // "ㄐㄧㄡˋ"
 writeWadeGiles(jiu); // "chiu⁴"
+writeYale(jiu); // "jyòu"
+writeIpa(jiu); // "tɕiou˥˩"
 ```
 
 Reading Wade-Giles back gives an **array**, because real text drops the
@@ -531,7 +535,9 @@ Both scripts are dictionary keys, so only the locale is an option to pass.
 | `splitSyllables` / `readWord`                        | split written pinyin                              |
 | `applySandhi`                                        | 一, 不 and optional third-tone sandhi             |
 | `writeBopomofo` / `writeWadeGiles`                   | one syllable, romanised                           |
+| `writeYale` / `writeIpa`                             | the same, in Yale and IPA                         |
 | `readBopomofo` / `readWadeGilesLoosely`              | and back again                                    |
+| `readYale` / `readIpa`                               | and back from those two                           |
 | `applyToneMark` / `stripToneMarks` / `toneFromMarks` | tone marks                                        |
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 
