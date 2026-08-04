@@ -5,9 +5,11 @@ import {
   type ToneNotation,
   writeSyllable,
 } from "../syllable/syllable.js";
-import { decodeGreedily, type DecodedWord } from "./greedy.js";
+import { decodeRun } from "./decode.js";
+import { decodeGreedily } from "./greedy.js";
 import { splitRuns } from "./runs.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
+import type { DecodedWord } from "./word.js";
 
 /**
  * How a conversion should be carried out and written.
@@ -65,44 +67,91 @@ function writeWord(
 }
 
 /**
+ * How a Han run is turned into words.
+ */
+type Decode = (dictionary: Dictionary, run: string) => readonly DecodedWord[];
+
+/**
+ * Write one Han run's worth of decoded words.
+ */
+function writeRun(
+  dictionary: Dictionary,
+  words: readonly DecodedWord[],
+  options: Required<Pick<ConvertOptions, "locale" | "notation">> &
+    ConvertOptions,
+): string {
+  const { locale, notation, sandhi } = options;
+  // Sandhi runs across the whole run rather than within a word, since 不 in one
+  // word assimilates to the tone starting the next.
+  const readings = words.map((word) => readingFor(dictionary, word, locale));
+  const flattened = applySandhi(readings.flat(), sandhi);
+
+  let at = 0;
+  const written: string[] = [];
+  for (const [index, word] of words.entries()) {
+    /* c8 ignore next -- readings is built by mapping over these same words */
+    const length = readings[index]?.length ?? 0;
+    written.push(writeWord(flattened.slice(at, at + length), word, notation));
+    at += length;
+  }
+  return written.join(" ");
+}
+
+/**
+ * Run the pipeline over a text with a given decoder.
+ */
+function convertWith(
+  decode: Decode,
+  dictionary: Dictionary,
+  text: string,
+  options: ConvertOptions,
+): string {
+  const { locale = "zh-CN", notation = "marks", ...rest } = options;
+  let converted = "";
+
+  for (const run of splitRuns(text)) {
+    converted += run.isHan
+      ? writeRun(dictionary, decode(dictionary, run.text), {
+          ...rest,
+          locale,
+          notation,
+        })
+      : run.text;
+  }
+
+  return converted;
+}
+
+/**
+ * Convert hanzi to pinyin with the lattice decoder.
+ *
+ * The recommended path. Builds every candidate reading of each Han run, locks
+ * the positions that read the same way whichever candidates are chosen, and
+ * scores only what is left — see {@link decodeRun} and ALGORITHM.md.
+ *
+ * Spacing is one gap per decoded word, which is not orthography: GB/T 16159
+ * grouping, apostrophes and sentence capitals are Phase 4, so the spacing here
+ * is what the decode believes rather than what the standard writes.
+ */
+export function convert(
+  dictionary: Dictionary,
+  text: string,
+  options: ConvertOptions = {},
+): string {
+  return convertWith(decodeRun, dictionary, text, options);
+}
+
+/**
  * Convert hanzi to pinyin with the greedy baseline decoder.
  *
  * **The baseline, kept to measure against.** See {@link decodeGreedily} for why
  * this is not the intended algorithm, and ALGORITHM.md for what replaces it.
- * Spacing here is one gap per matched word, which is not orthography — GB/T
- * 16159 grouping is Phase 4 — so the spacing score this produces is a floor
- * rather than an attempt.
+ * Use {@link convert} instead.
  */
 export function convertGreedily(
   dictionary: Dictionary,
   text: string,
   options: ConvertOptions = {},
 ): string {
-  const { locale = "zh-CN", notation = "marks", sandhi } = options;
-  let converted = "";
-
-  for (const run of splitRuns(text)) {
-    if (!run.isHan) {
-      converted += run.text;
-      continue;
-    }
-
-    const words = decodeGreedily(dictionary, run.text);
-    // Sandhi runs across the whole run rather than within a word, since 不 in
-    // one word assimilates to the tone starting the next.
-    const readings = words.map((word) => readingFor(dictionary, word, locale));
-    const flattened = applySandhi(readings.flat(), sandhi);
-
-    let at = 0;
-    const written: string[] = [];
-    for (const [index, word] of words.entries()) {
-      /* c8 ignore next -- readings is built by mapping over these same words */
-      const length = readings[index]?.length ?? 0;
-      written.push(writeWord(flattened.slice(at, at + length), word, notation));
-      at += length;
-    }
-    converted += written.join(" ");
-  }
-
-  return converted;
+  return convertWith(decodeGreedily, dictionary, text, options);
 }

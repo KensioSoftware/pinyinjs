@@ -30,20 +30,26 @@ Two things make it different from the usual approach:
 
 ## Status
 
-| Feature                                                    | State                                              |
-| ---------------------------------------------------------- | -------------------------------------------------- |
-| Syllable parsing, tones, validation                        | **works**                                          |
-| Dictionary: 461,623 entries, both scripts, zh-CN and zh-TW | **works**                                          |
-| Tone sandhi (一, 不, optional 3-3)                         | **works**                                          |
-| Hanzi → pinyin conversion                                  | **baseline only** — greedy, 93.7% reading accuracy |
-| Orthographic spacing, apostrophes, capitalisation          | not built                                          |
-| Wade-Giles, Bopomofo, Yale, IPA                            | not built                                          |
-| Numbers, dates, currency                                   | not built                                          |
+| Feature                                                    | State                                               |
+| ---------------------------------------------------------- | --------------------------------------------------- |
+| Syllable parsing, tones, validation                        | **works**                                           |
+| Dictionary: 461,623 entries, both scripts, zh-CN and zh-TW | **works**                                           |
+| Tone sandhi (一, 不, optional 3-3)                         | **works**                                           |
+| Hanzi → pinyin conversion                                  | **works** — lattice decoder, 96.2% reading accuracy |
+| Orthographic spacing, apostrophes, capitalisation          | not built                                           |
+| Wade-Giles, Bopomofo, Yale, IPA                            | not built                                           |
+| Numbers, dates, currency                                   | not built                                           |
 
-The decoder shipped today is deliberately the _old_ algorithm — forward
-longest-match with no scoring — so that the lattice decoder replacing it has a
-measured number to beat rather than an assertion to make. Treat
-`convertGreedily` as a baseline, not as the recommended API.
+`convert` decodes over a lattice: every dictionary match at every position
+becomes an edge, positions that read the same way on every path are locked
+outright, and only what is left is scored. `convertGreedily` is the _old_
+algorithm — forward longest-match, no scoring, no backtracking — kept so that
+every claim about the new one has a measured baseline behind it. Use `convert`.
+
+On the 71-case gold corpus the two read identically (96.2%); the lattice's win
+is spacing, 89.7% → 91.5% F1, and exact match, 67.6% → 70.4%. Both figures for
+readings are held back by orthography rather than by decoding: every remaining
+reading miss is a missing apostrophe or one source-data defect.
 
 ## Install
 
@@ -61,24 +67,24 @@ fetchable file rather than a JavaScript module — a 2.3 MB object literal would
 cost real parse time on every page load, and a text blob costs none.
 
 ```ts
-import { convertGreedily, loadDictionary } from "@kensio/pinyinjs";
+import { convert, loadDictionary } from "@kensio/pinyinjs";
 import { fileSource } from "@kensio/pinyinjs/node";
 
 const source = fileSource("node_modules/@kensio/pinyinjs/data");
 const dictionary = await loadDictionary(source, "full");
 
-convertGreedily(dictionary, "银行"); // "yínháng"
-convertGreedily(dictionary, "行长"); // "hángzhǎng"
-convertGreedily(dictionary, "我要去北京。"); // "wǒ yào qù Běijīng。"
+convert(dictionary, "银行"); // "yínháng"
+convert(dictionary, "行长"); // "hángzhǎng"
+convert(dictionary, "我要去北京。"); // "wǒ yào qù Běijīng。"
 ```
 
 In a browser, serve the `data/` directory and fetch it:
 
 ```ts
-import { convertGreedily, fetchSource, loadDictionary } from "@kensio/pinyinjs";
+import { convert, fetchSource, loadDictionary } from "@kensio/pinyinjs";
 
 const dictionary = await loadDictionary(fetchSource("/data"), "standard");
-convertGreedily(dictionary, "长城"); // "Chángchéng"
+convert(dictionary, "长城"); // "Chángchéng"
 ```
 
 Serve the artifacts uncompressed and let HTTP `Content-Encoding: br` compress
@@ -87,11 +93,11 @@ them: `DecompressionStream` has no brotli, and HTTP is the right layer for it.
 ### Options
 
 ```ts
-convertGreedily(dictionary, "垃圾"); // "lājī"
-convertGreedily(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
-convertGreedily(dictionary, "银行", { notation: "numbers" }); // "yin2hang2"
-convertGreedily(dictionary, "银行", { notation: "none" }); // "yinhang"
-convertGreedily(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
+convert(dictionary, "垃圾"); // "lājī"
+convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
+convert(dictionary, "银行", { notation: "numbers" }); // "yin2hang2"
+convert(dictionary, "银行", { notation: "none" }); // "yinhang"
+convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 ```
 
 Text that is not Han passes through untouched — punctuation, Latin letters and
@@ -187,8 +193,15 @@ import { readWord, splitSyllables } from "@kensio/pinyinjs";
 splitSyllables("nǐhǎo"); // ["nǐ", "hǎo"]
 splitSyllables("Xī'ān"); // ["Xī", "ān"]
 splitSyllables("yinhang"); // ["yin", "hang"]
+splitSyllables("guórén"); // ["guó", "rén"], not ["guór", "én"]
 readWord("yínháng"); // the same, parsed into Syllable objects
 ```
+
+A syllable starting with a, o or e takes an apostrophe before it unless it
+begins the word, so an unapostrophised run may not start one — which is what
+keeps `guórén` from splitting after the r. Where no split obeys that rule the
+word was written wrong, and the plain longest-first reading is used anyway:
+`hǎiōu` still reads as two syllables.
 
 ### Tones
 
@@ -277,17 +290,23 @@ exactly as it was built.
 pnpm accuracy
 ```
 
-Scores the current decoder against the gold corpus, readings and spacing
-separately, broken down by category.
+Scores both decoders against the gold corpus, readings and spacing separately,
+broken down by category, and reports how much of the corpus the reading
+projection locks.
 
-| Metric                       | Greedy baseline |
-| ---------------------------- | --------------: |
-| Reading accuracy (with tone) |       **93.7%** |
-| Reading accuracy (toneless)  |           95.0% |
-| Exact match                  |           67.6% |
-| Spacing (F1)                 |           88.7% |
+| Metric                       | Greedy baseline |   Lattice |
+| ---------------------------- | --------------: | --------: |
+| Reading accuracy (with tone) |           96.2% | **96.2%** |
+| Reading accuracy (toneless)  |           97.5% |     97.5% |
+| Exact match                  |           67.6% |     70.4% |
+| Spacing (F1)                 |           89.7% |     91.5% |
 
-Spacing is one gap per matched word, which is not orthography and is not trying
+The two read identically, and that is the honest result rather than a
+disappointing one: all six of the corpus's remaining reading errors are missing
+apostrophes or one known source-data defect, so the corpus has no reading
+headroom left to distinguish them by. The lattice's measurable win is spacing.
+
+Spacing is one gap per decoded word, which is not orthography and is not trying
 to be — that is the next phase. The figure is a floor to improve on.
 
 ## Data sources

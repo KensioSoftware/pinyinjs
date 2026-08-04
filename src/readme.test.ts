@@ -11,7 +11,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { convertGreedily } from "./decode/convert.js";
+import { convert } from "./decode/convert.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
@@ -59,10 +59,10 @@ function written(syllables: readonly Syllable[]): string {
 describe("the examples in README.md", () => {
   describe("converting hanzi", () => {
     it("converts the three words shown", () => {
-      assertIdentical(convertGreedily(dictionary, "银行"), "yínháng");
-      assertIdentical(convertGreedily(dictionary, "行长"), "hángzhǎng");
+      assertIdentical(convert(dictionary, "银行"), "yínháng");
+      assertIdentical(convert(dictionary, "行长"), "hángzhǎng");
       assertIdentical(
-        convertGreedily(dictionary, "我要去北京。"),
+        convert(dictionary, "我要去北京。"),
         "wǒ yào qù Běijīng。",
       );
     });
@@ -72,39 +72,36 @@ describe("the examples in README.md", () => {
         fileSource(dataDirectory),
         "standard",
       );
-      assertIdentical(convertGreedily(standard, "长城"), "Chángchéng");
+      assertIdentical(convert(standard, "长城"), "Chángchéng");
     });
   });
 
   describe("the options shown", () => {
     it("takes the locale's reading", () => {
-      assertIdentical(convertGreedily(dictionary, "垃圾"), "lājī");
-      assertIdentical(
-        convertGreedily(dictionary, "垃圾", { locale: "zh-TW" }),
-        "lèsè",
-      );
+      assertIdentical(convert(dictionary, "垃圾"), "lājī");
+      assertIdentical(convert(dictionary, "垃圾", { locale: "zh-TW" }), "lèsè");
     });
 
     it("writes the notation asked for", () => {
       assertIdentical(
-        convertGreedily(dictionary, "银行", { notation: "numbers" }),
+        convert(dictionary, "银行", { notation: "numbers" }),
         "yin2hang2",
       );
       assertIdentical(
-        convertGreedily(dictionary, "银行", { notation: "none" }),
+        convert(dictionary, "银行", { notation: "none" }),
         "yinhang",
       );
     });
 
     it("writes third-tone sandhi when asked", () => {
       assertIdentical(
-        convertGreedily(dictionary, "好好", { sandhi: { thirdTone: true } }),
+        convert(dictionary, "好好", { sandhi: { thirdTone: true } }),
         "háohǎo",
       );
     });
 
     it("leaves non-Han text exactly as written", () => {
-      assertIdentical(convertGreedily(dictionary, "3D银行"), "3Dyínháng");
+      assertIdentical(convert(dictionary, "3D银行"), "3Dyínháng");
     });
   });
 
@@ -183,6 +180,8 @@ describe("the examples in README.md", () => {
       assertArrayEquals(splitSyllables("nǐhǎo") ?? [], ["nǐ", "hǎo"]);
       assertArrayEquals(splitSyllables("Xī'ān") ?? [], ["Xī", "ān"]);
       assertArrayEquals(splitSyllables("yinhang") ?? [], ["yin", "hang"]);
+      assertArrayEquals(splitSyllables("guórén") ?? [], ["guó", "rén"]);
+      assertArrayEquals(splitSyllables("hǎiōu") ?? [], ["hǎi", "ōu"]);
       assertIdentical(written(readWord("yínháng") ?? []), "yín háng");
     });
   });

@@ -30,6 +30,28 @@ describe("splitting pinyin into syllables", () => {
       assertArrayEquals(splitSyllables("xian"), ["xian"]);
     });
 
+    it("does not start a syllable with a, o or e where no apostrophe says to", () => {
+      // Longest-first alone reads these as guór'én, huáng'ěi and fáng'ān, all
+      // of which the missing 隔音符号 rules out.
+      assertArrayEquals(splitSyllables("guórén"), ["guó", "rén"]);
+      assertArrayEquals(splitSyllables("Zhōngguórén"), ["Zhōng", "guó", "rén"]);
+      assertArrayEquals(splitSyllables("huángěi"), ["huán", "gěi"]);
+      assertArrayEquals(splitSyllables("fángān"), ["fán", "gān"]);
+    });
+
+    it("holds out for real syllables while that rule is in force", () => {
+      // Barring the vowel without this would read Tiānānmén as tiā nān mén,
+      // where tiā is not a syllable of the language at all.
+      assertArrayEquals(splitSyllables("Tiānānmén"), ["Tiān", "ān", "mén"]);
+    });
+
+    it("falls back to longest-first where the apostrophe rule leaves nothing", () => {
+      // hǎi'ōu written without its apostrophe still has to read as two
+      // syllables: input is tolerant even where it is not standard.
+      assertArrayEquals(splitSyllables("hǎiōu"), ["hǎi", "ōu"]);
+      assertArrayEquals(splitSyllables("kěài"), ["kě", "ài"]);
+    });
+
     it("honours a hyphen, as used in 成语 and reduplication", () => {
       assertArrayEquals(splitSyllables("fēngpíng-làngjìng"), [
         "fēng",

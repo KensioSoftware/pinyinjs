@@ -12,6 +12,26 @@ export const FREQUENCY_BUCKETS = 16;
 const MAX_BUCKET = FREQUENCY_BUCKETS - 1;
 
 /**
+ * What every word in a decoded path costs before its frequency is counted.
+ *
+ * A bucket is `log f` on a scale where the most frequent word in the corpus
+ * reaches {@link MAX_BUCKET}, so bucket *b* stands for `log f = b · L / 15`
+ * where `L = log(1 + f_max)`. The decoder wants `−log P = log N − log f`, which
+ * on that same scale is `15 · log N / L − b` — so the constant term is
+ * `15 · (log N / L − 1)` rather than the 1 that was here before.
+ *
+ * The shipped corpus makes that concrete: 60,101,967 counts over 349,046
+ * entries with a maximum of 883,634, giving `log N = 17.91`, `L = 13.69` and a
+ * charge of 4.62. Only the *ratio* of the two logarithms matters, and it moves
+ * slowly — doubling every count in the corpus shifts it by 0.05.
+ *
+ * The value is load-bearing. At the old charge of 1 the lattice decoder read
+ * 还给 as 还 + 给 and 还是 as 还 + 是, because two common characters summed to
+ * less than one uncommon word; at the derived charge both stay whole.
+ */
+const WORD_CHARGE = 4.62;
+
+/**
  * Quantised word frequencies, packed two to a byte.
  *
  * Frequencies are stored on a log scale because that is how they are used: the
@@ -101,16 +121,14 @@ export class FrequencyTable {
   /**
    * The decoding cost of an entry, where lower means more likely.
    *
-   * A monotone stand-in for `−log P`. The trailing `+ 1` is a per-word charge,
-   * which is what stops the decoder preferring many short words over one long
-   * one: every extra word in a path adds to the total.
-   *
-   * The exact shape of this function is a tuning decision, and should be
-   * settled by measurement against the accuracy harness rather than by
-   * argument.
+   * A quantised `−log P`, and {@link WORD_CHARGE} is not a tuning knob but the
+   * missing half of it: a bucket records `log f`, and `−log P` is
+   * `log N − log f`, so the charge is what turns one into the other. Getting it
+   * wrong is what makes a decoder split words that should stay whole, because
+   * every extra word in a path pays the charge again.
    */
   costOf(index: number): number {
-    return MAX_BUCKET - this.bucketOf(index) + 1;
+    return MAX_BUCKET - this.bucketOf(index) + WORD_CHARGE;
   }
 
   /**
