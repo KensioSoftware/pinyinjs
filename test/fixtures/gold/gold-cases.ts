@@ -62,6 +62,16 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "一点儿", pinyin: "yìdiǎnr", script: "Hans", tags: ["erhua", "sandhi-yi", "source-defect"] },
   { hanzi: "女儿", pinyin: "nǚ'ér", script: "Hans", tags: ["erhua", "apostrophe"] },
   { hanzi: "儿子", pinyin: "érzi", script: "Hans", tags: ["erhua", "neutral-tone"] },
+  // Not a dictionary key, while 这边儿 and 旁边儿 are. The reading is now right
+  // and the spacing is not: 边儿 is reached as a word of its own, so this is
+  // `nà biānr` rather than one word with a neutral 边. A known miss.
+  { hanzi: "那边儿", pinyin: "nàbianr", script: "Hans", tags: ["erhua", "rule-override"] },
+
+  // ── 得: one character, three readings, settled by context ──
+  { hanzi: "我得走了", pinyin: "wǒ děi zǒule", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "你得去", pinyin: "nǐ děi qù", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "他跑得很快", pinyin: "tā pǎo de hěn kuài", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "得到", pinyin: "dédào", script: "Hans", tags: ["polyphone"] },
 
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },

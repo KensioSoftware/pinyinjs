@@ -62,6 +62,45 @@ wrong. The two are held to different bars on purpose.
 The consequence you can see from outside is that the decoder knows when it was
 choosing, and will tell you: see [confidence](../confidence/).
 
+## Rules, where the cost model cannot reach
+
+Some readings are settled by context rather than by evidence about the
+characters, and no amount of frequency data reaches them. Those are handled by
+typed rules that run over the lattice — after it is built, before anything is
+decoded — and that may only take candidates away, never invent one.
+
+```ts
+convert(dictionary, "我得走了"); // "wǒ děi zǒule" — modal
+convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài" — particle
+convert(dictionary, "他得到了"); // "tā dédàole" — the word decides
+```
+
+得 is one character with three readings. The dictionary can only carry a
+default, and the default is the particle `de`, so every modal 得 read as one
+until this. What separates them is entirely contextual: the particle attaches to
+the verb or adjective in front of it, so a 得 with a pronoun, adverb or time
+word before it and a verb phrase after it is not that particle.
+
+The second rule keeps 儿 from standing on its own where the dictionary says it
+should not:
+
+```ts
+convert(dictionary, "那边儿"); // "nà biānr", not "nàbian ér"
+convert(dictionary, "女儿"); // "nǚ'ér" — a syllable of its own, and stays one
+```
+
+儿化 is a per-word dictionary fact, and 2,009 of the 2,067 words ending in 儿
+carry it — but 那边儿 is not listed while 这边儿, 上边儿 and 旁边儿 are. Where
+the character in front of a 儿 makes an attested 儿化 word, the reading that
+leaves 儿 stranded as `ér` is taken off the lattice. That asserts nothing new:
+边儿 is `biānr` because the dictionary says so. The spacing is still not what
+GB/T 16159 wants — 那边儿 is one word, and this writes two — because the word it
+would need is precisely the one missing.
+
+Rules are exported (`READING_RULES`, `MODAL_DE`, `ATTESTED_ERHUA`,
+`applyEdgeRules`) and `decodeRun` takes its own list, so an application with its
+own domain can add to them or decode with none.
+
 ## Non-Han text
 
 Digits, Latin letters, punctuation and anything else that was never Han pass
