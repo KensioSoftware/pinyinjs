@@ -26,6 +26,7 @@ const FLAGS = {
   capitals: { type: "string" },
   punctuation: { type: "string" },
   "no-grouping": { type: "boolean" },
+  "keep-numbers": { type: "boolean" },
   "third-tone": { type: "boolean" },
   "no-sandhi": { type: "boolean" },
   greedy: { type: "boolean" },
@@ -67,6 +68,7 @@ export const CONVERT_FLAGS: readonly FlagName[] = [
   "capitals",
   "punctuation",
   "no-grouping",
+  "keep-numbers",
   "third-tone",
   "no-sandhi",
 ];
@@ -212,6 +214,7 @@ export function convertOptions(flags: Flags): ConvertOptions {
   const punctuation = chosen(flags, "punctuation", PUNCTUATION);
 
   return {
+    ...(flags["keep-numbers"] === true && { numbers: "keep" as const }),
     ...(notation !== undefined && { notation }),
     ...(locale !== undefined && { locale }),
     ...(apostrophe !== undefined && { apostrophe }),

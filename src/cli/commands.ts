@@ -491,7 +491,7 @@ const NUMBER: Command = {
     const options: NumeralOptions = {
       style: input.flags.digits === true ? "digits" : "cardinal",
       ...(input.flags.yao === true && { yao: true }),
-      ...(input.flags["no-liang"] === true && { liang: false }),
+      ...(input.flags["no-liang"] === true && { liang: "never" as const }),
     };
     return input.texts.map((text) => {
       const hanzi =

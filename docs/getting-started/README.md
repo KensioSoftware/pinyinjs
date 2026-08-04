@@ -90,7 +90,7 @@ arrives. More in [dictionaries](../dictionaries/).
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "3Dyínháng" — non-Han text is left as written
+convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
 ```
 
 The two readings of 行 are the whole reason this package is not a lookup table:

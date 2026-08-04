@@ -11,6 +11,12 @@ import {
   type PunctuationStyle,
   toLatinPunctuationParts,
 } from "../orthography/punctuation.js";
+import {
+  type NumeralSegment,
+  readNumbersIn,
+  saidNumeral,
+} from "../numerals/text.js";
+import { toCharacters } from "../script/characters.js";
 import type { Locale } from "../script/script.js";
 import {
   type Syllable,
@@ -20,7 +26,7 @@ import {
 import type { ReadingConfidence } from "./confidence.js";
 import { decodeRun, decodeRunScored } from "./decode.js";
 import { decodeGreedily } from "./greedy.js";
-import { splitRuns } from "./runs.js";
+import { splitRuns, type TextRun } from "./runs.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
 
@@ -42,7 +48,20 @@ export interface ConvertOptions {
   readonly punctuation?: PunctuationStyle;
   /** Whether GB/T 16159 word grouping is applied. Defaults to true. */
   readonly grouping?: boolean;
+  /**
+   * What to do with the digits in a text. Defaults to `read`.
+   *
+   * `read` says them: 我有3个 is `wǒ yǒu sān gè` and 1997年 is
+   * `yī jiǔ jiǔ qī nián`. `keep` leaves every digit exactly as it was written,
+   * which is what this did before there was anything to read them with.
+   */
+  readonly numbers?: NumberStyle;
 }
+
+/**
+ * What a conversion does with the digits it meets.
+ */
+export type NumberStyle = "read" | "keep";
 
 /**
  * One piece of a conversion: a syllable, or the text between two of them.
@@ -217,6 +236,173 @@ function rewrite(
 }
 
 /**
+ * The words a Han run decodes to, with 分词连写 applied.
+ *
+ * Grouping rewrites word boundaries and never the readings behind them, so the
+ * syllables — and the confidence beside them — survive it in order.
+ */
+function wordsOf(
+  decoded: readonly ScoredWord[],
+  dictionary: Dictionary,
+  isGrouped: boolean,
+): readonly ScoredWord[] {
+  return isGrouped
+    ? regroup(
+        decoded,
+        applyGrouping(
+          decoded.map((scored) => scored.word),
+          dictionary,
+        ),
+      )
+    : decoded;
+}
+
+/**
+ * What surrounds a non-Han run, as far as a number in it cares.
+ */
+interface RunContext {
+  readonly after: {
+    readonly character: string;
+    readonly syllable: Syllable | undefined;
+  };
+  /** Whether pinyin was written immediately before this run. */
+  readonly isAfterHan: boolean;
+}
+
+/**
+ * What comes after a run: the first character of the next Han, and its first
+ * syllable.
+ *
+ * A number's only context. The character decides how it is read — 年 makes
+ * 1997 a year, 个 makes 3 a count — and the syllable is what a 一 ending the
+ * number assimilates to.
+ */
+function following(
+  runs: readonly TextRun[],
+  decoded: readonly (readonly ScoredWord[])[],
+  at: number,
+): RunContext {
+  const next = runs[at + 1];
+  const isAfterHan = runs[at - 1]?.isHan === true;
+  if (next?.isHan !== true) {
+    return { after: { character: "", syllable: undefined }, isAfterHan };
+  }
+  return {
+    after: {
+      character: toCharacters(next.text)[0] ?? "",
+      syllable: decoded[at + 1]?.[0]?.word.reading[0],
+    },
+    isAfterHan,
+  };
+}
+
+/**
+ * Whether a character wants a space between it and a number read out.
+ *
+ * A letter or a digit does; punctuation does not, so 20%。 keeps its full stop
+ * against the number.
+ */
+const WORDLIKE = /[\p{L}\p{N}]/u;
+
+/**
+ * Whether two stretches take a space between them once one has been read.
+ */
+function isSpaced(before: string, after: string): boolean {
+  return WORDLIKE.test(before.at(-1) ?? "") && WORDLIKE.test(after[0] ?? "");
+}
+
+/**
+ * Write a number's syllables as the pieces they are written with.
+ *
+ * A counted number is *one word*, which is what 正词法 6.1.5 asks for: 123 is
+ * `yībǎi'èrshísān` and not three words, so the syllables run together and take
+ * the 隔音符号 where one is needed. A number read out digit by digit is not a
+ * word at all — it is digits — so those are written apart: 1997年 is
+ * `yī jiǔ jiǔ qī nián`.
+ */
+function numberPieces(
+  said: readonly Syllable[],
+  segment: NumeralSegment,
+  written: Written,
+): readonly ConvertedPiece[] {
+  const spelled = said.map((syllable) =>
+    writeSyllable(syllable, written.notation),
+  );
+  // A decimal is not one word either: everything after the 点 is read digit by
+  // digit, so 3.14 is `sān diǎn yī sì`.
+  if (segment.style === "digits" || (segment.hanzi ?? "").includes("点")) {
+    return spelled.flatMap((text, at) => [
+      ...(at === 0 ? [] : [plainPiece(" ")]),
+      { text, syllable: said[at], confidence: undefined },
+    ]);
+  }
+  const isNumbered =
+    written.notation === "numbers" || written.notation === "superscript";
+  return markWord(spelled, isNumbered ? "never" : written.apostrophe).map(
+    (text, at) => ({ text, syllable: said[at], confidence: undefined }),
+  );
+}
+
+/**
+ * A stand-in for the pinyin either side of a run, which ends in a letter.
+ */
+function runEdge(isHan: boolean): string {
+  return isHan ? "a" : "";
+}
+
+/**
+ * Write a stretch that was never Han, reading the numbers in it.
+ *
+ * Everything that is not a number goes through exactly as written, which is
+ * what this always did: digits are the only part of a non-Han run this package
+ * has anything to say about. Once a number *has* been read, though, the whole
+ * stretch is being said rather than shown, so its parts take the spacing of
+ * words — 3D打印 is `sān D dǎyìn` — and punctuation still takes none.
+ */
+function writeNumbers(
+  text: string,
+  context: RunContext,
+  written: Written,
+  options: {
+    readonly numbers: NumberStyle;
+    readonly sandhi: SandhiOptions | undefined;
+  },
+): readonly ConvertedPiece[] {
+  const segments =
+    options.numbers === "keep"
+      ? []
+      : readNumbersIn(text, context.after.character);
+  if (segments.every((segment) => segment.reading === undefined)) {
+    return [plainPiece(text)];
+  }
+
+  const pieces: ConvertedPiece[] = [];
+  let before = runEdge(context.isAfterHan);
+
+  for (const segment of segments) {
+    if (isSpaced(before, segment.text)) {
+      pieces.push(plainPiece(" "));
+    }
+    pieces.push(
+      ...(segment.reading === undefined
+        ? [plainPiece(segment.text)]
+        : numberPieces(
+            saidNumeral(segment, context.after.syllable, options.sandhi),
+            segment,
+            written,
+          )),
+    );
+    // What decides the next space is what was *written*, not what was read:
+    // 95% ends in a sign and `bǎifēnzhījiǔshíwǔ` ends in a letter.
+    before = pieces.at(-1)?.text ?? before;
+  }
+  if (isSpaced(before, runEdge(context.after.character !== ""))) {
+    pieces.push(plainPiece(" "));
+  }
+  return pieces;
+}
+
+/**
  * Run the pipeline over a text with a given decoder.
  */
 function convertWith(
@@ -232,29 +418,34 @@ function convertWith(
     capitals = "auto",
     punctuation = "latin",
     grouping = true,
+    numbers = "read",
     sandhi,
   } = options;
   const written: Written = { notation, apostrophe, capitals };
   const converted: ConvertedPiece[] = [];
 
-  for (const run of splitRuns(text)) {
-    if (!run.isHan) {
-      converted.push(plainPiece(run.text));
+  // Decoded before anything is written, because a number needs to know what
+  // follows it — 1997年 is a year and 3个 is a count — and what follows it is
+  // in the next run.
+  const runs = [...splitRuns(text)];
+  const decoded = runs.map((run) =>
+    run.isHan
+      ? wordsOf(decode(dictionary, run.text), dictionary, grouping)
+      : [],
+  );
+
+  for (const [at, run] of runs.entries()) {
+    const words = decoded[at] ?? [];
+    if (run.isHan) {
+      converted.push(...writeRun(dictionary, words, locale, written, sandhi));
       continue;
     }
-    const decoded = decode(dictionary, run.text);
-    // Grouping rewrites word boundaries and never the readings behind them, so
-    // the syllables — and the confidence beside them — survive it in order.
-    const words = grouping
-      ? regroup(
-          decoded,
-          applyGrouping(
-            decoded.map((scored) => scored.word),
-            dictionary,
-          ),
-        )
-      : decoded;
-    converted.push(...writeRun(dictionary, words, locale, written, sandhi));
+    converted.push(
+      ...writeNumbers(run.text, following(runs, decoded, at), written, {
+        numbers,
+        sandhi,
+      }),
+    );
   }
   let pieces: readonly ConvertedPiece[] = converted;
 

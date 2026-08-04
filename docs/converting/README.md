@@ -8,7 +8,7 @@ the same answer.
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "3Dyínháng" — non-Han text is left as written
+convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
 ```
 
 The signature is `convert(dictionary, text, options?)`. Options are documented
@@ -107,7 +107,7 @@ Digits, Latin letters, punctuation and anything else that was never Han pass
 through exactly as written.
 
 ```ts
-convert(dictionary, "3D银行"); // "3Dyínháng"
+convert(dictionary, "3D银行"); // "sān D yínháng"
 ```
 
 Reading numbers aloud — 3 as `sān`, 2024 as a year — is a separate problem and

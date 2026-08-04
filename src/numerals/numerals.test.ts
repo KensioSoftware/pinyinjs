@@ -63,8 +63,12 @@ describe("cardinals", () => {
   });
 
   it("groups by 万 rather than by thousands", () => {
-    assertIdentical(cardinalHanzi(12_345), "一万二千三百四十五");
+    assertIdentical(cardinalHanzi(12_345), "一万两千三百四十五");
     assertIdentical(cardinalHanzi(1_234_567), "一百二十三万四千五百六十七");
+    assertIdentical(
+      cardinalHanzi(12_345, { liang: "leading" }),
+      "一万二千三百四十五",
+    );
     assertIdentical(cardinalHanzi(100_000_000), "一亿");
   });
 
@@ -74,19 +78,35 @@ describe("cardinals", () => {
     assertIdentical(cardinalHanzi(100_000_005), "一亿零五");
   });
 
-  it("writes a leading lone 2 as 两 in front of a big unit", () => {
+  it("writes a lone 2 as 两 in front of a big unit, wherever it falls", () => {
     assertIdentical(cardinalHanzi(2000), "两千");
     assertIdentical(cardinalHanzi(20_000), "两万");
-    // Not in the tens, not in 百, and not inside a longer number.
+    assertIdentical(cardinalHanzi(12_000), "一万两千");
+    assertIdentical(cardinalHanzi(22_000), "两万两千");
+  });
+
+  it("keeps 二 where the 2 is not a multiplier of a big unit", () => {
     assertIdentical(cardinalHanzi(12), "十二");
     assertIdentical(cardinalHanzi(20), "二十");
     assertIdentical(cardinalHanzi(200), "二百");
-    assertIdentical(cardinalHanzi(12_000), "一万二千");
+    // The 二 of 十二万 is the units digit of 12, not a multiplier of 万.
+    assertIdentical(cardinalHanzi(120_000), "十二万");
+  });
+
+  it("keeps 两 to the front of the number when asked", () => {
+    // 现代汉语词典's own prescription: the 二 of 三万二千 cannot be 两.
+    assertIdentical(cardinalHanzi(12_000, { liang: "leading" }), "一万二千");
+    assertIdentical(cardinalHanzi(2000, { liang: "leading" }), "两千");
+    assertIdentical(cardinalHanzi(20_000, { liang: "leading" }), "两万");
+    assertIdentical(
+      cardinalHanzi(30_002_000, { liang: "leading" }),
+      "三千万二千",
+    );
   });
 
   it("writes 二 everywhere when asked", () => {
-    assertIdentical(cardinalHanzi(2000, { liang: false }), "二千");
-    assertIdentical(cardinalHanzi(20_000, { liang: false }), "二万");
+    assertIdentical(cardinalHanzi(2000, { liang: "never" }), "二千");
+    assertIdentical(cardinalHanzi(20_000, { liang: "never" }), "二万");
   });
 
   it("refuses what it cannot write", () => {

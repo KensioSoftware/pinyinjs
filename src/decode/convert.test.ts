@@ -8,6 +8,7 @@ import {
   assertArrayEquals,
   assertArrayLength,
   assertIdentical,
+  assertNonNullable,
   assertTrue,
   assertUndefined,
 } from "@kensio/smartass";
@@ -43,10 +44,11 @@ describe("converting with the greedy baseline", () => {
     assertIdentical(convert("北京"), "Běijīng");
   });
 
-  it("passes non-Han text through untouched", () => {
-    // The digit and the letter are left exactly as written — reading them
-    // aloud belongs to the numerals package, not here.
-    assertIdentical(convert("3D银行"), "3Dyínháng");
+  it("reads the digits and passes the rest of the non-Han through", () => {
+    // The digit is said and the letter stays a letter, which is how
+    // CC-CEDICT reads 3D打印: `san1 D da3 yin4`.
+    assertIdentical(convert("3D银行"), "sān D yínháng");
+    assertIdentical(convert("3D银行", { numbers: "keep" }), "3Dyínháng");
     // 《》 marks a title, which the Latin script sets in italics rather than
     // with a bracket, so there is nothing to rewrite it to.
     assertIdentical(convert("《北京》"), "《Běijīng》");
@@ -127,8 +129,8 @@ describe("converting with the lattice", () => {
     assertIdentical(lattice("北京"), "Běijīng");
   });
 
-  it("passes non-Han text through untouched", () => {
-    assertIdentical(lattice("3D银行"), "3Dyínháng");
+  it("reads the digits and passes the rest of the non-Han through", () => {
+    assertIdentical(lattice("3D银行"), "sān D yínháng");
     assertIdentical(lattice("《北京》"), "《Běijīng》");
   });
 
@@ -240,6 +242,53 @@ describe("word grouping", () => {
   });
 });
 
+describe("numbers in text", () => {
+  const counting = dictionaryOf([
+    entry("个", "gè", { frequency: 90_000 }),
+    entry("人", "rén", { frequency: 80_000 }),
+    entry("年", "nián", { frequency: 70_000 }),
+    entry("我", "wǒ", { frequency: 60_000 }),
+    entry("有", "yǒu", { frequency: 50_000 }),
+    entry("的", "de", { frequency: 99_000 }),
+  ]);
+  const written = (text: string, options?: ConvertOptions): string =>
+    convert_(counting, text, options);
+
+  it("counts a number and spaces it as a word", () => {
+    assertIdentical(written("我有3个"), "wǒ yǒu sān gè");
+  });
+
+  it("writes a counted number as one word, as 正词法 asks", () => {
+    assertIdentical(written("我有25个"), "wǒ yǒu èrshíwǔ gè");
+  });
+
+  it("spells out a four-digit year and spaces its digits", () => {
+    assertIdentical(written("1997年"), "yī jiǔ jiǔ qī nián");
+    // Two digits before 年 is a count of years.
+    assertIdentical(written("30年"), "sānshí nián");
+  });
+
+  it("reverses a percentage", () => {
+    assertIdentical(written("95%的人"), "bǎifēnzhījiǔshíwǔ de rén");
+  });
+
+  it("assimilates a 一 to the word after the number", () => {
+    assertIdentical(written("1个"), "yí gè");
+  });
+
+  it("keeps the letters beside a number, spaced", () => {
+    assertIdentical(written("3D的"), "sān D de");
+  });
+
+  it("leaves an identifier exactly as written", () => {
+    assertIdentical(written("6:30的"), "6:30de");
+  });
+
+  it("leaves every digit alone when asked", () => {
+    assertIdentical(written("我有3个", { numbers: "keep" }), "wǒ yǒu3gè");
+  });
+});
+
 describe("converting to pieces", () => {
   it("joins back to exactly what convert writes", () => {
     for (const text of [
@@ -273,10 +322,21 @@ describe("converting to pieces", () => {
     );
   });
 
-  it("reports no syllable for text that was never Han", () => {
+  it("reports a syllable for a number, and none for a letter", () => {
+    // A number that has been read is said, so it has a syllable behind it like
+    // any other piece; the letter beside it does not.
     const pieces = convertPieces(dictionary, "3D银行");
-    assertUndefined(pieces[0]?.syllable);
-    assertIdentical(pieces[0]?.text, "3D");
+    const [first] = pieces;
+    assertNonNullable(first);
+    assertIdentical(first.text, "sān");
+    assertIdentical(first.syllable?.final, "an");
+    // A space, then the letter: the number is a word and takes the spacing of
+    // one.
+    assertArrayEquals(
+      pieces.slice(0, 5).map((piece) => piece.text),
+      ["sān", " ", "D", " ", "yín"],
+    );
+    assertUndefined(pieces[2]?.syllable);
   });
 
   it("reports what each syllable was chosen over", () => {
