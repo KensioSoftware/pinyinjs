@@ -120,6 +120,52 @@ describe("reading source dictionary entries", () => {
     });
   });
 
+  describe("punctuation inside a headword", () => {
+    it("consumes a comma that the source gives a reading for", () => {
+      // Two-clause proverbs record the comma as a reading of its own. 642
+      // entries depend on this, almost all of them 谚语.
+      assertArrayEquals(
+        written("一不做，二不休", [
+          "yi1",
+          "bu4",
+          "zuo4",
+          ",",
+          "er4",
+          "bu4",
+          "xiu1",
+        ]) ?? [],
+        ["yī", "bù", "zuò", "èr", "bù", "xiū"],
+      );
+    });
+
+    it("skips punctuation the source gives no reading for", () => {
+      // The · separating the parts of a transliterated name is unread, so the
+      // eight characters of 亞西爾·阿拉法特 carry seven syllables.
+      const syllables = readDictionaryReading("亞西爾·阿拉法特", [
+        "Ya4",
+        "xi1",
+        "er3",
+        "A1",
+        "la1",
+        "fa3",
+        "te4",
+      ]);
+      assertNonNullable(syllables);
+      assertArrayLength(syllables, 7);
+    });
+
+    it("skips unread punctuation at the end of a headword", () => {
+      assertArrayEquals(written("银行·", ["yin2", "hang2"]) ?? [], [
+        "yín",
+        "háng",
+      ]);
+    });
+
+    it("rejects a punctuation reading against a character that is not punctuation", () => {
+      assertUndefined(readDictionaryReading("银行", ["yin2", ","]));
+    });
+  });
+
   describe("what it rejects", () => {
     it("rejects a token that is not a syllable", () => {
       assertUndefined(readDictionaryReading("银行", ["yin2", "zzz"]));

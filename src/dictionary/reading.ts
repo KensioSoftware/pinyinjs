@@ -13,6 +13,17 @@ import { NEUTRAL_TONE, type Tone } from "../tone/tone.js";
 const ERHUA_TOKEN = "r5";
 
 /**
+ * A reading token that is punctuation rather than a syllable.
+ *
+ * CC-CEDICT records the comma of a two-clause proverb as a reading of its own:
+ * 一不做，二不休 reads `yi1 bu4 zuo4 , er4 bu4 xiu1`. The comma accounts for the
+ * 、character in the headword and contributes no syllable, so it has to be
+ * consumed rather than rejected — 642 entries, almost all of them 谚语, depend
+ * on it.
+ */
+const PUNCTUATION_TOKEN = /^[\p{P}\p{S}]+$/u;
+
+/**
  * Characters whose tone is fixed underlyingly, whatever a source writes.
  *
  * 一 and 不 are the only two characters in Mandarin whose written tone varies by
@@ -67,11 +78,12 @@ function normaliseSourceSyllable(
  * of the dictionary rather than guessed at.
  *
  * Measured over the real sources: every one of the 411,956 phrase corpus entries
- * is accepted, and 99.38% of CC-CEDICT. The rejections there are all headwords
+ * is accepted, and almost all of CC-CEDICT. What remains rejected are headwords
  * mixing digits and Latin letters — `3D打印`, `4S店`, `11區` — whose readings
  * include literal characters (`D`, `S`) or numbers spelled out (`san1` for 3).
- * Those belong to the numerals package rather than here, so rejecting them is
- * the intended behaviour rather than a gap.
+ * Reading those aloud is the numerals package's job, and CC-CEDICT's own
+ * readings for them are a useful worked set for it, so they are deferred rather
+ * than discarded.
  */
 export function readDictionaryReading(
   word: string,
@@ -95,15 +107,41 @@ export function readDictionaryReading(
       continue;
     }
 
+    // Punctuation the source gave no reading for, such as the · separating the
+    // parts of a transliterated name: 亞西爾·阿拉法特 is read as seven syllables
+    // for eight characters. Skipped so the rest stays aligned.
+    while (
+      !PUNCTUATION_TOKEN.test(reading) &&
+      PUNCTUATION_TOKEN.test(characters[consumed] ?? "")
+    ) {
+      consumed++;
+    }
+
     const character = characters[consumed];
     if (character === undefined) {
       return undefined;
+    }
+
+    // Punctuation that does have a reading lines up with a punctuation
+    // character and produces no syllable, which is what keeps multi-clause
+    // proverbs readable.
+    if (PUNCTUATION_TOKEN.test(reading)) {
+      if (!PUNCTUATION_TOKEN.test(character)) {
+        return undefined;
+      }
+      consumed++;
+      continue;
     }
     const syllable = readSyllable(normaliseUmlaut(reading));
     if (syllable === undefined) {
       return undefined;
     }
     syllables.push(normaliseSourceSyllable(syllable, character));
+    consumed++;
+  }
+
+  // Trailing punctuation, likewise unread.
+  while (PUNCTUATION_TOKEN.test(characters[consumed] ?? "")) {
     consumed++;
   }
 
