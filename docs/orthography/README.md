@@ -84,6 +84,44 @@ condition strong enough to survive the whole dictionary, or a listed entry with
 a reason attached. That asymmetry is why the rule set is short and the list
 exists.
 
+## Hyphens (重叠)
+
+A reduplication is one word with a boundary inside it, and GB/T 16159 marks
+that boundary with a hyphen rather than a space:
+
+```ts
+convert(dictionary, "干干净净"); // "gāngān-jìngjìng"
+convert(dictionary, "高高兴兴"); // "gāogāo-xìngxìng"
+convert(dictionary, "研究研究"); // "yánjiū-yánjiū"
+convert(dictionary, "请你休息休息。"); // "Qǐng nǐ xiūxi-xiūxi."
+```
+
+The shape is the whole of the evidence, which matters because two thirds of the
+dictionary carries no part-of-speech tag: a four-character word whose halves
+each double is a reduplication and essentially nothing else. Over 711,000
+decoded words of Tatoeba and zh.wikipedia the AABB rule fires 66 times and all
+66 are reduplications.
+
+The repeat rule — 研究研究, 休息休息 — reads two words rather than one, because
+verb reduplication is productive and 研究研究 is not a dictionary entry. It
+fires 54 times over the same text and is right 46 of them; the eight misses are
+a word ending one clause and starting the next, as in 告诉我们｜我们在哪里,
+which nothing short of syntax separates from 讨论讨论.
+
+Two things it deliberately does not do:
+
+```ts
+convert(dictionary, "爸爸妈妈"); // "bàba māma" — two words, not AABB
+convert(dictionary, "看看"); // "kànkan" — written solid, neutral second syllable
+```
+
+爸爸妈妈 has exactly the AABB shape and is two words. What separates it from
+干干净净 is that the decode produced two words rather than one, so that is the
+condition — nothing in the dictionary could tell them apart, since 匆匆 and 爸爸
+are both words and so are 匆忙 and 爸妈. The cost is measurable: of 43 AABB
+spans arriving as two words, about 16 are reduplications the decoder split, and
+those keep their space.
+
 ## Capitals
 
 ```ts
@@ -161,8 +199,15 @@ something readable rather than something wrong:
 | --------------------------------------------------------- | ------------------------------------------ |
 | 成语 hyphenate 2+2: 风平浪静 → `fēngpíng-làngjìng`        | `fēngpínglàngjìng`, no hyphen              |
 | 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit                  |
-| AABB/ABAB reduplication hyphenates                        | spaced: 研究研究 → `yánjiū yánjiū`         |
 | 老王 → `Lǎo Wáng`                                         | `lǎo Wáng` — 老 is not treated as a prefix |
+
+成语 is the one worth explaining, because it looks like the reduplication rule
+and is not. The standard hyphenates a four-syllable idiom that can be read as
+two disyllables and writes the rest solid, and no property of the dictionary
+tracks that: conditioning on both halves being words fires on 10,202 of the
+22,192 four-character idioms and gets 层出不穷 right while missing 风平浪静,
+which are the standard's own two examples of the same rule. That is a curated
+list or a source that marks the structure, not a rule.
 
 A coverage caveat worth knowing before expecting more from the tag-conditioned
 rules: 487,552 of 721,718 Han words carry no part-of-speech tag at all, since

@@ -96,6 +96,17 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "桌子", pinyin: "zhuōzi", script: "Hans", tags: ["orthography", "neutral-tone"] },
   { hanzi: "现代化", pinyin: "xiàndàihuà", script: "Hans", tags: ["orthography"] },
 
+  // ── 重叠: the hyphen goes inside the word ──────────────────
+  { hanzi: "干干净净", pinyin: "gāngān-jìngjìng", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "高高兴兴", pinyin: "gāogāo-xìngxìng", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "形形色色", pinyin: "xíngxíng-sèsè", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "研究研究", pinyin: "yánjiū-yánjiū", script: "Hans", tags: ["orthography", "hyphen"] },
+  { hanzi: "休息休息", pinyin: "xiūxi-xiūxi", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
+  // 爸爸妈妈 is that shape and is two words, so the hyphen must not reach it.
+  { hanzi: "爸爸妈妈", pinyin: "bàba māma", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
+  // 看看 is a repeat too, and is written solid with a neutral second syllable.
+  { hanzi: "看看", pinyin: "kànkan", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
+
   // ── Sentences ─────────────────────────────────────────────
   { hanzi: "我要去北京玩儿。", pinyin: "Wǒ yào qù Běijīng wánr.", script: "Hans", tags: ["sentence", "erhua", "proper-noun"] },
   { hanzi: "他是中国人。", pinyin: "Tā shì Zhōngguórén.", script: "Hans", tags: ["sentence", "proper-noun"] },

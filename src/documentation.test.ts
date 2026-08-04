@@ -222,11 +222,25 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "儿子"), "érzi");
     });
 
+    it("hyphenates the reduplications the page shows", () => {
+      assertIdentical(convert(dictionary, "干干净净"), "gāngān-jìngjìng");
+      assertIdentical(convert(dictionary, "高高兴兴"), "gāogāo-xìngxìng");
+      assertIdentical(convert(dictionary, "研究研究"), "yánjiū-yánjiū");
+      assertIdentical(
+        convert(dictionary, "请你休息休息。"),
+        "Qǐng nǐ xiūxi-xiūxi.",
+      );
+    });
+
+    it("leaves the two shapes the page says it leaves", () => {
+      assertIdentical(convert(dictionary, "爸爸妈妈"), "bàba māma");
+      assertIdentical(convert(dictionary, "看看"), "kànkan");
+    });
+
     it("writes the gaps the page admits to", () => {
       // jieba tags 无缝钢管 nz, so it capitalises where it should not.
       assertIdentical(convert(dictionary, "无缝钢管"), "Wúfènggāngguǎn");
       assertIdentical(convert(dictionary, "风平浪静"), "fēngpínglàngjìng");
-      assertIdentical(convert(dictionary, "研究研究"), "yánjiū yánjiū");
       assertIdentical(convert(dictionary, "老王"), "lǎo Wáng");
     });
   });

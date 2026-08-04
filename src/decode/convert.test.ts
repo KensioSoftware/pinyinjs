@@ -203,6 +203,19 @@ describe("the orthography options", () => {
   });
 });
 
+/**
+ * A dictionary holding the two shapes 重叠 arrives in: 干干净净 as one entry,
+ * and 研究 as an entry the text repeats.
+ */
+const reduplicating = dictionaryOf([
+  entry("干", "gān"),
+  entry("净", "jìng"),
+  entry("研", "yán"),
+  entry("究", "jiū"),
+  entry("干干净净", "gān gān jìng jìng", { frequency: 300 }),
+  entry("研究", "yán jiū", { frequency: 4000 }),
+]);
+
 describe("word grouping", () => {
   it("writes the generic half of a place name separately", () => {
     assertIdentical(lattice("北京市"), "Běijīng Shì");
@@ -210,6 +223,20 @@ describe("word grouping", () => {
 
   it("leaves the grouping alone when asked", () => {
     assertIdentical(lattice("北京市", { grouping: false }), "Běijīngshì");
+  });
+
+  it("writes a reduplication with the hyphen inside it", () => {
+    // GB/T 16159 6.1.3: one orthographic word, with the boundary between its
+    // halves marked rather than spaced.
+    assertIdentical(convert_(reduplicating, "干干净净"), "gāngān-jìngjìng");
+    assertIdentical(convert_(reduplicating, "研究研究"), "yánjiū-yánjiū");
+  });
+
+  it("writes a space instead when the grouping is off", () => {
+    assertIdentical(
+      convert_(reduplicating, "研究研究", { grouping: false }),
+      "yánjiū yánjiū",
+    );
   });
 });
 

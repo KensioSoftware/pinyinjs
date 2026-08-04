@@ -218,6 +218,15 @@ The list is not a complete 正词法 implementation, so some words it does not
 cover are written differently: 不但 is `búdàn`, 大米 is `dàmǐ`, 青海 is
 `Qīnghǎi`.
 
+**Reduplication** takes a hyphen rather than a space, since it is one word with
+a boundary inside it.
+
+```ts
+convert(dictionary, "干干净净"); // "gāngān-jìngjìng"
+convert(dictionary, "研究研究"); // "yánjiū-yánjiū"
+convert(dictionary, "爸爸妈妈"); // "bàba māma" — that shape, but two words
+```
+
 **Non-Han text** — digits, Latin letters, punctuation — passes through exactly
 as written. Reading numbers aloud is a separate package, not yet built.
 
