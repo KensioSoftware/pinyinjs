@@ -117,6 +117,20 @@ export {
 } from "./decode/locking.js";
 export type { ReadingProjection, ReadingUnit } from "./decode/locking.js";
 
+export {
+  applyEdgeRules,
+  tagOf,
+  wordEndingAt,
+  wordStartingAt,
+} from "./decode/rules.js";
+export type { EdgeContext, EdgeRule, EdgeVerdict } from "./decode/rules.js";
+
+export {
+  ATTESTED_ERHUA,
+  MODAL_DE,
+  READING_RULES,
+} from "./decode/reading-rules.js";
+
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
 export type { CostOf } from "./decode/viterbi.js";
 

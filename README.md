@@ -143,6 +143,17 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 convert(dictionary, "3D银行"); // "3Dyínháng" — non-Han text is left as written
 ```
 
+A reading the dictionary cannot settle on its own is settled by context, with
+typed rules over the lattice rather than tweaks to the output:
+
+```ts
+convert(dictionary, "我得走了"); // "wǒ děi zǒule" — modal 得
+convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài" — the particle
+convert(dictionary, "那边儿"); // "nà biānr" — 儿 does not stand on its own
+```
+
+See [converting](docs/converting/#rules-where-the-cost-model-cannot-reach).
+
 ### Options
 
 ```ts

@@ -9,6 +9,8 @@ import {
   settledUnits,
   unitsOf,
 } from "./locking.js";
+import { READING_RULES } from "./reading-rules.js";
+import { applyEdgeRules, type EdgeRule } from "./rules.js";
 import { readingCost, shortestPath, spacingCost } from "./viterbi.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
 
@@ -116,6 +118,22 @@ function wordFrom(
 }
 
 /**
+ * The lattice a run decodes over: stage 1 built, then stage 4 applied.
+ *
+ * The rules run between building and decoding rather than over the output,
+ * which is the whole point of them — they change what the decode gets to choose
+ * between, so everything downstream sees one lattice rather than a decode and
+ * a list of corrections to it.
+ */
+function ruledLattice(
+  dictionary: Dictionary,
+  run: string,
+  rules: readonly EdgeRule[],
+): Lattice {
+  return applyEdgeRules(buildLattice(dictionary, run), dictionary, rules);
+}
+
+/**
  * Decode a Han run with the lattice: the recommended path.
  *
  * Stages 1 to 3 of ALGORITHM.md end to end — build every candidate reading,
@@ -125,8 +143,9 @@ function wordFrom(
 export function decodeRun(
   dictionary: Dictionary,
   run: string,
+  rules: readonly EdgeRule[] = READING_RULES,
 ): readonly DecodedWord[] {
-  const lattice = buildLattice(dictionary, run);
+  const lattice = ruledLattice(dictionary, run, rules);
   const units = decodeReadings(lattice, projectReadings(lattice));
   return groupUnits(units, decodeSpacing(lattice)).map((group) =>
     wordFrom(dictionary, lattice, group),
@@ -144,8 +163,9 @@ export function decodeRun(
 export function decodeRunScored(
   dictionary: Dictionary,
   run: string,
+  rules: readonly EdgeRule[] = READING_RULES,
 ): readonly ScoredWord[] {
-  const lattice = buildLattice(dictionary, run);
+  const lattice = ruledLattice(dictionary, run, rules);
   const units = scoreReadings(lattice, projectReadings(lattice));
 
   return groupUnits<ScoredUnit>(units, decodeSpacing(lattice)).map((group) => ({

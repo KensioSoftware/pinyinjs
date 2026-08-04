@@ -153,6 +153,12 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "青海"), "Qīnghǎi");
     });
 
+    it("settles the readings the rules are shown settling", () => {
+      assertIdentical(convert(dictionary, "我得走了"), "wǒ děi zǒule");
+      assertIdentical(convert(dictionary, "他跑得很快"), "tā pǎo de hěn kuài");
+      assertIdentical(convert(dictionary, "那边儿"), "nà biānr");
+    });
+
     it("hyphenates the reduplications shown", () => {
       assertIdentical(convert(dictionary, "干干净净"), "gāngān-jìngjìng");
       assertIdentical(convert(dictionary, "研究研究"), "yánjiū-yánjiū");

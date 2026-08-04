@@ -63,6 +63,13 @@ guesses("银行").map((piece) => piece.text); // [] — the word settles both sy
 path through it. No amount of scoring can move it, so the decoder does not even
 try — locked positions are skipped before the shortest-path decode runs.
 
+A reading a [rule](../converting/#rules-where-the-cost-model-cannot-reach)
+settled reports as locked too, and for the same reason: the rules run over the
+lattice before anything is decoded, so the 得 of 我得走了 has one reading left by
+the time the decode sees it. What the flag says is that nothing downstream chose
+it, which stays true — but the 1.46% below is measured over positions the data
+locked, not over these.
+
 **Backed by a word** means other readings existed, but reaching any of them
 would have meant breaking apart a word the dictionary attests. 长江大桥 reads
 `Cháng` rather than `zhǎng` on that basis.

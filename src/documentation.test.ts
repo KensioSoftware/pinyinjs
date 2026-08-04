@@ -114,6 +114,17 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("reads 得 the three ways the page shows", () => {
+      assertIdentical(convert(dictionary, "我得走了"), "wǒ děi zǒule");
+      assertIdentical(convert(dictionary, "他跑得很快"), "tā pǎo de hěn kuài");
+      assertIdentical(convert(dictionary, "他得到了"), "tā dédàole");
+    });
+
+    it("keeps 儿 off its own where the 儿化 is attested", () => {
+      assertIdentical(convert(dictionary, "那边儿"), "nà biānr");
+      assertIdentical(convert(dictionary, "女儿"), "nǚ'ér");
+    });
+
     it("joins pieces back into what convert returns", () => {
       const pieces = convertPieces(dictionary, "长江大桥");
       assertIdentical(joinPieces(pieces), "Cháng Jiāng Dàqiáo");
