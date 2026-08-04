@@ -42,6 +42,20 @@ export interface CommandInput {
 }
 
 /**
+ * One answer, in both the forms the CLI can write it.
+ *
+ * Every command reports both rather than one being derived from the other: the
+ * lines are for a person reading them and the data is for `jq`, and a person's
+ * columns are a poor thing to parse. Keeping them side by side in each command
+ * is what stops them drifting apart.
+ */
+export interface Reported {
+  readonly lines: readonly string[];
+  /** Written as one JSON document per answer, for `--json`. */
+  readonly data: unknown;
+}
+
+/**
  * One subcommand.
  */
 export interface Command {
@@ -59,7 +73,7 @@ export interface Command {
    * should not wait for 2.4 MB to load.
    */
   readonly needsDictionary: boolean;
-  readonly run: (input: CommandInput) => readonly string[];
+  readonly run: (input: CommandInput) => readonly Reported[];
 }
 
 /**
@@ -81,7 +95,19 @@ function column(text: string, width: number): string {
 }
 
 /**
+ * A reading written out, syllable by syllable.
+ */
+function written(reading: readonly Syllable[]): string {
+  return reading.map((syllable) => writeSyllable(syllable)).join(" ");
+}
+
+/**
  * How settled a decoded syllable was, in one word.
+ *
+ * `locked` means no other reading was on offer, `word` that taking one would
+ * have meant breaking a dictionary word apart, and `guess` that another reading
+ * of the same characters was there for the taking. See ROADMAP.md for how often
+ * each turns out to be wrong.
  */
 function stateOf(piece: ConvertedPiece): string {
   const { confidence } = piece;
@@ -92,18 +118,22 @@ function stateOf(piece: ConvertedPiece): string {
 }
 
 /**
- * What a decode rejected, written out with what rejecting it saved.
+ * What a decode rejected at one syllable, and what rejecting it saved.
  */
-function alternativesOf(piece: ConvertedPiece, flags: Flags): string {
-  const notation = convertOptions(flags).notation;
-  return (piece.confidence?.alternatives ?? [])
-    .map((alternative) => {
-      const written = alternative.reading
-        .map((syllable) => writeSyllable(syllable, notation))
-        .join("");
-      return `${written} +${alternative.cost.toFixed(1)}`;
-    })
-    .join("  ");
+function alternativesOf(
+  piece: ConvertedPiece,
+  flags: Flags,
+): readonly { readonly reading: string; readonly cost: number }[] {
+  const { notation } = convertOptions(flags);
+  return (piece.confidence?.alternatives ?? []).map((alternative) => ({
+    reading: alternative.reading
+      .map((syllable) => writeSyllable(syllable, notation))
+      .join(""),
+    // Rounded because a cost is a sum of frequency buckets and a per-word
+    // charge of 4.62, which lands on 24.620000000000005 often enough to be
+    // worth not putting in front of anybody.
+    cost: Math.round(alternative.cost * 100) / 100,
+  }));
 }
 
 /**
@@ -118,9 +148,10 @@ const CONVERT: Command = {
   run: (input) => {
     const decode = input.flags.greedy === true ? convertGreedily : convert;
     const options = convertOptions(input.flags);
-    return input.texts.map((text) =>
-      decode(dictionaryOf(input), text, options),
-    );
+    return input.texts.map((text) => {
+      const pinyin = decode(dictionaryOf(input), text, options);
+      return { lines: [pinyin], data: { text, pinyin } };
+    });
   },
 };
 
@@ -135,11 +166,38 @@ const HTML: Command = {
   needsDictionary: true,
   run: (input) => {
     const options = htmlOptions(input.flags);
-    return input.texts.map((text) =>
-      convertToHtml(dictionaryOf(input), text, options),
-    );
+    return input.texts.map((text) => {
+      const html = convertToHtml(dictionaryOf(input), text, options);
+      return { lines: [html], data: { text, html } };
+    });
   },
 };
+
+/**
+ * One decoded syllable, as `explain` reports it.
+ */
+function explainSyllable(
+  piece: ConvertedPiece,
+  flags: Flags,
+): { readonly line: string; readonly data: unknown } {
+  const state = stateOf(piece);
+  const alternatives = alternativesOf(piece, flags);
+  const beaten = alternatives
+    .map(
+      (alternative) => `${alternative.reading} +${alternative.cost.toFixed(1)}`,
+    )
+    .join("  ");
+
+  return {
+    line: `  ${column(piece.text, 8)}${column(state, 8)}${beaten}`.trimEnd(),
+    data: {
+      text: piece.text,
+      state,
+      ...(piece.syllable?.tone !== undefined && { tone: piece.syllable.tone }),
+      alternatives,
+    },
+  };
+}
 
 /**
  * Show what the decoder chose, syllable by syllable, and what it rejected.
@@ -153,59 +211,69 @@ const EXPLAIN: Command = {
   run: (input) => {
     const dictionary = dictionaryOf(input);
     const options = convertOptions(input.flags);
-    const lines: string[] = [];
 
-    for (const text of input.texts) {
+    return input.texts.map((text) => {
       const pieces = convertPieces(dictionary, text, options);
-      lines.push(
-        `${text}  ${pieces.map((piece) => piece.text).join("")}`,
-        ...pieces
-          .filter((piece) => piece.syllable !== undefined)
-          .map((piece) =>
-            `  ${column(piece.text, 8)}${column(stateOf(piece), 8)}${alternativesOf(piece, input.flags)}`.trimEnd(),
-          ),
-      );
-    }
-    return lines;
+      const pinyin = pieces.map((piece) => piece.text).join("");
+      const syllables = pieces
+        .filter((piece) => piece.syllable !== undefined)
+        .map((piece) => explainSyllable(piece, input.flags));
+
+      return {
+        lines: [
+          `${text}  ${pinyin}`,
+          ...syllables.map((syllable) => syllable.line),
+        ],
+        data: {
+          text,
+          pinyin,
+          syllables: syllables.map((syllable) => syllable.data),
+        },
+      };
+    });
   },
 };
 
 /**
- * A reading written out, syllable by syllable.
- */
-function written(reading: readonly Syllable[]): string {
-  return reading.map((syllable) => writeSyllable(syllable)).join(" ");
-}
-
-/**
  * What the dictionary holds for a word.
  */
-function entryLines(dictionary: Dictionary, word: string): readonly string[] {
+function entryFound(dictionary: Dictionary, word: string): Reported {
   const entry = dictionary.lookup(word);
   if (entry === undefined) {
-    return [`${word}  not in the dictionary`];
+    return {
+      lines: [`${word}  not in the dictionary`],
+      data: { word, found: false },
+    };
   }
 
   const tags = [
-    entry.partOfSpeech === "" ? "" : entry.partOfSpeech,
+    entry.partOfSpeech,
     entry.isProperNoun ? "proper noun" : "",
   ].filter((tag) => tag !== "");
+  const others = dictionary.readingsOf(word).slice(1);
 
-  const readings = dictionary.readingsOf(word);
-  return [
-    `${word}  ${written(entry.reading)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
-    ...(entry.taiwanReading === undefined
-      ? []
-      : [`  zh-TW  ${written(entry.taiwanReading)}`]),
-    ...(readings.length > 1
-      ? [
-          `  also   ${readings
-            .slice(1)
-            .map((reading) => written(reading))
-            .join(", ")}`,
-        ]
-      : []),
-  ];
+  return {
+    lines: [
+      `${word}  ${written(entry.reading)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
+      ...(entry.taiwanReading === undefined
+        ? []
+        : [`  zh-TW  ${written(entry.taiwanReading)}`]),
+      ...(others.length > 0
+        ? [`  also   ${others.map((reading) => written(reading)).join(", ")}`]
+        : []),
+    ],
+    data: {
+      word,
+      found: true,
+      reading: written(entry.reading),
+      partOfSpeech: entry.partOfSpeech,
+      isProperNoun: entry.isProperNoun,
+      ...(entry.taiwanReading !== undefined && {
+        taiwanReading: written(entry.taiwanReading),
+      }),
+      otherReadings: others.map((reading) => written(reading)),
+    },
+  };
 }
 
 /**
@@ -218,32 +286,54 @@ const LOOKUP: Command = {
   flags: [],
   needsDictionary: true,
   run: (input) =>
-    input.texts.flatMap((word) => entryLines(dictionaryOf(input), word)),
+    input.texts.map((word) => entryFound(dictionaryOf(input), word)),
 };
 
 /**
  * One written syllable, taken apart.
  */
-function syllableLine(spelling: string): string {
+function syllableTaken(spelling: string): {
+  readonly line: string;
+  readonly data: unknown;
+} {
   const syllable = readSyllable(spelling);
-  /* c8 ignore next 3 -- splitSyllables only ever emits syllables that read */
+  /* c8 ignore next 6 -- splitSyllables only ever emits syllables that read */
   if (syllable === undefined) {
-    return `  ${column(spelling, 10)}not a syllable`;
+    return {
+      line: `  ${column(spelling, 10)}not a syllable`,
+      data: { spelling },
+    };
   }
+
+  const isAttested = DICTIONARY_SYLLABLES.has(
+    writeSyllableSpelling({ ...syllable, erhua: false }),
+  );
   const parts = [
     `${syllable.initial === "" ? "∅" : syllable.initial} + ${syllable.final}`,
     syllable.tone === undefined ? "no tone" : `tone ${String(syllable.tone)}`,
     ...(syllable.erhua === true ? ["儿化"] : []),
   ];
-  const notations = [
-    writeSyllable(syllable),
-    writeSyllable(syllable, "numbers"),
-    writeSyllable(syllable, "superscript"),
-  ].join("  ");
-  const isAttested = DICTIONARY_SYLLABLES.has(
-    writeSyllableSpelling({ ...syllable, erhua: false }),
-  );
-  return `  ${column(spelling, 10)}${column(parts.join(", "), 22)}${column(notations, 22)}${isAttested ? "" : "not attested"}`.trimEnd();
+  const notations = {
+    marks: writeSyllable(syllable),
+    numbers: writeSyllable(syllable, "numbers"),
+    superscript: writeSyllable(syllable, "superscript"),
+  };
+
+  return {
+    line: `  ${column(spelling, 10)}${column(parts.join(", "), 22)}${column(
+      Object.values(notations).join("  "),
+      22,
+    )}${isAttested ? "" : "not attested"}`.trimEnd(),
+    data: {
+      spelling,
+      initial: syllable.initial,
+      final: syllable.final,
+      ...(syllable.tone !== undefined && { tone: syllable.tone }),
+      erhua: syllable.erhua === true,
+      isAttested,
+      ...notations,
+    },
+  };
 }
 
 /**
@@ -256,15 +346,26 @@ const SYLLABLE: Command = {
   flags: [],
   needsDictionary: false,
   run: (input) =>
-    input.texts.flatMap((text) => {
+    input.texts.map((text) => {
       const split = splitSyllables(text);
       if (split === undefined) {
-        return [`${text}  not readable as pinyin`];
+        return {
+          lines: [`${text}  not readable as pinyin`],
+          data: { text, read: false },
+        };
       }
-      return [
-        `${text}  ${split.join(" ")}`,
-        ...split.map((spelling) => syllableLine(spelling)),
-      ];
+      const taken = split.map((spelling) => syllableTaken(spelling));
+      return {
+        lines: [
+          `${text}  ${split.join(" ")}`,
+          ...taken.map((syllable) => syllable.line),
+        ],
+        data: {
+          text,
+          read: true,
+          syllables: taken.map((syllable) => syllable.data),
+        },
+      };
     }),
 };
 
@@ -282,12 +383,16 @@ const SANDHI: Command = {
     return input.texts.map((text) => {
       const word = readWord(text);
       if (word === undefined) {
-        return `${text}  not readable as pinyin`;
+        return {
+          lines: [`${text}  not readable as pinyin`],
+          data: { text, read: false },
+        };
       }
-      const sandhied = applySandhi(word, options)
-        .map((syllable) => writeSyllable(syllable))
-        .join(" ");
-      return `${text}  ${sandhied}`;
+      const pinyin = written(applySandhi(word, options));
+      return {
+        lines: [`${text}  ${pinyin}`],
+        data: { text, read: true, pinyin },
+      };
     });
   },
 };
@@ -302,12 +407,27 @@ const INFO: Command = {
   argument: "",
   flags: [],
   needsDictionary: true,
-  run: (input) => [
-    `tier       ${input.choice.tier}`,
-    `data       ${input.choice.directory ?? "the artifacts that shipped"}`,
-    `keys       ${dictionaryOf(input).size.toLocaleString("en-GB")}`,
-    `syllables  ${String(ATTESTED_SYLLABLES.length)} attested, ${String(DICTIONARY_SYLLABLES.size)} spellings in the inventory`,
-  ],
+  run: (input) => {
+    const keys = dictionaryOf(input).size;
+    const directory = input.choice.directory;
+    return [
+      {
+        lines: [
+          `tier       ${input.choice.tier}`,
+          `data       ${directory ?? "the artifacts that shipped"}`,
+          `keys       ${keys.toLocaleString("en-GB")}`,
+          `syllables  ${String(ATTESTED_SYLLABLES.length)} attested, ${String(DICTIONARY_SYLLABLES.size)} spellings in the inventory`,
+        ],
+        data: {
+          tier: input.choice.tier,
+          ...(directory !== undefined && { data: directory }),
+          keys,
+          attestedSyllables: ATTESTED_SYLLABLES.length,
+          inventorySpellings: DICTIONARY_SYLLABLES.size,
+        },
+      },
+    ];
+  },
 };
 
 /**

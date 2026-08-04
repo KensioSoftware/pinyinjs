@@ -7,8 +7,11 @@ import {
 import {
   assertArrayEquals,
   assertArrayIncludes,
+  assertArrayLength,
   assertIdentical,
+  assertObjectEquals,
   assertStringIncludes,
+  assertStringNotIncludes,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
@@ -30,6 +33,15 @@ async function cli(...argv: readonly string[]): Promise<readonly string[]> {
   const result = await runCli(argv, environment);
   assertIdentical(result.status, 0, result.errors.join("\n"));
   return result.output;
+}
+
+/**
+ * The same, with `--json`, parsed back into the one document it wrote.
+ */
+async function json(...argv: readonly string[]): Promise<unknown> {
+  const written = await cli(...argv, "--json");
+  assertArrayLength(written, 1);
+  return JSON.parse(written[0]) as unknown;
 }
 
 describe("the convert command", () => {
@@ -70,6 +82,95 @@ describe("the convert command", () => {
     const lattice = await runCli(["convert", "银行长"], overlapping);
     assertArrayEquals(greedy.output, ["yínháng zhǎng"]);
     assertArrayEquals(lattice.output, ["yín hángzhǎng"]);
+  });
+});
+
+describe("writing JSON", () => {
+  it("writes one document per answer, not one array for the run", async () => {
+    const written = await cli("convert", "银行", "北京", "--json");
+    assertArrayLength(written, 2);
+    assertObjectEquals(JSON.parse(written[0]), {
+      text: "银行",
+      pinyin: "yínháng",
+    });
+  });
+
+  it("reports a syllable's state and what it beat", async () => {
+    assertObjectEquals(await json("explain", "银行"), {
+      text: "银行",
+      pinyin: "yínháng",
+      syllables: [
+        { text: "yín", state: "locked", tone: 2, alternatives: [] },
+        {
+          text: "háng",
+          state: "word",
+          tone: 2,
+          alternatives: [
+            { reading: "xíng", cost: 48.62 },
+            { reading: "héng", cost: 50.62 },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("rounds a cost to something worth printing", async () => {
+    // The per-word charge is 4.62, so an unrounded cost lands on
+    // 48.620000000000005 as often as not.
+    const explained = await json("explain", "银行");
+    assertStringNotIncludes(JSON.stringify(explained), "0000000");
+  });
+
+  it("reports a word's entry as fields rather than columns", async () => {
+    assertObjectEquals(await json("lookup", "垃圾"), {
+      word: "垃圾",
+      found: true,
+      reading: "lā jī",
+      partOfSpeech: "",
+      isProperNoun: false,
+      taiwanReading: "lè sè",
+      otherReadings: [],
+    });
+    assertObjectEquals(await json("lookup", "囧"), {
+      word: "囧",
+      found: false,
+    });
+  });
+
+  it("reports a syllable's parts", async () => {
+    assertObjectEquals(await json("syllable", "wánr"), {
+      text: "wánr",
+      read: true,
+      syllables: [
+        {
+          spelling: "wánr",
+          initial: "",
+          final: "uan",
+          tone: 2,
+          erhua: true,
+          isAttested: true,
+          marks: "wánr",
+          numbers: "wanr2",
+          superscript: "wanr²",
+        },
+      ],
+    });
+  });
+
+  it("says in the data when something could not be read", async () => {
+    assertObjectEquals(await json("sandhi", "xyz"), {
+      text: "xyz",
+      read: false,
+    });
+  });
+
+  it("reports what is loaded", async () => {
+    assertObjectEquals(await json("info", "--tier", "core"), {
+      tier: "core",
+      keys: 33,
+      attestedSyllables: 415,
+      inventorySpellings: 424,
+    });
   });
 });
 

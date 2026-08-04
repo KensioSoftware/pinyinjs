@@ -34,6 +34,7 @@ const GLOBAL_HELP: readonly string[] = (
   [
     ["--data <dir>", "read the dictionary from this directory"],
     ["--tier <tier>", "core, standard or full (default)"],
+    ["--json", "write one JSON document per answer"],
     ["-h, --help", "show this help"],
     ["-v, --version", "show the version"],
   ] as const

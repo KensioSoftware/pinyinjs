@@ -31,6 +31,7 @@ const FLAGS = {
   greedy: { type: "boolean" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
+  json: { type: "boolean" },
   help: { type: "boolean", short: "h" },
   version: { type: "boolean", short: "v" },
 } as const satisfies NonNullable<ParseArgsConfig["options"]>;
@@ -46,6 +47,7 @@ export type FlagName = keyof typeof FLAGS;
 export const GLOBAL_FLAGS: readonly FlagName[] = [
   "data",
   "tier",
+  "json",
   "help",
   "version",
 ];

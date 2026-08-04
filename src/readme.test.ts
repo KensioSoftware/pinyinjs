@@ -221,6 +221,43 @@ describe("the examples in README.md", () => {
       ]);
     });
 
+    it("writes the JSON the README pipes into jq", async () => {
+      const explained = await cli("explain", "长江大桥", "--json");
+      assertArrayLength(explained, 1);
+      assertObjectEquals(JSON.parse(explained[0]), {
+        text: "长江大桥",
+        pinyin: "Cháng Jiāng Dàqiáo",
+        syllables: [
+          {
+            text: "Cháng",
+            state: "word",
+            tone: 2,
+            alternatives: [{ reading: "zhǎng", cost: 24.62 }],
+          },
+          { text: "Jiāng", state: "locked", tone: 1, alternatives: [] },
+          {
+            text: "Dà",
+            state: "word",
+            tone: 4,
+            alternatives: [{ reading: "dài", cost: 22.62 }],
+          },
+          { text: "qiáo", state: "locked", tone: 2, alternatives: [] },
+        ],
+      });
+
+      const looked = await cli("lookup", "垃圾", "--json");
+      assertArrayLength(looked, 1);
+      assertObjectEquals(JSON.parse(looked[0]), {
+        word: "垃圾",
+        found: true,
+        reading: "lā jī",
+        partOfSpeech: "n",
+        isProperNoun: false,
+        taiwanReading: "lè sè",
+        otherReadings: [],
+      });
+    });
+
     it("has every command the README lists", async () => {
       const help = await cli();
       for (const command of [

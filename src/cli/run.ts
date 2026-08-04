@@ -88,8 +88,15 @@ async function runCommand(
     ? await environment.loadDictionary(choice)
     : undefined;
 
+  const reported = command.run({ texts, flags, dictionary, choice });
+
   return {
-    output: command.run({ texts, flags, dictionary, choice }),
+    // One JSON document per answer rather than one array for the run, so that
+    // `jq` sees the same shape whether one text was converted or a file was.
+    output:
+      flags.json === true
+        ? reported.map((answer) => JSON.stringify(answer.data))
+        : reported.flatMap((answer) => [...answer.lines]),
     errors: [],
     status: 0,
   };

@@ -61,6 +61,34 @@ A command given no arguments reads standard input, one text per line, so
 `cat article.txt | pinyinjs convert` works. `syllable` and `sandhi` need no
 dictionary at all and start without loading one.
 
+### Calling it from something else
+
+`convert` writes the pinyin and nothing else, so it drops straight into a
+pipeline:
+
+```console
+$ pinyinjs convert 银行
+yínháng
+```
+
+Everything else has columns for a person to read. Add `--json` — to any
+command — and it writes one JSON document per answer instead, which is what
+`jq` wants:
+
+```console
+$ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'
+{"text":"Cháng","state":"word","tone":2,"alternatives":[{"reading":"zhǎng","cost":24.62}]}
+{"text":"Dà","state":"word","tone":4,"alternatives":[{"reading":"dài","cost":22.62}]}
+
+$ pinyinjs lookup 垃圾 --json | jq -r .taiwanReading
+lè sè
+
+$ cat article.txt | pinyinjs convert --json | jq -r .pinyin
+```
+
+One document per answer rather than one array for the whole run, so the shape
+is the same whether you convert one word or pipe a file through.
+
 ## Load a dictionary
 
 Converting needs a dictionary, and it is a fetchable file rather than a
@@ -410,7 +438,7 @@ exported alongside them.
 ```bash
 pnpm install
 pnpm check      # format, complexity, build, typecheck, test with coverage
-pnpm cli        # run the CLI from the sources: pnpm cli convert 你好
+./pinyinjs      # the CLI, straight from the sources: ./pinyinjs convert 你好
 pnpm accuracy   # score both decoders against the gold corpus
 pnpm polyphones # score them against 20,139 hand-labelled polyphones
 pnpm build:data # rebuild data/ from the upstream sources
