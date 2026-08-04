@@ -26,6 +26,20 @@ export interface DictionaryEntry {
   readonly hans: string;
   /** The 繁體 form, equal to {@link DictionaryEntry.hans} when unchanged. */
   readonly hant: string;
+  /**
+   * Other 繁體 spellings of this same word, where a source attests one.
+   *
+   * Simplification was many-to-one, so a 简体 word can have more than one
+   * 繁體 spelling and both be current: 台湾 is written 臺灣 and 台灣, and a
+   * reader of either expects it read `Táiwān`. Keying only
+   * {@link DictionaryEntry.hant} would leave the other spelling converting
+   * character by character, which is precisely the loss SCRIPTS-AND-LOCALES.md
+   * makes 繁體 a first-class key to avoid.
+   *
+   * Only spellings a source writes out for this word belong here, never ones
+   * composed from per-character variants — see the merge for what that costs.
+   */
+  readonly hantVariants?: readonly string[];
   readonly readings: EntryReadings;
   /** Corpus occurrences from jieba, or 0 for a word jieba does not list. */
   readonly frequency: number;

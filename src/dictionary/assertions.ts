@@ -1,6 +1,7 @@
 import { characterCount } from "../script/characters.js";
 import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
 import { writeSyllable } from "../syllable/syllable.js";
+import { traditionalForms } from "./artifact.js";
 import type { DictionaryEntry } from "./entry.js";
 
 /**
@@ -21,7 +22,10 @@ export class BuiltDictionary {
   readonly entries: readonly DictionaryEntry[];
 
   /**
-   * Index entries by both of their scripts.
+   * Index entries by every key they claim, headwords first.
+   *
+   * The order matters for the same reason it does in the artifact: 发 and 髮
+   * both claim 发, and the entry the key names has to win.
    */
   constructor(entries: readonly DictionaryEntry[]) {
     const byKey = new Map<string, DictionaryEntry>();
@@ -29,8 +33,10 @@ export class BuiltDictionary {
       byKey.set(entry.hans, entry);
     }
     for (const entry of entries) {
-      if (!byKey.has(entry.hant)) {
-        byKey.set(entry.hant, entry);
+      for (const form of traditionalForms(entry)) {
+        if (!byKey.has(form)) {
+          byKey.set(form, entry);
+        }
       }
     }
     this.#byKey = byKey;
@@ -120,6 +126,9 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("头发", "tóu fa", "CC-CEDICT wins on the neutral tone"),
   reads("还是", "hái shi", "CC-CEDICT wins on the neutral tone"),
   reads("頭髮", "tóu fa", "繁體 derived using the reading, and keyed directly"),
+  reads("臺灣", "tái wān", "the second 繁體 spelling is keyed too"),
+  reads("台灣", "tái wān", "as is the first"),
+  reads("下麵", "xià miàn", "both spellings of a word CC-CEDICT writes twice"),
   // kHanyuPinlu writes 李 as `li(36)`, with no tone mark. Read as 轻声 — which
   // is what an unmarked reading means everywhere else in source data — 李华
   // comes out `Li Huá`. The other Unihan fields all write `lǐ`, and that is

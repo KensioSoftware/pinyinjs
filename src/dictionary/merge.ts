@@ -48,6 +48,8 @@ export interface MergeStats {
   readonly derivedTraditional: number;
   /** Entries with a 繁體 form differing from their 简体 one. */
   readonly scriptPairs: number;
+  /** Entries a source writes more than one 繁體 spelling of. */
+  readonly variantSpellings: number;
   /** Entries carrying a zh-TW reading delta. */
   readonly taiwanReadings: number;
   /** Words dropped because no source gave a usable reading. */
@@ -205,31 +207,43 @@ function nearestReading(
 }
 
 /**
- * The CC-CEDICT sense whose reading is nearest the one chosen for a word.
+ * The CC-CEDICT senses describing the pronunciation chosen for a word.
  *
  * A word with several pronunciations has several CC-CEDICT entries, and they
  * can disagree about more than the reading: 万 is written 萬 when read `wàn` and
  * 万 when read `mò`. Everything taken from CC-CEDICT for an entry — its 繁體
- * form, its Taiwan reading — has to come from the sense that matches the
- * reading, or the entry ends up describing two different words at once.
+ * form, its Taiwan reading — has to come from a sense that matches the reading,
+ * or the entry ends up describing two different words at once.
+ *
+ * Every sense equally near the reading is returned, most useful first, because
+ * senses can agree about the pronunciation and still differ about the script:
+ * 台湾 is `Tái wān` whether it is written 臺灣 or 台灣, and both spellings are
+ * this word. The first is the entry's 繁體 form and the rest are its
+ * {@link DictionaryEntry.hantVariants}.
+ *
+ * Where nothing compares — no sense has a readable reading of the same length —
+ * only the first is returned. A tie between senses that could not be measured
+ * is not evidence that they are the same word.
  */
-function nearestSense(
+function sensesForReading(
   word: string,
   entries: readonly CedictEntry[],
   reading: readonly Syllable[],
-): CedictEntry | undefined {
-  let best: CedictEntry | undefined;
-  let bestDistance = Infinity;
-  for (const entry of entries) {
+): readonly CedictEntry[] {
+  const measured = entries.map((entry) => {
     const candidate = readDictionaryReading(word, entry.readings);
-    const gap =
-      candidate === undefined ? Infinity : readingGap(reading, candidate);
-    if (best === undefined || gap < bestDistance) {
-      best = entry;
-      bestDistance = gap;
-    }
+    return {
+      entry,
+      gap: candidate === undefined ? Infinity : readingGap(reading, candidate),
+    };
+  });
+  const nearest = Math.min(...measured.map(({ gap }) => gap));
+  if (measured.length === 0 || nearest === Infinity) {
+    return entries.slice(0, 1);
   }
-  return best;
+  return measured
+    .filter(({ gap }) => gap === nearest)
+    .map(({ entry }) => entry);
 }
 
 /**
@@ -364,6 +378,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
   let erhuaRepairs = 0;
   let derivedTraditional = 0;
   let scriptPairs = 0;
+  let variantSpellings = 0;
   let taiwanReadings = 0;
   let phraseWords = 0;
   let cedictWords = 0;
@@ -474,7 +489,8 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // Which sense matters: 万 is 萬 when read wàn but stays 万 when read mò, and
     // CC-CEDICT carries both as separate entries. Taking whichever came first
     // in the file would pair the chosen reading with another sense's script.
-    const sense = nearestSense(word, cedictEntries, reading);
+    const senses = sensesForReading(word, cedictEntries, reading);
+    const sense = senses[0];
     let hant: string;
     if (sense === undefined) {
       hant = traditional.convert(aligned ?? []);
@@ -486,6 +502,19 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
     if (hant !== word) {
       scriptPairs++;
+    }
+
+    // Other spellings of the same word, so that a 繁體 reader of either finds
+    // it. Only what a source writes out: composing spellings from per-character
+    // variants instead would add 229,482 keys to the full tier, almost all of
+    // them forms nobody writes — 方麵 for 方面, 公裡 for 公里 — because the
+    // reading that picks the right variant for one word does not generalise to
+    // every word the character appears in.
+    const hantVariants = [
+      ...new Set(senses.map((other) => other.traditional)),
+    ].filter((form) => form !== hant && form !== word);
+    if (hantVariants.length > 0) {
+      variantSpellings++;
     }
 
     // ── zh-TW delta ───────────────────────────────────────────
@@ -531,6 +560,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     entries.push({
       hans: word,
       hant,
+      ...(hantVariants.length > 0 && { hantVariants }),
       readings: { cn: reading, ...(taiwan !== undefined && { tw: taiwan }) },
       frequency: jiebaEntry?.frequency ?? 0,
       partOfSpeech,
@@ -560,6 +590,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       erhuaRepairs,
       derivedTraditional,
       scriptPairs,
+      variantSpellings,
       taiwanReadings,
       rejected: rejected.size,
     },

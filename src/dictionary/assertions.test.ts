@@ -62,6 +62,8 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("行长", "háng zhǎng", { hant: "行長" }),
   entry("头发", "tóu fa", { hant: "頭髮" }),
   entry("还是", "hái shi", { hant: "還是" }),
+  entry("台湾", "tái wān", { hant: "台灣", hantVariants: ["臺灣"] }),
+  entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
   entry("北京", "běi jīng", { isProperNoun: true, partOfSpeech: "ns" }),
   entry("李", "lǐ"),
   entry("们", "men"),
@@ -83,6 +85,10 @@ describe("build assertions", () => {
 
     it("reports nothing for a word it does not hold", () => {
       assertUndefined(new BuiltDictionary(SOUND).reading("没有"));
+    });
+
+    it("finds an entry by a second 繁體 spelling as well", () => {
+      assertNonNullable(new BuiltDictionary(SOUND).get("臺灣"));
     });
 
     it("keeps an entry's own key when a 繁體 alias would collide", () => {

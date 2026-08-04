@@ -83,6 +83,33 @@ function byCodeUnit(left: string, right: string): number {
 }
 
 /**
+ * Every 繁體 spelling an entry claims a key for.
+ */
+export function traditionalForms(entry: DictionaryEntry): readonly string[] {
+  return [entry.hant, ...(entry.hantVariants ?? [])];
+}
+
+/**
+ * Let one entry claim each of its 繁體 spellings, where nothing outranks it.
+ *
+ * A spelling equal to the 简体 headword is already claimed, and a spelling that
+ * is some entry's own headword belongs to that entry — 发 and 髮 disagree about
+ * the reading, and the one the key names has to win.
+ */
+function claimTraditional(
+  claimed: Map<string, DictionaryEntry>,
+  entry: DictionaryEntry,
+): void {
+  for (const form of traditionalForms(entry)) {
+    const held = claimed.get(form);
+    const isTaken = form === entry.hans || held?.hans === form;
+    if (!isTaken && (held === undefined || entry.frequency > held.frequency)) {
+      claimed.set(form, entry);
+    }
+  }
+}
+
+/**
  * Decide which entry owns each key, since an entry claims both its scripts.
  *
  * Entries overlap: 头 claims 頭 as its 繁體 key, and 頭 is also a character
@@ -90,6 +117,11 @@ function byCodeUnit(left: string, right: string): number {
  * 髮 both claim 发, and they emphatically do not agree, one reading `fā` and the
  * other `fà`. The entry whose own headword *is* the key wins, which is what
  * keeps 发 on its own reading rather than the one that reached it sideways.
+ *
+ * An entry claims every 繁體 spelling a source attests for it, not only the one
+ * it stores as {@link DictionaryEntry.hant}: 台湾 claims 臺灣 as well as 台灣,
+ * since a reader typing either expects `Táiwān` rather than the character by
+ * character reading a missing key falls back to.
  */
 function claimKeys(
   entries: readonly DictionaryEntry[],
@@ -106,16 +138,7 @@ function claimKeys(
   }
 
   for (const entry of entries) {
-    if (entry.hant === entry.hans) {
-      continue;
-    }
-    const held = claimed.get(entry.hant);
-    if (held?.hans === entry.hant) {
-      continue;
-    }
-    if (held === undefined || entry.frequency > held.frequency) {
-      claimed.set(entry.hant, entry);
-    }
+    claimTraditional(claimed, entry);
   }
 
   return claimed;

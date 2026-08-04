@@ -143,6 +143,17 @@ describe("the examples in README.md", () => {
       assertIdentical(written(entry?.reading ?? []), "tóu fa");
     });
 
+    it("finds a word under either of its 繁體 spellings", () => {
+      assertIdentical(
+        written(dictionary.lookup("臺灣")?.reading ?? []),
+        "tái wān",
+      );
+      assertIdentical(
+        written(dictionary.lookup("台灣")?.reading ?? []),
+        "tái wān",
+      );
+    });
+
     it("answers a prefix query", () => {
       assertTrue(dictionary.hasPrefix("银"));
     });
