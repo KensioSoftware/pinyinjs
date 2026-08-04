@@ -16,6 +16,7 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `capitals`    | `"auto"`                           | `"auto"`, `"proper"`, `"none"`                    |
 | `punctuation` | `"latin"`                          | `"latin"`, `"keep"`                               |
 | `grouping`    | `true`                             | `false` turns off GB/T 16159 word spacing         |
+| `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
 `convertToHtml` takes all of these plus two of its own — see
@@ -131,6 +132,22 @@ name separates and capitalises. `false` writes each decoded word as one
 unbroken run.
 
 What the rules cover and where they stop is [orthography](../orthography/).
+
+## numbers
+
+```ts
+convert(dictionary, "我有3个"); // "wǒ yǒu sān gè"
+convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+convert(dictionary, "我有3个", { numbers: "keep" }); // "wǒ yǒu3gè"
+```
+
+| Value    | Does                                                     |
+| -------- | -------------------------------------------------------- |
+| `"read"` | says the digits, taking the style from what follows them |
+| `"keep"` | leaves every digit exactly as it was written             |
+
+See [numbers](../numerals/) for which style a number takes and why, and for
+what it deliberately does not guess at.
 
 ## sandhi
 

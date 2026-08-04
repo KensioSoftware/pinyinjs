@@ -36,7 +36,7 @@ Text that was never Han is escaped and emitted as-is, not marked up:
 
 ```ts
 convertToHtml(dictionary, "3D银行");
-// 3D<span class="py-syllable py-tone-2">yín</span><span class="py-syllable py-tone-2">háng</span>
+// <span class="py-syllable py-tone-1">sān</span> D <span class="py-syllable py-tone-2">yín</span><span class="py-syllable py-tone-2">háng</span>
 ```
 
 Escaping is not optional and not configurable — anything from the input that is

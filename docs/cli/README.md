@@ -154,6 +154,7 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 | `--capitals <value>`    | `capitals`                    |
 | `--punctuation <value>` | `punctuation`                 |
 | `--no-grouping`         | `grouping: false`             |
+| `--keep-numbers`        | `numbers: "keep"`             |
 | `--third-tone`          | `sandhi: { thirdTone: true }` |
 | `--no-sandhi`           | `sandhi: { yiBu: false }`     |
 

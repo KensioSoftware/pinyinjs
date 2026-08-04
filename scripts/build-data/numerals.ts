@@ -12,11 +12,14 @@
  * cardinal style is unattested here, so what this scores is the digit style,
  * `yāo`, and where each belongs.
  */
+import { convert } from "../../src/decode/convert.js";
+import { fileSource } from "../../src/dictionary/node-source.js";
+import { loadDictionary } from "../../src/dictionary/source.js";
 import { readNumeral } from "../../src/numerals/numerals.js";
 import { toCharacters } from "../../src/script/characters.js";
 import { parseCedict } from "../../src/sources/cedict.js";
 import { writeSyllable } from "../../src/syllable/syllable.js";
-import { readSource, SOURCE_FILES } from "./sources.js";
+import { DATA_DIR, readSource, SOURCE_FILES } from "./sources.js";
 
 const cedict = parseCedict(await readSource(SOURCE_FILES.cedict));
 
@@ -131,3 +134,46 @@ const lines = [
   "",
 ];
 process.stdout.write(`${lines.join("\n")}\n`);
+
+// ── The same entries, converted end to end ──────────────────
+//
+// The module reads a number; `convert` has to decide *which* reading a number
+// in text takes, and CC-CEDICT's headwords are the only worked examples of that
+// too. Spaces are dropped from both sides before comparing, because what is
+// being scored here is the readings: how a number is spaced is 正词法's
+// question and CC-CEDICT does not answer it.
+const dictionary = await loadDictionary(fileSource(DATA_DIR), "full");
+
+const bare = (text: string): string =>
+  text.replaceAll(/\s+/gu, "").toLowerCase();
+
+const converted = { matched: 0, missed: [] as string[] };
+for (const entry of withDigits) {
+  const characters = toCharacters(entry.simplified);
+  if (characters.length !== entry.readings.length) {
+    continue;
+  }
+  const want = bare(entry.readings.join(" "));
+  const got = bare(
+    convert(dictionary, entry.simplified, {
+      notation: "numbers",
+      capitals: "none",
+    }),
+  );
+  if (want === got) {
+    converted.matched += 1;
+  } else {
+    converted.missed.push(`  ${entry.simplified}\twant ${want}\tgot ${got}`);
+  }
+}
+
+process.stdout.write(
+  `${[
+    "converted end to end",
+    "────────────────────",
+    `matched  ${String(converted.matched)}`,
+    `missed   ${String(converted.missed.length)}`,
+    ...(converted.missed.length > 0 ? ["", ...converted.missed] : []),
+    "",
+  ].join("\n")}\n`,
+);

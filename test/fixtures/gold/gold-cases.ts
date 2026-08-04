@@ -126,6 +126,13 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // 看看 is a repeat too, and is written solid with a neutral second syllable.
   { hanzi: "看看", pinyin: "kànkan", script: "Hans", tags: ["orthography", "hyphen", "neutral-tone"] },
 
+  // ── Numbers in text ───────────────────────────────────────
+  { hanzi: "我有3个苹果。", pinyin: "Wǒ yǒu sān gè píngguǒ.", script: "Hans", tags: ["numbers", "sentence"] },
+  { hanzi: "1988年", pinyin: "yī jiǔ bā bā nián", script: "Hans", tags: ["numbers"] },
+  { hanzi: "25个", pinyin: "èrshíwǔ gè", script: "Hans", tags: ["numbers", "orthography"] },
+  { hanzi: "95%的人", pinyin: "bǎifēnzhījiǔshíwǔ de rén", script: "Hans", tags: ["numbers"] },
+  { hanzi: "3D打印", pinyin: "sān D dǎyìn", script: "Hans", tags: ["numbers"] },
+
   // ── Sentences ─────────────────────────────────────────────
   { hanzi: "我要去北京玩儿。", pinyin: "Wǒ yào qù Běijīng wánr.", script: "Hans", tags: ["sentence", "erhua", "proper-noun"] },
   { hanzi: "他是中国人。", pinyin: "Tā shì Zhōngguórén.", script: "Hans", tags: ["sentence", "proper-noun"] },

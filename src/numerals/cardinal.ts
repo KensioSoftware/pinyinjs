@@ -5,15 +5,22 @@ import { DIGIT_CHARACTERS } from "./characters.js";
  */
 export interface CardinalOptions {
   /**
-   * Whether a leading lone 2 in front of 千, 万 or 亿 is written 两.
+   * Where a lone 2 multiplying 千, 万 or 亿 is written 两 rather than 二.
    *
-   * Defaults to true, which is the ordinary spoken form: 2,000 is 两千 and
-   * 20,000 is 两万. 二 stands everywhere else — 12 is 十二 and 20 is 二十, never
-   * 两十 — and inside a longer number the 千 keeps its 二, so 12,000 is 一万二千
-   * rather than 一万两千. 200 takes either and this writes 二百, which is the
-   * form 现代汉语词典 gives first.
+   * Genuinely variable, so it is a choice rather than a rule. 现代汉语词典 has
+   * 二 before 百 and either before 千/万/亿, and then adds that the 二 of
+   * 三万二千 and 两亿二千万 *cannot* be 两 — so the prescription is `leading`,
+   * and what people say is `always`.
+   *
+   * - `always` (default) — 2,000 是两千, 12,000 是一万两千, 22,000 是两万两千.
+   * - `leading` — 两 only where the 2 opens the number, so 12,000 是一万二千.
+   * - `never` — 二 throughout, the register a written figure often takes.
+   *
+   * None of them touches a 2 that is not a multiplier of a big unit: 12 is
+   * 十二, 20 is 二十, 200 is 二百, and 120,000 is 十二万, where the 二 is the
+   * units digit of 12.
    */
-  readonly liang?: boolean;
+  readonly liang?: "always" | "leading" | "never";
 }
 
 /**
@@ -45,11 +52,21 @@ export const LARGEST_CARDINAL = 10 ** 16 - 1;
 interface GroupOptions {
   /** Whether this is the highest group, where a leading 十 drops its 一. */
   readonly isLeading: boolean;
-  readonly liang: boolean;
+  readonly liang: NonNullable<CardinalOptions["liang"]>;
 }
 
 /**
- * The character a digit takes in a place, which is 两 only at the front.
+ * Whether a lone 2 opening this group takes 两.
+ */
+function isLiang(
+  liang: NonNullable<CardinalOptions["liang"]>,
+  isLeading: boolean,
+): boolean {
+  return liang === "always" || (liang === "leading" && isLeading);
+}
+
+/**
+ * The character a digit takes in a place: 两 before a 千, 二 otherwise.
  */
 function digitAt(
   value: number,
@@ -57,7 +74,9 @@ function digitAt(
   isFirst: boolean,
   options: GroupOptions,
 ): string {
-  return value === 2 && place === "千" && isFirst && options.liang
+  return value === 2 &&
+    place === "千" &&
+    isLiang(options.liang, options.isLeading && isFirst)
     ? "两"
     : (DIGIT_CHARACTERS[value] ?? "");
 }
@@ -91,8 +110,7 @@ function writeGroup(group: number, options: GroupOptions): string {
       value === 1 && place === "十" && written === "" && options.isLeading;
     written += isBareTen
       ? place
-      : digitAt(value, place, written === "" && options.isLeading, options) +
-        place;
+      : digitAt(value, place, written === "", options) + place;
   }
 
   return written;
@@ -119,7 +137,7 @@ export function cardinalHanzi(
   if (value === 0) {
     return "零";
   }
-  const { liang = true } = options;
+  const { liang = "always" } = options;
 
   const groups: number[] = [];
   for (let rest = value; rest > 0; rest = Math.floor(rest / 10_000)) {
@@ -140,7 +158,9 @@ export function cardinalHanzi(
     // it is needed unless that group fills its own 千 place.
     const below = groups[at - 1] ?? 0;
     const gap = written !== "" && below < 1000 ? "零" : "";
-    const lone = body === "二" && liang && unit !== "" ? "两" : body;
+    const isLeading = at === groups.length - 1;
+    const lone =
+      body === "二" && unit !== "" && isLiang(liang, isLeading) ? "两" : body;
     written = lone + unit + gap + written;
   }
 

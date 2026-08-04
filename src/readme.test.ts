@@ -158,8 +158,25 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "青海"), "Qīnghǎi");
     });
 
+    it("reads the numbers in text the README shows", () => {
+      assertIdentical(
+        convert(dictionary, "我有3个苹果。"),
+        "Wǒ yǒu sān gè píngguǒ.",
+      );
+      assertIdentical(
+        convert(dictionary, "1988年之后"),
+        "yī jiǔ bā bā nián zhīhòu",
+      );
+      assertIdentical(
+        convert(dictionary, "95%的人"),
+        "bǎifēnzhījiǔshíwǔ de rén",
+      );
+      assertIdentical(convert(dictionary, "3D打印"), "sān D dǎyìn");
+      assertIdentical(convert(dictionary, "6:30起床"), "6:30qǐchuáng");
+    });
+
     it("reads the numbers the README reads", () => {
-      assertIdentical(numeralHanzi(12_345), "一万二千三百四十五");
+      assertIdentical(numeralHanzi(12_345), "一万两千三百四十五");
       assertIdentical(numeralHanzi(1005), "一千零五");
       assertIdentical(numeralHanzi(2000), "两千");
       assertIdentical(percentHanzi(95), "百分之九十五");
@@ -224,8 +241,8 @@ describe("the examples in README.md", () => {
       );
     });
 
-    it("leaves non-Han text exactly as written", () => {
-      assertIdentical(convert(dictionary, "3D银行"), "3Dyínháng");
+    it("reads a digit and leaves the rest of the non-Han as written", () => {
+      assertIdentical(convert(dictionary, "3D银行"), "sān D yínháng");
     });
   });
 
