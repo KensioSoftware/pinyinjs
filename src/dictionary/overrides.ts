@@ -34,6 +34,12 @@ export const READING_OVERRIDES: readonly ReadingOverride[] = [
     reason:
       "Both sources give dà fū, the ancient court title. The everyday sense, doctor, is dàifu and is overwhelmingly the more common.",
   },
+  {
+    word: "一个",
+    reading: "yī gè",
+    reason:
+      "Not a source defect but a real disagreement: CC-CEDICT has yi1 ge5 and large_pinyin has yí gè, and both are attested speech. Step 7 prefers CC-CEDICT on neutral tones, which is right for the other 771 words it settles and wrong here — 个 counting is written with its tone. Stored underlyingly, so the runtime sandhi pass writes yí gè.",
+  },
 ];
 
 /**
