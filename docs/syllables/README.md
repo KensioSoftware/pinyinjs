@@ -1,0 +1,189 @@
+# Syllables
+
+The syllable layer needs no dictionary and no network. It parses written
+pinyin, writes it back in any notation, splits a run of it into syllables, and
+answers whether a spelling is well formed.
+
+```ts
+import { isSyllable, readSyllable, writeSyllable } from "@kensio/pinyinjs";
+
+readSyllable("jiù"); // { initial: "j", final: "iou", tone: 4 }
+readSyllable("jiu4"); // the same — both notations parse
+readSyllable("lv4"); // { initial: "l", final: "ü", tone: 4 }
+readSyllable("hello"); // undefined
+readSyllable("běi3"); // undefined — one notation at a time
+```
+
+This is the half of the package that is not about hanzi at all. If you are
+building a pinyin input field, checking a learner's typing, or converting
+between tone notations, none of the dictionary machinery is involved.
+
+## Underlying forms, not spelling
+
+`initial` and `final` are the _underlying_ forms rather than what gets written,
+so 就 is `j` + `iou` and 军 is `j` + `ün`:
+
+```ts
+readSyllable("jūn"); // { initial: "j", final: "ün", tone: 1 }
+readSyllable("jun1"); // the same
+```
+
+The spelling rules that turn `iou` into `iu` after an initial, or drop the
+umlaut from `ün` after `j`, are reconstruction rather than storage. That means
+a syllable compares equal to itself however it was typed, which is the whole
+reason for doing it this way.
+
+Spelling is put back on demand:
+
+```ts
+const jiu = { initial: "j", final: "iou", tone: 4 } as const;
+writeSyllable(jiu); // "jiù"
+writeSyllable(jiu, "numbers"); // "jiu4"
+writeSyllable(jiu, "superscript"); // "jiu⁴"
+writeSyllable(jiu, "none"); // "jiu"
+```
+
+`writeSyllableSpelling` gives the toneless spelling on its own:
+
+```ts
+import { writeSyllableSpelling } from "@kensio/pinyinjs";
+
+writeSyllableSpelling({ initial: "j", final: "ün", tone: 1 }); // "jun"
+```
+
+## What input is accepted
+
+Either notation, the `v` and `u:` conventions for ü, and raised tone digits:
+
+```ts
+readSyllable("lü4"); // { initial: "l", final: "ü", tone: 4 }
+readSyllable("lv4"); // the same
+readSyllable("lu:4"); // the same
+```
+
+Not both notations at once — `běi3` is undefined, because a syllable carries
+one tone and that spelling states two.
+
+`normaliseUmlaut` does the `v`/`u:` rewrite on its own if you need it earlier:
+
+```ts
+import { normaliseUmlaut } from "@kensio/pinyinjs";
+
+normaliseUmlaut("lv"); // "lü"
+```
+
+## Well formed is not the same as real
+
+Parsing answers whether a spelling _could_ be a Mandarin syllable, not whether
+Mandarin uses it:
+
+```ts
+readSyllable("shong"); // { initial: "sh", final: "ong", tone: undefined }
+isSyllable("shong"); // true
+```
+
+`shong` is a perfectly formed initial plus final that no Mandarin word uses.
+The attested inventory is a separate question, and a separate export:
+
+```ts
+import { ATTESTED_SYLLABLES, DICTIONARY_SYLLABLES } from "@kensio/pinyinjs";
+
+DICTIONARY_SYLLABLES.has("shong"); // false
+DICTIONARY_SYLLABLES.has("zhuang"); // true
+ATTESTED_SYLLABLES.length; // 415
+```
+
+There are three of these and they are not the same size:
+
+| Export                 | Size | Is                                                     |
+| ---------------------- | ---: | ------------------------------------------------------ |
+| `ATTESTED_SYLLABLES`   |  415 | the standard toneless syllable inventory               |
+| `RARE_SYLLABLES`       |    9 | spellings the dictionary uses that the inventory omits |
+| `DICTIONARY_SYLLABLES` |  424 | the two together — what the build validates against    |
+
+The nine rare ones are `bong`, `cei`, `din`, `eng`, `fiao`, `lo`, `rua`, `sei`
+and `tei`: interjections, dialect readings and onomatopoeia that appear in the
+source dictionaries but not in any textbook's table. Validate learner input
+against `ATTESTED_SYLLABLES`; validate dictionary data against
+`DICTIONARY_SYLLABLES`.
+
+`INITIALS` has 21 entries and `FINALS` has 41, with `isInitial`, `isFinal` and
+`isPalatalInitial` beside them.
+
+## Splitting written pinyin
+
+```ts
+import { readWord, splitSyllables } from "@kensio/pinyinjs";
+
+splitSyllables("nǐhǎo"); // ["nǐ", "hǎo"]
+splitSyllables("Xī'ān"); // ["Xī", "ān"]
+splitSyllables("yinhang"); // ["yin", "hang"]
+splitSyllables("guórén"); // ["guó", "rén"], not ["guór", "én"]
+splitSyllables("hǎiōu"); // ["hǎi", "ōu"] — missing apostrophe, read anyway
+readWord("yínháng"); // the same, parsed into Syllable objects
+```
+
+Splitting is greedy in a way that respects the finals: `guórén` cannot split as
+`guór` + `én` because `guór` is not a syllable. A missing 隔音符号 is recovered
+where the split is unambiguous.
+
+Note that splitting will find _a_ reading of almost any Latin text, since so
+many English letter sequences are also well-formed syllables:
+
+```ts
+readWord("nonsense");
+// [{ initial: "n", final: "o" }, { initial: "", final: "n" }, … ]
+```
+
+If you need to know whether something is really pinyin, check the pieces
+against `ATTESTED_SYLLABLES` rather than relying on `readWord` returning
+`undefined`.
+
+## Tones
+
+```ts
+import {
+  applyToneMark,
+  NEUTRAL_TONE,
+  stripToneMarks,
+  toneFromMarks,
+} from "@kensio/pinyinjs";
+
+applyToneMark("hao", 3); // "hǎo"
+applyToneMark("hao", NEUTRAL_TONE); // "hao"
+applyToneMark("lü", 4); // "lǜ"
+stripToneMarks("hǎo"); // "hao"
+stripToneMarks("Xī'ān"); // "Xi'an"
+toneFromMarks("hǎo"); // 3
+toneFromMarks("hao"); // undefined
+```
+
+`applyToneMark` puts the mark on the right vowel for you, which is not a
+one-liner. The standard places it on `a`, failing that on `o` or `e`, failing
+that on the last remaining vowel — and it is that last clause which puts the
+mark on the `u` of `iu` and the `i` of `ui`. Any mark already present is
+replaced, and text with nothing that can carry one comes back unchanged.
+
+### undefined is not the neutral tone
+
+`Syllable.tone` is `Tone | undefined`, and the two mean different things:
+
+- **`5` (`NEUTRAL_TONE`)** — this syllable is toneless, and that is a fact
+  about the word. The `de` in 我的.
+- **`undefined`** — no tone was written. The `bei` in a typed `beijing`, where
+  the writer simply did not say.
+
+`toneFromMarks("hao")` is `undefined` rather than `5` for the same reason: an
+unmarked syllable in running text has not claimed to be neutral.
+
+## From the command line
+
+```console
+$ pinyinjs syllable nǐhǎo
+nǐhǎo  nǐ hǎo
+  nǐ        n + i, tone 3         nǐ  ni3  ni³
+  hǎo       h + ao, tone 3        hǎo  hao3  hao³
+```
+
+`syllable` and `sandhi` are the two commands that need no dictionary, so they
+start without loading one.

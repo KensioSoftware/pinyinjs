@@ -1,0 +1,159 @@
+# API
+
+Everything the package exports, grouped by what it is for. Exports are listed
+one by one in `src/index.ts` rather than re-exported wholesale, so the surface
+is a deliberate choice rather than whatever happened to be internal.
+
+Two entry points:
+
+| Import from             | Holds                                                    |
+| ----------------------- | -------------------------------------------------------- |
+| `@kensio/pinyinjs`      | everything below                                         |
+| `@kensio/pinyinjs/node` | `fileSource`, the only thing that touches Node built-ins |
+
+## The short version
+
+| Function                                             | Does                                              |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| `loadDictionary(source, tier)`                       | load a dictionary from `fileSource`/`fetchSource` |
+| `convert(dictionary, text, options?)`                | hanzi → pinyin                                    |
+| `convertPieces(dictionary, text, options?)`          | the same, per syllable, with confidence           |
+| `convertToHtml(dictionary, text, options?)`          | the same, as HTML                                 |
+| `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
+| `isUncertain(confidence)`                            | was this syllable a guess?                        |
+| `dictionary.lookup / hasPrefix / readingsOf / size`  | query the dictionary                              |
+| `readSyllable` / `writeSyllable` / `isSyllable`      | one syllable, no dictionary                       |
+| `splitSyllables` / `readWord`                        | split written pinyin                              |
+| `applySandhi`                                        | 一, 不 and optional third-tone sandhi             |
+| `applyToneMark` / `stripToneMarks` / `toneFromMarks` | tone marks                                        |
+| `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
+
+If you are reading this to find one thing, it is almost certainly in that
+table. The rest of the page is the full surface.
+
+## Converting
+
+See [converting](../converting/), [options](../options/) and
+[confidence](../confidence/).
+
+| Export                                                  | Is                                             |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `convert`                                               | hanzi → pinyin                                 |
+| `convertPieces`                                         | the same, one piece at a time, with confidence |
+| `convertGreedily`                                       | the longest-match baseline                     |
+| `joinPieces`                                            | pieces → the string `convert` would return     |
+| `isUncertain`                                           | was this syllable a guess?                     |
+| `scoreReadings`                                         | price every reading a stretch offers           |
+| `ConvertOptions`, `ConvertedPiece`                      | types                                          |
+| `ReadingConfidence`, `ReadingAlternative`, `ScoredUnit` | types                                          |
+
+The decoder's own parts are exported too, for anyone building on the lattice
+rather than on `convert`: `buildLattice`, `allEdges`, `cutPoints`,
+`READING_CHARGE`, `decodeReadings`, `decodeRun`, `decodeRunScored`,
+`decodeSpacing`, `decodeGreedily`, `shortestPath`, `readingCost`,
+`spacingCost`, `projectReadings`, `settledUnits`, `unitsOf`, `isSettled`,
+`splitRuns`, with the types `Lattice`, `LatticeEdge`, `ReadingProjection`,
+`ReadingUnit`, `DecodedWord`, `ScoredWord`, `TextRun`, `CostOf`.
+
+## HTML
+
+See [HTML output](../html/).
+
+| Export          | Is                             |
+| --------------- | ------------------------------ |
+| `convertToHtml` | hanzi → marked-up pinyin       |
+| `toHtml`        | render pieces you already have |
+| `HtmlOptions`   | type                           |
+
+## Dictionaries
+
+See [dictionaries](../dictionaries/).
+
+| Export                                                       | Is                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------ |
+| `loadDictionary`                                             | build a `Dictionary` from a source and a tier          |
+| `loadArtifact`                                               | the artifact without the `Dictionary` around it        |
+| `fetchSource`                                                | an HTTP source                                         |
+| `fileSource`                                                 | a filesystem source — from `@kensio/pinyinjs/node`     |
+| `tierFiles`                                                  | which files a tier needs                               |
+| `Dictionary`                                                 | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
+| `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier` | the tiers                                              |
+| `WordEntry`, `DictionarySource`, `Tier`                      | types                                                  |
+
+The build pipeline is exported as well, since the artifacts are reproducible
+from the sources: `buildArtifact`, `readArtifact`, `encodeReading`,
+`decodeReading`, `findRoundTripFailure`, `mergeSources`, `checkBuild`,
+`BUILD_ASSERTIONS`, `BuiltDictionary`, `KeyIndex`, `FrequencyTable`,
+`FREQUENCY_BUCKETS`, `TraditionalTable`, `pairScripts`, `attachErhua`,
+`withErhua`, `isErFinal`, `NON_ERHUA_ER_WORDS`, `readDictionaryReading`,
+`readAlignedReading`, `isSameReading`, `isSameSyllable`, `OVERRIDE_READINGS`,
+`READING_OVERRIDES`, `readOverrideReading`, with the types
+`DictionaryArtifact`, `DictionaryEntry`, `EntryReadings`, `KeyLookup`,
+`BuildAssertion`, `MergeSources`, `MergeResult`, `MergeStats`,
+`ReadingOverride` and `ReadCharacters`.
+
+## Syllables
+
+See [syllables](../syllables/).
+
+| Export                                                           | Is                                         |
+| ---------------------------------------------------------------- | ------------------------------------------ |
+| `readSyllable`                                                   | parse one syllable, either notation        |
+| `writeSyllable`                                                  | write one, in any notation                 |
+| `writeSyllableSpelling`                                          | the toneless spelling                      |
+| `isSyllable`                                                     | is this a well-formed syllable?            |
+| `normaliseUmlaut`                                                | `v` and `u:` → `ü`                         |
+| `splitSyllables`                                                 | split written pinyin into syllable strings |
+| `readWord`                                                       | the same, parsed into `Syllable` objects   |
+| `ATTESTED_SYLLABLES`                                             | the 415-syllable standard inventory        |
+| `RARE_SYLLABLES`                                                 | the 9 the dictionary adds                  |
+| `DICTIONARY_SYLLABLES`                                           | both, as a set                             |
+| `INITIALS`, `FINALS`, `isInitial`, `isFinal`, `isPalatalInitial` | phonology                                  |
+| `SEPARABLE_VOWELS`, `isSeparableStart`                           | what triggers an apostrophe                |
+| `Syllable`, `Initial`, `Final`, `ToneNotation`                   | types                                      |
+
+## Tones and sandhi
+
+See [sandhi](../sandhi/).
+
+| Export                            | Is                                    |
+| --------------------------------- | ------------------------------------- |
+| `applySandhi`                     | 一, 不 and optional third-tone sandhi |
+| `applyToneMark`                   | write a tone onto a toneless syllable |
+| `stripToneMarks`                  | take them off                         |
+| `toneFromMarks`                   | read the tone off a marked syllable   |
+| `toneFromNotation`                | read it off a numbered one            |
+| `TONES`, `NEUTRAL_TONE`, `isTone` | the tone values                       |
+| `Tone`, `SandhiOptions`           | types                                 |
+
+## Orthography
+
+See [orthography](../orthography/).
+
+| Export                                                                                                   | Is                               |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `applyGrouping`                                                                                          | 分词连写 over decoded words      |
+| `GROUPING_RULES`, `ASPECT_PARTICLES`, `SUFFIXES`, `PLACE_GENERICS`                                       | the rules                        |
+| `SPACED_WORD_LIST`, `SPACED_WORDS`, `SPACED_WORD_FORMS`, `LONGEST_SPACED_WORD`                           | the curated list                 |
+| `capitaliseSentences`, `capitaliseSentenceParts`, `capitaliseWord`, `isSentence`                         | capitals                         |
+| `markWord`, `joinWord`                                                                                   | apostrophes                      |
+| `toLatinPunctuation`, `toLatinPunctuationParts`                                                          | punctuation                      |
+| `rewriteParts`                                                                                           | the shared part-rewriting helper |
+| `GroupingRule`, `SpacedWord`, `CapitalStyle`, `ApostropheStyle`, `PunctuationStyle`, `RewriteCharacters` | types                            |
+
+## Scripts and locales
+
+See [scripts and locales](../scripts-and-locales/).
+
+| Export                                                         | Is                                              |
+| -------------------------------------------------------------- | ----------------------------------------------- |
+| `detectScript`                                                 | the script a text is in, given the variant sets |
+| `SCRIPTS`, `LOCALES`, `isScript`, `isLocale`, `DEFAULT_LOCALE` | the values                                      |
+| `Script`, `Locale`, `ScriptPairing`                            | types                                           |
+
+## Stability
+
+The package is beta. The short table at the top is the part that is settled in
+shape; the decoder internals and the build pipeline are exported because they
+are useful and testable, not because their signatures are fixed. Expect the API
+to change before 1.0.
