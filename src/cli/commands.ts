@@ -16,6 +16,16 @@ import {
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { convertToHtml } from "../format/html.js";
 import {
+  isBopomofo,
+  readBopomofo,
+  writeBopomofoWord,
+} from "../romanization/bopomofo.js";
+import {
+  readWadeGiles,
+  readWadeGilesLoosely,
+  writeWadeGilesWord,
+} from "../romanization/wade-giles.js";
+import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
 } from "../syllable/inventory.js";
@@ -33,6 +43,7 @@ import {
   type Flags,
   type FlagName,
   htmlOptions,
+  romanizationSource,
   UsageError,
 } from "./arguments.js";
 
@@ -405,6 +416,117 @@ const SANDHI: Command = {
 };
 
 /**
+ * One syllable or word, in all three systems.
+ */
+interface Romanised {
+  readonly pinyin: string;
+  readonly bopomofo: string;
+  readonly wadeGiles: string;
+  /**
+   * Whether the Wade-Giles this came from was spelled exactly.
+   *
+   * Undefined when the input was not Wade-Giles, since the question only
+   * arises there.
+   */
+  readonly isExact?: boolean;
+}
+
+/**
+ * Write a run of syllables in all three systems.
+ */
+function romanised(
+  syllables: readonly Syllable[],
+  flags: Flags,
+  isExact?: boolean,
+): Romanised {
+  const { notation } = convertOptions(flags);
+  return {
+    pinyin: syllables
+      .map((syllable) => writeSyllable(syllable, notation))
+      .join(""),
+    bopomofo: writeBopomofoWord(syllables),
+    wadeGiles: writeWadeGilesWord(syllables),
+    ...(isExact !== undefined && { isExact }),
+  };
+}
+
+/**
+ * Read Wade-Giles, keeping track of which candidates were spelled exactly.
+ *
+ * Always the loose reader, because the exact one is a strict subset of it and
+ * the interesting case at a command line is the spelling that dropped its
+ * marks. Which candidates needed repairing is shown rather than hidden — that
+ * is the one thing a person looking at Wade-Giles wants to know.
+ */
+function fromWadeGiles(text: string, flags: Flags): readonly Romanised[] {
+  const exact = new Set(
+    readWadeGiles(text).map((syllable) => writeSyllable(syllable)),
+  );
+  return readWadeGilesLoosely(text).map((syllable) =>
+    romanised([syllable], flags, exact.has(writeSyllable(syllable))),
+  );
+}
+
+/**
+ * Read whatever system the text is in, and say so.
+ */
+function romanisations(text: string, flags: Flags): readonly Romanised[] {
+  const from = romanizationSource(flags);
+  if (from === "wade-giles") {
+    return fromWadeGiles(text, flags);
+  }
+  // Bopomofo needs no flag to be recognised: it has a script of its own, so a
+  // caller can only mean one thing by it. Wade-Giles and pinyin overlap almost
+  // entirely, so those have to be declared.
+  if (from === "bopomofo" || (from === "auto" && isBopomofo(text))) {
+    const syllable = readBopomofo(text);
+    return syllable === undefined ? [] : [romanised([syllable], flags)];
+  }
+  const split = splitSyllables(text);
+  const syllables = (split ?? []).flatMap((spelling) => {
+    const syllable = readSyllable(spelling);
+    /* c8 ignore next -- splitSyllables only emits syllables that read */
+    return syllable === undefined ? [] : [syllable];
+  });
+  return syllables.length === 0 ? [] : [romanised(syllables, flags)];
+}
+
+/**
+ * Write pinyin as bopomofo and Wade-Giles, and read either back.
+ *
+ * Needs no dictionary, for the same reason `syllable` does: a romanisation is
+ * a mapping over syllables and there is nothing to look up. Several rows come
+ * back where Wade-Giles is ambiguous, which is most of it once the apostrophes
+ * and diacritics have been dropped.
+ */
+const ROMANIZE: Command = {
+  name: "romanize",
+  summary: "pinyin to bopomofo and Wade-Giles, and back",
+  argument: "<text...>",
+  flags: ["notation", "from"],
+  needsDictionary: false,
+  run: (input) =>
+    input.texts.map((text) => {
+      const found = romanisations(text, input.flags);
+      if (found.length === 0) {
+        return {
+          lines: [`${text}  not readable`],
+          data: { text, read: false },
+        };
+      }
+      return {
+        lines: found.map((one, index) =>
+          `${column(index === 0 ? text : "", 12)}${column(one.pinyin, 10)}${column(
+            one.bopomofo,
+            12,
+          )}${column(one.wadeGiles, 10)}${one.isExact === false ? "marks restored" : ""}`.trimEnd(),
+        ),
+        data: { text, read: true, readings: found },
+      };
+    }),
+};
+
+/**
  * Report what is loaded, which is the first thing to check when output looks
  * wrong.
  */
@@ -528,6 +650,7 @@ export const COMMANDS: readonly Command[] = [
   SYLLABLE,
   SANDHI,
   NUMBER,
+  ROMANIZE,
   INFO,
 ];
 

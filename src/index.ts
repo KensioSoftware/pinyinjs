@@ -155,6 +155,23 @@ export {
 } from "./numerals/numerals.js";
 export type { NumeralOptions, NumeralStyle } from "./numerals/numerals.js";
 
+export {
+  isBopomofo,
+  readBopomofo,
+  writeBopomofo,
+  writeBopomofoWord,
+} from "./romanization/bopomofo.js";
+export type { BopomofoOptions } from "./romanization/bopomofo.js";
+
+export {
+  readWadeGiles,
+  readWadeGilesLoosely,
+  writeWadeGiles,
+  writeWadeGilesSpelling,
+  writeWadeGilesWord,
+} from "./romanization/wade-giles.js";
+export type { WadeGilesOptions } from "./romanization/wade-giles.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 

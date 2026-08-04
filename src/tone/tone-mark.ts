@@ -54,6 +54,48 @@ export function stripToneMarks(text: string): string {
 }
 
 /**
+ * How each tone is written raised.
+ *
+ * Used by pinyin's `superscript` notation and by Wade-Giles, which writes its
+ * tone as a raised digit and nothing else. The neutral tone is written ⁵ rather
+ * than left off, so that superscript is exactly the numeric notation set higher
+ * and the two round-trip alike.
+ */
+export const SUPERSCRIPT_TONES: ReadonlyMap<Tone, string> = new Map([
+  [1, "¹"],
+  [2, "²"],
+  [3, "³"],
+  [4, "⁴"],
+  [NEUTRAL_TONE, "⁵"],
+]);
+
+/**
+ * The plain digit each raised digit stands for.
+ *
+ * Zero is included because a tone may be written 0 for neutral, and a notation
+ * that can be written should be readable back.
+ */
+const superscriptDigits = new Map<string, string>([
+  ["⁰", "0"],
+  ["¹", "1"],
+  ["²", "2"],
+  ["³", "3"],
+  ["⁴", "4"],
+  ["⁵", "5"],
+]);
+
+/**
+ * Rewrite raised tone digits as plain ones, so that input takes either.
+ */
+export function normaliseSuperscript(text: string): string {
+  return text.replaceAll(
+    /[⁰¹²³⁴⁵]/gu,
+    /* c8 ignore next -- the pattern only matches what the map holds */
+    (digit) => superscriptDigits.get(digit) ?? digit,
+  );
+}
+
+/**
  * Read the tone written by the diacritics in a tone-marked syllable.
  *
  * Returns undefined when no tone is written, which is *not* the same as the

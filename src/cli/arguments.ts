@@ -34,6 +34,7 @@ const FLAGS = {
   yao: { type: "boolean" },
   "no-liang": { type: "boolean" },
   percent: { type: "boolean" },
+  from: { type: "string" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
   json: { type: "boolean" },
@@ -175,6 +176,30 @@ const CAPITALS: readonly CapitalStyle[] = ["auto", "proper", "none"];
 const PUNCTUATION: readonly PunctuationStyle[] = ["latin", "keep"];
 
 const TIERS: readonly Tier[] = ["core", "standard", "full"];
+
+/**
+ * Which system the text handed to `romanize` is written in.
+ *
+ * `auto` reads bopomofo as bopomofo and everything else as pinyin, which is as
+ * far as detection can honestly go: bopomofo has a script of its own, while
+ * `chi` is a well-formed spelling in both pinyin and Wade-Giles and means
+ * different syllables in each.
+ */
+export type RomanizationSource = "auto" | "pinyin" | "wade-giles" | "bopomofo";
+
+const SOURCES: readonly RomanizationSource[] = [
+  "auto",
+  "pinyin",
+  "wade-giles",
+  "bopomofo",
+];
+
+/**
+ * Read the `--from` flag.
+ */
+export function romanizationSource(flags: Flags): RomanizationSource {
+  return chosen(flags, "from", SOURCES) ?? "auto";
+}
 
 /**
  * Which dictionary a run should read.

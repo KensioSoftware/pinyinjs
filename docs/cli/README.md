@@ -19,6 +19,7 @@ Wǒ yào qù Běijīng.
 | `syllable` | take written pinyin apart                           |
 | `sandhi`   | apply tone sandhi to written pinyin                 |
 | `number`   | read a number as Chinese numerals                   |
+| `romanize` | pinyin to bopomofo and Wade-Giles, and back         |
 | `info`     | which dictionary is loaded, and how big it is       |
 
 Run `pinyinjs <command> --help` for what a command takes.
@@ -119,6 +120,24 @@ difference between 2026年 and 2026个; `--yao` reads 一 as `yāo`, as a phone
 number does; `--no-liang` writes 二千 rather than 两千. Needs no dictionary
 either. See [numbers](../numerals/).
 
+### romanize
+
+```console
+$ pinyinjs romanize běijīng
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹
+
+$ pinyinjs romanize --from wade-giles chu¹
+chu¹        zhū       ㄓㄨ          chu¹
+            chū       ㄔㄨ          ch'u¹     marks restored
+            jū        ㄐㄩ          chü¹      marks restored
+            qū        ㄑㄩ          ch'ü¹     marks restored
+```
+
+Four rows because Wade-Giles `chu` with its marks dropped is four different
+syllables. `--from` takes `pinyin`, `wade-giles` or `bopomofo`, and defaults to
+working it out: bopomofo has a script of its own, and everything else is read as
+pinyin. Needs no dictionary. See [romanisation](../romanization/).
+
 ### html
 
 ```console
@@ -163,6 +182,7 @@ baseline instead of the lattice — see [converting](../converting/#the-greedy-b
 `html` also takes `--no-tone-classes` and `--no-uncertain`. `sandhi` takes
 `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
 `--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
+`romanize` takes `--from` and `--notation`.
 
 [Options](../options/) documents what each value does.
 
@@ -176,8 +196,8 @@ These work on every command:
 | `-h`, `--help`    | show help                               |
 | `-v`, `--version` | show the version                        |
 
-`syllable` and `sandhi` need no dictionary at all and start without loading
-one, so `--data` and `--tier` do nothing on them.
+`syllable`, `sandhi`, `number` and `romanize` need no dictionary at all and
+start without loading one, so `--data` and `--tier` do nothing on them.
 
 ## Standard input
 

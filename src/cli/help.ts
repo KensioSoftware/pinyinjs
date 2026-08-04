@@ -18,6 +18,7 @@ const FLAG_HELP = new Map<string, string>([
   ["greedy", "decode with the old longest-match baseline"],
   ["no-tone-classes", "leave the tone classes off"],
   ["no-uncertain", "do not mark uncertain readings"],
+  ["from", "pinyin, wade-giles or bopomofo (auto by default)"],
   ["data", "read the dictionary from this directory"],
   ["tier", "core, standard or full (default)"],
 ]);
@@ -44,6 +45,7 @@ const GLOBAL_HELP: readonly string[] = (
  * The flags that take a value after them, as opposed to standing alone.
  */
 const VALUE_FLAGS = new Set([
+  "from",
   "notation",
   "locale",
   "apostrophe",
@@ -105,6 +107,7 @@ export function generalHelp(): readonly string[] {
     "  pinyinjs explain 长江大桥",
     "  pinyinjs lookup 头发",
     "  pinyinjs syllable nǐhǎo",
+    "  pinyinjs romanize běijīng",
     "  cat article.txt | pinyinjs convert",
   ];
 }

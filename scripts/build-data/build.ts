@@ -163,6 +163,24 @@ const manifestJson = JSON.stringify(
   2,
 );
 
+/**
+ * Sources this repository holds but does not ship inside the artifacts.
+ *
+ * A share-alike table checked into `test/` is still somebody's work and still
+ * wants attribution, and putting it here rather than in a comment is what keeps
+ * it from being lost the next time NOTICE is regenerated.
+ */
+const TESTED_AGAINST = [
+  {
+    name: "Comparison of Chinese transcription systems (Wikipedia)",
+    url: "https://en.wikipedia.org/wiki/Comparison_of_Chinese_transcription_systems",
+    licence: "CC BY-SA 4.0",
+    provides:
+      "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo and Wade-Giles tables are checked against",
+    note: "used by the tests only; nothing in data/ is derived from it",
+  },
+] as const;
+
 // Attribution is generated rather than hand-written, so that it cannot drift
 // from what the artifacts were actually built from.
 const notice = [
@@ -182,6 +200,15 @@ const notice = [
     `Source:   ${source.url}`,
     `Licence:  ${source.licence}`,
     `Provides: ${source.provides}`,
+    "",
+  ]),
+  ...TESTED_AGAINST.flatMap((source) => [
+    `## ${source.name}`,
+    "",
+    `Source:   ${source.url}`,
+    `Licence:  ${source.licence}`,
+    `Provides: ${source.provides}`,
+    `Note:     ${source.note}`,
     "",
   ]),
 ].join("\n");
