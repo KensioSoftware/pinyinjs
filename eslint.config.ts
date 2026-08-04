@@ -177,7 +177,11 @@ export default defineConfig(
   },
 
   // ── No Secrets (detect accidental secret inclusion) ────────
+  // Skips tests, whose fixtures quote real upstream data — Unihan code point
+  // lines, packed dictionary rows — that reads as high entropy without being a
+  // secret.
   {
+    ignores: ["**/*.test.ts"],
     plugins: { "no-secrets": noSecrets },
     rules: {
       "no-secrets/no-secrets": "error",
