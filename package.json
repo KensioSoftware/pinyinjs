@@ -53,7 +53,8 @@
     "test:coverage": "vitest run --coverage",
     "check": "pnpm fmt && pnpm fta && pnpm build && pnpm build:check && pnpm test:coverage",
     "accuracy": "node --import jiti/register scripts/build-data/accuracy.ts",
-    "polyphones": "node --import jiti/register scripts/build-data/polyphones.ts"
+    "polyphones": "node --import jiti/register scripts/build-data/polyphones.ts",
+    "numerals": "node --import jiti/register scripts/build-data/numerals.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

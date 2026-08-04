@@ -28,6 +28,7 @@ each `docs/<path>/README.md` here to a page there. Edit them here.
 - [Syllables](syllables/) — the layer that needs no dictionary: parsing,
   writing, splitting and tones.
 - [Sandhi](sandhi/) — 一, 不 and third-tone sandhi.
+- [Numbers](numerals/) — reading numbers aloud, counted or spelled out.
 - [Scripts and locales](scripts-and-locales/) — 简体 and 繁體, 普通话 and 國語,
   and why they are two axes.
 

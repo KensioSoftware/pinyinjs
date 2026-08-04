@@ -18,6 +18,11 @@ import { convert, convertPieces, joinPieces } from "./decode/convert.js";
 import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToHtml } from "./format/html.js";
 import { applySandhi } from "./decode/sandhi.js";
+import {
+  numeralHanzi,
+  percentHanzi,
+  readNumeral,
+} from "./numerals/numerals.js";
 import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
@@ -151,6 +156,21 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "不但"), "búdàn");
       assertIdentical(convert(dictionary, "大米"), "dàmǐ");
       assertIdentical(convert(dictionary, "青海"), "Qīnghǎi");
+    });
+
+    it("reads the numbers the README reads", () => {
+      assertIdentical(numeralHanzi(12_345), "一万二千三百四十五");
+      assertIdentical(numeralHanzi(1005), "一千零五");
+      assertIdentical(numeralHanzi(2000), "两千");
+      assertIdentical(percentHanzi(95), "百分之九十五");
+      assertIdentical(numeralHanzi(2026), "两千零二十六");
+      assertIdentical(numeralHanzi(2026, { style: "digits" }), "二〇二六");
+      assertIdentical(
+        (readNumeral(110, { style: "digits", yao: true }) ?? [])
+          .map((syllable) => writeSyllable(syllable))
+          .join(" "),
+        "yāo yāo líng",
+      );
     });
 
     it("settles the readings the rules are shown settling", () => {

@@ -247,7 +247,8 @@ convert(dictionary, "不亦乐乎"); // "búyìlèhū" — cannot be halved
 ```
 
 **Non-Han text** — digits, Latin letters, punctuation — passes through exactly
-as written. Reading numbers aloud is a separate package, not yet built.
+as written by `convert`. Reading numbers aloud is [its own layer](#numbers),
+and choosing when to apply it inside text is not built.
 
 ## Syllable by syllable
 
@@ -411,6 +412,31 @@ toneFromMarks("hǎo"); // 3
 `Syllable.tone` is `Tone | undefined`, and undefined is not the neutral tone: the
 `de` in 我的 is neutral (5), whereas the `bei` in a typed `beijing` has no tone
 written at all.
+
+## Numbers
+
+Reading a number needs no dictionary — arithmetic and about twenty readings —
+so this works with nothing loaded.
+
+```ts
+import { numeralHanzi, percentHanzi, readNumeral } from "@kensio/pinyinjs";
+
+numeralHanzi(12345); // "一万二千三百四十五"
+numeralHanzi(1005); // "一千零五" — a skipped place is spoken
+numeralHanzi(2000); // "两千" — a leading lone 2 before a big unit
+percentHanzi(95); // "百分之九十五" — the order reverses
+```
+
+The same digits are read two ways and nothing in the number says which — 2026年
+is spelled out and 2026个 is counted — so the style is the caller's:
+
+```ts
+numeralHanzi(2026); // "两千零二十六"
+numeralHanzi(2026, { style: "digits" }); // "二〇二六"
+readNumeral(110, { style: "digits", yao: true }); // yāo yāo líng
+```
+
+More in [numbers](docs/numerals/).
 
 ## Sandhi
 

@@ -23,6 +23,13 @@ import {
   joinPieces,
 } from "./decode/convert.js";
 import { applySandhi } from "./decode/sandhi.js";
+import {
+  fractionHanzi,
+  numeralHanzi,
+  type NumeralOptions,
+  percentHanzi,
+  readNumeral,
+} from "./numerals/numerals.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
@@ -80,6 +87,17 @@ function alternatives(text: string, index: number): readonly string[] {
   assertNonNullable(piece.confidence);
   return piece.confidence.alternatives.map((found) =>
     found.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
+
+/**
+ * A number read out, as the numbers page reads it.
+ */
+function said(value: string | number, options: NumeralOptions = {}): string {
+  return (
+    readNumeral(value, options)
+      ?.map((syllable) => writeSyllable(syllable))
+      .join(" ") ?? ""
   );
 }
 
@@ -482,6 +500,59 @@ describe("the examples in docs/", () => {
       assertNonNullable(first);
       assertNonNullable(second);
       assertIdentical(written(first.reading), written(second.reading));
+    });
+  });
+
+  describe("numerals", () => {
+    it("counts and spells out the examples the page shows", () => {
+      assertIdentical(numeralHanzi(12_345), "一万二千三百四十五");
+      assertIdentical(numeralHanzi(2026), "两千零二十六");
+      assertIdentical(numeralHanzi(2026, { style: "digits" }), "二〇二六");
+      assertIdentical(numeralHanzi(10), "十");
+      assertIdentical(numeralHanzi(115), "一百一十五");
+      assertIdentical(numeralHanzi(1005), "一千零五");
+      assertIdentical(numeralHanzi(1500), "一千五百");
+      assertIdentical(numeralHanzi(25_000), "两万五千");
+      assertIdentical(numeralHanzi(20_050), "两万零五十");
+      assertIdentical(numeralHanzi(100_000_005), "一亿零五");
+    });
+
+    it("keeps the digits of a string and not of a number", () => {
+      assertIdentical(numeralHanzi("007", { style: "digits" }), "〇〇七");
+      assertIdentical(numeralHanzi("007"), "七");
+      assertIdentical(
+        numeralHanzi(2019, { style: "digits", zero: "零" }),
+        "二零一九",
+      );
+    });
+
+    it("reads them as the page reads them", () => {
+      assertIdentical(said(2026), "liǎng qiān líng èr shí liù");
+      assertIdentical(said(2026, { style: "digits" }), "èr líng èr liù");
+      assertIdentical(
+        said(110, { style: "digits", yao: true }),
+        "yāo yāo líng",
+      );
+      assertIdentical(said("3.14"), "sān diǎn yī sì");
+      assertIdentical(said(-40), "fù sì shí");
+    });
+
+    it("puts the sandhi back where the page says to", () => {
+      assertIdentical(
+        applySandhi(readNumeral(100) ?? [])
+          .map((syllable) => writeSyllable(syllable))
+          .join(" "),
+        "yì bǎi",
+      );
+    });
+
+    it("reverses a percentage and a fraction", () => {
+      assertIdentical(percentHanzi(95), "百分之九十五");
+      assertIdentical(fractionHanzi(3, 4), "四分之三");
+    });
+
+    it("leaves a number inside text alone, as the page admits", () => {
+      assertIdentical(convert(dictionary, "3D打印"), "3Ddǎyìn");
     });
   });
 
