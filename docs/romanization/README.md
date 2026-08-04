@@ -108,6 +108,7 @@ believing the text wrote what it meant.
 | syllables still recovered alone once the marks go | 205 |
 | syllables that merge with others                  | 219 |
 | the worst of them merge four ways                 |  12 |
+| recovered by taking the first candidate           | 312 |
 
 The twelve are `chu`, `chuan` and `chun`, each of which is zhu/chu/ju/qu once
 `ch'u`, `chü` and `ch'ü` have lost their marks.
