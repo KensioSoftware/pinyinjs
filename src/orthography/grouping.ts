@@ -1,22 +1,9 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import type { DecodedWord } from "../decode/word.js";
 import { characterCount, toCharacters } from "../script/characters.js";
+import { AABB_REDUPLICATION, ABAB_REDUPLICATION } from "./reduplication.js";
+import { type GroupingRule, join, splitAt } from "./rule.js";
 import { LONGEST_SPACED_WORD, SPACED_WORD_FORMS } from "./word-list.js";
-
-/**
- * One 分词连写 rule, rewriting the words a decode produced.
- *
- * Typed and individually testable, which is the point ALGORITHM.md makes about
- * rules: the old project patched the output string with regexes, so its rules
- * were order-dependent and could not be tested apart from each other.
- */
-export interface GroupingRule {
-  readonly name: string;
-  readonly apply: (
-    words: readonly DecodedWord[],
-    dictionary: Dictionary,
-  ) => readonly DecodedWord[];
-}
 
 /**
  * jieba's tags for the aspect particles 了, 着 and 过.
@@ -60,22 +47,6 @@ const ADMINISTRATIVE_GENERICS = new Set([
   "村",
   "州",
 ]);
-
-/**
- * Join two decoded words into one.
- *
- * The first word's flags carry, because it is the head: 看了 is the verb 看
- * with an aspect particle stuck to it, not a new word of its own.
- */
-function join(head: DecodedWord, tail: DecodedWord): DecodedWord {
-  return {
-    text: head.text + tail.text,
-    reading: [...head.reading, ...tail.reading],
-    isProperNoun: head.isProperNoun,
-    partOfSpeech: head.partOfSpeech,
-    isKnown: head.isKnown && tail.isKnown,
-  };
-}
 
 /**
  * Fold every word a predicate accepts into the word before it.
@@ -125,30 +96,6 @@ export const SUFFIXES: GroupingRule = {
   apply: (words) =>
     joinBackwards(words, (word) => word.partOfSpeech === SUFFIX_TAG),
 };
-
-/**
- * Split a decoded word into two at a character offset.
- *
- * Only possible where the reading has one syllable per character, which 儿化
- * does not: there is no way to cut `wánr` in half.
- */
-function splitAt(
-  word: DecodedWord,
-  at: number,
-): readonly [DecodedWord, DecodedWord] | undefined {
-  const characters = toCharacters(word.text);
-  if (word.reading.length !== characters.length) {
-    return undefined;
-  }
-  const part = (from: number, to: number): DecodedWord => ({
-    text: characters.slice(from, to).join(""),
-    reading: word.reading.slice(from, to),
-    isProperNoun: word.isProperNoun,
-    partOfSpeech: word.partOfSpeech,
-    isKnown: word.isKnown,
-  });
-  return [part(0, at), part(at, characters.length)];
-}
 
 /**
  * A place name's generic half is written separately, and capitalised.
@@ -299,12 +246,17 @@ export const SPACED_WORD_LIST: GroupingRule = {
 
 /**
  * The rules applied by default, in order.
+ *
+ * The hyphens come last, because every rule before them moves word boundaries
+ * and a hyphen is a statement about where a boundary ended up.
  */
 export const GROUPING_RULES: readonly GroupingRule[] = [
   ASPECT_PARTICLES,
   SUFFIXES,
   PLACE_GENERICS,
   SPACED_WORD_LIST,
+  AABB_REDUPLICATION,
+  ABAB_REDUPLICATION,
 ];
 
 /**

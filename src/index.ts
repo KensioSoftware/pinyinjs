@@ -120,7 +120,7 @@ export type { ReadingProjection, ReadingUnit } from "./decode/locking.js";
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
 export type { CostOf } from "./decode/viterbi.js";
 
-export type { DecodedWord, ScoredWord } from "./decode/word.js";
+export type { DecodedWord, ScoredWord, WordSeparator } from "./decode/word.js";
 
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
@@ -155,7 +155,13 @@ export {
   SPACED_WORD_LIST,
   SUFFIXES,
 } from "./orthography/grouping.js";
-export type { GroupingRule } from "./orthography/grouping.js";
+
+export {
+  AABB_REDUPLICATION,
+  ABAB_REDUPLICATION,
+} from "./orthography/reduplication.js";
+
+export type { GroupingRule } from "./orthography/rule.js";
 
 export {
   LONGEST_SPACED_WORD,

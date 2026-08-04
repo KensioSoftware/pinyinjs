@@ -182,7 +182,9 @@ function writeRun(
     /* c8 ignore next -- readings is built by mapping over these same words */
     const length = readings[index]?.length ?? 0;
     if (index > 0) {
-      pieces.push(plainPiece(" "));
+      // A space, unless 分词连写 wrote a hyphen: 干干净净 is one orthographic
+      // word, `gāngān-jìngjìng`, cut into two decoded ones.
+      pieces.push(plainPiece(scored.word.separator ?? " "));
     }
     pieces.push(
       ...writeWord(
