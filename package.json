@@ -6,6 +6,9 @@
   "homepage": "https://pinyinjs.dev",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "pinyinjs": "./dist/cli/main.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -35,6 +38,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "cli": "node --import jiti/register src/cli/main.ts",
     "build:check": "tsc -p tsconfig.json --noEmit",
     "fmt": "eslint --fix . && prettier --write .",
     "lint": "eslint . && prettier --check .",

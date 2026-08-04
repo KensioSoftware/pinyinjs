@@ -16,7 +16,10 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: [...configDefaults.exclude],
+      // The bin shim is three lines of wiring: it reads argv, calls runCli
+      // against the Node environment, and writes what comes back. Everything
+      // it wires is covered, and importing it would run the CLI.
+      exclude: [...configDefaults.exclude, "src/cli/main.ts"],
       reporter: ["text", "lcov", "json-summary"],
       reportsDirectory: "./test/.coverage",
       thresholds: {

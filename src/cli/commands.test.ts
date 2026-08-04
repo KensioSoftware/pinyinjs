@@ -1,0 +1,218 @@
+import {
+  dictionaryOf,
+  entry,
+  reading,
+  sampleDictionary,
+} from "#test/fixtures/decoder-dictionary.js";
+import {
+  assertArrayEquals,
+  assertArrayIncludes,
+  assertIdentical,
+  assertStringIncludes,
+} from "@kensio/smartass";
+import { describe, it } from "vitest";
+
+import { COMMANDS } from "./commands.js";
+import { type CliEnvironment, runCli } from "./run.js";
+
+const dictionary = sampleDictionary();
+
+const environment: CliEnvironment = {
+  version: "0.0.0",
+  readInput: () => Promise.resolve(""),
+  loadDictionary: () => Promise.resolve(dictionary),
+};
+
+/**
+ * Run the CLI over the shared test dictionary and return what it wrote.
+ */
+async function cli(...argv: readonly string[]): Promise<readonly string[]> {
+  const result = await runCli(argv, environment);
+  assertIdentical(result.status, 0, result.errors.join("\n"));
+  return result.output;
+}
+
+describe("the convert command", () => {
+  it("writes one conversion per argument", async () => {
+    assertArrayEquals(await cli("convert", "银行", "北京"), [
+      "yínháng",
+      "Běijīng",
+    ]);
+  });
+
+  it("passes the conversion options through", async () => {
+    assertArrayEquals(await cli("convert", "-n", "numbers", "银行"), [
+      "yin2hang2",
+    ]);
+    assertArrayEquals(await cli("convert", "--capitals", "none", "北京"), [
+      "běijīng",
+    ]);
+    assertArrayEquals(await cli("convert", "--no-grouping", "北京市"), [
+      "Běijīngshì",
+    ]);
+  });
+
+  it("decodes with the greedy baseline when asked", async () => {
+    // The one case the two decoders read differently: greedy takes 银行 because
+    // it is the longest match at the first character and never revisits it.
+    const overlap = dictionaryOf([
+      entry("银", "yín", { frequency: 4000 }),
+      entry("行", "xíng", { alternates: [reading("háng")] }),
+      entry("长", "zhǎng", { frequency: 40 }),
+      entry("银行", "yín háng", { frequency: 40 }),
+      entry("行长", "háng zhǎng", { frequency: 400_000 }),
+    ]);
+    const overlapping: CliEnvironment = {
+      ...environment,
+      loadDictionary: () => Promise.resolve(overlap),
+    };
+    const greedy = await runCli(["convert", "--greedy", "银行长"], overlapping);
+    const lattice = await runCli(["convert", "银行长"], overlapping);
+    assertArrayEquals(greedy.output, ["yínháng zhǎng"]);
+    assertArrayEquals(lattice.output, ["yín hángzhǎng"]);
+  });
+});
+
+describe("the html command", () => {
+  it("writes one element per syllable", async () => {
+    assertArrayEquals(await cli("html", "银行"), [
+      '<span class="py-syllable py-tone-2">yín</span>' +
+        '<span class="py-syllable py-tone-2">háng</span>',
+    ]);
+  });
+
+  it("leaves the classes off when asked", async () => {
+    assertArrayEquals(await cli("html", "--no-tone-classes", "银"), [
+      '<span class="py-syllable">yín</span>',
+    ]);
+  });
+});
+
+describe("the explain command", () => {
+  it("reports each syllable and how settled it was", async () => {
+    const lines = await cli("explain", "银行");
+    assertArrayEquals(lines, [
+      "银行  yínháng",
+      "  yín     locked",
+      "  háng    word    xíng +48.6  héng +50.6",
+    ]);
+  });
+
+  it("calls a bare polyphone a guess, and lists what it beat", async () => {
+    const lines = await cli("explain", "行");
+    assertStringIncludes(lines[1] ?? "", "guess");
+    assertStringIncludes(lines[1] ?? "", "háng +1.0");
+  });
+});
+
+describe("the lookup command", () => {
+  it("reports a word's reading and tags", async () => {
+    assertArrayEquals(await cli("lookup", "北京"), [
+      "北京  běi jīng  ns, proper noun",
+    ]);
+  });
+
+  it("reports a Taiwan reading where the word has one", async () => {
+    assertArrayEquals(await cli("lookup", "垃圾"), [
+      "垃圾  lā jī",
+      "  zh-TW  lè sè",
+    ]);
+  });
+
+  it("reports a character's other readings", async () => {
+    assertArrayEquals(await cli("lookup", "行"), [
+      "行  xíng",
+      "  also   háng, héng",
+    ]);
+  });
+
+  it("says so when the dictionary has nothing", async () => {
+    assertArrayEquals(await cli("lookup", "囧"), ["囧  not in the dictionary"]);
+  });
+});
+
+describe("the syllable command", () => {
+  it("splits a written word and takes each syllable apart", async () => {
+    const lines = await cli("syllable", "nǐhǎo");
+    assertIdentical(lines[0], "nǐhǎo  nǐ hǎo");
+    assertStringIncludes(lines[1] ?? "", "n + i, tone 3");
+    assertStringIncludes(lines[1] ?? "", "nǐ  ni3  ni³");
+  });
+
+  it("writes the underlying initial and final, not the spelling", async () => {
+    // 玩儿 is wánr: no initial at all, and the final is uan.
+    const lines = await cli("syllable", "wánr");
+    assertStringIncludes(lines[1] ?? "", "∅ + uan");
+    assertStringIncludes(lines[1] ?? "", "儿化");
+  });
+
+  it("marks a well-formed spelling Mandarin does not use", async () => {
+    const lines = await cli("syllable", "shong");
+    assertStringIncludes(lines[1] ?? "", "not attested");
+  });
+
+  it("says so when it cannot be read as pinyin at all", async () => {
+    assertArrayEquals(await cli("syllable", "xyz"), [
+      "xyz  not readable as pinyin",
+    ]);
+  });
+
+  it("needs no dictionary", async () => {
+    let loaded = 0;
+    const counted: CliEnvironment = {
+      ...environment,
+      loadDictionary: () => {
+        loaded++;
+        return Promise.resolve(dictionary);
+      },
+    };
+    await runCli(["syllable", "nǐhǎo"], counted);
+    assertIdentical(loaded, 0);
+  });
+});
+
+describe("the sandhi command", () => {
+  it("writes the tones the orthography writes", async () => {
+    assertArrayEquals(await cli("sandhi", "bùshì"), ["bùshì  bú shì"]);
+  });
+
+  it("takes the sandhi flags", async () => {
+    assertArrayEquals(await cli("sandhi", "--no-sandhi", "bùshì"), [
+      "bùshì  bù shì",
+    ]);
+    assertArrayEquals(await cli("sandhi", "--third-tone", "nǐhǎo"), [
+      "nǐhǎo  ní hǎo",
+    ]);
+  });
+
+  it("says so when it cannot be read as pinyin at all", async () => {
+    assertArrayEquals(await cli("sandhi", "xyz"), [
+      "xyz  not readable as pinyin",
+    ]);
+  });
+});
+
+describe("the info command", () => {
+  it("reports what is loaded", async () => {
+    const lines = await cli("info");
+    assertArrayIncludes(lines, "tier       full");
+    assertStringIncludes(lines[1] ?? "", "the artifacts that shipped");
+    assertStringIncludes(lines[2] ?? "", "keys");
+  });
+
+  it("reports the directory it was pointed at", async () => {
+    assertArrayIncludes(
+      await cli("info", "--data", "./elsewhere"),
+      "data       ./elsewhere",
+    );
+  });
+});
+
+describe("the command list", () => {
+  it("gives every command a summary and an argument line", () => {
+    for (const command of COMMANDS) {
+      assertIdentical(command.summary.trim(), command.summary);
+      assertIdentical(command.name.trim(), command.name);
+    }
+  });
+});

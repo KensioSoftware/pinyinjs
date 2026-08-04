@@ -133,12 +133,14 @@ export default defineConfig(
   unicorn.configs.recommended,
   {
     rules: {
-      // Both rules ask for methods that do not exist in the ES2023 lib this
-      // package targets: `Iterator#toArray` and `Set#difference` landed in
-      // ES2024/ES2025 and are not in the browser baseline a first-class
-      // browser target has to hold to. Revisit when the target moves.
+      // These rules ask for methods that do not exist in the ES2023 lib this
+      // package targets: `Iterator#toArray`, `Set#difference` and
+      // `Array.fromAsync` landed in ES2024/ES2025 and are not in the browser
+      // baseline a first-class browser target has to hold to. Revisit when the
+      // target moves.
       "unicorn/prefer-iterator-to-array": "off",
       "unicorn/prefer-set-methods": "off",
+      "unicorn/prefer-array-from-async": "off",
     },
   },
 
@@ -177,6 +179,16 @@ export default defineConfig(
     files: ["src/cli/**/*.ts"],
     rules: {
       "no-console": "off",
+      // A flag's key *is* its spelling on the command line, and --no-grouping
+      // is not spelled noGrouping anywhere a user can see.
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          selector: "objectLiteralProperty",
+          format: null,
+          filter: { regex: String.raw`^[a-z]+(-[a-z]+)+$`, match: true },
+        },
+      ],
     },
   },
 
