@@ -77,6 +77,21 @@ See [numbers](../numerals/).
 | `DIGIT_CHARACTERS`, `UNIT_VALUES`, `LARGEST_CARDINAL` | the tables                      |
 | `NumeralOptions`, `NumeralStyle`, `CardinalOptions`   | types                           |
 
+## Romanisation
+
+See [romanisation](../romanization/).
+
+| Export                                 | Is                                       |
+| -------------------------------------- | ---------------------------------------- |
+| `writeBopomofo`, `writeBopomofoWord`   | syllable, or word → 注音符號             |
+| `readBopomofo`                         | 注音符號 → syllable                      |
+| `isBopomofo`                           | whether the text is written in it at all |
+| `writeWadeGiles`, `writeWadeGilesWord` | syllable, or word → Wade-Giles           |
+| `writeWadeGilesSpelling`               | the same without the tone                |
+| `readWadeGiles`                        | Wade-Giles → every syllable it can be    |
+| `readWadeGilesLoosely`                 | the same, allowing for dropped marks     |
+| `BopomofoOptions`, `WadeGilesOptions`  | types                                    |
+
 ## HTML
 
 See [HTML output](../html/).

@@ -26,6 +26,11 @@ import {
 import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
+import { writeBopomofo } from "./romanization/bopomofo.js";
+import {
+  readWadeGilesLoosely,
+  writeWadeGiles,
+} from "./romanization/wade-giles.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -190,6 +195,21 @@ describe("the examples in README.md", () => {
       );
     });
 
+    it("romanises the syllable the README romanises", () => {
+      const jiu = readSyllable("jiù");
+      assertNonNullable(jiu);
+      assertIdentical(writeBopomofo(jiu), "ㄐㄧㄡˋ");
+      assertIdentical(writeWadeGiles(jiu), "chiu⁴");
+      assertArrayEquals(
+        readWadeGilesLoosely("chi¹").map((syllable) => writeSyllable(syllable)),
+        ["jī", "qī"],
+      );
+      assertArrayEquals(
+        readWadeGilesLoosely("chu¹").map((syllable) => writeSyllable(syllable)),
+        ["zhū", "chū", "jū", "qū"],
+      );
+    });
+
     it("settles the readings the rules are shown settling", () => {
       assertIdentical(convert(dictionary, "我得走了"), "wǒ děi zǒule");
       assertIdentical(convert(dictionary, "他跑得很快"), "tā pǎo de hěn kuài");
@@ -273,6 +293,12 @@ describe("the examples in README.md", () => {
         "nǐhǎo  nǐ hǎo",
         "  nǐ        n + i, tone 3         nǐ  ni3  ni³",
         "  hǎo       h + ao, tone 3        hǎo  hao3  hao³",
+      ]);
+    });
+
+    it("romanises from the command line as the README shows", async () => {
+      assertArrayEquals(await cli("romanize", "běijīng"), [
+        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹",
       ]);
     });
 

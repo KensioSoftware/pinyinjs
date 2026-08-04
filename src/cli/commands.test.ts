@@ -359,6 +359,61 @@ describe("the number command", () => {
   });
 });
 
+describe("the romanize command", () => {
+  it("writes pinyin in both systems", async () => {
+    assertArrayEquals(await cli("romanize", "běijīng"), [
+      "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹",
+    ]);
+  });
+
+  it("reads bopomofo without being told what it is", async () => {
+    assertArrayEquals(await cli("romanize", "ㄅㄟˇ"), [
+      "ㄅㄟˇ         běi       ㄅㄟˇ         pei³",
+    ]);
+  });
+
+  it("reads Wade-Giles, marking what needed a mark put back", async () => {
+    assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
+      "chu¹        zhū       ㄓㄨ          chu¹",
+      "            chū       ㄔㄨ          ch'u¹     marks restored",
+      "            jū        ㄐㄩ          chü¹      marks restored",
+      "            qū        ㄑㄩ          ch'ü¹     marks restored",
+    ]);
+  });
+
+  it("reports the readings as data", async () => {
+    assertObjectEquals(await json("romanize", "--from", "wade-giles", "chi"), {
+      text: "chi",
+      read: true,
+      readings: [
+        { pinyin: "ji", bopomofo: "ㄐㄧ", wadeGiles: "chi", isExact: true },
+        { pinyin: "qi", bopomofo: "ㄑㄧ", wadeGiles: "ch'i", isExact: false },
+      ],
+    });
+  });
+
+  it("says so when it cannot read the text at all", async () => {
+    assertArrayEquals(await cli("romanize", "zzz"), ["zzz  not readable"]);
+    // A regular Wade-Giles spelling of a syllable Mandarin does not have.
+    assertArrayEquals(await cli("romanize", "--from", "wade-giles", "shung"), [
+      "shung  not readable",
+    ]);
+  });
+
+  it("loads no dictionary, since a romanisation needs none", async () => {
+    let loaded = 0;
+    const counted = {
+      ...environment,
+      loadDictionary: () => {
+        loaded += 1;
+        return Promise.resolve(dictionary);
+      },
+    };
+    await runCli(["romanize", "běijīng"], counted);
+    assertIdentical(loaded, 0);
+  });
+});
+
 describe("the info command", () => {
   it("reports what is loaded", async () => {
     const lines = await cli("info");

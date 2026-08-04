@@ -6,9 +6,9 @@ validates and writes pinyin syllables on their own, with no dictionary.
 [https://pinyinjs.dev](https://pinyinjs.dev "PinyinJS docs website")
 
 > **Beta.** Published under the `beta` tag, so a plain `pnpm add
-@kensio/pinyinjs` will not find it until 1.0. Wade-Giles, Bopomofo, Yale and
-> IPA, and reading numbers aloud, are not built. Everything below works and is
-> tested, but the API will change before 1.0.
+@kensio/pinyinjs` will not find it until 1.0. Yale, Gwoyeu Romatzyh and IPA are
+> not built. Everything below works and is tested, but the API will change
+> before 1.0.
 
 ## Install
 
@@ -46,6 +46,9 @@ $ pinyinjs syllable nǐhǎo
 nǐhǎo  nǐ hǎo
   nǐ        n + i, tone 3         nǐ  ni3  ni³
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
+
+$ pinyinjs romanize běijīng
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹
 ```
 
 | Command    | Does                                                |
@@ -449,6 +452,37 @@ readNumeral(110, { style: "digits", yao: true }); // yāo yāo líng
 
 More in [numbers](docs/numerals/).
 
+## Bopomofo and Wade-Giles
+
+Also dictionary-free: a romanisation is a mapping over about 420 syllables, so
+hanzi → Wade-Giles is hanzi → pinyin → Wade-Giles.
+
+```ts
+import {
+  readSyllable,
+  readWadeGilesLoosely,
+  writeBopomofo,
+  writeWadeGiles,
+} from "@kensio/pinyinjs";
+
+const jiu = readSyllable("jiù");
+writeBopomofo(jiu); // "ㄐㄧㄡˋ"
+writeWadeGiles(jiu); // "chiu⁴"
+```
+
+Reading Wade-Giles back gives an **array**, because real text drops the
+apostrophes and diacritics that carry the distinctions:
+
+```ts
+readWadeGilesLoosely("chi¹"); // [jī, qī] — chi is jī, ch'i is qī
+readWadeGilesLoosely("chu¹"); // [zhū, chū, jū, qū]
+```
+
+Measured over the phrase corpus, 52.07% of written syllables have a Wade-Giles
+spelling that merges with another once its marks are dropped, and taking the
+first candidate recovers 79.05% of them. More in
+[romanisation](docs/romanization/).
+
 ## Sandhi
 
 The dictionary stores underlying tones, and sandhi is applied to the syllable
@@ -496,6 +530,8 @@ Both scripts are dictionary keys, so only the locale is an option to pass.
 | `readSyllable` / `writeSyllable` / `isSyllable`      | one syllable, no dictionary                       |
 | `splitSyllables` / `readWord`                        | split written pinyin                              |
 | `applySandhi`                                        | 一, 不 and optional third-tone sandhi             |
+| `writeBopomofo` / `writeWadeGiles`                   | one syllable, romanised                           |
+| `readBopomofo` / `readWadeGilesLoosely`              | and back again                                    |
 | `applyToneMark` / `stripToneMarks` / `toneFromMarks` | tone marks                                        |
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 

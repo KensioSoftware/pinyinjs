@@ -33,6 +33,14 @@ import {
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
+import { readBopomofo, writeBopomofo } from "./romanization/bopomofo.js";
+import {
+  readWadeGiles,
+  readWadeGilesLoosely,
+  writeWadeGiles,
+  writeWadeGilesSpelling,
+  writeWadeGilesWord,
+} from "./romanization/wade-giles.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -53,7 +61,7 @@ import {
   stripToneMarks,
   toneFromMarks,
 } from "./tone/tone-mark.js";
-import { NEUTRAL_TONE } from "./tone/tone.js";
+import { NEUTRAL_TONE, TONES } from "./tone/tone.js";
 
 /**
  * Every example the pages under `docs/` show, run against the committed
@@ -87,6 +95,33 @@ function alternatives(text: string, index: number): readonly string[] {
   assertNonNullable(piece.confidence);
   return piece.confidence.alternatives.map((found) =>
     found.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
+
+/**
+ * A syllable of the romanisation page's examples, parsed.
+ */
+function one(pinyin: string): Syllable {
+  const read = readSyllable(pinyin);
+  assertNonNullable(read, pinyin);
+  return read;
+}
+
+/**
+ * What a Wade-Giles spelling reads back as on that page.
+ */
+function loosely(spelling: string): readonly string[] {
+  return readWadeGilesLoosely(spelling).map((syllable) =>
+    writeSyllable(syllable),
+  );
+}
+
+/**
+ * A Wade-Giles spelling with the marks a hurried text drops taken off it.
+ */
+function dropped(spelling: string): string {
+  return spelling.replaceAll(/['êŭü]/gu, (mark) =>
+    mark === "ê" ? "e" : mark === "'" ? "" : "u",
   );
 }
 
@@ -583,6 +618,125 @@ describe("the examples in docs/", () => {
     });
   });
 
+  describe("romanization", () => {
+    it("writes the syllable the page opens on in both systems", () => {
+      assertIdentical(writeBopomofo(one("jiù")), "ㄐㄧㄡˋ");
+      assertIdentical(writeWadeGiles(one("jiù")), "chiu⁴");
+    });
+
+    it("writes the bopomofo the page shows", () => {
+      assertIdentical(writeBopomofo(one("zhōng")), "ㄓㄨㄥ");
+      assertIdentical(writeBopomofo(one("zhī")), "ㄓ");
+      assertIdentical(writeBopomofo(one("ma5")), "˙ㄇㄚ");
+      const xiong = readBopomofo("ㄒㄩㄥˊ");
+      assertNonNullable(xiong);
+      assertIdentical(writeSyllable(xiong), "xióng");
+      // 事儿 has no rhyme for the ㄦ to attach to; 二儿 is ㄦㄦ.
+      assertIdentical(writeBopomofo(one("shìr")), "ㄕㄦˋ");
+      assertIdentical(writeBopomofo(one("èrr")), "ㄦㄦˋ");
+      assertIdentical(writeBopomofo(one("ǹg")), "ㄫˋ");
+    });
+
+    it("writes the Wade-Giles the page shows", () => {
+      const spelt = (pinyin: string): string =>
+        writeWadeGiles(one(pinyin), { tones: "none" });
+      assertIdentical(spelt("běi"), "pei");
+      assertIdentical(spelt("gē"), "ko");
+      assertIdentical(spelt("zuò"), "tso");
+      assertIdentical(spelt("guì"), "kuei");
+      assertIdentical(spelt("zī"), "tzŭ");
+      assertIdentical(
+        writeWadeGilesWord([one("běi"), one("jīng")]),
+        "pei³-ching¹",
+      );
+    });
+
+    it("reads back the spellings the page reads back", () => {
+      assertArrayEquals(
+        readWadeGiles("chiu⁴").map((syllable) => writeSyllable(syllable)),
+        ["jiù"],
+      );
+      assertArrayEquals(
+        readWadeGiles("lo²").map((syllable) => writeSyllable(syllable)),
+        ["luó", "ló"],
+      );
+      assertArrayEquals(
+        readWadeGiles("o¹").map((syllable) => writeSyllable(syllable)),
+        ["ō", "ē"],
+      );
+      assertArrayEquals(loosely("chi¹"), ["jī", "qī"]);
+      assertArrayEquals(loosely("chu¹"), ["zhū", "chū", "jū", "qū"]);
+      assertArrayEquals(loosely("hsueh²"), ["xué"]);
+      // Marks may be missing, never wrong.
+      assertArrayEquals(loosely("ch'u¹"), ["chū", "qū"]);
+    });
+
+    it("has the ambiguity figures the page tabulates", () => {
+      const spellings = [...DICTIONARY_SYLLABLES].map((pinyin) =>
+        writeWadeGilesSpelling(one(pinyin)),
+      );
+      assertSetSize(new Set(spellings), 423);
+      assertArrayLength(
+        spellings.filter((spelling) => /['êŭü]/u.test(spelling)),
+        164,
+      );
+
+      const merged = spellings.filter(
+        (spelling) => readWadeGilesLoosely(dropped(spelling)).length > 1,
+      );
+      assertArrayLength(merged, 219);
+      assertIdentical(spellings.length - merged.length, 205);
+      assertArrayLength(
+        spellings.filter(
+          (spelling) => readWadeGilesLoosely(dropped(spelling)).length === 4,
+        ),
+        12,
+      );
+      // Taking the first candidate means believing the text wrote what it
+      // meant, which is right wherever the marks-dropped spelling is somebody
+      // else's correct one.
+      const believed = [...DICTIONARY_SYLLABLES].filter((pinyin) => {
+        const spelling = writeWadeGilesSpelling(one(pinyin));
+        const first = readWadeGilesLoosely(dropped(spelling))[0];
+        return first !== undefined && writeSyllable(first, "none") === pinyin;
+      });
+      assertArrayLength(believed, 312);
+    });
+
+    it("round-trips every form except the tone bopomofo cannot write", () => {
+      let forms = 0;
+      let bopomofo = 0;
+      let wade = 0;
+      for (const pinyin of DICTIONARY_SYLLABLES) {
+        for (const tone of [undefined, ...TONES]) {
+          for (const erhua of [false, true]) {
+            const form = {
+              ...one(pinyin),
+              tone,
+              ...(erhua && { erhua: true }),
+            };
+            forms += 1;
+            const back = readBopomofo(writeBopomofo(form));
+            if (back !== undefined && back.tone === form.tone) {
+              bopomofo += 1;
+            }
+            if (
+              readWadeGiles(writeWadeGiles(form)).some(
+                (found) =>
+                  found.final === form.final && found.tone === form.tone,
+              )
+            ) {
+              wade += 1;
+            }
+          }
+        }
+      }
+      assertIdentical(forms, 5088);
+      assertIdentical(wade, 5088);
+      assertIdentical(bopomofo, 4240);
+    });
+  });
+
   describe("the command line", () => {
     /**
      * The CLI, against the same committed dictionary and a fixed version, as
@@ -620,6 +774,18 @@ describe("the examples in docs/", () => {
     it("converts with the locale flag", async () => {
       assertArrayEquals(await cli("convert", "--locale", "zh-TW", "垃圾"), [
         "lèsè",
+      ]);
+    });
+
+    it("romanises pinyin and reads sloppy Wade-Giles back", async () => {
+      assertArrayEquals(await cli("romanize", "běijīng"), [
+        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹",
+      ]);
+      assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
+        "chu¹        zhū       ㄓㄨ          chu¹",
+        "            chū       ㄔㄨ          ch'u¹     marks restored",
+        "            jū        ㄐㄩ          chü¹      marks restored",
+        "            qū        ㄑㄩ          ch'ü¹     marks restored",
       ]);
     });
 

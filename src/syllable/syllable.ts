@@ -1,9 +1,11 @@
 import {
   applyToneMark,
+  normaliseSuperscript,
   stripToneMarks,
+  SUPERSCRIPT_TONES,
   toneFromMarks,
 } from "../tone/tone-mark.js";
-import { NEUTRAL_TONE, type Tone, toneFromNotation } from "../tone/tone.js";
+import { type Tone, toneFromNotation } from "../tone/tone.js";
 import {
   AFTER_INITIAL_SPELLINGS,
   type Final,
@@ -27,7 +29,7 @@ export interface Syllable {
   /**
    * The tone, or undefined when the source wrote no tone at all.
    *
-   * Undefined is distinct from {@link NEUTRAL_TONE}: `de` in 我的 is neutral,
+   * Undefined is distinct from the neutral tone: `de` in 我的 is neutral,
    * whereas the `bei` in a typed `beijing` simply has no tone written. Treating
    * the second as neutral would fabricate information — it would round-trip to
    * `bei5`, and would emit the neutral-tone dot in bopomofo.
@@ -106,46 +108,6 @@ const STANDALONE_FINALS = new Set<Final>([
 export function normaliseUmlaut(text: string): string {
   return text.replaceAll("u:", "ü").replaceAll("v", "ü").replaceAll("V", "Ü");
 }
-
-/**
- * How each tone is written raised, for the `superscript` notation.
- *
- * The neutral tone is written `⁵` rather than left off, so that superscript is
- * exactly the numeric notation set higher and the two round-trip alike.
- */
-const SUPERSCRIPT_TONES = new Map<Tone, string>([
-  [1, "¹"],
-  [2, "²"],
-  [3, "³"],
-  [4, "⁴"],
-  [NEUTRAL_TONE, "⁵"],
-]);
-
-/**
- * Rewrite raised tone digits as plain ones, so that input takes either.
- *
- * Zero is included because {@link toneFromNotation} accepts it for the neutral
- * tone, and a notation that can be written should be readable back.
- */
-function normaliseSuperscript(text: string): string {
-  return text.replaceAll(
-    /[⁰¹²³⁴⁵]/gu,
-    /* c8 ignore next -- the pattern only matches what the map holds */
-    (digit) => SUPERSCRIPT_DIGITS.get(digit) ?? digit,
-  );
-}
-
-/**
- * The plain digit each raised digit stands for.
- */
-const SUPERSCRIPT_DIGITS = new Map<string, string>([
-  ["⁰", "0"],
-  ["¹", "1"],
-  ["²", "2"],
-  ["³", "3"],
-  ["⁴", "4"],
-  ["⁵", "5"],
-]);
 
 /**
  * Split a written syllable into its initial and the final's spelling.
