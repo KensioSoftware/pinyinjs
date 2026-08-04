@@ -52,8 +52,9 @@ export function dictionaryOf(entries: readonly DictionaryEntry[]): Dictionary {
  *
  * Small, but chosen to carry every case the decoder has to handle: a longer
  * word overlapping a shorter one (银行 over 银), a polyphone whose reading
- * depends on the word it is in (行), a proper noun, a 繁體 key, 儿化, and 一 and
- * 不 stored with their underlying tones.
+ * depends on the word it is in (行), a proper noun, a 繁體 key, 儿化, a word
+ * needing the 隔音符号 (西安) and one that does not strictly need it (海鸥), and
+ * 一 and 不 stored with their underlying tones.
  */
 export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
   entry("银", "yín"),
@@ -72,6 +73,10 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
   entry("京", "jīng"),
   entry("垃", "lā"),
   entry("圾", "jī"),
+  entry("西", "xī"),
+  entry("安", "ān"),
+  entry("海", "hǎi"),
+  entry("鸥", "ōu"),
   entry("银行", "yín háng", { hant: "銀行", frequency: 7684 }),
   entry("行长", "háng zhǎng", { hant: "行長", frequency: 419 }),
   entry("长大", "zhǎng dà", { frequency: 1498 }),
@@ -81,6 +86,8 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
     frequency: 34_488,
   }),
   entry("玩儿", "wánr", { hant: "玩兒", frequency: 220 }),
+  entry("西安", "xī ān", { isProperNoun: true, partOfSpeech: "ns", frequency: 2731 }),
+  entry("海鸥", "hǎi ōu", { frequency: 233 }),
   entry("垃圾", "lā jī", {
     readings: { cn: reading("lā jī"), tw: reading("lè sè") },
     frequency: 1165,

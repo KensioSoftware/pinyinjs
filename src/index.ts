@@ -106,6 +106,21 @@ export {
 } from "./dictionary/tiers.js";
 export type { Tier } from "./dictionary/tiers.js";
 
+export { joinWord } from "./orthography/apostrophe.js";
+export type { ApostropheStyle } from "./orthography/apostrophe.js";
+
+export {
+  capitaliseSentences,
+  capitaliseWord,
+  isSentence,
+} from "./orthography/capitals.js";
+export type { CapitalStyle } from "./orthography/capitals.js";
+
+export { toLatinPunctuation } from "./orthography/punctuation.js";
+export type { PunctuationStyle } from "./orthography/punctuation.js";
+
+export { isSeparableStart, SEPARABLE_VOWELS } from "./syllable/separation.js";
+
 export {
   detectScript,
   DEFAULT_LOCALE,

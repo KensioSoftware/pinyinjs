@@ -1,4 +1,5 @@
 import { DICTIONARY_SYLLABLES } from "./inventory.js";
+import { isSeparableStart } from "./separation.js";
 import {
   isSyllable,
   readSyllable,
@@ -13,16 +14,6 @@ import {
  * reduplicated word or a 成语 written 2+2.
  */
 const SYLLABLE_SEPARATORS = /['’‘-]/u;
-
-/**
- * Vowels that may only begin a syllable when an apostrophe says so.
- *
- * The 隔音符号 rule: a syllable starting with a, o or e takes an apostrophe
- * before it unless it begins the word. Since apostrophes have already been
- * split on by the time a run is segmented, a run may only start one such
- * syllable, and it must be its first.
- */
-const SEPARATED_VOWELS = /^[aāáǎàoōóǒòeēéěè]/u;
 
 /**
  * Whether a spelling is a syllable Mandarin actually uses.
@@ -84,7 +75,7 @@ function segmentRun(
       continue;
     }
     const tail = run.slice(length);
-    if (isSeparated && SEPARATED_VOWELS.test(tail)) {
+    if (isSeparated && isSeparableStart(tail)) {
       continue;
     }
     const rest = segmentRun(tail, memo, isSeparated);

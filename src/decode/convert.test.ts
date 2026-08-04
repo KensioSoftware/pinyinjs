@@ -31,10 +31,11 @@ describe("converting with the greedy baseline", () => {
   });
 
   it("passes non-Han text through untouched", () => {
-    assertIdentical(convert("北京。"), "Běijīng。");
     // The digit and the letter are left exactly as written — reading them
     // aloud belongs to the numerals package, not here.
     assertIdentical(convert("3D银行"), "3Dyínháng");
+    // 《》 marks a title, which the Latin script sets in italics rather than
+    // with a bracket, so there is nothing to rewrite it to.
     assertIdentical(convert("《北京》"), "《Běijīng》");
   });
 
@@ -85,7 +86,7 @@ describe("converting with the greedy baseline", () => {
   });
 
   it("converts a whole sentence, punctuation and all", () => {
-    assertIdentical(convert("北京银行。"), "Běijīng yínháng。");
+    assertIdentical(convert("北京银行。"), "Běijīng yínháng.");
   });
 
   it("converts empty text to nothing", () => {
@@ -137,5 +138,54 @@ describe("converting with the lattice", () => {
 
   it("converts empty text to nothing", () => {
     assertIdentical(lattice(""), "");
+  });
+});
+
+describe("the orthography options", () => {
+  it("writes the 隔音符号 inside a word", () => {
+    assertIdentical(lattice("西安"), "Xī'ān");
+    assertIdentical(lattice("海鸥"), "hǎi'ōu");
+  });
+
+  it("writes only the apostrophes the standard requires when asked", () => {
+    // Xīān would read as the single syllable xian, so the mark stays; hǎiōu
+    // could not be read any other way, so it goes.
+    assertIdentical(lattice("西安", { apostrophe: "standard" }), "Xī'ān");
+    assertIdentical(lattice("海鸥", { apostrophe: "standard" }), "hǎiōu");
+  });
+
+  it("writes none when asked", () => {
+    assertIdentical(lattice("西安", { apostrophe: "never" }), "Xīān");
+  });
+
+  it("leaves numbered tones unapostrophised, since they cannot be misread", () => {
+    assertIdentical(lattice("西安", { notation: "numbers" }), "Xi1an1");
+  });
+
+  it("capitalises the first word of a sentence, but not a word on its own", () => {
+    assertIdentical(lattice("银行北京。"), "Yínháng Běijīng.");
+    assertIdentical(lattice("银行"), "yínháng");
+  });
+
+  it("capitalises after each sentence ending", () => {
+    assertIdentical(lattice("银行。北京。"), "Yínháng. Běijīng.");
+  });
+
+  it("capitalises proper nouns only when asked", () => {
+    assertIdentical(
+      lattice("银行北京。", { capitals: "proper" }),
+      "yínháng Běijīng.",
+    );
+  });
+
+  it("writes no capitals at all when asked", () => {
+    assertIdentical(
+      lattice("银行北京。", { capitals: "none" }),
+      "yínháng běijīng.",
+    );
+  });
+
+  it("keeps the source punctuation when asked", () => {
+    assertIdentical(lattice("北京。", { punctuation: "keep" }), "Běijīng。");
   });
 });

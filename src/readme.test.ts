@@ -63,7 +63,7 @@ describe("the examples in README.md", () => {
       assertIdentical(convert(dictionary, "行长"), "hángzhǎng");
       assertIdentical(
         convert(dictionary, "我要去北京。"),
-        "wǒ yào qù Běijīng。",
+        "Wǒ yào qù Běijīng.",
       );
     });
 
@@ -98,6 +98,30 @@ describe("the examples in README.md", () => {
         convert(dictionary, "好好", { sandhi: { thirdTone: true } }),
         "háohǎo",
       );
+    });
+
+    it("writes the orthography options shown", () => {
+      assertIdentical(convert(dictionary, "西安"), "Xī'ān");
+      assertIdentical(
+        convert(dictionary, "海鸥", { apostrophe: "standard" }),
+        "hǎiōu",
+      );
+      assertIdentical(
+        convert(dictionary, "北京。", { punctuation: "keep" }),
+        "Běijīng。",
+      );
+      assertIdentical(
+        convert(dictionary, "北京。", { capitals: "none" }),
+        "běijīng.",
+      );
+    });
+
+    it("writes the apostrophes and grouping the orthography section shows", () => {
+      assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
+      assertIdentical(convert(dictionary, "女儿"), "nǚ'ér");
+      assertIdentical(convert(dictionary, "你好，世界"), "nǐ hǎo, shìjiè");
+      // Not built yet, and documented as not built.
+      assertIdentical(convert(dictionary, "他看了"), "tā kàn le");
     });
 
     it("leaves non-Han text exactly as written", () => {
