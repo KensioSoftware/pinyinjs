@@ -7,6 +7,14 @@
  */
 
 export {
+  FREQUENCY_BUCKETS,
+  FrequencyTable,
+} from "./dictionary/frequency-table.js";
+
+export { KeyIndex } from "./dictionary/key-index.js";
+export type { KeyLookup } from "./dictionary/key-index.js";
+
+export {
   detectScript,
   DEFAULT_LOCALE,
   isLocale,
