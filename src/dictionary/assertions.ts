@@ -144,6 +144,32 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
         : "北京 is not marked as a proper noun",
   },
   {
+    // jieba tags all four of these a proper noun; CC-CEDICT writes their
+    // pinyin in lower case, and the decoder capitalises straight off this bit.
+    description: "沙发, 城市, 阿姨 and 长大 are not proper nouns",
+    check: (dictionary: BuiltDictionary): string | undefined => {
+      const wrong = ["沙发", "城市", "阿姨", "长大"].filter(
+        (word) => dictionary.get(word)?.isProperNoun === true,
+      );
+      return wrong.length === 0
+        ? undefined
+        : `marked as proper nouns: ${wrong.join(", ")}`;
+    },
+  },
+  {
+    // The veto only demotes. These stay proper nouns, and 人民政府 is the
+    // control that shows the veto still fires on an institution.
+    description: "毛泽东, 国务院 and 湖北 stay proper nouns",
+    check: (dictionary: BuiltDictionary): string | undefined => {
+      const wrong = ["毛泽东", "国务院", "湖北"].filter(
+        (word) => dictionary.get(word)?.isProperNoun !== true,
+      );
+      return wrong.length === 0
+        ? undefined
+        : `no longer proper nouns: ${wrong.join(", ")}`;
+    },
+  },
+  {
     description: "头发 derives 頭髮 rather than 頭發",
     check: (dictionary: BuiltDictionary): string | undefined => {
       const hant = dictionary.get("头发")?.hant;

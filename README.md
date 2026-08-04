@@ -343,18 +343,21 @@ projection locks.
 
 | Metric                       | Greedy baseline |   Lattice |
 | ---------------------------- | --------------: | --------: |
-| Reading accuracy (with tone) |           96.2% | **96.2%** |
-| Reading accuracy (toneless)  |           97.5% |     97.5% |
-| Exact match                  |           67.6% |     70.4% |
-| Spacing (F1)                 |           89.7% |     91.5% |
+| Reading accuracy (with tone) |           98.7% | **98.7%** |
+| Reading accuracy (toneless)  |          100.0% |    100.0% |
+| Exact match                  |           83.1% |     84.5% |
+| Spacing (F1)                 |           93.8% |     95.4% |
+| Capitalisation               |           97.5% |     97.5% |
 
-The two read identically, and that is the honest result rather than a
-disappointing one: all six of the corpus's remaining reading errors are missing
-apostrophes or one known source-data defect, so the corpus has no reading
-headroom left to distinguish them by. The lattice's measurable win is spacing.
+The two decoders read identically, and that is the honest result rather than a
+disappointing one: the corpus has no reading headroom left to distinguish them
+by. Every base reading is correct, and the one reading error left is 一个,
+stored with a neutral 个 that the gold wants toned. The lattice's measurable win
+is spacing.
 
-Spacing is one gap per decoded word, which is not orthography and is not trying
-to be — that is the next phase. The figure is a floor to improve on.
+Eleven of the 71 cases still miss on exact match. Most need a curated 正词法
+list; two are 你好 and 谢谢, which the corpus capitalises as bare greetings with
+no punctuation to signal one.
 
 ## Data sources
 

@@ -596,7 +596,9 @@ describe("merging the sources", () => {
       assertTrue(byWord.get("巴黎")?.isProperNoun ?? false);
     });
 
-    it("prefers jieba's verdict over CC-CEDICT's capitalisation", () => {
+    it("does not let CC-CEDICT promote a word jieba calls ordinary", () => {
+      // A capital in CC-CEDICT is not proof: it capitalises any headword
+      // written with Latin letters too.
       const { byWord } = merge({
         cedict: [
           cedictEntry("巴黎", "巴黎", "Ba1 li2", { isProperNoun: true }),
@@ -604,6 +606,52 @@ describe("merging the sources", () => {
         jieba: new Map([["巴黎", { frequency: 10, partOfSpeech: "n" }]]),
       });
       assertFalse(byWord.get("巴黎")?.isProperNoun ?? true);
+    });
+
+    it("lets CC-CEDICT's lower case veto a jieba proper noun tag", () => {
+      // jieba tags 沙发 nz. CC-CEDICT writes `sha1 fa1`, and nothing but a
+      // common noun is written that way.
+      const { byWord, result } = merge({
+        phrase: new Map([["沙发", ["shā", "fā"]]]),
+        cedict: [cedictEntry("沙發", "沙发", "sha1 fa1")],
+        jieba: new Map([["沙发", { frequency: 862, partOfSpeech: "nz" }]]),
+      });
+      assertFalse(byWord.get("沙发")?.isProperNoun ?? true);
+      assertIdentical(result.stats.properNounVetoes, 1);
+    });
+
+    it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
+      const { byWord, result } = merge({
+        phrase: new Map([["北京", ["běi", "jīng"]]]),
+        cedict: [
+          cedictEntry("北京", "北京", "Bei3 jing1", { isProperNoun: true }),
+        ],
+        jieba: new Map([["北京", { frequency: 34_488, partOfSpeech: "ns" }]]),
+      });
+      assertTrue(byWord.get("北京")?.isProperNoun ?? false);
+      assertIdentical(result.stats.properNounVetoes, 0);
+    });
+
+    it("keeps jieba's verdict where CC-CEDICT has nothing to say", () => {
+      const { byWord } = merge({
+        phrase: new Map([["襄阳", ["xiāng", "yáng"]]]),
+        jieba: new Map([["襄阳", { frequency: 13_196, partOfSpeech: "ns" }]]),
+      });
+      assertTrue(byWord.get("襄阳")?.isProperNoun ?? false);
+    });
+
+    it("compares against the sense matching the reading, not just any sense", () => {
+      // 万 is 萬 and a proper noun surname when read wàn, and 万 read mò is a
+      // different word; the veto must consult the sense that was chosen.
+      const { byWord } = merge({
+        phrase: new Map([["万", ["mò"]]]),
+        cedict: [
+          cedictEntry("萬", "万", "Wan4", { isProperNoun: true }),
+          cedictEntry("万", "万", "mo4"),
+        ],
+        jieba: new Map([["万", { frequency: 100, partOfSpeech: "nr" }]]),
+      });
+      assertFalse(byWord.get("万")?.isProperNoun ?? true);
     });
   });
 
