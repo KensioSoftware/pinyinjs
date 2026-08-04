@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -11,7 +12,18 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { convert } from "./decode/convert.js";
+import {
+  type AccuracyReport,
+  emptyTally,
+  report,
+  scoreCase,
+} from "./accuracy/score.js";
+import { GOLD_CASES } from "#test/fixtures/gold/gold-cases.js";
+import {
+  convert,
+  convertGreedily,
+  type ConvertOptions,
+} from "./decode/convert.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
@@ -47,6 +59,7 @@ import { NEUTRAL_TONE } from "./tone/tone.js";
  * them is now lying to somebody.
  */
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
+const readmePath = fileURLToPath(new URL("../README.md", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
 
 /**
@@ -273,5 +286,75 @@ describe("the examples in README.md", () => {
       });
       assertIdentical(empty.size, 0);
     });
+  });
+});
+
+/**
+ * The percentage the README's accuracy table gives for a row and column.
+ *
+ * Read out of the file rather than compared as formatted text, so that
+ * reformatting the table cannot make the check pass vacuously — which is
+ * exactly how these figures went stale through two releases.
+ */
+function quoted(readme: string, metric: string, column: number): number {
+  const row = new RegExp(
+    String.raw`\|\s*${metric}[^|]*\|([^|]*)\|([^|]*)\|`,
+    "u",
+  ).exec(readme);
+  assertNonNullable(row);
+  const cell = row[column];
+  assertNonNullable(cell);
+  const percent = /(\d+\.\d+)%/u.exec(cell);
+  assertNonNullable(percent);
+  return Number(percent[1]);
+}
+
+/**
+ * Score a decoder over the whole gold corpus, as `pnpm accuracy` does.
+ */
+function measure(
+  convertWith: (
+    dictionary: Dictionary,
+    text: string,
+    options: ConvertOptions,
+  ) => string,
+): AccuracyReport {
+  const tally = emptyTally();
+  for (const goldCase of GOLD_CASES) {
+    scoreCase(
+      goldCase.pinyin,
+      convertWith(dictionary, goldCase.hanzi, {
+        ...(goldCase.locale !== undefined && { locale: goldCase.locale }),
+      }),
+      tally,
+    );
+  }
+  return report(tally);
+}
+
+describe("the accuracy figures in README.md", () => {
+  it("quotes what the scorer actually produces", async () => {
+    const readme = await readFile(readmePath, "utf8");
+    const scored = {
+      greedy: measure(convertGreedily),
+      lattice: measure(convert),
+    };
+    const rows: readonly (readonly [string, keyof AccuracyReport])[] = [
+      [String.raw`Reading accuracy \(with tone\)`, "readings"],
+      [String.raw`Reading accuracy \(toneless\)`, "bases"],
+      ["Exact match", "exact"],
+      [String.raw`Spacing \(F1\)`, "spacing"],
+      ["Capitalisation", "capitals"],
+    ];
+    for (const [metric, key] of rows) {
+      assertIdentical(
+        quoted(readme, metric, 1),
+        Number(scored.greedy[key].toFixed(1)),
+      );
+      assertIdentical(
+        quoted(readme, metric, 2),
+        Number(scored.lattice[key].toFixed(1)),
+      );
+    }
   });
 });

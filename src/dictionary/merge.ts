@@ -52,6 +52,10 @@ export interface MergeStats {
   readonly variantSpellings: number;
   /** Entries carrying a zh-TW reading delta. */
   readonly taiwanReadings: number;
+  /**
+   * Words jieba tagged a proper noun that CC-CEDICT's lowercase pinyin vetoed.
+   */
+  readonly properNounVetoes: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
 }
@@ -380,6 +384,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
   let scriptPairs = 0;
   let variantSpellings = 0;
   let taiwanReadings = 0;
+  let properNounVetoes = 0;
   let phraseWords = 0;
   let cedictWords = 0;
   let characters = 0;
@@ -540,14 +545,26 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // ── Frequency, part of speech and the proper noun bit ─────
     const jiebaEntry = jieba.get(word);
     const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
-    // jieba's tags are the primary signal. CC-CEDICT's capitalisation only gets
-    // a say where jieba has no entry at all, since it is corroboration rather
-    // than proof: a headword with Latin letters reads as capitalised without
-    // being a proper noun.
+    // jieba's tags propose a proper noun and CC-CEDICT's capitalisation can
+    // veto it. The tags on their own are noisy enough to be worth correcting:
+    // 沙发, 城市, 阿姨, 智能卡 and 花生仁 are all tagged nr or nz, and the
+    // decoder capitalises straight off this bit, so 我买了一个沙发 came out as
+    // `Wǒ mǎile yīge Shāfā`.
+    //
+    // The veto only ever demotes, never promotes. CC-CEDICT capitalises the
+    // pinyin of a proper noun, which is a claim about the word rather than a
+    // category it was sorted into — but it also capitalises any headword
+    // written with Latin letters, so a capital there is not proof on its own.
+    // A lowercase one is much better evidence, since nothing else would write
+    // it that way.
     const isProperNoun =
       jiebaEntry === undefined
         ? cedictEntries.some((entry) => entry.isProperNoun)
-        : isProperNounTag(partOfSpeech);
+        : isProperNounTag(partOfSpeech) &&
+          (senses.length === 0 || senses.some((entry) => entry.isProperNoun));
+    if (isProperNounTag(partOfSpeech) && !isProperNoun) {
+      properNounVetoes++;
+    }
 
     // ── Polyphone priors, for single characters only ──────────
     const characterReadings = defaults.get(word) ?? [];
@@ -592,6 +609,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       scriptPairs,
       variantSpellings,
       taiwanReadings,
+      properNounVetoes,
       rejected: rejected.size,
     },
   };

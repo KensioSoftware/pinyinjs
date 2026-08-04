@@ -65,6 +65,21 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("台湾", "tái wān", { hant: "台灣", hantVariants: ["臺灣"] }),
   entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
   entry("北京", "běi jīng", { isProperNoun: true, partOfSpeech: "ns" }),
+  entry("毛泽东", "máo zé dōng", {
+    hant: "毛澤東",
+    isProperNoun: true,
+    partOfSpeech: "nr",
+  }),
+  entry("国务院", "guó wù yuàn", {
+    hant: "國務院",
+    isProperNoun: true,
+    partOfSpeech: "nt",
+  }),
+  entry("湖北", "hú běi", { isProperNoun: true, partOfSpeech: "ns" }),
+  entry("沙发", "shā fā", { hant: "沙發", partOfSpeech: "nz" }),
+  entry("城市", "chéng shì", { partOfSpeech: "ns" }),
+  entry("阿姨", "ā yí", { partOfSpeech: "nr" }),
+  entry("长大", "zhǎng dà", { hant: "長大", partOfSpeech: "ns" }),
   entry("李", "lǐ"),
   entry("们", "men"),
 ];
