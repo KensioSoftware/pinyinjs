@@ -20,11 +20,13 @@ import {
   readBopomofo,
   writeBopomofoWord,
 } from "../romanization/bopomofo.js";
+import { readIpa, writeIpaWord } from "../romanization/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
   writeWadeGilesWord,
 } from "../romanization/wade-giles.js";
+import { readYale, writeYaleWord } from "../romanization/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -416,12 +418,14 @@ const SANDHI: Command = {
 };
 
 /**
- * One syllable or word, in all three systems.
+ * One syllable or word, in every system.
  */
 interface Romanised {
   readonly pinyin: string;
   readonly bopomofo: string;
   readonly wadeGiles: string;
+  readonly yale: string;
+  readonly ipa: string;
   /**
    * Whether the Wade-Giles this came from was spelled exactly.
    *
@@ -432,7 +436,7 @@ interface Romanised {
 }
 
 /**
- * Write a run of syllables in all three systems.
+ * Write a run of syllables in every system.
  */
 function romanised(
   syllables: readonly Syllable[],
@@ -446,6 +450,8 @@ function romanised(
       .join(""),
     bopomofo: writeBopomofoWord(syllables),
     wadeGiles: writeWadeGilesWord(syllables),
+    yale: writeYaleWord(syllables),
+    ipa: writeIpaWord(syllables),
     ...(isExact !== undefined && { isExact }),
   };
 }
@@ -475,6 +481,10 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
   if (from === "wade-giles") {
     return fromWadeGiles(text, flags);
   }
+  if (from === "yale" || from === "ipa") {
+    const read = from === "yale" ? readYale(text) : readIpa(text);
+    return read.map((syllable) => romanised([syllable], flags));
+  }
   // Bopomofo needs no flag to be recognised: it has a script of its own, so a
   // caller can only mean one thing by it. Wade-Giles and pinyin overlap almost
   // entirely, so those have to be declared.
@@ -492,7 +502,7 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
 }
 
 /**
- * Write pinyin as bopomofo and Wade-Giles, and read either back.
+ * Write pinyin in every other system, and read any of them back.
  *
  * Needs no dictionary, for the same reason `syllable` does: a romanisation is
  * a mapping over syllables and there is nothing to look up. Several rows come
@@ -501,7 +511,7 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
  */
 const ROMANIZE: Command = {
   name: "romanize",
-  summary: "pinyin to bopomofo and Wade-Giles, and back",
+  summary: "pinyin to bopomofo, Wade-Giles, Yale and IPA, and back",
   argument: "<text...>",
   flags: ["notation", "from"],
   needsDictionary: false,
@@ -519,7 +529,10 @@ const ROMANIZE: Command = {
           `${column(index === 0 ? text : "", 12)}${column(one.pinyin, 10)}${column(
             one.bopomofo,
             12,
-          )}${column(one.wadeGiles, 10)}${one.isExact === false ? "marks restored" : ""}`.trimEnd(),
+          )}${column(one.wadeGiles, 12)}${column(one.yale, 10)}${column(
+            one.ipa,
+            12,
+          )}${one.isExact === false ? "marks restored" : ""}`.trimEnd(),
         ),
         data: { text, read: true, readings: found },
       };

@@ -185,13 +185,16 @@ const TIERS: readonly Tier[] = ["core", "standard", "full"];
  * `chi` is a well-formed spelling in both pinyin and Wade-Giles and means
  * different syllables in each.
  */
-export type RomanizationSource = "auto" | "pinyin" | "wade-giles" | "bopomofo";
+export type RomanizationSource =
+  "auto" | "pinyin" | "wade-giles" | "bopomofo" | "yale" | "ipa";
 
 const SOURCES: readonly RomanizationSource[] = [
   "auto",
   "pinyin",
   "wade-giles",
   "bopomofo",
+  "yale",
+  "ipa",
 ];
 
 /**

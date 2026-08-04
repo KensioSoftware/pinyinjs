@@ -172,6 +172,22 @@ export {
 } from "./romanization/wade-giles.js";
 export type { WadeGilesOptions } from "./romanization/wade-giles.js";
 
+export {
+  readYale,
+  writeYale,
+  writeYaleSpelling,
+  writeYaleWord,
+} from "./romanization/yale.js";
+export type { YaleOptions } from "./romanization/yale.js";
+
+export {
+  readIpa,
+  writeIpa,
+  writeIpaSymbols,
+  writeIpaWord,
+} from "./romanization/ipa.js";
+export type { IpaOptions } from "./romanization/ipa.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 

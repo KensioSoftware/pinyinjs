@@ -42,6 +42,19 @@ const secondaryToneVowels = "iuüê";
 const syllabicConsonantPattern = /[mn]/u;
 
 /**
+ * The combining diacritic a tone is written with, or the empty string for the
+ * neutral tone, which is written with none.
+ *
+ * Exported for the romanisations that mark tones as pinyin does but do not
+ * place the mark as pinyin does: Yale's `jr` and `sz` have no vowel at all, so
+ * {@link applyToneMark} has nowhere to put the mark and the caller has to say
+ * where it goes.
+ */
+export function toneDiacritic(tone: Tone): string {
+  return toneDiacritics[tone - 1] ?? "";
+}
+
+/**
  * Remove any tone diacritics, leaving the plain syllable.
  *
  * The diaeresis of ü is preserved, so ǚ becomes ü rather than u.

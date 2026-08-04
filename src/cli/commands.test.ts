@@ -360,24 +360,33 @@ describe("the number command", () => {
 });
 
 describe("the romanize command", () => {
-  it("writes pinyin in both systems", async () => {
+  it("writes pinyin in every system", async () => {
     assertArrayEquals(await cli("romanize", "běijīng"), [
-      "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹",
+      "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥",
     ]);
   });
 
   it("reads bopomofo without being told what it is", async () => {
     assertArrayEquals(await cli("romanize", "ㄅㄟˇ"), [
-      "ㄅㄟˇ         běi       ㄅㄟˇ         pei³",
+      "ㄅㄟˇ         běi       ㄅㄟˇ         pei³        běi       pei˨˩˦",
     ]);
   });
 
   it("reads Wade-Giles, marking what needed a mark put back", async () => {
     assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
-      "chu¹        zhū       ㄓㄨ          chu¹",
-      "            chū       ㄔㄨ          ch'u¹     marks restored",
-      "            jū        ㄐㄩ          chü¹      marks restored",
-      "            qū        ㄑㄩ          ch'ü¹     marks restored",
+      "chu¹        zhū       ㄓㄨ          chu¹        jū        ʈʂu˥",
+      "            chū       ㄔㄨ          ch'u¹       chū       ʈʂʰu˥       marks restored",
+      "            jū        ㄐㄩ          chü¹        jyū       tɕy˥        marks restored",
+      "            qū        ㄑㄩ          ch'ü¹       chyū      tɕʰy˥       marks restored",
+    ]);
+  });
+
+  it("reads Yale and IPA when told which one it is", async () => {
+    assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
+      "syī         xī        ㄒㄧ          hsi¹        syī       ɕi˥",
+    ]);
+    assertArrayEquals(await cli("romanize", "--from", "ipa", "tɕiou˥˩"), [
+      "tɕiou˥˩     jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      tɕiou˥˩",
     ]);
   });
 
@@ -386,8 +395,22 @@ describe("the romanize command", () => {
       text: "chi",
       read: true,
       readings: [
-        { pinyin: "ji", bopomofo: "ㄐㄧ", wadeGiles: "chi", isExact: true },
-        { pinyin: "qi", bopomofo: "ㄑㄧ", wadeGiles: "ch'i", isExact: false },
+        {
+          pinyin: "ji",
+          bopomofo: "ㄐㄧ",
+          wadeGiles: "chi",
+          yale: "ji",
+          ipa: "tɕi",
+          isExact: true,
+        },
+        {
+          pinyin: "qi",
+          bopomofo: "ㄑㄧ",
+          wadeGiles: "ch'i",
+          yale: "chi",
+          ipa: "tɕʰi",
+          isExact: false,
+        },
       ],
     });
   });
