@@ -40,12 +40,15 @@ Two things make it different from the usual approach:
 | Hanzi → pinyin conversion                                  | **works** — lattice decoder             |
 | Apostrophes, sentence capitals, punctuation                | **works**                               |
 | Word grouping (GB/T 16159 分词连写)                        | **partial** — rules plus a curated list |
+| Per-syllable confidence and alternatives                   | **works**                               |
+| HTML output with tone and confidence classes               | **works**                               |
 | Wade-Giles, Bopomofo, Yale, IPA                            | not built                               |
 | Numbers, dates, currency                                   | not built                               |
 
 `convert` decodes over a lattice: every dictionary match at every position
 becomes an edge, positions that read the same way on every path are locked
-outright, and only what is left is scored. `convertGreedily` is the _old_
+outright, and only what is left is scored. Because it scores, it can also say
+where it was guessing — see [confidence](#confidence-and-what-was-rejected). `convertGreedily` is the _old_
 algorithm — forward longest-match, no scoring, no backtracking — kept so that
 every claim about the new one has a measured baseline behind it. Use `convert`.
 
@@ -104,6 +107,7 @@ them: `DecompressionStream` has no brotli, and HTTP is the right layer for it.
 convert(dictionary, "垃圾"); // "lājī"
 convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 convert(dictionary, "银行", { notation: "numbers" }); // "yin2hang2"
+convert(dictionary, "银行", { notation: "superscript" }); // "yin²hang²"
 convert(dictionary, "银行", { notation: "none" }); // "yinhang"
 convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 convert(dictionary, "西安"); // "Xī'ān"
@@ -166,6 +170,61 @@ Text that is not Han passes through untouched — punctuation, Latin letters and
 digits are left exactly as written, because reading numbers aloud is a separate
 problem with its own rules (2026年 is `èr líng èr liù nián`, but 2026个 is
 `liǎng qiān líng èr shí liù gè`).
+
+### Confidence, and what was rejected
+
+A lattice decode knows when it is guessing, and greedy longest-match cannot.
+`convertPieces` returns the conversion one syllable at a time, each carrying
+what the decode chose it over:
+
+```ts
+import { convertPieces, isUncertain, writeSyllable } from "@kensio/pinyinjs";
+
+const pieces = convertPieces(dictionary, "银行");
+pieces.map((piece) => piece.text); // ["yín", "háng"]
+pieces[0]?.confidence?.isLocked; // true — 银 reads one way on every path
+pieces[1]?.confidence?.alternatives.map((found) =>
+  found.reading.map((syllable) => writeSyllable(syllable)).join(""),
+); // ["xíng", "héng", "hàng"] — rejected, and costed
+```
+
+Three states, in increasing order of how often they are wrong:
+
+- **locked** — every path through the lattice reads the position the same way,
+  so no cost model could have changed it. Nothing is rejected.
+- **backed by a word** — other readings existed, and taking one would have meant
+  breaking a dictionary word apart. 行 in 银行 is `háng` for that reason.
+- **uncertain** — another reading of the same stretch was available for less
+  than the price of a word boundary, so the choice rests on a prior and nothing
+  else. 行 on its own is `xíng` for that reason. `isUncertain` reports it.
+
+An alternative's `cost` is in the reading decode's own units, where one step is
+one frequency bucket and a boundary is 16. It is a measure of how much evidence
+the choice had, **not a probability**: a character's alternate readings are
+ranked but not weighted upstream, so they sit exactly one bucket apart whatever
+the real odds are. [Accuracy](#accuracy) gives what each state is worth,
+measured.
+
+### HTML output
+
+```ts
+import { convertToHtml } from "@kensio/pinyinjs";
+
+convertToHtml(dictionary, "行");
+// <span class="py-syllable py-tone-2 py-uncertain"
+//       data-alternatives="háng héng hàng">xíng</span>
+```
+
+One element per syllable, carrying `py-tone-1` to `py-tone-5` and, where the
+decode was guessing, `py-uncertain` with the readings it turned down. Nothing is
+styled and nothing wraps the whole conversion: the classes are hooks, and the
+page decides whether a fourth tone is red and an uncertain reading is dotted
+underneath. Text that is not Han is escaped rather than marked up.
+
+Pass `toneClasses: false` or `markUncertain: false` to leave either off, and any
+`convert` option to change the conversion itself. `toHtml` renders pieces that
+have already been converted, for a page that wants to render them more than one
+way.
 
 ### Tiers
 
@@ -240,13 +299,15 @@ Initials and finals are the _underlying_ forms rather than the spelling, so 就 
 const jiu = { initial: "j", final: "iou", tone: 4 } as const;
 writeSyllable(jiu); // "jiù"
 writeSyllable(jiu, "numbers"); // "jiu4"
+writeSyllable(jiu, "superscript"); // "jiu⁴"
 writeSyllable(jiu, "none"); // "jiu"
 ```
 
 Input is tolerant and output is standard by default: `bei3` and `běi` parse
-identically and mix freely, as do the `v` and `u:` conventions for ü. The one
-deliberate rejection is both notations on one syllable (`běi3`), which is more
-likely a mistake than an intent.
+identically and mix freely, as do the `v` and `u:` conventions for ü, and a
+raised tone number reads back as the number it is. The one deliberate rejection
+is both notations on one syllable (`běi3`), which is more likely a mistake than
+an intent.
 
 ### Splitting a written word
 
@@ -377,6 +438,43 @@ through two releases before anything noticed.
 Two of the 71 cases still miss, both the same one: 你好 and 谢谢 are expected
 capitalised as greetings, and there is no punctuation in a bare word to signal
 that it is an utterance rather than a citation.
+
+### Polyphones
+
+```bash
+pnpm polyphones
+```
+
+A corpus of 71 cases cannot separate two decoders, so the hard part is measured
+against the [CPP dataset](https://github.com/kakaobrain/g2pM) instead: 20,139
+polyphonic characters in real sentences, each labelled by hand. It is
+deliberately a hard sample — every case is a polyphone, and rare ones are
+represented about as often as common ones — so it is a floor for running text
+rather than an estimate of it.
+
+| Decoder         | Correct reading |
+| --------------- | --------------: |
+| Greedy baseline |          88.81% |
+| Lattice         |      **89.04%** |
+
+The margin is small but not noise: the lattice is right where greedy is wrong 76
+times, and wrong where greedy is right 30 times (McNemar, _p_ ≈ 9 × 10⁻⁶). This
+is the first measurement to separate the two decoders on readings at all — the
+gold corpus has both at 100% and cannot.
+
+Split by what the decoder said about its own confidence:
+
+| State            |  Cases | Wrong reading |
+| ---------------- | -----: | ------------: |
+| locked           |  2,060 |         1.46% |
+| backed by a word | 12,035 |         4.46% |
+| uncertain        |  6,044 |        27.15% |
+
+So the signal is worth having: a syllable the decoder marks uncertain is around
+19 times likelier to be wrong than a locked one. On ordinary running text it
+lands on 18.7% of the syllables of everyday sentences (Tatoeba, 199,508
+syllables) and 13.2% of encyclopedic prose (zh.wikipedia, 168,892) — enough to
+be informative, and not so much that marking it drowns the page.
 
 ## Data sources
 

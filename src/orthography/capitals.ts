@@ -1,3 +1,5 @@
+import { type RewriteCharacters, rewriteParts } from "./parts.js";
+
 /**
  * Which capitals are written.
  *
@@ -47,20 +49,36 @@ export function capitaliseWord(text: string): string {
  * still capitalises.
  */
 export function capitaliseSentences(text: string): string {
-  let written = "";
+  /* c8 ignore next -- rewriteParts returns one part for each it was given */
+  return rewriteParts([text], capitaliseCharacters)[0] ?? text;
+}
+
+/**
+ * The same, over parts that are kept separate rather than joined into a string.
+ *
+ * A sentence capital belongs to whichever syllable starts the sentence, and an
+ * output format that wraps each syllable separately still has to find it.
+ */
+export function capitaliseSentenceParts(
+  parts: readonly string[],
+): readonly string[] {
+  return rewriteParts(parts, capitaliseCharacters);
+}
+
+/**
+ * Capitalise the first letter of each sentence, character by character.
+ */
+const capitaliseCharacters: RewriteCharacters = (characters) => {
   let isPending = true;
 
-  for (const character of text) {
+  return characters.map((character) => {
     if (isPending && character.toLowerCase() !== character.toUpperCase()) {
-      written += character.toUpperCase();
       isPending = false;
-      continue;
+      return character.toUpperCase();
     }
-    written += character;
     if (SENTENCE_ENDINGS.has(character)) {
       isPending = true;
     }
-  }
-
-  return written;
-}
+    return character;
+  });
+};

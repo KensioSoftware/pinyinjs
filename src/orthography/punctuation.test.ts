@@ -1,7 +1,7 @@
-import { assertIdentical } from "@kensio/smartass";
+import { assertArrayEquals, assertIdentical } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { toLatinPunctuation } from "./punctuation.js";
+import { toLatinPunctuation, toLatinPunctuationParts } from "./punctuation.js";
 
 describe("rewriting punctuation in the Latin script", () => {
   it("writes the marks with an exact equivalent", () => {
@@ -37,5 +37,28 @@ describe("rewriting punctuation in the Latin script", () => {
   it("leaves text with nothing to rewrite exactly as it was", () => {
     assertIdentical(toLatinPunctuation("Běijīng yínháng"), "Běijīng yínháng");
     assertIdentical(toLatinPunctuation(""), "");
+  });
+});
+
+describe("rewriting punctuation across separate parts", () => {
+  it("rewrites the marks wherever they fall", () => {
+    assertArrayEquals(toLatinPunctuationParts(["Běijīng", "。"]), [
+      "Běijīng",
+      ".",
+    ]);
+  });
+
+  it("looks past a part boundary for what follows a mark", () => {
+    // The comma takes a space because a syllable follows it, even though that
+    // syllable is in the next part.
+    assertArrayEquals(toLatinPunctuationParts(["hǎo", "，", "shìjiè"]), [
+      "hǎo",
+      ", ",
+      "shìjiè",
+    ]);
+  });
+
+  it("does not give the last mark a space, whichever part it is in", () => {
+    assertArrayEquals(toLatinPunctuationParts(["hǎo", "。"]), ["hǎo", "."]);
   });
 });

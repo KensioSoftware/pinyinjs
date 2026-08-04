@@ -46,20 +46,33 @@ export function joinWord(
   syllables: readonly string[],
   style: ApostropheStyle = "always",
 ): string {
+  return markWord(syllables, style).join("");
+}
+
+/**
+ * The same, syllable by syllable, each carrying the 隔音符号 it takes.
+ *
+ * What {@link joinWord} is built from, and what an output format that keeps the
+ * syllables apart needs: an HTML renderer wraps each syllable in its own
+ * element, so it cannot be handed the word already joined. The mark stays on
+ * the syllable it belongs to rather than becoming a piece of its own, because
+ * it is a letter of the orthography and not punctuation between words.
+ */
+export function markWord(
+  syllables: readonly string[],
+  style: ApostropheStyle = "always",
+): readonly string[] {
   const marked = syllables.map((syllable, at) =>
     at > 0 && isSeparableStart(syllable)
       ? `${APOSTROPHE}${syllable}`
       : syllable,
   );
-  const plain = syllables.join("");
 
   if (
     style === "never" ||
     marked.every((word) => !word.startsWith(APOSTROPHE))
   ) {
-    return plain;
+    return syllables;
   }
-  return style === "standard" && isUnambiguous(syllables)
-    ? plain
-    : marked.join("");
+  return style === "standard" && isUnambiguous(syllables) ? syllables : marked;
 }

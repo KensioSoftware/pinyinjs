@@ -1,3 +1,5 @@
+import { type RewriteCharacters, rewriteParts } from "./parts.js";
+
 /**
  * Whether Chinese punctuation is rewritten in the Latin script.
  *
@@ -39,21 +41,33 @@ const SPACE_AFTER = new Set([".", ",", ";", ":", "?", "!"]);
  * something follows it, so a sentence does not gain a trailing space.
  */
 export function toLatinPunctuation(text: string): string {
-  // Matched rather than spread, so that a character outside the BMP stays in
-  // one piece — the same reason `toCharacters` exists.
-  const characters = text.match(/./gsu) ?? [];
-  let written = "";
-  for (const [at, character] of characters.entries()) {
+  /* c8 ignore next -- rewriteParts returns one part for each it was given */
+  return rewriteParts([text], latinCharacters)[0] ?? text;
+}
+
+/**
+ * The same, over parts that are kept separate rather than joined into a string.
+ *
+ * Whether a mark takes a space depends on what follows it, which may well be
+ * the next part rather than the rest of this one.
+ */
+export function toLatinPunctuationParts(
+  parts: readonly string[],
+): readonly string[] {
+  return rewriteParts(parts, latinCharacters);
+}
+
+/**
+ * Rewrite each Chinese mark in the Latin script, character by character.
+ */
+const latinCharacters: RewriteCharacters = (characters) =>
+  characters.map((character, at) => {
     const latin = LATIN_PUNCTUATION.get(character);
     if (latin === undefined) {
-      written += character;
-      continue;
+      return character;
     }
     const next = characters[at + 1];
-    written +=
-      SPACE_AFTER.has(latin) && next !== undefined && next !== " "
-        ? `${latin} `
-        : latin;
-  }
-  return written;
-}
+    return SPACE_AFTER.has(latin) && next !== undefined && next !== " "
+      ? `${latin} `
+      : latin;
+  });

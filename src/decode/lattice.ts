@@ -72,7 +72,7 @@ const ALTERNATE_PENALTY = 1;
  * the same number of words. That ordering — fewest words first, frequency
  * second — is the one ALGORITHM.md already gives its data-free fallback tier.
  */
-const READING_CHARGE = 16;
+export const READING_CHARGE = 16;
 
 /**
  * What an edge covering a character no dictionary entry knows costs.

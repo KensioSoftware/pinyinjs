@@ -1,51 +1,16 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { scoreReadings, type ScoredUnit } from "./confidence.js";
 import { buildLattice, cutPoints, type Lattice } from "./lattice.js";
 import {
+  isSettled,
   projectReadings,
   type ReadingProjection,
   type ReadingUnit,
+  settledUnits,
   unitsOf,
 } from "./locking.js";
 import { readingCost, shortestPath, spacingCost } from "./viterbi.js";
-import type { DecodedWord } from "./word.js";
-
-/**
- * Whether every position in a stretch is locked.
- */
-function isSettled(
-  projection: ReadingProjection,
-  from: number,
-  to: number,
-): boolean {
-  for (let at = from; at < to; at++) {
-    if (projection.locked[at] === undefined) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * The units a settled stretch reads as, taken straight from the locks.
- */
-function settledUnits(
-  projection: ReadingProjection,
-  from: number,
-  to: number,
-): readonly ReadingUnit[] {
-  const units: ReadingUnit[] = [];
-  let at = from;
-  while (at < to) {
-    const unit = projection.locked[at];
-    /* c8 ignore next 3 -- the caller has checked every position is locked */
-    if (unit === undefined) {
-      break;
-    }
-    units.push(unit);
-    at = unit.to;
-  }
-  return units;
-}
+import type { DecodedWord, ScoredWord } from "./word.js";
 
 /**
  * Decode the run's readings, scoring only where the readings are still open.
@@ -94,51 +59,60 @@ export function decodeSpacing(lattice: Lattice): readonly number[] {
 }
 
 /**
- * Assemble words from the readings and the boundaries that survive them.
+ * Gather the reading units into the words the boundaries make of them.
  *
  * Where the two decodes disagree the readings win, which is what "advisory"
  * means for the spacing decode: a boundary falling inside a reading unit is
  * dropped rather than allowed to break the unit up. 玩儿 read as `wánr` is one
  * syllable over two characters, and no spacing can be put between them.
  */
-function wordsFrom(
-  dictionary: Dictionary,
-  lattice: Lattice,
-  units: readonly ReadingUnit[],
+function groupUnits<Unit extends ReadingUnit>(
+  units: readonly Unit[],
   boundaries: readonly number[],
-): readonly DecodedWord[] {
+): readonly (readonly Unit[])[] {
   const starts = new Set(units.map((unit) => unit.from));
   const kept = new Set(boundaries.filter((at) => starts.has(at)));
-  const words: DecodedWord[] = [];
-  let held: ReadingUnit[] = [];
-
-  const flush = (): void => {
-    const first = held[0];
-    const last = held.at(-1);
-    if (first === undefined || last === undefined) {
-      return;
-    }
-    const text = lattice.characters.slice(first.from, last.to).join("");
-    const entry = dictionary.lookup(text);
-    words.push({
-      text,
-      reading: held.flatMap((unit) => [...unit.reading]),
-      isProperNoun: entry?.isProperNoun ?? false,
-      partOfSpeech: entry?.partOfSpeech ?? "",
-      isKnown: entry !== undefined,
-    });
-    held = [];
-  };
+  const groups: Unit[][] = [];
+  let held: Unit[] = [];
 
   for (const unit of units) {
-    if (kept.has(unit.from)) {
-      flush();
+    if (kept.has(unit.from) && held.length > 0) {
+      groups.push(held);
+      held = [];
     }
     held.push(unit);
   }
-  flush();
+  if (held.length > 0) {
+    groups.push(held);
+  }
 
-  return words;
+  return groups;
+}
+
+/**
+ * Assemble one word from the units the boundaries kept together.
+ */
+function wordFrom(
+  dictionary: Dictionary,
+  lattice: Lattice,
+  group: readonly ReadingUnit[],
+): DecodedWord {
+  const first = group[0];
+  const last = group.at(-1);
+  /* c8 ignore next 3 -- a group is only made by pushing a unit into it */
+  if (first === undefined || last === undefined) {
+    throw new Error("a word must cover at least one reading unit");
+  }
+  const text = lattice.characters.slice(first.from, last.to).join("");
+  const entry = dictionary.lookup(text);
+
+  return {
+    text,
+    reading: group.flatMap((unit) => [...unit.reading]),
+    isProperNoun: entry?.isProperNoun ?? false,
+    partOfSpeech: entry?.partOfSpeech ?? "",
+    isKnown: entry !== undefined,
+  };
 }
 
 /**
@@ -153,7 +127,34 @@ export function decodeRun(
   run: string,
 ): readonly DecodedWord[] {
   const lattice = buildLattice(dictionary, run);
-  const projection = projectReadings(lattice);
-  const units = decodeReadings(lattice, projection);
-  return wordsFrom(dictionary, lattice, units, decodeSpacing(lattice));
+  const units = decodeReadings(lattice, projectReadings(lattice));
+  return groupUnits(units, decodeSpacing(lattice)).map((group) =>
+    wordFrom(dictionary, lattice, group),
+  );
+}
+
+/**
+ * Decode a Han run, keeping what each reading was chosen over.
+ *
+ * The same decode as {@link decodeRun}, and the same words, with the losing
+ * candidates kept rather than discarded. Separate because the extra sweep is
+ * only worth running for a caller that will use the answer — rendering
+ * uncertain readings differently, or reporting them.
+ */
+export function decodeRunScored(
+  dictionary: Dictionary,
+  run: string,
+): readonly ScoredWord[] {
+  const lattice = buildLattice(dictionary, run);
+  const units = scoreReadings(lattice, projectReadings(lattice));
+
+  return groupUnits<ScoredUnit>(units, decodeSpacing(lattice)).map((group) => ({
+    word: wordFrom(dictionary, lattice, group),
+    confidence: group.flatMap((unit) =>
+      unit.reading.map(() => ({
+        isLocked: unit.isLocked,
+        alternatives: unit.alternatives,
+      })),
+    ),
+  }));
 }

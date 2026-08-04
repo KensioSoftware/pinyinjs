@@ -74,23 +74,53 @@ export {
 } from "./dictionary/source.js";
 export type { DictionarySource } from "./dictionary/source.js";
 
-export { convert, convertGreedily } from "./decode/convert.js";
-export type { ConvertOptions } from "./decode/convert.js";
+export {
+  convert,
+  convertGreedily,
+  convertPieces,
+  joinPieces,
+} from "./decode/convert.js";
+export type { ConvertedPiece, ConvertOptions } from "./decode/convert.js";
 
-export { decodeReadings, decodeRun, decodeSpacing } from "./decode/decode.js";
+export { isUncertain, scoreReadings } from "./decode/confidence.js";
+export type {
+  ReadingAlternative,
+  ReadingConfidence,
+  ScoredUnit,
+} from "./decode/confidence.js";
+
+export {
+  decodeReadings,
+  decodeRun,
+  decodeRunScored,
+  decodeSpacing,
+} from "./decode/decode.js";
+
+export { convertToHtml, toHtml } from "./format/html.js";
+export type { HtmlOptions } from "./format/html.js";
 
 export { decodeGreedily } from "./decode/greedy.js";
 
-export { allEdges, buildLattice, cutPoints } from "./decode/lattice.js";
+export {
+  allEdges,
+  buildLattice,
+  cutPoints,
+  READING_CHARGE,
+} from "./decode/lattice.js";
 export type { Lattice, LatticeEdge } from "./decode/lattice.js";
 
-export { projectReadings, unitsOf } from "./decode/locking.js";
+export {
+  isSettled,
+  projectReadings,
+  settledUnits,
+  unitsOf,
+} from "./decode/locking.js";
 export type { ReadingProjection, ReadingUnit } from "./decode/locking.js";
 
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
 export type { CostOf } from "./decode/viterbi.js";
 
-export type { DecodedWord } from "./decode/word.js";
+export type { DecodedWord, ScoredWord } from "./decode/word.js";
 
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
@@ -106,10 +136,11 @@ export {
 } from "./dictionary/tiers.js";
 export type { Tier } from "./dictionary/tiers.js";
 
-export { joinWord } from "./orthography/apostrophe.js";
+export { joinWord, markWord } from "./orthography/apostrophe.js";
 export type { ApostropheStyle } from "./orthography/apostrophe.js";
 
 export {
+  capitaliseSentenceParts,
   capitaliseSentences,
   capitaliseWord,
   isSentence,
@@ -133,7 +164,13 @@ export {
 } from "./orthography/word-list.js";
 export type { SpacedWord } from "./orthography/word-list.js";
 
-export { toLatinPunctuation } from "./orthography/punctuation.js";
+export { rewriteParts } from "./orthography/parts.js";
+export type { RewriteCharacters } from "./orthography/parts.js";
+
+export {
+  toLatinPunctuation,
+  toLatinPunctuationParts,
+} from "./orthography/punctuation.js";
 export type { PunctuationStyle } from "./orthography/punctuation.js";
 
 export { isSeparableStart, SEPARABLE_VOWELS } from "./syllable/separation.js";

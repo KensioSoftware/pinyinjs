@@ -1,5 +1,6 @@
 import { ATTESTED_SYLLABLES } from "#test/fixtures/attested-syllables.js";
 import {
+  assertArrayEquals,
   assertArrayLength,
   assertFalse,
   assertIdentical,
@@ -9,7 +10,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { NEUTRAL_TONE } from "../tone/tone.js";
+import { NEUTRAL_TONE, TONES } from "../tone/tone.js";
 import {
   isSyllable,
   normaliseUmlaut,
@@ -247,7 +248,35 @@ describe("syllable", () => {
       const syllable = { initial: "h", final: "ao", tone: 3 } as const;
       assertIdentical(writeSyllable(syllable, "marks"), "hǎo");
       assertIdentical(writeSyllable(syllable, "numbers"), "hao3");
+      assertIdentical(writeSyllable(syllable, "superscript"), "hao³");
       assertIdentical(writeSyllable(syllable, "none"), "hao");
+    });
+
+    it("raises the tone number in the superscript notation", () => {
+      assertArrayEquals(
+        TONES.map((tone) =>
+          writeSyllable({ initial: "m", final: "a", tone }, "superscript"),
+        ),
+        ["ma¹", "ma²", "ma³", "ma⁴", "ma⁵"],
+      );
+    });
+
+    it("leaves an unwritten tone unwritten when raising it", () => {
+      assertIdentical(
+        writeSyllable(
+          { initial: "b", final: "ei", tone: undefined },
+          "superscript",
+        ),
+        "bei",
+      );
+    });
+
+    it("reads back a raised tone number, so the notation round-trips", () => {
+      assertIdentical(readSyllable("hao³")?.tone, 3);
+      assertIdentical(readSyllable("ma⁵")?.tone, NEUTRAL_TONE);
+      assertIdentical(readSyllable("ma⁰")?.tone, NEUTRAL_TONE);
+      // Mixed notation is a mistake raised or not.
+      assertUndefined(readSyllable("hǎo³"));
     });
 
     it("writes the r suffix of 儿化 after the tone-marked syllable", () => {

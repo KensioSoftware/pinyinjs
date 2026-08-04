@@ -108,6 +108,46 @@ export function normaliseUmlaut(text: string): string {
 }
 
 /**
+ * How each tone is written raised, for the `superscript` notation.
+ *
+ * The neutral tone is written `⁵` rather than left off, so that superscript is
+ * exactly the numeric notation set higher and the two round-trip alike.
+ */
+const SUPERSCRIPT_TONES = new Map<Tone, string>([
+  [1, "¹"],
+  [2, "²"],
+  [3, "³"],
+  [4, "⁴"],
+  [NEUTRAL_TONE, "⁵"],
+]);
+
+/**
+ * Rewrite raised tone digits as plain ones, so that input takes either.
+ *
+ * Zero is included because {@link toneFromNotation} accepts it for the neutral
+ * tone, and a notation that can be written should be readable back.
+ */
+function normaliseSuperscript(text: string): string {
+  return text.replaceAll(
+    /[⁰¹²³⁴⁵]/gu,
+    /* c8 ignore next -- the pattern only matches what the map holds */
+    (digit) => SUPERSCRIPT_DIGITS.get(digit) ?? digit,
+  );
+}
+
+/**
+ * The plain digit each raised digit stands for.
+ */
+const SUPERSCRIPT_DIGITS = new Map<string, string>([
+  ["⁰", "0"],
+  ["¹", "1"],
+  ["²", "2"],
+  ["³", "3"],
+  ["⁴", "4"],
+  ["⁵", "5"],
+]);
+
+/**
  * Split a written syllable into its initial and the final's spelling.
  *
  * Falls back to treating the whole syllable as a final with no initial, which is
@@ -200,7 +240,9 @@ function readParts(spelling: string): readonly [Initial, Final] | undefined {
  * undefined for anything that is not a well-formed Mandarin syllable.
  */
 export function readSyllable(text: string): Syllable | undefined {
-  const trimmed = normaliseUmlaut(text.trim()).normalize("NFC");
+  const trimmed = normaliseSuperscript(
+    normaliseUmlaut(text.trim()).normalize("NFC"),
+  );
   if (trimmed === "") {
     return undefined;
   }
@@ -265,9 +307,9 @@ export function writeSyllableSpelling(syllable: Syllable): string {
  * How a syllable's tone should be written.
  *
  * `marks` is the standard diacritic notation, `numbers` appends the tone number,
- * and `none` writes the plain syllable.
+ * `superscript` raises that number, and `none` writes the plain syllable.
  */
-export type ToneNotation = "marks" | "numbers" | "none";
+export type ToneNotation = "marks" | "numbers" | "superscript" | "none";
 
 /**
  * Spell a syllable, writing its tone in the requested notation.
@@ -286,6 +328,12 @@ export function writeSyllable(
       return syllable.tone === undefined
         ? spelling
         : `${spelling}${String(syllable.tone)}`;
+    }
+    case "superscript": {
+      /* c8 ignore next 3 -- every tone has a raised digit */
+      return syllable.tone === undefined
+        ? spelling
+        : `${spelling}${SUPERSCRIPT_TONES.get(syllable.tone) ?? ""}`;
     }
     case "none": {
       return spelling;
