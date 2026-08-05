@@ -9,6 +9,7 @@ import {
   assertIdentical,
   assertNonNullable,
   assertTrue,
+  assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
@@ -146,13 +147,13 @@ describe("what a rule can ask about its neighbours", () => {
   });
 
   it("reports nothing where there is no word", () => {
-    assertIdentical(wordEndingAt(context("我走"), 0), undefined);
-    assertIdentical(wordStartingAt(context("走囧"), 1), undefined);
+    assertUndefined(wordEndingAt(context("我走"), 0));
+    assertUndefined(wordStartingAt(context("走囧"), 1));
   });
 
   it("reports nothing past the end of the run", () => {
     // Where a 得 closes a sentence there is no following word to ask about.
-    assertIdentical(wordStartingAt(context("我走"), 2), undefined);
+    assertUndefined(wordStartingAt(context("我走"), 2));
   });
 
   it("reports a word's part of speech, and nothing for no word", () => {

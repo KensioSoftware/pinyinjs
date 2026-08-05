@@ -69,6 +69,9 @@ export function versionFrom(manifest: string): string {
  */
 async function version(): Promise<string> {
   return versionFrom(
+    // A constant URL resolved against this module, which the rule cannot see
+    // is constant because it is a `new URL` rather than a string literal.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     await readFile(new URL("../../package.json", import.meta.url), "utf8"),
   );
 }

@@ -57,7 +57,12 @@ interface Parsed {
 
 /**
  * Anything this module will read: digits, optionally signed and pointed.
+ *
+ * `security/detect-unsafe-regex` flags the optional group after `\d+`, and the
+ * literal `.` in front of it means no input can be split between the two. Timed
+ * on a signed decimal that cannot match, it is linear to 128k characters.
  */
+// eslint-disable-next-line security/detect-unsafe-regex
 const NUMBER = /^(?<sign>-?)(?<whole>\d+)(?:\.(?<fraction>\d+))?$/u;
 
 /**

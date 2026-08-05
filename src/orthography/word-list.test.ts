@@ -1,6 +1,7 @@
 import {
   assertArrayNotEmpty,
   assertIdentical,
+  assertMapSize,
   assertTrue,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
@@ -23,12 +24,12 @@ describe("the 正词法 word list", () => {
 
   it("gives every entry a reason", () => {
     for (const spaced of SPACED_WORDS) {
-      assertTrue(spaced.reason.length > 0);
+      assertTrue(spaced.reason !== "");
     }
   });
 
   it("lists no word twice", () => {
-    assertIdentical(SPACED_WORD_FORMS.size, SPACED_WORDS.length);
+    assertMapSize(SPACED_WORD_FORMS, SPACED_WORDS.length);
   });
 
   it("never lists a part longer than the word", () => {
