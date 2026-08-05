@@ -32,6 +32,8 @@ import {
 import {
   readWadeGiles,
   readWadeGilesLoosely,
+  readWadeGilesWord,
+  splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesSpelling,
 } from "../../src/romanization/wade-giles.js";
@@ -45,6 +47,7 @@ import { DICTIONARY_SYLLABLES } from "../../src/syllable/inventory.js";
 import {
   readSyllable,
   type Syllable,
+  writeSyllable,
   writeSyllableSpelling,
 } from "../../src/syllable/syllable.js";
 import { NEUTRAL_TONE, type Tone, TONES } from "../../src/tone/tone.js";
@@ -397,6 +400,136 @@ count(
   "recovered by taking the first",
   `${recovered.toLocaleString("en-GB")} (${share(recovered)})`,
 );
+// ── And what a splitter can do with a word ──────────────
+//
+// The figures above are per syllable. A word run together without its hyphens
+// asks two questions at once — where the boundary is, and which syllable each
+// piece was — and they have very different answers, so they are counted apart.
+say();
+say("splitting a word written without its hyphens");
+say("────────────────────────────────────────────");
+
+interface SplitScore {
+  boundary: number;
+  whole: number;
+}
+
+const marked: SplitScore = { boundary: 0, whole: 0 };
+const dropped: SplitScore = { boundary: 0, whole: 0 };
+let multiSyllable = 0;
+let boundaryMisses = 0;
+let missVowel = 0;
+let missN = 0;
+let missYi = 0;
+
+/** A Wade-Giles spelling with every droppable mark taken off. */
+const stripMarks = (spelling: string): string =>
+  spelling.replaceAll(/['êŭü]/gu, (mark) =>
+    mark === "ê" ? "e" : mark === "'" ? "" : "u",
+  );
+
+const LEADING_VOWELS = new Set(["a", "e", "ê", "i", "o", "u", "ü"]);
+const parsedSyllables = new Map<string, Syllable | undefined>();
+
+for (const readings of entries.values()) {
+  if (readings.length < 2) {
+    continue;
+  }
+  const word = readings.map((reading) => {
+    if (!parsedSyllables.has(reading)) {
+      parsedSyllables.set(reading, readSyllable(reading));
+    }
+    const parsed = parsedSyllables.get(reading);
+    return parsed === undefined ? undefined : { ...parsed, tone: undefined };
+  });
+  if (word.includes(undefined)) {
+    continue;
+  }
+  const syllables = word as readonly Syllable[];
+  multiSyllable += 1;
+
+  const parts = syllables.map((one) =>
+    writeWadeGilesSpelling(one).toLowerCase(),
+  );
+  const wanted = syllables.map((one) => writeSyllable(one)).join("");
+
+  for (const [spelt, score] of [
+    [parts, marked],
+    [parts.map((part) => stripMarks(part)), dropped],
+  ] as const) {
+    const split = splitWadeGiles(spelt.join(""));
+    const isBoundaryRight = split?.join("|") === spelt.join("|");
+    if (isBoundaryRight) {
+      score.boundary += 1;
+    }
+    const read = readWadeGilesWord(spelt.join(""));
+    if (read?.map((one) => writeSyllable(one)).join("") === wanted) {
+      score.whole += 1;
+    }
+    // The mechanism behind the misses, counted on the marked run: a Wade-Giles
+    // syllable ends in -n or -ng and the next one starts with a vowel or n-, so
+    // the boundary slides by one letter.
+    if (score === marked && !isBoundaryRight && split !== undefined) {
+      boundaryMisses += 1;
+      let at = 0;
+      while (at < spelt.length && split[at] === spelt[at]) {
+        at += 1;
+      }
+      const next = spelt[at + 1] ?? "";
+      const head = next[0] ?? "";
+      if (LEADING_VOWELS.has(head)) {
+        missVowel += 1;
+      } else if (head === "n") {
+        missN += 1;
+      }
+      if (next === "i") {
+        missYi += 1;
+      }
+    }
+  }
+}
+
+const ofWords = (part: number): string =>
+  `${((part / multiSyllable) * 100).toFixed(2)}%`;
+const ofMisses = (part: number): string =>
+  `${((part / boundaryMisses) * 100).toFixed(2)}%`;
+
+count("multi-syllable words", multiSyllable.toLocaleString("en-GB"));
+count("marks kept: boundary found", ofWords(marked.boundary));
+count("marks kept: word comes back", ofWords(marked.whole));
+count("marks dropped: boundary found", ofWords(dropped.boundary));
+count("marks dropped: word comes back", ofWords(dropped.whole));
+say();
+count("boundary misses, marks kept", boundaryMisses.toLocaleString("en-GB"));
+count("  the next syllable starts n-", ofMisses(missN));
+count("  ... or with a vowel", ofMisses(missVowel));
+count(
+  "  a swallowed 一, which is `i`",
+  `${missYi.toLocaleString("en-GB")} (${ofMisses(missYi)})`,
+);
+
+// The names this was built for, and whether they are Wade-Giles at all.
+say();
+say("the names that motivate a splitter");
+say("──────────────────────────────────");
+for (const name of [
+  "maotsetung",
+  "kuomintang",
+  "taipei",
+  "chungking",
+  "tsingtao",
+  "peking",
+  "nanking",
+]) {
+  const split = splitWadeGiles(name);
+  const read = readWadeGilesWord(name);
+  say(
+    `  ${name.padEnd(12)}${(split?.join("-") ?? "not Wade-Giles").padEnd(20)}${
+      read?.map((one) => writeSyllable(one)).join("") ?? ""
+    }`,
+  );
+}
+
 say();
 
 process.stdout.write(`${lines.join("\n")}\n`);

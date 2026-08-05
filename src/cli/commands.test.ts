@@ -9,6 +9,7 @@ import {
   assertArrayIncludes,
   assertArrayLength,
   assertIdentical,
+  assertNonNullable,
   assertObjectEquals,
   assertStringIncludes,
   assertStringNotIncludes,
@@ -436,6 +437,41 @@ describe("the transcribe command", () => {
       await cli("transcribe", "--from", "wade-giles", "shung"),
       ["shung  not readable"],
     );
+  });
+
+  it("reads a whole Wade-Giles word, hyphens or none", async () => {
+    // One row rather than a candidate list: `maotsetung` splits five ways
+    // before any of its syllables has been chosen, so what is shown is the
+    // reading the module settles on. See docs/romanization/.
+    assertArrayEquals(
+      await cli("transcribe", "--from", "wade-giles", "maotsetung"),
+      [
+        "maotsetung  maocedong ㄇㄠ ㄘㄜ ㄉㄨㄥ   mao-ts'ê-tung  mautsedung  mhautsedong  mautsʰɤtʊŋ  marks restored",
+      ],
+    );
+    const solid = await cli("transcribe", "--from", "wade-giles", "maotsetung");
+    assertArrayEquals(
+      await cli("transcribe", "--from", "wade-giles", "mao-tse-tung"),
+      solid.map((one) => one.replace("maotsetung", "mao-tse-tung")),
+    );
+  });
+
+  it("widens its columns for a cell that does not fit one", async () => {
+    // A word is wider than a syllable and the widths were sized for syllables.
+    // Every cell keeps at least one space after it, which is what the fixed
+    // widths gave the widest syllable anyway.
+    const [line] = await cli(
+      "transcribe",
+      "--from",
+      "wade-giles",
+      "kuomintang",
+    );
+    assertNonNullable(line);
+    assertStringIncludes(line, "kuo-min-tang");
+    assertStringNotIncludes(line, "kuo-min-tangkuomintang");
+    for (const cell of ["guomindang", "kuo-min-tang"]) {
+      assertStringIncludes(line, `${cell} `);
+    }
   });
 
   it("loads no dictionary, since a transcription needs none", async () => {

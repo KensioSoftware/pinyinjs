@@ -321,6 +321,69 @@ ceiling for a syllable at a time; a decoder with a dictionary and neighbouring
 syllables to look at could do better, and this module deliberately does not
 guess.
 
+## Splitting a word that dropped its hyphens
+
+Wade-Giles hyphenates its syllables and the hyphen is not decoration: the system
+has no 隔音符号 to fall back on, because its apostrophe marks aspiration instead.
+Real text drops the hyphen anyway, so `splitWadeGiles` puts it back.
+
+```js
+splitWadeGiles("maotsetung"); // ["mao", "tse", "tung"]
+splitWadeGiles("mao-tse-tung"); // the same, hyphens honoured
+splitWadeGiles("hua-êrh"); // ["hua-êrh"] — that hyphen is part of 花儿
+readWadeGilesWord("pei³ching¹"); // 北京, běijīng
+```
+
+`pnpm romanization` measures it over the same 411,956 multi-syllable words of
+the phrase corpus the ambiguity figures above come from, written in Wade-Giles
+and run together:
+
+|                       | marks kept | marks dropped |
+| --------------------- | ---------: | ------------: |
+| the boundary is found |     99.19% |        99.04% |
+| the word comes back   |     99.45% |        56.04% |
+
+**Finding the boundary is not the hard part; saying which syllable it was is.**
+The boundary is found either way. What collapses is the reading, and only once
+the marks are gone — because [half of running
+text](#how-ambiguous-is-wade-giles-really) is then ambiguous a syllable at a
+time, and a word has to get every one of its syllables right.
+
+The true split is among the candidates 100.00% of the time and is the only
+candidate 17.08% of the time, at a mean of 5.23 candidates per word, so
+longest-first is a choice among real rivals rather than the only reading going.
+It comes back whole slightly _more_ often than it finds the boundary, because
+two of the variant spellings read the same either way.
+
+The 0.81% of boundaries that are missed are one mechanism. Wade-Giles ends
+syllables in -n and -ng and begins them with vowels and with n-, so `i-ti-hu-na`
+run together as `itihuna` comes back `i-ti-hun-a`. Of 3,317 misses, 53.39%
+swallow a syllable beginning with n- and 36.72% one beginning with a vowel.
+Pinyin is spared most of this by spelling a zero-initial i- as `yi-`; Wade-Giles
+writes 一 as `i`, and 960 of the misses — 28.94% — are a swallowed 一.
+
+### The syllabic nasals are barred from a split
+
+嗯 `ng`, 呣 `m`, 唔 `n`, 噷 `hm` and 哼 `hng` are syllables and read as such on
+their own, but never as one piece of a longer run: **not one** of the 411,956
+multi-syllable words has a syllabic nasal anywhere in it. Without the bar, `ng`
+would let any run ending in -ng come apart — `shung` is regular Wade-Giles for a
+syllable Mandarin does not have, and `shu` + `ng` would hand it back through the
+side door after [the index](#reading-it-back-is-the-hard-part) had refused it.
+
+### Chungking is not Wade-Giles
+
+The name this was built for turns out to be the wrong example, and so are most
+of the others. `Chungking`, `Tsingtao`, `Peking`, `Nanking` and `Canton` are
+[Postal Romanisation](https://en.wikipedia.org/wiki/Chinese_postal_romanization),
+which is a different system and largely a list — `king`, `tsing`, `pe`, `can`
+and `ton` are not Wade-Giles syllables at all. 重慶 in Wade-Giles is
+`chʻung²-chʻing⁴` and 青島 is `chʻing¹-tao³`. `splitWadeGiles` returns undefined
+for all of them, which is the honest answer rather than a gap.
+
+`Mao Tse-tung`, `Taipei` and `Kuomintang` really are Wade-Giles, and those are
+the cases this handles.
+
 ## What round-trips
 
 Exhaustively, every syllable of the inventory in every tone state, with and
@@ -424,6 +487,9 @@ chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu�
             jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored
             qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored
 
+$ pinyinjs transcribe --from wade-giles maotsetung
+maotsetung  maocedong ㄇㄠ ㄘㄜ ㄉㄨㄥ   mao-ts'ê-tung  mautsedung  mhautsedong  mautsʰɤtʊŋ  marks restored
+
 $ pinyinjs transcribe --from yale syī
 syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥
 
@@ -441,13 +507,10 @@ them: it has a script of its own. See [the command line](../cli/).
   suffix written here, and **the etymological tone behind a neutral syllable's
   dot**, which pinyin does not record. Both are set out under
   [Gwoyeu Romatzyh](#gwoyeu-romatzyh) above.
-- **Whole words of Wade-Giles.** `readWadeGiles` takes one syllable. Real text
-  writes `Chungking` unhyphenated, and splitting that is the Wade-Giles
-  equivalent of `splitSyllables` — with the added difficulty that every
-  candidate split multiplies against the ambiguity measured above.
 - **hanzi → Wade-Giles end to end.** `convertPieces` already hands back a
   `Syllable` per piece, so the mapping is a few lines; what is not decided is
   what the _orthography_ should be — 正词法's word spacing is a pinyin standard,
   and Wade-Giles hyphenates instead.
-- **Postal romanisation** (`Peking`, `Tsingtao`, `Canton`), which is not a
-  system so much as a list, and is not derivable from any of this.
+- **Postal Romanisation** (`Peking`, `Tsingtao`, `Canton`), which is not a
+  system so much as a list, and is not derivable from any of this. See
+  [Chungking is not Wade-Giles](#chungking-is-not-wade-giles).
