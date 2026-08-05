@@ -42,10 +42,21 @@ numeralHanzi(100_000_005); // "一亿零五"
 Numbers group by 万 rather than by thousands, which is why 12,345 is _one_ 万
 and 2,345 rather than twelve thousand.
 
-**两 or 二.** A leading lone 2 in front of a big unit is 两: 2,000 is 两千 and
-20,000 is 两万. 二 stands everywhere else — 12 is 十二, 20 is 二十, and inside a
-longer number the 千 keeps its 二, so 12,000 is 一万二千. `liang: false` writes
-二 throughout.
+**两 or 二.** A lone 2 multiplying 千, 万 or 亿 is 两: 2,000 is 两千, 20,000 is
+两万, and 12,000 is 一万两千. 二 stands wherever the 2 is not a multiplier — 12
+is 十二, 20 is 二十, 200 is 二百, and 120,000 is 十二万, where the 二 is the units
+digit of 12.
+
+This is genuinely variable rather than a rule, so it is a choice of three.
+现代汉语词典 has 二 before 百 and either before 千/万/亿, and then adds that the
+二 of 三万二千 cannot be 两 — so the prescription is `leading` and what people
+say is `always`:
+
+```ts
+numeralHanzi(12_000); // "一万两千" — always, the default
+numeralHanzi(12_000, { liang: "leading" }); // "一万二千" — the 词典's own rule
+numeralHanzi(12_000, { liang: "never" }); // "一万二千", and 二千 for 2,000 too
+```
 
 ## Spelling digits out
 
