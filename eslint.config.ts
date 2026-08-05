@@ -203,6 +203,18 @@ export default defineConfig(
     },
   },
 
+  // ── Tests reading the repo's own files ──────────────────
+  {
+    files: ["**/*.test.ts"],
+    rules: {
+      // Several guards assert a document against the code it describes, so
+      // they read README.md, CHANGELOG.md, the docs pages and `data/`. Every
+      // path is built from `import.meta.url` and none is reachable from
+      // outside the repo — the same reasoning the build scripts get above.
+      "security/detect-non-literal-fs-filename": "off",
+    },
+  },
+
   // ── Config files (allow default exports) ────────────────
   {
     files: ["*.config.ts", "*.config.js"],

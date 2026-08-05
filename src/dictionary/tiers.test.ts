@@ -74,6 +74,9 @@ describe("dictionary tiers", () => {
 
     it("drops a character no word uses and jieba does not attest", () => {
       // 𱿅 is a real Unihan character with a reading and no modern vocabulary.
+      // smartass has assertArrayIncludes but no negative counterpart, and
+      // assertStringNotIncludes is for strings; these keys are an array.
+      // eslint-disable-next-line no-restricted-syntax
       assertFalse(keysOf("core").includes("𱿅"));
     });
 
@@ -82,6 +85,7 @@ describe("dictionary tiers", () => {
     });
 
     it("holds no multi-character words", () => {
+      // eslint-disable-next-line no-restricted-syntax -- as above
       assertFalse(keysOf("core").includes("银行"));
     });
 

@@ -1,7 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-import { assertIdentical, assertNonNullable } from "@kensio/smartass";
+import {
+  assertIdentical,
+  assertNonNullable,
+  assertStringIncludes,
+} from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import { GOLD_CASES } from "#test/fixtures/gold/gold-cases.js";
@@ -85,9 +89,9 @@ describe("the accuracy table in CHANGELOG.md", () => {
 
   it("covers every case the corpus holds", () => {
     // The prose says "105-case gold corpus", so the number is checked too.
-    assertIdentical(
-      changelog.includes(`${String(GOLD_CASES.length)}-case gold corpus`),
-      true,
+    assertStringIncludes(
+      changelog,
+      `${String(GOLD_CASES.length)}-case gold corpus`,
     );
   });
 });

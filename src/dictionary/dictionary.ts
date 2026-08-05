@@ -16,8 +16,14 @@ const ALTERNATE = ",";
 const PROPER_NOUN_FLAG = "p";
 
 /**
- * Where a proper name divides, after the proper-noun flag: `p1`, `p2.4`.
+ * Where a proper name divides, after the proper-noun flag: `p1`, `p2.4`. *
+ * `security/detect-unsafe-regex` flags the nested quantifier, and there is no
+ * ambiguity behind it: a literal `.` separates `\d+` from `(?:\.\d+)*`, so no
+ * input can be split between them two ways. Timed on a string of digits and
+ * dots that cannot match, it is linear — 8k to 128k characters doubles the time
+ * for each doubling of the input, 39µs to 607µs.
  */
+// eslint-disable-next-line security/detect-unsafe-regex
 const NAME_BOUNDARIES = /^p(?<at>\d+(?:\.\d+)*)$/u;
 
 /**

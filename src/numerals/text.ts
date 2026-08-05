@@ -35,7 +35,13 @@ export interface NumeralSegment {
 /**
  * A number as it appears in running text: digits, with the separators a writer
  * uses and an optional decimal part.
+ *
+ * `security/detect-unsafe-regex` flags the optional decimal after `[\d,]*`. A
+ * comma run and a decimal part cannot claim the same characters, since `\.` is
+ * neither a digit nor a comma, so there is nothing to backtrack over — timed
+ * linear to 128k characters.
  */
+// eslint-disable-next-line security/detect-unsafe-regex
 const NUMBER = /\d[\d,]*(?:\.\d+)?/gu;
 
 /**

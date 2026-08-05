@@ -590,6 +590,9 @@ describe("the examples in docs/", () => {
     });
 
     it("counts keys rather than entries", () => {
+      // `Dictionary.size` counts keys and is a plain number getter; the
+      // rule's Map and Set assertions do not apply to it.
+      // eslint-disable-next-line no-restricted-syntax
       assertIdentical(dictionary.size, 723_139);
     });
 
@@ -600,6 +603,9 @@ describe("the examples in docs/", () => {
 
     it("reads 银行 on standard and full but not on core", async () => {
       const core = await loadDictionary(fileSource(dataDirectory), "core");
+      // `Dictionary.size` counts keys and is a plain number getter; the
+      // rule's Map and Set assertions do not apply to it.
+      // eslint-disable-next-line no-restricted-syntax
       assertIdentical(core.size, 16_987);
       assertIdentical(convert(core, "银行"), "yín xíng");
       assertIdentical(convert(core, "我要去北京。"), "Wǒ yào qù běi Jīng.");
@@ -608,6 +614,9 @@ describe("the examples in docs/", () => {
         fileSource(dataDirectory),
         "standard",
       );
+      // `Dictionary.size` counts keys and is a plain number getter; the
+      // rule's Map and Set assertions do not apply to it.
+      // eslint-disable-next-line no-restricted-syntax
       assertIdentical(standard.size, 98_018);
       assertIdentical(convert(standard, "银行"), "yínháng");
       assertIdentical(convert(standard, "我要去北京。"), "Wǒ yào qù Běijīng.");

@@ -137,12 +137,18 @@ describe("querying a compiled dictionary", () => {
       const distinctHant = SAMPLE_ENTRIES.filter(
         (held) => held.hant !== held.hans,
       ).length;
+      // `Dictionary.size` counts keys and is a plain number getter; the
+      // rule's Map and Set assertions do not apply to it.
+      // eslint-disable-next-line no-restricted-syntax
       assertIdentical(dictionary.size, SAMPLE_ENTRIES.length + distinctHant);
     });
   });
 
   it("holds an empty artifact without complaint", () => {
     const empty = Dictionary.from(buildArtifact([]));
+    // `Dictionary.size` counts keys and is a plain number getter; the
+    // rule's Map and Set assertions do not apply to it.
+    // eslint-disable-next-line no-restricted-syntax
     assertIdentical(empty.size, 0);
     assertUndefined(empty.lookup("银行"));
     assertFalse(empty.hasPrefix("银"));

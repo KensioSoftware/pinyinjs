@@ -3,7 +3,7 @@ import {
   entry,
   reading,
 } from "#test/fixtures/decoder-dictionary.js";
-import { assertArrayEquals, assertIdentical } from "@kensio/smartass";
+import { assertArrayEquals, assertArrayLength } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
@@ -72,7 +72,7 @@ describe("得 as a modal", () => {
   it("is the only rule needed for the reading, not the spacing", () => {
     // The rule settles which reading the character takes and says nothing about
     // where the word boundaries fall.
-    assertIdentical(decodeRun(dictionary, "我得走", [MODAL_DE]).length, 3);
+    assertArrayLength(decodeRun(dictionary, "我得走", [MODAL_DE]), 3);
   });
 });
 
