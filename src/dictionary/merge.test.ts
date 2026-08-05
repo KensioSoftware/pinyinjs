@@ -642,7 +642,7 @@ describe("merging the sources", () => {
         ],
         jieba: new Map([["毛泽东", { frequency: 5638, partOfSpeech: "nr" }]]),
       });
-      assertIdentical(byWord.get("毛泽东")?.nameBoundary, 1);
+      assertArrayEquals(byWord.get("毛泽东")?.nameBoundaries ?? [], [1]);
       assertIdentical(result.stats.nameBoundaries, 1);
     });
 
@@ -658,7 +658,7 @@ describe("merging the sources", () => {
         ],
         jieba: new Map([["马克思", { frequency: 1160, partOfSpeech: "nr" }]]),
       });
-      assertUndefined(byWord.get("马克思")?.nameBoundary);
+      assertUndefined(byWord.get("马克思")?.nameBoundaries);
       assertIdentical(result.stats.nameBoundaries, 0);
     });
 
@@ -670,7 +670,7 @@ describe("merging the sources", () => {
         cedict: [cedictEntry("沙發", "沙发", "sha1 Fa1")],
         jieba: new Map([["沙发", { frequency: 862, partOfSpeech: "nz" }]]),
       });
-      assertUndefined(byWord.get("沙发")?.nameBoundary);
+      assertUndefined(byWord.get("沙发")?.nameBoundaries);
       assertIdentical(result.stats.nameBoundaries, 0);
     });
 

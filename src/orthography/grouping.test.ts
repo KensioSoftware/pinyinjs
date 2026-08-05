@@ -18,7 +18,7 @@ import {
   ADDRESS_PREFIX,
   applyGrouping,
   ASPECT_PARTICLES,
-  PERSONAL_NAME,
+  NAME_PARTS,
   PLACE_GENERICS,
   SPACED_WORD_LIST,
   SUFFIXES,
@@ -285,18 +285,18 @@ function capitals(...words: readonly DecodedWord[]): readonly boolean[] {
   return ADDRESS_PREFIX.apply(words, dictionary).map((one) => one.isProperNoun);
 }
 
-describe("姓 and 名 written apart", () => {
+describe("the parts of a proper name written apart", () => {
   const names = dictionaryOf([
     entry("毛泽东", "máo zé dōng", {
       isProperNoun: true,
       partOfSpeech: "nr",
-      nameBoundary: 1,
+      nameBoundaries: [1],
     }),
     // A compound surname, which nothing in the rule knows is compound.
     entry("司马迁", "sī mǎ qiān", {
       isProperNoun: true,
       partOfSpeech: "nr",
-      nameBoundary: 2,
+      nameBoundaries: [2],
     }),
     // A transliteration: CC-CEDICT capitalises it once and never again.
     entry("马克思", "mǎ kè sī", { isProperNoun: true, partOfSpeech: "nr" }),
@@ -304,15 +304,27 @@ describe("姓 and 名 written apart", () => {
     entry("丁青县", "dīng qīng xiàn", {
       isProperNoun: true,
       partOfSpeech: "ns",
-      nameBoundary: 2,
+      nameBoundaries: [2],
+    }),
+    // An organisation: 5.1's other half, and the tag the rule also takes.
+    entry("北京大学", "běi jīng dà xué", {
+      isProperNoun: true,
+      partOfSpeech: "nt",
+      nameBoundaries: [2],
+    }),
+    // Three elements, which is what one cut would get wrong.
+    entry("上海交通大学", "shàng hǎi jiāo tōng dà xué", {
+      isProperNoun: true,
+      partOfSpeech: "nt",
+      nameBoundaries: [2, 4],
     }),
     // A boundary on a word the veto demoted: not a proper noun, so not a name.
-    entry("未名", "wèi míng", { partOfSpeech: "nr", nameBoundary: 1 }),
+    entry("未名", "wèi míng", { partOfSpeech: "nr", nameBoundaries: [1] }),
     // 儿化 reads two characters as one syllable, so there is nothing to cut.
     entry("花儿", "huār", {
       isProperNoun: true,
       partOfSpeech: "nr",
-      nameBoundary: 1,
+      nameBoundaries: [1],
     }),
   ]);
 
@@ -333,7 +345,7 @@ describe("姓 and 名 written apart", () => {
         },
       ],
       names,
-      [PERSONAL_NAME],
+      [NAME_PARTS],
     ).map((result) => result.text);
   }
 
@@ -362,7 +374,7 @@ describe("姓 and 名 written apart", () => {
         },
       ],
       names,
-      [PERSONAL_NAME],
+      [NAME_PARTS],
     );
     assertArrayEquals(
       parts.map((part) => part.isProperNoun),
@@ -370,7 +382,15 @@ describe("姓 and 名 written apart", () => {
     );
   });
 
-  it("needs jieba's nr, since a place carries the same mark", () => {
+  it("divides an organisation from its generic too", () => {
+    assertArrayEquals(split("北京大学"), ["北京", "大学"]);
+  });
+
+  it("cuts every stated boundary, not only the first", () => {
+    assertArrayEquals(split("上海交通大学"), ["上海", "交通", "大学"]);
+  });
+
+  it("leaves a place alone, since the place rule has its own condition", () => {
     assertArrayEquals(split("丁青县"), ["丁青县"]);
   });
 

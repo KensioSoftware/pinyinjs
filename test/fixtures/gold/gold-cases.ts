@@ -111,6 +111,14 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "诸葛亮", pinyin: "Zhūgě Liàng", script: "Hans", tags: ["proper-noun", "personal-name"] },
   { hanzi: "马克思", pinyin: "Mǎkèsī", script: "Hans", tags: ["proper-noun", "personal-name"] },
 
+  // ── 5.1's other half: a proper noun apart from its generic ─
+  // Same clause and the same evidence. 上海交通大学 is here because it wants
+  // two cuts, which is what 48% of organisations carrying a boundary want.
+  { hanzi: "北京大学", pinyin: "Běijīng Dàxué", script: "Hans", tags: ["proper-noun", "organisation"] },
+  { hanzi: "清华大学", pinyin: "Qīnghuá Dàxué", script: "Hans", tags: ["proper-noun", "organisation"] },
+  { hanzi: "上海交通大学", pinyin: "Shànghǎi Jiāotōng Dàxué", script: "Hans", tags: ["proper-noun", "organisation"] },
+  { hanzi: "汇丰银行", pinyin: "Huìfēng Yínháng", script: "Hans", tags: ["proper-noun", "organisation"] },
+
   // ── Orthography: particles, affixes, measure words ─────────
   { hanzi: "我的书", pinyin: "wǒ de shū", script: "Hans", tags: ["orthography", "particle"] },
   { hanzi: "他看了", pinyin: "tā kànle", script: "Hans", tags: ["orthography", "particle"] },

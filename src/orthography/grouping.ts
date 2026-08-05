@@ -3,7 +3,7 @@ import type { DecodedWord } from "../decode/word.js";
 import { characterCount, toCharacters } from "../script/characters.js";
 import { IDIOM_HYPHENS } from "./idioms.js";
 import { AABB_REDUPLICATION, ABAB_REDUPLICATION } from "./reduplication.js";
-import { type GroupingRule, join, splitAt } from "./rule.js";
+import { divideAt, type GroupingRule, join, splitAt } from "./rule.js";
 import { LONGEST_SPACED_WORD, SPACED_WORD_FORMS } from "./word-list.js";
 
 /**
@@ -290,58 +290,64 @@ export const ADDRESS_PREFIX: GroupingRule = {
 };
 
 /**
- * 姓 and 名 are written apart: 毛泽东 is `Máo Zédōng`.
+ * jieba's tags for the two kinds of proper noun 5.1 divides.
  *
- * GB/T 16159 5.1 writes a personal name as two words, each capitalised. The
- * decoder produces one, because 毛泽东 is a dictionary entry and reading it as
- * one word is what makes it read correctly at all — so this is a *split*, and
- * splitting contradicts the dictionary's own claim that the characters are one
- * word. That needs a condition strong enough to survive the whole dictionary,
- * and the usual one — a surname list — is not it: 马克思, 高尔基, 巴赫 and 牛顿
- * all begin with a surname character and none of them is a Chinese name.
+ * A person and an organisation. Places are `PLACE_GENERICS`' business, and `nz`
+ * is left out — both are measured out in `docs/orthography/`.
+ */
+const DIVIDED_TAGS = new Set(["nr", "nt"]);
+
+/**
+ * The parts of a proper name are written apart: 毛泽东 is `Máo Zédōng`.
+ *
+ * GB/T 16159 5.1 writes 姓 apart from 名 and a proper noun apart from its
+ * generic, each part capitalised. Both halves of that clause are this rule,
+ * because the evidence for them is the same evidence.
+ *
+ * 毛泽东 and 北京大学 are dictionary entries, so the decoder produces **one**
+ * word each — and reading them as one word is what makes them read correctly at
+ * all. That makes this a *split*, and splitting contradicts the dictionary's own
+ * claim that the characters belong together. It needs a condition strong enough
+ * to survive the whole dictionary, and the obvious ones are not: a surname list
+ * takes 马克思, 高尔基, 巴赫 and 牛顿 apart, none of which is a Chinese name,
+ * and a list of generics cannot say where 上海浦东发展银行 divides.
  *
  * **The condition is CC-CEDICT's own capitalisation**, which states the
- * boundary outright rather than leaving it to be inferred: 毛泽东 is
- * `[Mao2 Ze2 dong1]`, 司马迁 is `[Si1 ma3 Qian1]`, and 马克思 is
- * `[Ma3 ke4 si1]` with no second capital at all. So a compound surname is
- * recognised without a list of compound surnames, and a transliteration is
- * excluded without a list of transliterations. It is the same source and the
- * same signal the proper-noun veto already trusts — see "jieba's 专名 tags need
- * a second opinion" in ROADMAP.md — extended from *whether* a word is a proper
- * noun to *where* its 姓 ends.
+ * boundaries outright: 毛泽东 is `[Mao2 Ze2 dong1]`, 司马迁 `[Si1 ma3 Qian1]`,
+ * 上海交通大学 `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`, and 马克思 `[Ma3 ke4 si1]`
+ * with no second capital at all. So a compound surname is recognised without a
+ * list of compound surnames, a generic without a list of generics, and a
+ * transliteration is excluded without a list of transliterations. It is the same
+ * source and the same signal the proper-noun veto already trusts — see "jieba's
+ * 专名 tags need a second opinion" in ROADMAP.md — extended from *whether* a
+ * word is a proper noun to *where* its parts divide.
  *
- * jieba's `nr` is required on top, because the stored boundary is not only
- * about people: CC-CEDICT capitalises the generic in 丁青县 `[Ding1 qing1
- * Xian4]` the same way, and that is `PLACE_GENERICS`' business.
+ * **Every stated boundary is cut, not only the first**, which is what separates
+ * an organisation from a person: 48% of `nt` entries carrying a boundary carry
+ * more than one, against 1.6% of `nr`. One cut would leave 上海交通大学 as
+ * `Shànghǎi Jiāotōngdàxué`.
  *
- * Both halves are proper nouns — 名 takes a capital of its own, `Máo Zédōng`
- * and not `Máo zédōng`.
- *
- * Measured over 88,866 lines of Tatoeba and zh.wikipedia it fires **304 times
- * over 127 distinct words**, and what it produces is a boundary GB/T 16159
- * wants in all but a handful: 蒋介石, 孙中山, 毛泽东, 邓小平, 诸葛亮 and
- * 夏目漱石 among the names, and 富士山 → `Fùshì Shān`, 柏林墙 → `Bólín Qiáng`
- * among the words jieba calls a name and CC-CEDICT still marks. See
- * `docs/orthography/` for the ones it gets wrong.
+ * A tag is still required, because the mark is not confined to what 5.1 covers:
+ * 5,341 `ns` entries carry one, where `PLACE_GENERICS` already applies a
+ * measured condition, and `nz` carries 346 of which 第二次世界大战
+ * `[Di4 er4 Ci4 Shi4 jie4 Da4 zhan4]` divides in the wrong place. Both are
+ * measured out in `docs/orthography/`.
  */
-export const PERSONAL_NAME: GroupingRule = {
-  name: "personal-name",
+export const NAME_PARTS: GroupingRule = {
+  name: "name-parts",
   apply: (words, dictionary) =>
     words.flatMap((word) => {
-      const at = dictionary.lookup(word.text)?.nameBoundary;
-      if (
-        at === undefined ||
-        !word.isProperNoun ||
-        word.partOfSpeech !== "nr"
-      ) {
+      const boundaries = dictionary.lookup(word.text)?.nameBoundaries ?? [];
+      if (boundaries.length === 0 || !word.isProperNoun) {
         return [word];
       }
-      const split = splitAt(word, at);
-      if (split === undefined) {
+      if (!DIVIDED_TAGS.has(word.partOfSpeech)) {
         return [word];
       }
-      // 名 is a proper noun in its own right, so it takes its own capital.
-      return split.map((part) => ({ ...part, isProperNoun: true }));
+      const parts = divideAt(word, boundaries);
+      // Every part is a proper noun in its own right, so each takes a capital:
+      // `Máo Zédōng`, `Běijīng Dàxué`.
+      return parts.map((part) => ({ ...part, isProperNoun: true }));
     }),
 };
 
@@ -355,7 +361,7 @@ export const GROUPING_RULES: readonly GroupingRule[] = [
   ASPECT_PARTICLES,
   SUFFIXES,
   PLACE_GENERICS,
-  PERSONAL_NAME,
+  NAME_PARTS,
   SPACED_WORD_LIST,
   ADDRESS_PREFIX,
   AABB_REDUPLICATION,

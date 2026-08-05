@@ -1,5 +1,5 @@
 import { characterCount, isSingleCharacter } from "../script/characters.js";
-import { type CedictEntry, nameBoundaryOf } from "../sources/cedict.js";
+import { type CedictEntry, nameBoundariesOf } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import {
   FREQUENCY_FIELD,
@@ -56,7 +56,7 @@ export interface MergeStats {
    * Words jieba tagged a proper noun that CC-CEDICT's lowercase pinyin vetoed.
    */
   readonly properNounVetoes: number;
-  /** Entries where CC-CEDICT's capitalisation states where the 姓 ends. */
+  /** Entries whose parts CC-CEDICT's capitalisation divides. */
   readonly nameBoundaries: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
@@ -575,13 +575,13 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // only meaningful where this word reads one syllable per character — 儿化
     // reads two characters as one syllable and could not be cut by it.
     const isAligned = characterCount(word) === reading.length;
-    const nameBoundary =
+    const boundaries =
       isProperNoun && isAligned
-        ? cedictEntries
-            .map((entry) => nameBoundaryOf(entry.readings))
-            .find((at) => at !== undefined)
-        : undefined;
-    if (nameBoundary !== undefined) {
+        ? (cedictEntries
+            .map((entry) => nameBoundariesOf(entry.readings))
+            .find((found) => found.length > 0) ?? [])
+        : [];
+    if (boundaries.length > 0) {
       nameBoundaries++;
     }
 
@@ -601,7 +601,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       frequency: jiebaEntry?.frequency ?? 0,
       partOfSpeech,
       isProperNoun,
-      ...(nameBoundary !== undefined && { nameBoundary }),
+      ...(boundaries.length > 0 && { nameBoundaries: boundaries }),
       ...(alternates.length > 0 && { alternates }),
     });
 

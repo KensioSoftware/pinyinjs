@@ -9,7 +9,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { type CedictEntry, nameBoundaryOf, parseCedict } from "./cedict.js";
+import { type CedictEntry, nameBoundariesOf, parseCedict } from "./cedict.js";
 
 /**
  * Real lines from CC-CEDICT, kept verbatim so the parser is tested against the
@@ -112,27 +112,36 @@ describe("CC-CEDICT source", () => {
     });
   });
 
-  describe("where the 姓 ends", () => {
+  describe("where a proper name divides", () => {
     it("reads the boundary off the second capital", () => {
-      assertIdentical(nameBoundaryOf(["Mao2", "Ze2", "dong1"]), 1);
+      assertArrayEquals(nameBoundariesOf(["Mao2", "Ze2", "dong1"]), [1]);
     });
 
     it("puts it after a compound surname without knowing what one is", () => {
-      assertIdentical(nameBoundaryOf(["Si1", "ma3", "Qian1"]), 2);
+      assertArrayEquals(nameBoundariesOf(["Si1", "ma3", "Qian1"]), [2]);
+    });
+
+    it("reads every capital, not only the second", () => {
+      // 上海交通大学 is three elements, and one cut would leave
+      // `Shànghǎi Jiāotōngdàxué`.
+      assertArrayEquals(
+        nameBoundariesOf(["Shang4", "hai3", "Jiao1", "tong1", "Da4", "xue2"]),
+        [2, 4],
+      );
     });
 
     it("finds none in a transliteration, which is what keeps Marx whole", () => {
-      assertUndefined(nameBoundaryOf(["Ma3", "ke4", "si1"]));
+      assertArrayEquals(nameBoundariesOf(["Ma3", "ke4", "si1"]), []);
     });
 
     it("finds none where the first syllable is not capitalised", () => {
-      // A common noun says nothing about 姓 and 名, even if some later
-      // syllable happens to be capitalised: 阿Q正传 is not a person.
-      assertUndefined(nameBoundaryOf(["yin2", "Hang2"]));
+      // A common noun says nothing about how a proper name divides, even if
+      // some later syllable happens to be capitalised.
+      assertArrayEquals(nameBoundariesOf(["yin2", "Hang2"]), []);
     });
 
     it("finds none in a single syllable", () => {
-      assertUndefined(nameBoundaryOf(["Mao2"]));
+      assertArrayEquals(nameBoundariesOf(["Mao2"]), []);
     });
   });
 

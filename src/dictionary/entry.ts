@@ -47,15 +47,17 @@ export interface DictionaryEntry {
   readonly partOfSpeech: string;
   readonly isProperNoun: boolean;
   /**
-   * Where the 姓 ends, in characters, for a name written 姓 then 名.
+   * Where a proper name divides into its parts, in characters.
    *
-   * Read off CC-CEDICT's own capitalisation — 毛泽东 is `[Mao2 Ze2 dong1]` and
-   * 司马迁 `[Si1 ma3 Qian1]` — so a compound surname needs no list to be
-   * recognised. Absent where the source marks no boundary, which is what keeps
-   * 马克思 `[Ma3 ke4 si1]` in one piece. Read by `nameBoundaryOf` in
+   * Read off CC-CEDICT's own capitalisation — 毛泽东 is `[Mao2 Ze2 dong1]`,
+   * 司马迁 `[Si1 ma3 Qian1]`, 上海交通大学 `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`
+   * — so a compound surname needs no list of compound surnames and a generic no
+   * list of generics. One boundary for a personal name, often two or three for
+   * an organisation. Absent where the source marks none, which keeps 马克思
+   * `[Ma3 ke4 si1]` in one piece. Read by `nameBoundariesOf` in
    * `src/sources/cedict.ts`, which is where the interpretation lives.
    */
-  readonly nameBoundary?: number;
+  readonly nameBoundaries?: readonly number[];
   /**
    * Other readings this word's single character has, most likely first.
    *
