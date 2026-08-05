@@ -1,4 +1,5 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { isSameReading } from "../dictionary/entry.js";
 import { type ApostropheStyle, markWord } from "../orthography/apostrophe.js";
 import {
   capitaliseSentenceParts,
@@ -100,6 +101,14 @@ interface Written {
  *
  * `zh-TW` is stored as a delta, so a word with no Taiwan reading simply reads
  * the same in both.
+ *
+ * The delta is measured against the entry's own 普通话 reading, so it only
+ * applies where the decode settled on that reading. A polyphone the decode read
+ * some other way — 长 as `cháng` where its entry reads `zhǎng`, 差 as `chā`
+ * where its entry reads `chà` — is a different sense of the word, and the delta
+ * beside the entry says nothing about it. Replacing the reading there would
+ * discard what the lattice worked out in favour of a reading of the wrong
+ * syllable entirely.
  */
 function readingFor(
   dictionary: Dictionary,
@@ -109,7 +118,13 @@ function readingFor(
   if (locale !== "zh-TW") {
     return word.reading;
   }
-  return dictionary.lookup(word.text)?.taiwanReading ?? word.reading;
+  const entry = dictionary.lookup(word.text);
+  if (entry?.taiwanReading === undefined) {
+    return word.reading;
+  }
+  return isSameReading(entry.reading, word.reading)
+    ? entry.taiwanReading
+    : word.reading;
 }
 
 /**

@@ -69,14 +69,31 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 - **A compound lost the zh-TW reading its own parts carry.** 垃圾分類 read
   `lājīfēnlèi` under `zh-TW`, because CC-CEDICT marks `Taiwan pr.` on 垃圾 and
   垃圾桶 and on no other compound, and the decoder prefers the longer word — so
-  the entry that had the delta was never consulted. 104 compounds now compose
+  the entry that had the delta was never consulted. 101 compounds now compose
   one from their constituents, 垃圾 accounting for 14 of them and 比肩, 玳瑁,
   从容, 骨头, 蜗牛 and 说服 for most of the rest. Three guards keep it honest:
   the constituent has to survive segmentation (運行狀況 contains 行狀 but reads
   運行 + 狀況), it has to be read in the compound exactly as its own entry reads
-  it, and it has to be a whole word — never a bare character, since 地's `dì` is
-  the locative noun and not a locale-wide shift, and propagating characters
-  would rewrite 4,240 adverbs ending in the particle 地.
+  it, and it has to be a whole word — never a bare character, since 會's `huǐ`
+  would rewrite 三合會 as `sānhéhuǐ` and 3,743 entries would compose that way
+  against the 101 that whole words compose.
+- **A character's zh-TW delta was often a choice between its 普通话 senses.**
+  从容地 read `cōngróng dì` and 他都知道 read `tā dū zhīdào` under `zh-TW`,
+  because 地 was stored with a Taiwan reading of `dì` and 都 with `dū`. Neither
+  is a locale shift: CC-CEDICT lists 地[de5] and 地[di4] as separate entries, so
+  `dì` is what 地 reads in 普通话 when it means the ground, and the adverbial
+  particle is `de` in Taipei too. A delta the word already has as a 普通话 sense
+  is now refused — 71 characters and 3 words lose one, 都, 着, 应, 差, 称, 斗,
+  舍, 薄 and 万 among them — while 和 `hàn`, 期 `qí`, 垃 `lè` and 髮 `fǎ` stay,
+  no 普通话 sense reading any of those that way. A `Taiwan pr.` note is also
+  only read off a sense matching the reading the entry settled on, which drops
+  16 more: the note on 著's chess-move sense, which reads `zhāo`, had been
+  giving the aspect particle 着 a 國語 reading of `zhuó`.
+- **A locale delta overwrote a reading it was not measured against.** The delta
+  describes the entry's own 普通话 reading, so a polyphone the decode read some
+  other way — 得 forced to the modal `děi` rather than the particle `de` its
+  entry stores — now keeps what the decode worked out instead of being rewritten
+  from the entry.
 
 ### Changed
 
@@ -150,14 +167,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 107-case gold corpus, which is committed to the repository — not to
+Over the 110-case gold corpus, which is committed to the repository — not to
 the published package — and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.2%** |           92.5% |
+| exact match      | **97.3%** |           90.9% |
 | reading accuracy |     99.7% |           98.7% |
-| spacing (F1)     | **99.7%** |           97.0% |
+| spacing (F1)     | **99.7%** |           96.3% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale — which is

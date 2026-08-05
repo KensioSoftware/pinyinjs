@@ -94,7 +94,7 @@ says nothing about 出发.
 
 ## The locale delta
 
-Only about 640 items read differently between 普通话 and 國語, so `zh-TW` is
+Only about 490 items read differently between 普通话 and 國語, so `zh-TW` is
 stored as a delta over `zh-CN` rather than as a second dictionary. The locale
 axis costs almost nothing.
 
@@ -109,8 +109,35 @@ entry?.taiwanReading; // lè sè
 `taiwanReading` is absent where the readings do not differ, which is the
 overwhelming majority of entries.
 
-Sources for the two: CC-CEDICT's inline `Taiwan pr.` annotations give 540 word
-readings, and Unihan's dual `kMandarin` values give 101 character readings.
+Sources for the two: CC-CEDICT's inline `Taiwan pr.` annotations give 349
+readings and Unihan's dual `kMandarin` values give 35, with a further 101
+composed from a compound's constituents.
+
+### A delta is a locale shift, not a choice between senses
+
+Both sources write the two the same way and mean different things. CC-CEDICT
+hangs `Taiwan pr.` on one _sense_ of a headword, and Unihan's second `kMandarin`
+value is as often that headword's second reading as it is a Taiwan one:
+
+```
+地  kMandarin  de dì        地 [de5] /-ly; structural particle/
+                            地 [di4] /earth; ground; field/
+```
+
+Read as a locale shift, that says 國語 turns the adverbial particle into `dì` —
+which it does not, and 4,240 entries end in that particle. The test that
+separates the two is whether the offered reading is one the word already has in
+普通话: CC-CEDICT lists 地[di4] itself, so `dì` is a sense. Nothing lists 和 as
+`hàn`, 期 as `qí` or 垃 as `lè`, so those are the real thing. 71 characters and 3
+words fail that test, 都, 着, 应, 差, 称, 斗, 舍, 薄 and 万 among them, and the
+delta is dropped for all of them. The senses of a 繁體 headword are filed under
+whichever 简体 form each one simplifies to — 沈 is `chén` under 沉 and 誰 `shéi`
+under 谁 — so both scripts are searched.
+
+A note is also only read off a sense that matches the reading the entry settled
+on. `Taiwan pr. [zhuo2]` sits on 著's chess-move sense, which reads `zhāo`;
+reaching across for it gave the aspect particle 着 a 國語 reading of `zhuó`, and
+15 more characters and a word one just as unrelated.
 
 ### A compound inherits its constituents' delta
 
@@ -134,14 +161,11 @@ inference goes wrong:
 | The compound reads it as its own entry does | 渾身解數 is `jiě shù`; the marked 解數 is `xiè shù` |
 | The constituent is a word, not a character  | see below                                           |
 
-**Single characters never contribute.** A character's delta looks like the same
-thing and is not. 期 carries `qí`, which 國語 really does read throughout, but 地
-carries `dì` — the locative noun, not the adverbial particle that 4,240 of these
-compounds end in — and 會 carries `huǐ`, which would turn 三合會 into
-`sānhéhuǐ`. Nothing in the sources separates the two cases, because CC-CEDICT's
-`Taiwan pr.` marks a _sense_ of a character rather than a locale-wide shift.
-Measured on the full dictionary, letting characters contribute composes 8,619
-entries against the 100 that words compose, and most of the 8,619 are wrong.
+**Single characters never contribute.** A character's delta reaches every
+compound that character appears in, and the ones that survive the test above are
+still not all locale-wide. 會 carries `huǐ`, which would turn 三合會 into
+`sānhéhuǐ`. Measured on the full dictionary, letting characters contribute
+composes 3,743 entries against the 101 that words compose.
 
 The cost of that decision is real and worth stating: 星期 stays `xīngqī` under
 `zh-TW` where 教育部's dictionary gives `xīngqí`, and so does every other

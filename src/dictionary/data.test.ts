@@ -171,12 +171,41 @@ describe("the committed dictionary", () => {
     });
 
     it("composes from a word and never from a bare character", () => {
-      // 从容 is a word with a marked reading, so 从容地 takes it — but the 地
-      // beside it keeps `de`, because 地's own delta is the locative noun `dì`
-      // and not a locale-wide shift. Propagating characters would rewrite 4,240
-      // adverbs this way.
+      // 从容 is a word with a marked reading, so 从容地 takes it. 會 still
+      // carries `huǐ` and would turn 三合會 into `sānhéhuǐ` if characters could
+      // contribute — 3,743 entries would compose that way against the 101 that
+      // words compose.
       assertIdentical(full.taiwanReading("从容地"), "cōng róng de");
       assertUndefined(full.taiwanReading("一个个地"));
+      assertUndefined(full.taiwanReading("三合会"));
+    });
+
+    it("refuses a delta that is another 普通话 sense of the same word", () => {
+      // CC-CEDICT lists 地[de5] and 地[di4] both, so `dì` is what 地 reads in
+      // 普通话 when it means the ground — not what 國語 does to the particle.
+      // Storing it made every adverb in 地 read `dì` under zh-TW.
+      assertUndefined(full.taiwanReading("地"));
+      assertUndefined(full.taiwanReading("都"));
+      assertUndefined(full.taiwanReading("着"));
+      // The same test reaches a 繁體 headword whose senses are filed under the
+      // 简体 forms they simplify to: 沈 is `chén` under 沉, 誰 `shéi` under 谁.
+      assertUndefined(full.taiwanReading("沈"));
+      assertUndefined(full.taiwanReading("誰"));
+      // A real delta leaves no such trace. Nothing in 普通话 reads 和 `hàn`,
+      // 期 `qí` or 垃 `lè`.
+      assertIdentical(full.taiwanReading("和"), "hàn");
+      assertIdentical(full.taiwanReading("期"), "qí");
+      assertIdentical(full.taiwanReading("垃"), "lè");
+    });
+
+    it("takes the note from a sense that reads the way the entry does", () => {
+      // CC-CEDICT hangs `Taiwan pr. [zhuo2]` on 著's chess-move sense, which
+      // reads `zhāo`, and `Taiwan pr. [cheng4]` on 稱's `chèn` sense. Reaching
+      // across for either described a different word.
+      assertUndefined(full.taiwanReading("称"));
+      // 髮 keeps its own `fǎ`, and 发 — the 發 that reads `fā` — is left alone.
+      assertIdentical(full.taiwanReading("髮"), "fǎ");
+      assertUndefined(full.taiwanReading("发"));
     });
 
     it("leaves a compound the segmentation cuts elsewhere alone", () => {

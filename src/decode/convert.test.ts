@@ -96,6 +96,26 @@ describe("converting with the greedy baseline", () => {
     assertIdentical(convert("银行", { locale: "zh-TW" }), "yínháng");
   });
 
+  it("leaves a reading the delta was not measured against alone", () => {
+    // The delta sits beside the entry's own 普通话 reading and describes that
+    // reading. Where the decode settled on another of the character's, the
+    // delta is talking about a different word — so 得 forced to the modal
+    // `děi` keeps it, rather than being rewritten as the particle's delta.
+    const modal = dictionaryOf([
+      entry("我", "wǒ", { partOfSpeech: "r" }),
+      entry("得", "de", {
+        readings: { cn: reading("de"), tw: reading("dì") },
+        alternates: [reading("dé"), reading("děi")],
+      }),
+      entry("走", "zǒu", { partOfSpeech: "v" }),
+    ]);
+    assertIdentical(convert_(modal, "得", { locale: "zh-TW" }), "dì");
+    assertIdentical(
+      convert_(modal, "我得走", { locale: "zh-TW" }),
+      "wǒ děi zǒu",
+    );
+  });
+
   it("reads 儿化 as one syllable", () => {
     assertIdentical(convert("玩儿"), "wánr");
   });

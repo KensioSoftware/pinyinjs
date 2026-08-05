@@ -87,16 +87,18 @@ function byCodeUnit(left: string, right: string): number {
 }
 
 /**
- * CC-CEDICT's entries for a word, keyed by its 简体 form.
+ * CC-CEDICT's entries for a word, keyed by one of its two written forms.
  */
 function indexCedict(
   cedict: readonly CedictEntry[],
+  formOf: (entry: CedictEntry) => string,
 ): ReadonlyMap<string, readonly CedictEntry[]> {
   const byWord = new Map<string, CedictEntry[]>();
   for (const entry of cedict) {
-    const existing = byWord.get(entry.simplified);
+    const form = formOf(entry);
+    const existing = byWord.get(form);
     if (existing === undefined) {
-      byWord.set(entry.simplified, [entry]);
+      byWord.set(form, [entry]);
     } else {
       existing.push(entry);
     }
@@ -268,6 +270,32 @@ function cedictReadingsOf(
 }
 
 /**
+ * Whether a proposed 國語 reading is really another 普通话 sense of the word.
+ *
+ * The test that separates a locale shift from a sense selection, which the
+ * sources write the same way and mean differently. 地 is offered `dì` against a
+ * 普通话 `de` — but CC-CEDICT lists 地[de5] and 地[di4] as two entries, so `dì`
+ * is what 地 reads in 普通话 when it means the ground, not what 國語 does to the
+ * particle. The adverbial 地 is `de` in Taipei too, and 4,240 entries end in it.
+ * 都 is the same shape, and so are 着, 应, 差, 称, 斗, 舍, 薄 and 万.
+ *
+ * A genuine delta leaves no such trace: nothing in 普通话 reads 和 as `hàn`, 期
+ * as `qí` or 垃 as `lè`, which is why those survive this and 71 characters and
+ * 3 words do not.
+ *
+ * Only CC-CEDICT is consulted. Unihan's reading fields carry rare and historical
+ * pronunciations alongside current ones — 驯 is listed `xún` somewhere in them —
+ * and a reading no one uses today is not evidence that a source meant a sense
+ * rather than a locale.
+ */
+function isOwnSense(
+  taiwan: readonly Syllable[],
+  senseReadings: readonly (readonly Syllable[])[],
+): boolean {
+  return senseReadings.some((sense) => isSameReading(sense, taiwan));
+}
+
+/**
  * Strip the tone marks from a reading, for comparing two spellings.
  */
 function tonelessReading(reading: string): string {
@@ -350,7 +378,12 @@ function characterSyllable(
  */
 export function mergeSources(sources: MergeSources): MergeResult {
   const { unihanReadings, unihanVariants, phrase, cedict, jieba } = sources;
-  const cedictByWord = indexCedict(cedict);
+  const cedictByWord = indexCedict(cedict, (entry) => entry.simplified);
+  // Only ever read for {@link isOwnSense}. A 繁體-only headword keeps its senses
+  // under whichever 简体 form each one simplifies to — 沈 is `chén` under 沉 and
+  // 誰 is `shéi` under 谁 — so the 简体 index alone cannot say what a character
+  // like that already reads in 普通话.
+  const cedictByHant = indexCedict(cedict, (entry) => entry.traditional);
 
   // ── Character defaults, which every later step leans on ────
   const defaults = new Map<string, readonly Syllable[]>();
@@ -398,6 +431,11 @@ export function mergeSources(sources: MergeSources): MergeResult {
   for (const word of [...words].toSorted(byCodeUnit)) {
     const cedictEntries = cedictByWord.get(word) ?? [];
     const cedictReadings = cedictReadingsOf(word, cedictEntries);
+    // Every reading CC-CEDICT gives this spelling, under either script.
+    const senseReadings = [
+      ...cedictReadings,
+      ...cedictReadingsOf(word, cedictByHant.get(word) ?? []),
+    ];
     const phraseReading = phrase.get(word);
     const phraseAligned =
       phraseReading === undefined
@@ -529,10 +567,14 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
 
     // ── zh-TW delta ───────────────────────────────────────────
-    const taiwanTokens =
-      sense?.taiwanReadings ??
-      cedictEntries.find((entry) => entry.taiwanReadings !== undefined)
-        ?.taiwanReadings;
+    // Only from a sense that reads the way this entry reads. CC-CEDICT hangs
+    // `Taiwan pr.` on one sense of a headword and the others know nothing about
+    // it: 著 is marked `zhuó` on the chess-move sense that reads `zhāo`, and
+    // reaching across for it gave the aspect particle 着 a 國語 reading of
+    // `zhuó`.
+    const taiwanTokens = senses.find(
+      (entry) => entry.taiwanReadings !== undefined,
+    )?.taiwanReadings;
     const unihanTaiwan = unihanReadings.get(word)?.taiwanReading;
     let taiwan: readonly Syllable[] | undefined;
     if (taiwanTokens !== undefined) {
@@ -541,7 +583,10 @@ export function mergeSources(sources: MergeSources): MergeResult {
       const syllable = characterSyllable(word, unihanTaiwan);
       taiwan = syllable === undefined ? undefined : [syllable];
     }
-    if (taiwan !== undefined && isSameReading(taiwan, reading)) {
+    if (
+      taiwan !== undefined &&
+      (isSameReading(taiwan, reading) || isOwnSense(taiwan, senseReadings))
+    ) {
       taiwan = undefined;
     }
     if (taiwan !== undefined) {

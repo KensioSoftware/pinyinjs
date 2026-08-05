@@ -184,4 +184,11 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "垃圾分類", pinyin: "lājīfēnlèi", script: "Hant", locale: "zh-CN", tags: ["locale"] },
   { hanzi: "垃圾分類", pinyin: "lèsèfēnlèi", script: "Hant", locale: "zh-TW", tags: ["locale"] },
   { hanzi: "亞洲", pinyin: "Yàzhōu", script: "Hant", locale: "zh-CN", tags: ["locale", "proper-noun"] },
+  // A character's delta that was a choice between its 普通话 senses. 地 is `dì`
+  // when it means the ground and `de` as the adverbial particle, in Taipei as
+  // much as in Beijing; 都 is `dū` only as the capital city.
+  { hanzi: "從容地", pinyin: "cōngróng de", script: "Hant", locale: "zh-TW", tags: ["locale", "particle"] },
+  { hanzi: "他都知道", pinyin: "tā dōu zhīdào", script: "Hant", locale: "zh-TW", tags: ["locale", "polyphone"] },
+  // What a real delta looks like beside them.
+  { hanzi: "他和我", pinyin: "tā hàn wǒ", script: "Hant", locale: "zh-TW", tags: ["locale"] },
 ];
