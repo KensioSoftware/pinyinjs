@@ -91,11 +91,15 @@ describe("writing bopomofo", () => {
     assertIdentical(written("ma"), "ㄇㄚ");
   });
 
-  it("adds ㄦ for 儿化", () => {
-    assertIdentical(written("wánr"), "ㄨㄢㄦˊ");
+  it("adds ㄦ for 儿化, after the tone mark rather than before it", () => {
+    // The mark belongs to the nucleus and the suffix is not part of what it
+    // marks, so it goes between the two: see TONE_MARKS.
+    assertIdentical(written("wánr"), "ㄨㄢˊㄦ");
     assertIdentical(written("gēr"), "ㄍㄜㄦ");
     // 事儿 has no rhyme to hang the ㄦ on, so the two symbols stand alone.
-    assertIdentical(written("shìr"), "ㄕㄦˋ");
+    assertIdentical(written("shìr"), "ㄕˋㄦ");
+    // The neutral dot is in front either way.
+    assertIdentical(written("der5"), "˙ㄉㄜㄦ");
   });
 
   it("writes the syllabic nasals with their letters doing rhyme duty", () => {
@@ -146,10 +150,17 @@ describe("reading bopomofo", () => {
   });
 
   it("reads ㄦ as a suffix except at the front of a syllable", () => {
+    assertIdentical(read("ㄨㄢˊㄦ"), "wánr");
+    assertIdentical(read("ㄕˋㄦ"), "shìr");
+    assertIdentical(read("ㄦˊ"), "ér");
+    assertIdentical(read("ㄦˋㄦ"), "èrr");
+  });
+
+  it("reads a mark written after the ㄦ, where it does not belong", () => {
+    // Not what the standard writes, and it is what a text treating the suffix
+    // as part of the syllable produces, so it is read rather than refused.
     assertIdentical(read("ㄨㄢㄦˊ"), "wánr");
     assertIdentical(read("ㄕㄦˋ"), "shìr");
-    assertIdentical(read("ㄦˊ"), "ér");
-    assertIdentical(read("ㄦㄦˋ"), "èrr");
   });
 
   it("takes an unmarked syllable as a first tone", () => {

@@ -393,15 +393,17 @@ describe("the transcribe command", () => {
     assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "jiow"), [
       "jiow        jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
     ]);
-    // GR's `-l` suffix collides with 二, and the tone settles it: `ell` is
-    // 二 alone, since the rime it collides with has no first tone. Neutral,
-    // both are real and both come back.
+    // GR's 儿化 fusion puts 二 and two rhotacised rimes on the same spelling,
+    // and every reading of it comes back.
     assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "ell"), [
-      "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
+      "ell         èir       ㄟˋㄦ         ei⁴-'rh     èir       ell       eiɚ˥˩",
+      "            ènr       ㄣˋㄦ         ên⁴-'rh     ènr       ell       ənɚ˥˩",
+      "            èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
     ]);
     assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", ".ell"), [
-      ".ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ",
-      "            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ",
+      ".ell        enr       ˙ㄣㄦ         ên⁵-'rh     enr       .ell      ənɚ",
+      "            err       ˙ㄦㄦ         êrh⁵-'rh    err       .ell      aɚɚ",
+      "            er        ˙ㄦ          êrh⁵        er        .ell      aɚ",
     ]);
   });
 

@@ -46,7 +46,13 @@ export interface SyllabaryRow {
    * otherwise take.
    */
   readonly gwoyeu: readonly [string, string, string, string];
-  /** The broad transcription of *Help:IPA/Mandarin*, with no tone letters. */
+  /**
+   * The source's own broad transcription, with no tone letters.
+   *
+   * Broader than the key of *Help:IPA/Mandarin*, which is a different page:
+   * [ipa-mandarin.ts](ipa-mandarin.ts) holds that one and records every place
+   * the two part.
+   */
   readonly ipa: string;
 }
 

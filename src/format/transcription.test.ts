@@ -51,8 +51,8 @@ describe("writing a conversion in another system", () => {
     assertIdentical(plain("银行"), "yin-hang");
   });
 
-  it("writes 儿化 as the syllable Wade-Giles writes it as", () => {
-    assertIdentical(plain("花儿"), "hua-êrh");
+  it("writes 儿化 as the suffix Wade-Giles hangs off the syllable", () => {
+    assertIdentical(plain("花儿"), "hua-'rh");
   });
 
   it("passes anything that is not Han through as it was", () => {

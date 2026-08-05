@@ -50,7 +50,9 @@ Three things are worth knowing:
   way. Pass `{ firstTone: "mark" }` to write ˉ and keep the two apart.
 - **ㄦ is the 儿化 suffix everywhere except at the front of a syllable**, where
   it is 兒 itself. 事儿 shìr is ㄕㄦ, with no rhyme for the ㄦ to attach to, and
-  二儿 is ㄦㄦ.
+  二儿 is ㄦㄦ. **The tone mark goes in front of that ㄦ** rather than after it —
+  哪儿 nǎr is ㄋㄚˇㄦ — because the mark belongs to the nucleus and the suffix is
+  not part of what it marks. A mark written after the ㄦ is read anyway.
 - **ㄫ, the obsolete letter, writes the syllabic ng** of 嗯 ǹg, so that it does
   not collide with the rare 鞥 ēng.
 
@@ -75,6 +77,17 @@ writeWadeGilesWord([readSyllable("běi"), readSyllable("jīng")]); // "pei³-chi
 The tone is a raised digit, which is what Wade-Giles writes; `{ tones: "numbers"
 }` puts it on the line and `{ tones: "none" }` leaves it off. A word hyphenates,
 because Wade-Giles has no 隔音符号 and the hyphen is what marks the boundary.
+
+儿化 hangs off the syllable as a reduced `-'rh`, with the tone digit staying
+with the syllable it belongs to:
+
+```ts
+writeWadeGiles(readSyllable("wánr")); // "wan²-'rh"
+writeWadeGiles(readSyllable("èr")); // "êrh⁴" — 兒 as a syllable keeps its own
+```
+
+The suffix is written short precisely so that the two stay apart: 女儿 nǚ'ér is
+`nü³-êrh²`, two syllables, and a suffix spelled `-êrh` would be the same string.
 
 ### Reading it back is the hard part
 
@@ -182,9 +195,28 @@ writeIpa(readSyllable("mǎ")); // "ma˨˩˦" — Chao's tone letters
 writeIpa(readSyllable("mǎ"), { tones: "numbers" }); // "ma214"
 ```
 
-The transcription is the broad one of Wikipedia's _Help:IPA/Mandarin_, which is
-what the syllabary below uses, so the table and its ground truth are the same
-analysis rather than two.
+The transcription is the broad one of the IPA column of Wikipedia's _Comparison
+of Standard Chinese transcription systems_, which is where the syllabary below
+comes from, so the table and its ground truth are the same analysis rather than
+two.
+
+**Wikipedia has a second IPA table and the two do not agree.**
+_Help:IPA/Mandarin_ is the key its editors transcribe articles with, and it is
+the narrower of the two in four places:
+
+|                 | the syllabary, and this | _Help:IPA/Mandarin_ |
+| --------------- | ----------------------- | ------------------- |
+| the medials     | i, u, y                 | j, w, ɥ             |
+| -ang            | aŋ                      | ɑŋ                  |
+| the empty rhyme | ɨ                       | ɻ̩ and ɹ̩             |
+| the diphthongs  | ai au ei ou             | aɪ aʊ eɪ oʊ         |
+
+Both are scored against — all 50 rows of the key, in
+`test/fixtures/ipa-mandarin.ts` — and the twelve rows where they part are
+recorded there one by one, along with the reason. The other two of the twelve
+are tones: the key writes the third tone as the pitches it is realised at rather
+than as a citation contour, and gives the neutral tone a pitch where this writes
+no letter at all.
 
 Two things it shares with Yale and one it does not:
 
@@ -271,30 +303,61 @@ wherever there was one.
 With that one word corrected, the rules write **all 1,668 cells** of the
 syllabary's four GR columns.
 
-### The neutral tone, and 儿化
+### The neutral tone
+
+The dot goes in front, and **the syllable behind it keeps the tonal spelling it
+had before it was reduced**: 没有 méiyou is `mei.yeou`, with 友 still spelled as
+the third tone it came from. Pinyin does not write that tone anywhere, so a
+syllable carries it explicitly:
 
 ```ts
-writeGwoyeu(readSyllable("de5")); // ".de" — the dot is in front
-writeGwoyeu(readSyllable("huār")); // "hual" — 儿化 is an -l
-readGwoyeu("shaan"); // [shǎn]
-readGwoyeu("ell"); // [èr] — 二; the tone-1 兒 plus -l it collides with is not one
-readGwoyeu(".ell"); // [er, err] — neutral, where both of them are real
+writeGwoyeu({ ...readSyllable("you5"), originalTone: 3 }); // ".yeou"
+writeGwoyeu(readSyllable("you5")); // ".iou" — no original tone to keep
+readGwoyeu(".yeou"); // [you, originalTone 3]
 ```
 
-Both of those come with a caveat this module states rather than hides:
+Without one the basic form goes behind the dot, which is what GR itself writes
+for a syllable that is neutral in its own right: 什么 shénme is `shern.me`, and
+never `shern.mhe` — the `-h-` is the first tone of a sonorant initial, and 么 is
+not in the first tone, it is in no tone at all.
 
-- **GR keeps the syllable's etymological tone behind the dot** — 朋友 is
-  `perng.yeou`, with 友 still spelled as the third tone it came from. A neutral
-  pinyin syllable does not record what that tone was, so what is written here is
-  the basic form: `perng.iou`. Reading is not so limited, and a dot in front of
-  any tonal spelling reads as the neutral tone, which is what GR means by it.
-- **GR's `-l` is a fusion rather than a suffix.** 一點兒 yìdiǎnr is `ideal`,
-  where `dean` has lost its `-n`, and the fusion collapses syllables that were
-  distinct — the source's own example is that `jiel` is either 今兒 or 雞兒.
-  Modelling that needs a rime-by-rime table of rhotacised forms, which is a
-  phonological claim rather than a spelling convention, and it is the same line
-  the IPA module draws around its suffixed [ɚ]. So this module's 儿化 always
-  reads back and GR's own does not.
+`originalTone` is a field on a parsed [syllable](../syllables/), and nothing
+infers it: a syllable that arrives neutral and nothing else leaves it undefined.
+GR is the only system here with any use for it, every other one writing the
+neutral tone with a mark of its own.
+
+### 儿化 is a fusion, not a suffix
+
+GR transcribes 儿化 as it is said rather than as it is spelled, which makes it a
+table rather than an `-l` on the end:
+
+```ts
+writeGwoyeu(readSyllable("huār")); // "hual"
+writeGwoyeu(readSyllable("wánr")); // "wal" — the -n is not there to hear
+writeGwoyeu(readSyllable("shìr")); // "shell" — the empty rhyme has gone
+writeGwoyeu(readSyllable("zhèr")); // "jehl"
+writeGwoyeu(readSyllable("diǎnr")); // "deal", as in 一點兒 `ideal`
+```
+
+The rules are those of _Spelling in Gwoyeu Romatzyh_, which gives them rime by
+rime: `-y` becomes `e`, `i` and `in` become `ie`, `ing` becomes `ieng`, every
+other `-n` disappears, and so does the asyllabic `-i` of `ai` and `uei`. The
+tonal rules then apply to what is left, and the fourth tone doubles the `-l`
+except where the rime has a fourth tone of its own to spell — `dawl`, `anql`,
+`ehl`.
+
+**The fusion is many-to-one, and that is the system rather than this module** —
+the source makes the point itself: `jiel` is 今兒 jīnr and 雞兒 jīr alike,
+because neither has an `-n` left to tell them apart.
+
+```ts
+readGwoyeu("jiel"); // [jīr, jīnr]
+readGwoyeu("hual"); // [huār, huānr]
+readGwoyeu("ell"); // [èir, ènr, èr] — 二, and two rimes that fuse to the same el
+```
+
+Which is why GR round-trips fewer forms than the systems that spell 儿化 as a
+suffix: see [what round-trips](#what-round-trips).
 
 ### Reading it back
 
@@ -361,7 +424,8 @@ Real text drops the hyphen anyway, so `splitWadeGiles` puts it back.
 ```js
 splitWadeGiles("maotsetung"); // ["mao", "tse", "tung"]
 splitWadeGiles("mao-tse-tung"); // the same, hyphens honoured
-splitWadeGiles("hua-êrh"); // ["hua-êrh"] — that hyphen is part of 花儿
+splitWadeGiles("hua¹-'rh"); // ["hua¹-'rh"] — that hyphen is part of 花儿
+splitWadeGiles("hua-êrh"); // ["hua", "êrh"] — and this one is not: 花兒, huā ér
 readWadeGilesWord("pei³ching¹"); // 北京, běijīng
 ```
 
@@ -426,7 +490,7 @@ without 儿化 — 5,088 forms:
 | Yale read back exactly, `tones` marked | 4,239 |
 | Yale read back exactly, `tones` 1 to 5 | 5,085 |
 | bopomofo read back exactly             | 4,240 |
-| Gwoyeu Romatzyh read back exactly      | 4,238 |
+| Gwoyeu Romatzyh read back exactly      | 4,112 |
 | IPA read back exactly                  | 4,239 |
 
 Almost every miss in that table is a tone that the system cannot write, and
@@ -448,7 +512,7 @@ there are only two such tones between the four of them:
 Wade-Giles loses nothing to a tone it cannot write, because it writes all five
 as digits and never writes one by leaving it off.
 
-The rest of the misses — eight in Wade-Giles, one each in Yale and IPA, two in
+The rest of the misses — eight in Wade-Giles, one each in Yale and IPA, 128 in
 GR, three in numbered Yale — are the price of [narrowing on the
 tone](#the-tone-narrows-the-list), and every one of them is a form Mandarin does
 not write:
@@ -456,11 +520,15 @@ not write:
 - **`lo` in the four contour tones**, with and without 儿化, which is the eight.
   Wade-Giles spells 羅 and 咯 alike and 咯 is only ever neutral.
 - **`ēr`**, in every system that spells 兒 the way it spells another syllable
-  plus 儿化. There is no first-tone 兒, so `ēr` is 啊儿 ār, `ell` is 二 èr, and
-  GR's `ērr` goes the same way.
+  plus 儿化. There is no first-tone 兒, so `ēr` is 啊儿 ār and `ell` is 二 èr.
 - **a neutral 誒 `ê`**, in numbered Yale, which is the only notation that can
   say "neutral" over a spelling Yale shares between 額 and 誒. 誒 is written in
   the four contour tones and not in the neutral one.
+- **GR's 128** are the [fusion](#儿化-is-a-fusion-not-a-suffix), which is a
+  different mechanism reaching the same place. One rhotacised spelling is
+  several syllables — `barl` is 拔儿 bár and 掰儿 báir — and where the form
+  written in is one the language does not read, narrowing hands back the ones
+  it does and not that. 37 of them are neutral and 91 are not.
 
 A round trip through one of those is a round trip through a syllable no Chinese
 word is read with. Every form the language does write still comes back — 1,708
@@ -639,9 +707,14 @@ $ pinyinjs transcribe --from yale syī
 syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥
 
 $ pinyinjs transcribe --from gwoyeu .ell
-.ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ
-            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ
+.ell        enr       ˙ㄣㄦ         ên⁵-'rh     enr       .ell      ənɚ
+            err       ˙ㄦㄦ         êrh⁵-'rh    err       .ell      aɚɚ
+            er        ˙ㄦ          êrh⁵        er        .ell      aɚ
 ```
+
+Three readings, because `ell` is where GR's [fusion](#儿化-is-a-fusion-not-a-suffix)
+puts 恩儿, 二儿 and 二 together, and the dot in front says only that whichever it
+is, it is neutral.
 
 `--from` takes `pinyin`, `wade-giles`, `bopomofo`, `yale`, `gwoyeu` or `ipa`,
 and defaults to working it out. Bopomofo is the only one detection can be sure

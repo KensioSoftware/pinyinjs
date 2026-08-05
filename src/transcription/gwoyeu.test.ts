@@ -159,19 +159,63 @@ describe("writing Gwoyeu Romatzyh", () => {
     assertIdentical(spelt("shān"), "shan");
   });
 
-  it("writes the neutral tone as a dot in front of the basic form", () => {
+  it("writes the neutral tone as a dot in front of the original tone", () => {
+    // 没有 méiyou is `mei.yeou`: the dot says the tone is neutral and the
+    // spelling behind it is still 有 yǒu's third.
+    assertIdentical(
+      writeGwoyeu({ ...syllable("you5"), originalTone: 3 }),
+      ".yeou",
+    );
+    assertIdentical(
+      writeGwoyeu({ ...syllable("le5"), originalTone: 4 }),
+      ".leh",
+    );
+  });
+
+  it("writes the basic form where there is no original tone to keep", () => {
+    // Which is what a syllable that is neutral in its own right takes: 什么
+    // shénme is `shern.me`. The basic form is the second tone for a sonorant
+    // initial, not the first, so this is `.me` and never `.mhe`.
     assertIdentical(spelt("de5"), ".de");
-    assertIdentical(spelt("ma5"), ".mha");
-    // GR itself keeps the etymological tone behind the dot — 朋友 is
-    // `perng.yeou` — and a neutral pinyin syllable does not record it.
+    assertIdentical(spelt("me5"), ".me");
+    assertIdentical(spelt("ma5"), ".ma");
     assertIdentical(spelt("you5"), ".iou");
   });
 
-  it("writes 儿化 as an -l suffix", () => {
+  it("fuses 儿化 into the rime rather than suffixing it", () => {
+    // The rules of *Spelling in Gwoyeu Romatzyh*, rime by rime: the -n goes,
+    // the empty rhyme becomes e, and the tone is spelled onto what is left.
     assertIdentical(spelt("huār"), "hual");
-    assertIdentical(spelt("wánr"), "wanl");
-    assertIdentical(spelt("shìr"), "shyhl");
-    assertIdentical(spelt("èrr"), "elll");
+    assertIdentical(spelt("wánr"), "wal");
+    assertIdentical(spelt("shìr"), "shell");
+    assertIdentical(spelt("nàr"), "nall");
+    assertIdentical(spelt("nǎr"), "naal");
+    assertIdentical(spelt("háir"), "harl");
+    assertIdentical(spelt("ménr"), "mel");
+    assertIdentical(spelt("jīnr"), "jiel");
+    assertIdentical(spelt("wèir"), "well");
+    assertIdentical(spelt("diǎnr"), "deal");
+  });
+
+  it("writes the apostrophe the fused rimes need to stay apart", () => {
+    // `e` rhotacised would otherwise be the `el` that en, ei and the empty
+    // rhyme already give, and 这儿 zhèr would be 郑儿 zhèngr.
+    assertIdentical(spelt("gēr"), "ge'l");
+    assertIdentical(spelt("zhèr"), "jehl");
+    assertIdentical(spelt("gēnr"), "gel");
+    // ie and iue take one in the first two tones only.
+    assertIdentical(spelt("xiér"), "shye'l");
+    assertIdentical(spelt("xiěr"), "shieel");
+  });
+
+  it("spells the fourth tone by doubling the l, or not", () => {
+    // `-l` doubles, except where the rime has a fourth tone of its own to
+    // spell and the l goes on the end of that.
+    assertIdentical(spelt("huàr"), "huall");
+    assertIdentical(spelt("dàor"), "dawl");
+    assertIdentical(spelt("dòur"), "dowl");
+    assertIdentical(spelt("bàngr"), "banql");
+    assertIdentical(spelt("dòngr"), "donql");
   });
 
   it("writes a word solid, as GR does", () => {
@@ -215,15 +259,16 @@ describe("reading Gwoyeu Romatzyh", () => {
     assertIdentical(readGwoyeu(".de")[0]?.tone, NEUTRAL_TONE);
   });
 
-  it("reads the -l suffix, and what it collides with", () => {
-    assertArrayEquals(read("hual"), ["huār"]);
-    assertArrayEquals(read("shyhl"), ["shìr"]);
-    // `ell` is 二 èr itself, and it is also the same rime in the first tone
-    // with the suffix on the end — the collision Yale's `er` has too. That
-    // rime has no first tone, so the collision is settled and 二 is what
-    // comes back; the neutral `.ell` is where both are real.
-    assertArrayEquals(read("ell"), ["èr"]);
-    assertArrayEquals(read(".ell"), ["er", "err"]);
+  it("reads the fused rimes, and everything they collapsed together", () => {
+    assertArrayEquals(read("shell"), ["shènr", "shìr"]);
+    assertArrayEquals(read("deal"), ["diǎr", "diǎnr"]);
+    // The fusion is many-to-one and this is the cost of it: 花儿 huār and
+    // 欢儿 huānr are the same spelling, since the -n is not there to hear.
+    assertArrayEquals(read("hual"), ["huār", "huānr"]);
+    assertArrayEquals(read("jiel"), ["jīr", "jīnr"]);
+    // `ell` is 二 èr itself, and also en, ei and the empty rhyme rhotacised in
+    // the fourth tone, all three of which fuse to the same `el`.
+    assertArrayEquals(read("ell"), ["èir", "ènr", "èr"]);
   });
 
   it("gives back both syllables where the spellings collide", () => {
@@ -247,22 +292,33 @@ describe("reading Gwoyeu Romatzyh", () => {
 describe("Gwoyeu Romatzyh over the whole inventory", () => {
   it("writes every syllable in every tone and reads it back", () => {
     // Over the tones each syllable is written in, since reading narrows on
-    // the tone: `ell` is 二 èr, there being no first-tone 兒 for the -l to
-    // have been suffixed to.
+    // the tone: `ell` is 二 èr and 诶儿 êir, and neither is a first tone.
+    //
+    // The neutral tone carries an original tone through, because that is what
+    // GR spells behind the dot; without one the basic form is written, and it
+    // reads back as the tone that form means. So the round trip is exact only
+    // where there was an original tone to keep, and the tone written in is the
+    // one asserted below.
     let checked = 0;
     for (const [spelling, tones] of SYLLABLE_TONES) {
       const base = syllable(spelling);
       for (const tone of tones) {
         for (const erhua of [false, true]) {
-          const form = { ...base, tone, ...(erhua && { erhua: true }) };
+          const form = {
+            ...base,
+            tone,
+            ...(erhua && { erhua: true }),
+            ...(tone === NEUTRAL_TONE && { originalTone: 4 as const }),
+          };
           const back = readGwoyeu(writeGwoyeu(form));
-          // 儿化 is matched too, because `ell` is genuinely both 二 èr and 婀
-          // with the suffix on it, and the list holds both.
+          // 儿化 is matched too, because one fused spelling is several
+          // syllables — `hual` is 花儿 huār and 欢儿 huānr alike.
           const found = back.find(
             (candidate) =>
               candidate.initial === form.initial &&
               candidate.final === form.final &&
               candidate.tone === form.tone &&
+              candidate.originalTone === form.originalTone &&
               (candidate.erhua === true) === erhua,
           );
           assertObjectEquals(found, form, spelling);
