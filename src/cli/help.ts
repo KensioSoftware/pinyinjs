@@ -29,6 +29,17 @@ const FLAG_HELP = new Map<string, string>([
 const FLAG_WIDTH = 23;
 
 /**
+ * How wide the command column is in the listing.
+ *
+ * Derived from the longest name rather than fixed, because a fixed 10 was
+ * exactly the width of `transcribe` and ran the summary straight into it. A
+ * number that has to be revisited whenever a command is added is a number that
+ * will not be.
+ */
+const COMMAND_WIDTH =
+  Math.max(...COMMANDS.map((command) => command.name.length)) + 2;
+
+/**
  * The global flags, listed under every command's help.
  */
 const GLOBAL_HELP: readonly string[] = (
@@ -93,7 +104,7 @@ export function generalHelp(): readonly string[] {
     "",
     "Commands:",
     ...COMMANDS.map(
-      (command) => `  ${command.name.padEnd(10)}${command.summary}`,
+      (command) => `  ${command.name.padEnd(COMMAND_WIDTH)}${command.summary}`,
     ),
     "",
     "Options for every command:",
@@ -107,7 +118,7 @@ export function generalHelp(): readonly string[] {
     "  pinyinjs explain 长江大桥",
     "  pinyinjs lookup 头发",
     "  pinyinjs syllable nǐhǎo",
-    "  pinyinjs romanize běijīng",
+    "  pinyinjs transcribe běijīng",
     "  cat article.txt | pinyinjs convert",
   ];
 }

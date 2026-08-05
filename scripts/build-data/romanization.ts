@@ -23,6 +23,7 @@ import {
   readBopomofo,
   writeBopomofo,
 } from "../../src/romanization/bopomofo.js";
+import { readGwoyeu, writeGwoyeu } from "../../src/romanization/gwoyeu.js";
 import {
   readIpa,
   writeIpa,
@@ -157,6 +158,14 @@ const SYSTEMS: readonly System[] = [
     spell: (syllable) => writeYaleSpelling(syllable),
   },
   {
+    // The tone is in the spelling rather than on it, so the analogue of a
+    // toneless spelling is the basic form — every syllable in one tone.
+    name: "Gwoyeu Romatzyh",
+    write: (syllable) => writeGwoyeu(syllable),
+    read: (text) => readGwoyeu(text),
+    spell: (syllable) => writeGwoyeu({ ...syllable, tone: 1 }),
+  },
+  {
     name: "IPA",
     write: (syllable) => writeIpa(syllable),
     read: (text) => readIpa(text),
@@ -201,6 +210,35 @@ for (const system of DISTINCT_SYSTEMS) {
   count(`distinct ${system.name} spellings`, spellings.size);
   for (const [spelling, pinyin] of shared) {
     say(`  ${spelling.padEnd(10)}${pinyin.join(", ")}`);
+  }
+}
+
+// ── What Gwoyeu Romatzyh's four spellings per syllable cost ──────────────
+//
+// The count above holds the tone still, which is the only way to compare GR
+// with a system that writes the tone separately. The question GR raises on its
+// own is what happens once the tone is let loose: it spells 424 syllables four
+// ways each, and every one of those spellings has to be distinct from every
+// other or the reader cannot tell them apart.
+say();
+say("Gwoyeu Romatzyh, tone by tone");
+say("─────────────────────────────");
+
+const grForms = new Map<string, string[]>();
+for (const syllable of SYLLABLES) {
+  for (const tone of [1, 2, 3, 4] as const) {
+    const key = writeGwoyeu({ ...syllable, tone });
+    grForms.set(key, [
+      ...(grForms.get(key) ?? []),
+      `${written(syllable)} tone ${String(tone)}`,
+    ]);
+  }
+}
+count("syllables × the four tones", SYLLABLES.length * 4);
+count("distinct spellings", grForms.size);
+for (const [spelling, forms] of grForms) {
+  if (forms.length > 1) {
+    say(`  ${spelling.padEnd(10)}${forms.join(", ")}`);
   }
 }
 

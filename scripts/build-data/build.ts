@@ -176,7 +176,7 @@ const TESTED_AGAINST = [
     url: "https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcription_systems",
     licence: "CC BY-SA 4.0",
     provides:
-      "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo, Wade-Giles, Yale and IPA tables are checked against",
+      "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo, Wade-Giles, Yale, IPA and Gwoyeu Romatzyh tables are checked against, GR having four columns of its own",
     note: "used by the tests only; nothing in data/ is derived from it",
   },
 ] as const;

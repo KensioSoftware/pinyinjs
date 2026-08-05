@@ -1,14 +1,15 @@
 # Romanisation
 
-Bopomofo (注音符號), Wade-Giles, Yale and IPA, in both directions, at the
-syllable level. Like [numbers](../numerals/) this needs no dictionary: a
-romanisation is a mapping over about 420 syllables, so hanzi → Wade-Giles is
-just hanzi → pinyin → Wade-Giles.
+Bopomofo (注音符號), Wade-Giles, Yale, Gwoyeu Romatzyh and IPA, in both
+directions, at the syllable level. Like [numbers](../numerals/) this needs no
+dictionary: a romanisation is a mapping over about 420 syllables, so hanzi →
+Wade-Giles is just hanzi → pinyin → Wade-Giles.
 
 ```ts
 import {
   readSyllable,
   writeBopomofo,
+  writeGwoyeu,
   writeIpa,
   writeWadeGiles,
   writeYale,
@@ -18,14 +19,15 @@ const jiu = readSyllable("jiù");
 writeBopomofo(jiu); // "ㄐㄧㄡˋ"
 writeWadeGiles(jiu); // "chiu⁴"
 writeYale(jiu); // "jyòu"
+writeGwoyeu(jiu); // "jiow" — the tone is in the spelling
 writeIpa(jiu); // "tɕiou˥˩"
 ```
 
 ## Why the tables are short
 
 A parsed syllable holds its **underlying** initial and final rather than its
-spelling — 就 is `j` + `iou`, not `j` + `iu`, and 军 is `j` + `ün` — so both
-systems fall out of a lookup instead of a second pile of respelling rules. See
+spelling — 就 is `j` + `iou`, not `j` + `iu`, and 军 is `j` + `ün` — so the
+tables fall out of a lookup instead of a second pile of respelling rules. See
 [syllables](../syllables/).
 
 That is most of the reason bopomofo is a straight bijection: ㄐㄧㄡ is the
@@ -179,6 +181,113 @@ rhyme entirely. Modelling that needs a rhyme-by-rhyme table of fused forms,
 which is a phonological claim rather than a transcription convention, and it is
 not made here.
 
+## Gwoyeu Romatzyh
+
+The odd one. Every other system here writes a syllable and then marks its tone;
+GR spells the tone **into** the syllable, so it is not one mapping over 424
+syllables but four:
+
+```ts
+writeGwoyeu(readSyllable("shān")); // "shan"
+writeGwoyeu(readSyllable("shán")); // "sharn"
+writeGwoyeu(readSyllable("shǎn")); // "shaan"
+writeGwoyeu(readSyllable("shàn")); // "shann"
+```
+
+That is why 陝西 is Shaanxi in English and 山西 is Shanxi: the doubled vowel is
+GR's third tone, and it is the one piece of the system in everyday use.
+
+The basic form is the first tone, and about twenty rules make the other three
+out of it. The shape of all of them is: change a vowel if there is a suitable
+one, and otherwise put a letter in.
+
+```ts
+const gr = (pinyin: string) => writeGwoyeu(readSyllable(pinyin));
+gr("chuán"); // "chwan" — i/u become y/w in the second tone...
+gr("cháng"); // "charng" — ...or an r goes in after the vowels
+gr("qiǎn"); // "chean" — i/u become e/o in the third...
+gr("dǎ"); // "daa" — ...or the main vowel doubles
+gr("dào"); // "daw" — the last letter changes in the fourth...
+gr("dà"); // "dah" — ...or an h is added
+```
+
+Three things are worth knowing:
+
+- **`j`, `ch` and `sh` do two jobs each**, standing for the retroflexes and the
+  palatals alike, with the following `i` saying which. Pinyin zhu, ju and jiu
+  come out as `ju`, `jiu` and `jiou`, which is the single most confusing thing
+  about reading GR next to pinyin.
+- **The sonorants swap the first two tones over.** A syllable starting l-, m-,
+  n- or r- takes an `-h-` as its second letter in the first tone and is left
+  bare in the second, so 媽 mā is `mha` and 麻 má is `ma`. The reason is
+  frequency: those initials carry far more second tones than first ones.
+- **A syllable with no initial has no y- or w- in the first tone**, and grows
+  one in the others: 一 yī is `i`, 疑 yí is `yi`, 已 yǐ is `yii`, 意 yì is
+  `yih`.
+
+### The rule the published rules get wrong
+
+That last line is where the published rules break, and it is worth setting out
+because it is the whole of what this module had to work out for itself.
+_Spelling in Gwoyeu Romatzyh_ says that a basic form starting i- or u- has that
+letter **replaced** by y- or w-. Applied literally, 一's basic form `i` gives
+`yh` in the fourth tone where the attested spelling is `yih`: the rule has
+deleted the only vowel the syllable had. Nine cells of the syllabary below fail
+that way, and they are all one shape — a rime that is bare or closed by a
+consonant, in the third and fourth tones: `yii`, `yih`, `wuu`, `wuh`, `yiin`,
+`yinn`, `yiing`, `yinq`, `yuh`.
+
+The same page's rime table says what actually happens, and it is one rule rather
+than the published two: **the letter replaced is a medial**, so it goes only
+when a different vowel follows it. `iuh` has a u after the i and becomes `yuh`;
+`ih` has an h and becomes `yih`; `ii` is one vowel written twice, which is not a
+following vowel at all, and becomes `yii`. The third tone needs no separate
+clause once that is said, because its own swap has already eaten the medial
+wherever there was one.
+
+With that one word corrected, the rules write **all 1,668 cells** of the
+syllabary's four GR columns.
+
+### The neutral tone, and 儿化
+
+```ts
+writeGwoyeu(readSyllable("de5")); // ".de" — the dot is in front
+writeGwoyeu(readSyllable("huār")); // "hual" — 儿化 is an -l
+readGwoyeu("shaan"); // [shǎn]
+readGwoyeu("ell"); // [èr, ērr] — 二, and the same rime in tone 1 plus -l
+```
+
+Both of those come with a caveat this module states rather than hides:
+
+- **GR keeps the syllable's etymological tone behind the dot** — 朋友 is
+  `perng.yeou`, with 友 still spelled as the third tone it came from. A neutral
+  pinyin syllable does not record what that tone was, so what is written here is
+  the basic form: `perng.iou`. Reading is not so limited, and a dot in front of
+  any tonal spelling reads as the neutral tone, which is what GR means by it.
+- **GR's `-l` is a fusion rather than a suffix.** 一點兒 yìdiǎnr is `ideal`,
+  where `dean` has lost its `-n`, and the fusion collapses syllables that were
+  distinct — the source's own example is that `jiel` is either 今兒 or 雞兒.
+  Modelling that needs a rime-by-rime table of rhotacised forms, which is a
+  phonological claim rather than a spelling convention, and it is the same line
+  the IPA module draws around its suffixed [ɚ]. So this module's 儿化 always
+  reads back and GR's own does not.
+
+### Reading it back
+
+An index like the others, but built four times over, because the tone is in the
+spelling rather than on it. Over the 424 syllables of the inventory that is
+1,696 spellings, and **1,695 of them are distinct** — GR separates every
+syllable in every tone but one:
+
+```ts
+readGwoyeu("nn"); // [ň, ǹ] — the syllabic nasal, and nothing else collides
+```
+
+唔 is not in the syllabary at all, and nothing in GR is attested for a syllabic
+nasal; what it gets here is the general rules applied to the letters it has,
+where the third tone's doubling and the fourth tone's `-n` → `-nn` land in the
+same place.
+
 ## How ambiguous is Wade-Giles, really?
 
 `pnpm romanization` measures it. Over the 424 syllables of the
@@ -223,13 +332,18 @@ without 儿化 — 5,088 forms:
 | Yale read back exactly, `tones` marked | 4,240 |
 | Yale read back exactly, `tones` 1 to 5 | 5,088 |
 | bopomofo read back exactly             | 4,240 |
+| Gwoyeu Romatzyh read back exactly      | 4,240 |
 | IPA read back exactly                  | 4,240 |
 
-Every miss in that table is a tone that the system cannot write, and no two of
-them are the same tone:
+Every miss in that table is a tone that the system cannot write, and there are
+only two such tones between the four of them:
 
 - **bopomofo** marks the first tone by omission, so a syllable whose tone was
   never written comes back as a first tone. 848 forms.
+- **Gwoyeu Romatzyh** has the same 848, for a reason that looks nothing like
+  bopomofo's and comes to the same thing: the basic form _is_ the first tone,
+  so there is no spelling left over to mean "no tone was written". It is the
+  only system here that can write the neutral tone but not the absence of one.
 - **Yale** and pinyin both leave the neutral tone unmarked, so a syllable
   written `de` might be neutral or might have no tone written at all. 848 forms,
   and `{ tones: "numbers" }` is the notation that keeps them apart.
@@ -240,17 +354,30 @@ them are the same tone:
 Wade-Giles loses nothing, because it writes all five tones as digits and never
 writes one by leaving it off. Every written tone in every system round-trips.
 
-How many syllables each system can tell apart, over the 424 of the inventory:
+How many syllables each system can tell apart, over the 424 of the inventory —
+for GR the basic form, so that all five are being asked the same question:
 
-|                               |     |
-| ----------------------------- | --: |
-| distinct bopomofo spellings   | 424 |
-| distinct IPA transcriptions   | 424 |
-| distinct Wade-Giles spellings | 423 |
-| distinct Yale spellings       | 423 |
+|                                |     |
+| ------------------------------ | --: |
+| distinct bopomofo spellings    | 424 |
+| distinct Gwoyeu Romatzyh forms | 424 |
+| distinct IPA transcriptions    | 424 |
+| distinct Wade-Giles spellings  | 423 |
+| distinct Yale spellings        | 423 |
 
 Wade-Giles writes both 羅 luó and 咯 lo as `lo`; Yale writes both 額 e and 誒 ê
 as `e`. Both are the systems' own doing rather than this module's.
+
+GR is the one system where that count is not the whole story, because it writes
+the tone as well. Over the same inventory in all four tones:
+
+|                            |       |
+| -------------------------- | ----: |
+| syllables × the four tones | 1,696 |
+| distinct GR spellings      | 1,695 |
+
+The one collision is 唔 `nn`, which the syllabary does not list and GR has no
+attested spelling for.
 
 ## How the tables were checked
 
@@ -259,8 +386,8 @@ CC-CEDICT, Unihan and the phrase corpus are all pinyin — so unlike every other
 claim here, the tables could not be scored against the data that ships. They are
 scored instead against an outside syllabary: `test/fixtures/syllabary.ts` holds
 all 417 rows of Wikipedia's _Comparison of Chinese transcription systems_, and
-`src/romanization/syllabary.test.ts` asserts every one of them, in all four
-systems.
+`src/romanization/syllabary.test.ts` asserts every one of them, in all five
+systems — 3,336 cells, since GR has four columns to everyone else's one.
 
 **The Yale and IPA tables were derived from those columns rather than typed and
 then checked against them**, which is a weaker claim than the one bopomofo and
@@ -269,6 +396,14 @@ is compression: one table of initials, one of finals and a handful of context
 rules reproduce all 417 attested spellings in each system, and they go on to
 write the 12 syllables of this inventory that the source's table does not have.
 A table that had simply been copied would do neither.
+
+**Gwoyeu Romatzyh is checked the strongest way any of them is**, and it is worth
+saying that too. Its tables and every one of its tonal rules were written from a
+_different page_ — _Spelling in Gwoyeu Romatzyh_, which states them in prose —
+and then scored against the four columns of this one, which is a different page
+maintained by different people. All 1,668 cells. The one amendment the prose
+needed came from that page's rime table rather than from the columns being
+scored against, so nothing here was fitted to its own test.
 
 The two lists differ at the edges and both differences are marginal: 12
 syllables here are not in that table (the interjections, the syllabic nasals,
@@ -280,46 +415,32 @@ about them is special.
 ## On the command line
 
 ```console
-$ pinyinjs romanize běijīng
-běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥
+$ pinyinjs transcribe běijīng
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 
-$ pinyinjs romanize --from wade-giles chu¹
-chu¹        zhū       ㄓㄨ          chu¹        jū        ʈʂu˥
-            chū       ㄔㄨ          ch'u¹       chū       ʈʂʰu˥       marks restored
-            jū        ㄐㄩ          chü¹        jyū       tɕy˥        marks restored
-            qū        ㄑㄩ          ch'ü¹       chyū      tɕʰy˥       marks restored
+$ pinyinjs transcribe --from wade-giles chu¹
+chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥
+            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored
+            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored
+            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored
 
-$ pinyinjs romanize --from yale syī
-syī         xī        ㄒㄧ          hsi¹        syī       ɕi˥
+$ pinyinjs transcribe --from yale syī
+syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥
+
+$ pinyinjs transcribe --from gwoyeu ell
+ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩
+            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥
 ```
 
-`--from` takes `wade-giles`, `yale` or `ipa`. Bopomofo needs none of them: it
-has a script of its own. See [the command line](../cli/).
+`--from` takes `wade-giles`, `yale`, `gwoyeu` or `ipa`. Bopomofo needs none of
+them: it has a script of its own. See [the command line](../cli/).
 
 ## What is not built
 
-- **Gwoyeu Romatzyh**, which is a different shape of problem from the other
-  three and is deliberately left on its own. GR spells the tone into the
-  syllable rather than marking it — 山 shān is `shan`, 陝 shǎn is `shaan` and
-  二 èr is `ell` — so it is not one mapping over 424 syllables but four, related
-  by about twenty rules, with a sonorant exception that swaps what the first two
-  tones do.
-
-  It was **measured before being deferred**, because "harder" is not a
-  number. The same source has four GR columns, 417 rows each; a throwaway
-  implementation of the rules exactly as _Spelling in Gwoyeu Romatzyh_ states
-  them writes **1,659 of those 1,668 cells correctly**, and all nine misses are
-  one class: a zero-initial syllable whose rime is bare or closed by a
-  consonant, in the third and fourth tones, where the stated rule replaces the
-  initial i- or u- with y- or w- and the attested form keeps the vowel as well
-  — `yih`, `wuh`, `yinn`, `yinq`, `yiin`, `yiing`, `yuh`, `yii`, `wuu`.
-
-  So the writing direction is close to solved and the phase's remaining work is
-  everything around it: reading back, where the index has to be built per tone
-  because the tone is in the spelling; the neutral tone's leading dot; the `-l`
-  suffix for 儿化, which the source itself notes is ambiguous (`jiel` is either
-  今儿 or 鸡儿); and the four columns being taken into the fixture.
-
+- **GR's rhotacised forms**, which are a fusion rather than the plain `-l`
+  suffix written here, and **the etymological tone behind a neutral syllable's
+  dot**, which pinyin does not record. Both are set out under
+  [Gwoyeu Romatzyh](#gwoyeu-romatzyh) above.
 - **Whole words of Wade-Giles.** `readWadeGiles` takes one syllable. Real text
   writes `Chungking` unhyphenated, and splitting that is the Wade-Giles
   equivalent of `splitSyllables` — with the added difficulty that every

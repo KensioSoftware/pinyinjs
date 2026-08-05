@@ -12,6 +12,7 @@ import { SYLLABARY } from "#test/fixtures/syllabary.js";
 import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
 import { readSyllable } from "../syllable/syllable.js";
 import { writeBopomofo } from "./bopomofo.js";
+import { writeGwoyeu } from "./gwoyeu.js";
 import { writeIpaSymbols } from "./ipa.js";
 import { writeWadeGilesSpelling } from "./wade-giles.js";
 import { writeYaleSpelling } from "./yale.js";
@@ -45,6 +46,16 @@ function unsure(cell: string): string {
 describe("the tables against an independent syllabary", () => {
   it("covers the whole of it", () => {
     assertArrayLength(SYLLABARY, 417);
+    // Eight cells a row, because GR spends four columns on what the others
+    // write in one.
+    const cells = SYLLABARY.flatMap((row) => [
+      row.bopomofo,
+      row.wadeGiles[0] ?? "",
+      row.yale,
+      row.ipa,
+      ...row.gwoyeu,
+    ]);
+    assertArrayLength(cells, 3336);
   });
 
   it("writes every row's bopomofo exactly", () => {
@@ -79,6 +90,26 @@ describe("the tables against an independent syllabary", () => {
         row.pinyin,
       );
     }
+  });
+
+  it("writes every row's Gwoyeu Romatzyh exactly, in all four tones", () => {
+    // 1,668 cells rather than 417, since GR spells the tone into the syllable.
+    // This is the check the tonal rules have to pass, and the one that found
+    // the amendment `zeroInitial` records.
+    let cells = 0;
+    for (const row of SYLLABARY) {
+      const syllable = readSyllable(row.pinyin);
+      assertNonNullable(syllable, row.pinyin);
+      const spelt = [
+        writeGwoyeu({ ...syllable, tone: 1 }),
+        writeGwoyeu({ ...syllable, tone: 2 }),
+        writeGwoyeu({ ...syllable, tone: 3 }),
+        writeGwoyeu({ ...syllable, tone: 4 }),
+      ];
+      assertArrayEquals(spelt, row.gwoyeu, row.pinyin);
+      cells += spelt.length;
+    }
+    assertIdentical(cells, 1668);
   });
 
   it("transcribes every row's IPA exactly", () => {

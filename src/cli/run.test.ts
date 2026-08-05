@@ -45,6 +45,10 @@ describe("running the CLI", () => {
     for (const command of COMMANDS) {
       assertStringIncludes(help, command.name);
       assertStringIncludes(help, command.summary);
+      // Asserting that both appear is not enough: the column was padded to a
+      // fixed 10, which is exactly the width of `transcribe`, and the summary
+      // ran straight into the name while both substrings were still there.
+      assertStringIncludes(help, `${command.name}  `);
     }
   });
 
