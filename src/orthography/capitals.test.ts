@@ -26,6 +26,13 @@ describe("capitalisation", () => {
       assertFalse(isSentence("《北京》"));
       assertFalse(isSentence(""));
     });
+
+    it("does not take a decimal point for a full stop", () => {
+      assertFalse(isSentence("一共75.5元"));
+      // A stop that only has a digit on one side of it still ends a sentence.
+      assertTrue(isSentence("我有75."));
+      assertTrue(isSentence(".5元"));
+    });
   });
 
   describe("capitaliseWord", () => {
@@ -52,6 +59,12 @@ describe("capitalisation", () => {
         capitaliseSentences("nǐ hǎo. wǒ hěn hǎo! nǐ ne?"),
         "Nǐ hǎo. Wǒ hěn hǎo! Nǐ ne?",
       );
+    });
+
+    it("does not start a new sentence at a decimal point", () => {
+      // Digits survive a conversion that was asked to keep them, and the point
+      // in 75.5 is part of the number rather than the end of a sentence.
+      assertIdentical(capitaliseSentences("wǒ yǒu75.5gè."), "Wǒ yǒu75.5gè.");
     });
 
     it("capitalises a letter that carries a tone mark", () => {

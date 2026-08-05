@@ -24,10 +24,11 @@ export interface NumeralSegment {
   /**
    * Where the words break, as a syllable count each.
    *
-   * A counted number is one word and needs none of this. A time is three or
-   * four — 6:30 is `liù diǎn sānshí fēn`, where the hour and the minutes are
-   * numbers and 点 and 分 are not — and nothing in the syllables themselves
-   * says where those breaks are.
+   * A counted whole number is one word and needs none of this. A time is three
+   * or four — 6:30 is `liù diǎn sānshí fēn`, where the hour and the minutes are
+   * numbers and 点 and 分 are not — and a decimal is a counted part and then a
+   * digit at a time: 75.5 is `qīshíwǔ diǎn wǔ`. Nothing in the syllables
+   * themselves says where those breaks are.
    */
   readonly words?: readonly number[];
 }
@@ -121,6 +122,23 @@ function styleFor(digits: string, following: string): NumeralStyle {
 }
 
 /**
+ * Where a decimal breaks into words, or undefined where it is not one.
+ *
+ * The counted part keeps its grouping — 75.5 is `qīshíwǔ diǎn wǔ`, one word for
+ * the quantity, which is the same word 75 on its own is — and everything from
+ * the 点 onwards is read digit by digit, so the point and each digit after it
+ * stand alone: 3.14 is `sān diǎn yī sì`.
+ */
+function decimalWords(hanzi: string): readonly number[] | undefined {
+  const characters = toCharacters(hanzi);
+  const point = characters.indexOf("点");
+  if (point === -1) {
+    return undefined;
+  }
+  return [point, ...characters.slice(point).map(() => 1)];
+}
+
+/**
  * Read one number, with the sign that may follow it.
  */
 function readNumber(
@@ -141,7 +159,16 @@ function readNumber(
   if (hanzi === undefined || reading === undefined) {
     return undefined;
   }
-  return { text: digits, reading, hanzi, style };
+  // Digits read out one at a time are not a word at all, so there is nothing
+  // for a point in them to break up.
+  const words = style === "digits" ? undefined : decimalWords(hanzi);
+  return {
+    text: digits,
+    reading,
+    hanzi,
+    style,
+    ...(words !== undefined && { words }),
+  };
 }
 
 /**

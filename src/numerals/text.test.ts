@@ -2,6 +2,7 @@ import {
   assertArrayEquals,
   assertIdentical,
   assertNonNullable,
+  assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
@@ -70,6 +71,20 @@ describe("finding numbers in text", () => {
     // Not a time at all once the clock runs out.
     assertArrayEquals(segments("25:30"), ["25:30"]);
     assertArrayEquals(segments("6:75"), ["6:75"]);
+  });
+
+  it("breaks a decimal at the point and nowhere else", () => {
+    // The counted part is the same word it is without the point — 75 is
+    // `qīshíwǔ` either way — and everything from the 点 on is read a digit at a
+    // time, so 75.5 is `qīshíwǔ diǎn wǔ` rather than four loose syllables.
+    const [decimal] = readNumbersIn("75.5", "");
+    assertNonNullable(decimal);
+    assertIdentical(decimal.hanzi, "七十五点五");
+    assertArrayEquals(decimal.words ?? [], [3, 1, 1]);
+    // A whole number is one word and has no breaks to report.
+    const [whole] = readNumbersIn("75", "");
+    assertNonNullable(whole);
+    assertUndefined(whole.words);
   });
 
   it("leaves a number too large to count exactly as written", () => {

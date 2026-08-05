@@ -868,6 +868,14 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "1998年"), "yī jiǔ jiǔ bā nián");
       assertIdentical(convert(dictionary, "1个"), "yí gè");
     });
+
+    it("writes a decimal as the counted word and then digits", () => {
+      assertIdentical(
+        convert(dictionary, "一共75.5元"),
+        "yígòng qīshíwǔ diǎn wǔ yuán",
+      );
+      assertIdentical(convert(dictionary, "3.14"), "sān diǎn yī sì");
+    });
   });
 
   describe("transcription", () => {

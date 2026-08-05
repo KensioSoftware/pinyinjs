@@ -322,7 +322,7 @@ function groupedPieces(
   spelled: readonly string[],
   said: readonly Syllable[],
   words: readonly number[],
-  written: Written,
+  apostrophe: ApostropheStyle,
 ): readonly ConvertedPiece[] {
   const pieces: ConvertedPiece[] = [];
   let at = 0;
@@ -331,7 +331,7 @@ function groupedPieces(
       pieces.push(plainPiece(" "));
     }
     const group = spelled.slice(at, at + length);
-    for (const [index, text] of markWord(group, written.apostrophe).entries()) {
+    for (const [index, text] of markWord(group, apostrophe).entries()) {
       pieces.push({
         text,
         syllable: said[at + index],
@@ -360,14 +360,7 @@ function numberPieces(
   const spelled = said.map((syllable) =>
     writeSyllable(syllable, written.notation),
   );
-  // A run that says where its words break gets them: a time is `liù diǎn
-  // sānshí fēn`, with the hour and the minutes each a word of their own.
-  if (segment.words !== undefined) {
-    return groupedPieces(spelled, said, segment.words, written);
-  }
-  // A decimal is not one word either: everything after the 点 is read digit by
-  // digit, so 3.14 is `sān diǎn yī sì`.
-  if (segment.style === "digits" || (segment.hanzi ?? "").includes("点")) {
+  if (segment.style === "digits") {
     return spelled.flatMap((text, at) => [
       ...(at === 0 ? [] : [plainPiece(" ")]),
       { text, syllable: said[at], confidence: undefined },
@@ -375,9 +368,18 @@ function numberPieces(
   }
   const isNumbered =
     written.notation === "numbers" || written.notation === "superscript";
-  return markWord(spelled, isNumbered ? "never" : written.apostrophe).map(
-    (text, at) => ({ text, syllable: said[at], confidence: undefined }),
-  );
+  const apostrophe = isNumbered ? "never" : written.apostrophe;
+  // A run that says where its words break gets them: a time is `liù diǎn
+  // sānshí fēn` and a decimal is `qīshíwǔ diǎn wǔ`, each counted part a word
+  // of its own and everything after the 点 a digit at a time.
+  if (segment.words !== undefined) {
+    return groupedPieces(spelled, said, segment.words, apostrophe);
+  }
+  return markWord(spelled, apostrophe).map((text, at) => ({
+    text,
+    syllable: said[at],
+    confidence: undefined,
+  }));
 }
 
 /**

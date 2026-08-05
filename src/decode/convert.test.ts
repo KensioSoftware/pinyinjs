@@ -262,6 +262,24 @@ describe("numbers in text", () => {
     assertIdentical(written("我有25个"), "wǒ yǒu èrshíwǔ gè");
   });
 
+  it("keeps the counted part of a decimal one word", () => {
+    // The integer part is the word it is without the point: 75个 is
+    // `qīshíwǔ gè`, and 75.5个 says the same 75. Only what follows the 点 is
+    // read a digit at a time.
+    assertIdentical(written("75.5个"), "qīshíwǔ diǎn wǔ gè");
+    assertIdentical(written("12.5%的人"), "bǎifēnzhīshí'èr diǎn wǔ de rén");
+    // Sandhi still stops at the point, and still applies before it.
+    assertIdentical(written("3.14个"), "sān diǎn yī sì gè");
+    assertIdentical(written("100.5个"), "yìbǎi diǎn wǔ gè");
+    // And the counted part takes the 隔音符号 rules a whole number takes: a
+    // tone digit already ends its syllable, so it needs no apostrophe.
+    assertIdentical(
+      written("12.5个", { notation: "numbers" }),
+      "shi2er4 dian3 wu3 ge4",
+    );
+    assertIdentical(written("12.5个"), "shí'èr diǎn wǔ gè");
+  });
+
   it("spells out a four-digit year and spaces its digits", () => {
     assertIdentical(written("1998年"), "yī jiǔ jiǔ bā nián");
     // Two digits before 年 is a count of years.
