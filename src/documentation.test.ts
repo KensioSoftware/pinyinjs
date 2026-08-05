@@ -562,6 +562,16 @@ describe("the examples in docs/", () => {
       assertIdentical(numeralHanzi(100_000_005), "一亿零五");
     });
 
+    it("writes 两 the three ways the page shows", () => {
+      assertIdentical(numeralHanzi(12_000), "一万两千");
+      assertIdentical(numeralHanzi(12_000, { liang: "leading" }), "一万二千");
+      assertIdentical(numeralHanzi(12_000, { liang: "never" }), "一万二千");
+      assertIdentical(numeralHanzi(2000, { liang: "never" }), "二千");
+      // And a 2 that is not a multiplier is 二 whatever the setting.
+      assertIdentical(numeralHanzi(120_000), "十二万");
+      assertIdentical(numeralHanzi(200), "二百");
+    });
+
     it("keeps the digits of a string and not of a number", () => {
       assertIdentical(numeralHanzi("007", { style: "digits" }), "〇〇七");
       assertIdentical(numeralHanzi("007"), "七");
