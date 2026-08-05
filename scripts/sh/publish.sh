@@ -2,41 +2,46 @@
 #
 # Publish to npm.
 #
-#   ./scripts/sh/publish.sh          # a stable minor release, tagged latest
-#   ./scripts/sh/publish.sh beta     # a prerelease, tagged beta
+#   ./scripts/sh/publish.sh          # a minor release
+#   ./scripts/sh/publish.sh major    # a major release
+#   ./scripts/sh/publish.sh patch    # a patch release
 #
-# A prerelease goes out under its own dist-tag, so `pnpm add @kensio/pinyinjs`
-# keeps returning the newest stable version and nobody gets a beta by accident.
-# The version bump follows suit: with no prerelease in progress it opens one
-# (0.0.1 becomes 0.1.0-beta.0), and with one in progress it advances that
-# (0.1.0-beta.0 becomes 0.1.0-beta.1) rather than opening another.
+# The argument is the release type, and it is passed straight to `pnpm version`.
+# This script owns the version bump, so package.json holds the *last released*
+# version between releases and nothing else should edit it.
+#
+# It used to take a prerelease identifier instead — `publish.sh beta` meant
+# "open or advance a beta" — and the two readings of one argument are not
+# distinguishable by looking: `publish.sh major` ran `pnpm version preminor
+# --preid major` against 1.0.0 and published `1.1.0-major.0` under a `major`
+# dist-tag. The prerelease mechanism is gone rather than fixed, since the
+# package is past 1.0 and a release type is what anyone would expect to pass.
 
 set -Eeuo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
-preid="${1:-}"
+RELEASE_TYPE="${1:-minor}"
+
+# A release type is checked rather than trusted, because the failure this
+# replaces was an argument that meant something plausible and wrong.
+case "$RELEASE_TYPE" in
+  major | minor | patch) ;;
+  *)
+    echo "publish: expected major, minor or patch; got '$RELEASE_TYPE'" >&2
+    exit 1
+    ;;
+esac
 
 pnpm install
 pnpm lint
 pnpm test:coverage
 pnpm build
-pnpm pack --dry-run
-
-if [[ -n "$preid" ]]; then
-  current="$(node -p "require('./package.json').version")"
-  if [[ "$current" == *-* ]]; then
-    pnpm version prerelease --preid "$preid"
-  else
-    pnpm version preminor --preid "$preid"
-  fi
-  pnpm login
-  pnpm publish --access public --tag "$preid"
-else
-  pnpm version minor
-  pnpm login
-  pnpm publish --access public
-fi
-
+# Checks the real tarball rather than the local dist/, which is where a stale
+# build hides. See scripts/sh/pack-check.sh.
+pnpm pack:check
+pnpm version "$RELEASE_TYPE"
+pnpm login
+pnpm publish --access public
 git push
 git push --tags
