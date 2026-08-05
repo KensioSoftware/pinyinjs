@@ -34,6 +34,11 @@ import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
 import { readBopomofo, writeBopomofo } from "./romanization/bopomofo.js";
+import {
+  readGwoyeu,
+  writeGwoyeu,
+  writeGwoyeuWord,
+} from "./romanization/gwoyeu.js";
 import { readIpa, writeIpa, writeIpaSymbols } from "./romanization/ipa.js";
 import {
   readWadeGiles,
@@ -105,6 +110,13 @@ function alternatives(text: string, index: number): readonly string[] {
  */
 function distinct(spell: (pinyin: string) => string): number {
   return new Set([...DICTIONARY_SYLLABLES].map((pinyin) => spell(pinyin))).size;
+}
+
+/**
+ * A pinyin syllable spelled in Gwoyeu Romatzyh, as that page writes it.
+ */
+function gr(pinyin: string): string {
+  return writeGwoyeu(one(pinyin));
 }
 
 /**
@@ -642,6 +654,7 @@ describe("the examples in docs/", () => {
       assertIdentical(writeBopomofo(one("jiù")), "ㄐㄧㄡˋ");
       assertIdentical(writeWadeGiles(one("jiù")), "chiu⁴");
       assertIdentical(writeYale(one("jiù")), "jyòu");
+      assertIdentical(writeGwoyeu(one("jiù")), "jiow");
       assertIdentical(writeIpa(one("jiù")), "tɕiou˥˩");
     });
 
@@ -730,6 +743,7 @@ describe("the examples in docs/", () => {
       let wade = 0;
       let yale = 0;
       let yaleNumbered = 0;
+      let gwoyeu = 0;
       let ipa = 0;
       for (const pinyin of DICTIONARY_SYLLABLES) {
         for (const tone of [undefined, ...TONES]) {
@@ -769,6 +783,14 @@ describe("the examples in docs/", () => {
               yaleNumbered += 1;
             }
             if (
+              readGwoyeu(writeGwoyeu(form)).some(
+                (found) =>
+                  found.final === form.final && found.tone === form.tone,
+              )
+            ) {
+              gwoyeu += 1;
+            }
+            if (
               readIpa(writeIpa(form)).some(
                 (found) =>
                   found.final === form.final && found.tone === form.tone,
@@ -784,6 +806,7 @@ describe("the examples in docs/", () => {
       assertIdentical(bopomofo, 4240);
       assertIdentical(yale, 4240);
       assertIdentical(yaleNumbered, 5088);
+      assertIdentical(gwoyeu, 4240);
       assertIdentical(ipa, 4240);
     });
 
@@ -802,6 +825,71 @@ describe("the examples in docs/", () => {
       assertArrayEquals(
         readYale("ér").map((syllable) => writeSyllable(syllable)),
         ["ér", "ér", "ếr"],
+      );
+    });
+
+    it("writes the four spellings of one syllable the page opens on", () => {
+      assertIdentical(writeGwoyeu(one("shān")), "shan");
+      assertIdentical(writeGwoyeu(one("shán")), "sharn");
+      assertIdentical(writeGwoyeu(one("shǎn")), "shaan");
+      assertIdentical(writeGwoyeu(one("shàn")), "shann");
+      // 陝西 is Shaanxi in English because of that third-tone doubling.
+      assertIdentical(writeGwoyeuWord([one("shǎn"), one("xī")]), "shaanshi");
+    });
+
+    it("writes the Gwoyeu Romatzyh the page shows", () => {
+      assertIdentical(gr("chuán"), "chwan");
+      assertIdentical(gr("cháng"), "charng");
+      assertIdentical(gr("qiǎn"), "chean");
+      assertIdentical(gr("dǎ"), "daa");
+      assertIdentical(gr("dào"), "daw");
+      assertIdentical(gr("dà"), "dah");
+      // j, ch and sh each stand for two series.
+      assertIdentical(gr("zhū"), "ju");
+      assertIdentical(gr("jū"), "jiu");
+      assertIdentical(gr("jiū"), "jiou");
+      // The sonorants swap the first two tones over.
+      assertIdentical(gr("mā"), "mha");
+      assertIdentical(gr("má"), "ma");
+      // And a syllable with no initial grows its y- in every tone but the
+      // first, keeping the vowel where the i is not a medial.
+      assertArrayEquals(
+        ["yī", "yí", "yǐ", "yì"].map((pinyin) => gr(pinyin)),
+        ["i", "yi", "yii", "yih"],
+      );
+    });
+
+    it("writes the neutral dot and the -l the page shows, and reads back", () => {
+      assertIdentical(writeGwoyeu(one("de5")), ".de");
+      assertIdentical(writeGwoyeu(one("huār")), "hual");
+      // GR writes `perng.yeou`, keeping the tone 友 came from; a neutral pinyin
+      // syllable does not record it, so what comes out is the basic form.
+      assertIdentical(writeGwoyeuWord([one("péng"), one("you5")]), "perng.iou");
+      assertArrayEquals(
+        readGwoyeu("shaan").map((syllable) => writeSyllable(syllable)),
+        ["shǎn"],
+      );
+      assertArrayEquals(
+        readGwoyeu("ell").map((syllable) => writeSyllable(syllable)),
+        ["èr", "ērr"],
+      );
+      assertArrayEquals(
+        readGwoyeu("nn").map((syllable) => writeSyllable(syllable)),
+        ["ň", "ǹ"],
+      );
+    });
+
+    it("has the Gwoyeu Romatzyh counts the page tabulates", () => {
+      const forms = [...DICTIONARY_SYLLABLES].flatMap((pinyin) =>
+        TONES.filter((tone) => tone !== NEUTRAL_TONE).map((tone) =>
+          writeGwoyeu({ ...one(pinyin), tone }),
+        ),
+      );
+      assertArrayLength(forms, 1696);
+      assertSetSize(new Set(forms), 1695);
+      assertIdentical(
+        distinct((pinyin) => writeGwoyeu({ ...one(pinyin), tone: 1 })),
+        424,
       );
     });
 
@@ -879,16 +967,20 @@ describe("the examples in docs/", () => {
 
     it("romanises pinyin and reads sloppy Wade-Giles back", async () => {
       assertArrayEquals(await cli("romanize", "běijīng"), [
-        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥",
+        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
       ]);
       assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
-        "chu¹        zhū       ㄓㄨ          chu¹        jū        ʈʂu˥",
-        "            chū       ㄔㄨ          ch'u¹       chū       ʈʂʰu˥       marks restored",
-        "            jū        ㄐㄩ          chü¹        jyū       tɕy˥        marks restored",
-        "            qū        ㄑㄩ          ch'ü¹       chyū      tɕʰy˥       marks restored",
+        "chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥",
+        "            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored",
+        "            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored",
+        "            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored",
       ]);
       assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
-        "syī         xī        ㄒㄧ          hsi¹        syī       ɕi˥",
+        "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
+      ]);
+      assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "ell"), [
+        "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
+        "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
       ]);
     });
 

@@ -181,6 +181,12 @@ export {
 export type { YaleOptions } from "./romanization/yale.js";
 
 export {
+  readGwoyeu,
+  writeGwoyeu,
+  writeGwoyeuWord,
+} from "./romanization/gwoyeu.js";
+
+export {
   readIpa,
   writeIpa,
   writeIpaSymbols,

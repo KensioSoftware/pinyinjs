@@ -186,7 +186,7 @@ const TIERS: readonly Tier[] = ["core", "standard", "full"];
  * different syllables in each.
  */
 export type RomanizationSource =
-  "auto" | "pinyin" | "wade-giles" | "bopomofo" | "yale" | "ipa";
+  "auto" | "pinyin" | "wade-giles" | "bopomofo" | "yale" | "gwoyeu" | "ipa";
 
 const SOURCES: readonly RomanizationSource[] = [
   "auto",
@@ -194,6 +194,7 @@ const SOURCES: readonly RomanizationSource[] = [
   "wade-giles",
   "bopomofo",
   "yale",
+  "gwoyeu",
   "ipa",
 ];
 

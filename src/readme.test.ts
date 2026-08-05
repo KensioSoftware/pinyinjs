@@ -27,10 +27,13 @@ import { Dictionary } from "./dictionary/dictionary.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { writeBopomofo } from "./romanization/bopomofo.js";
+import { writeGwoyeu } from "./romanization/gwoyeu.js";
+import { writeIpa } from "./romanization/ipa.js";
 import {
   readWadeGilesLoosely,
   writeWadeGiles,
 } from "./romanization/wade-giles.js";
+import { writeYale } from "./romanization/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -200,6 +203,18 @@ describe("the examples in README.md", () => {
       assertNonNullable(jiu);
       assertIdentical(writeBopomofo(jiu), "ㄐㄧㄡˋ");
       assertIdentical(writeWadeGiles(jiu), "chiu⁴");
+      assertIdentical(writeYale(jiu), "jyòu");
+      assertIdentical(writeGwoyeu(jiu), "jiow");
+      assertIdentical(writeIpa(jiu), "tɕiou˥˩");
+      // 陝西 is Shaanxi and 山西 is Shanxi, which is GR's third tone.
+      assertArrayEquals(
+        ["shān", "shán", "shǎn", "shàn"].map((pinyin) => {
+          const read = readSyllable(pinyin);
+          assertNonNullable(read, pinyin);
+          return writeGwoyeu(read);
+        }),
+        ["shan", "sharn", "shaan", "shann"],
+      );
       assertArrayEquals(
         readWadeGilesLoosely("chi¹").map((syllable) => writeSyllable(syllable)),
         ["jī", "qī"],
@@ -298,7 +313,7 @@ describe("the examples in README.md", () => {
 
     it("romanises from the command line as the README shows", async () => {
       assertArrayEquals(await cli("romanize", "běijīng"), [
-        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥",
+        "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
       ]);
     });
 

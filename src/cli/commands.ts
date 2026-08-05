@@ -20,6 +20,7 @@ import {
   readBopomofo,
   writeBopomofoWord,
 } from "../romanization/bopomofo.js";
+import { readGwoyeu, writeGwoyeuWord } from "../romanization/gwoyeu.js";
 import { readIpa, writeIpaWord } from "../romanization/ipa.js";
 import {
   readWadeGiles,
@@ -45,6 +46,7 @@ import {
   type Flags,
   type FlagName,
   htmlOptions,
+  type RomanizationSource,
   romanizationSource,
   UsageError,
 } from "./arguments.js";
@@ -425,6 +427,7 @@ interface Romanised {
   readonly bopomofo: string;
   readonly wadeGiles: string;
   readonly yale: string;
+  readonly gwoyeu: string;
   readonly ipa: string;
   /**
    * Whether the Wade-Giles this came from was spelled exactly.
@@ -451,6 +454,7 @@ function romanised(
     bopomofo: writeBopomofoWord(syllables),
     wadeGiles: writeWadeGilesWord(syllables),
     yale: writeYaleWord(syllables),
+    gwoyeu: writeGwoyeuWord(syllables),
     ipa: writeIpaWord(syllables),
     ...(isExact !== undefined && { isExact }),
   };
@@ -474,6 +478,21 @@ function fromWadeGiles(text: string, flags: Flags): readonly Romanised[] {
 }
 
 /**
+ * The systems that read back as a plain list of candidates.
+ *
+ * Wade-Giles is not among them because it has a second, looser reader to run;
+ * bopomofo is not because it needs no flag at all.
+ */
+const INDEXED_READERS = new Map<
+  RomanizationSource,
+  (text: string) => readonly Syllable[]
+>([
+  ["yale", readYale],
+  ["gwoyeu", readGwoyeu],
+  ["ipa", readIpa],
+]);
+
+/**
  * Read whatever system the text is in, and say so.
  */
 function romanisations(text: string, flags: Flags): readonly Romanised[] {
@@ -481,9 +500,9 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
   if (from === "wade-giles") {
     return fromWadeGiles(text, flags);
   }
-  if (from === "yale" || from === "ipa") {
-    const read = from === "yale" ? readYale(text) : readIpa(text);
-    return read.map((syllable) => romanised([syllable], flags));
+  const reader = INDEXED_READERS.get(from);
+  if (reader !== undefined) {
+    return reader(text).map((syllable) => romanised([syllable], flags));
   }
   // Bopomofo needs no flag to be recognised: it has a script of its own, so a
   // caller can only mean one thing by it. Wade-Giles and pinyin overlap almost
@@ -511,7 +530,7 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
  */
 const ROMANIZE: Command = {
   name: "romanize",
-  summary: "pinyin to bopomofo, Wade-Giles, Yale and IPA, and back",
+  summary: "pinyin to bopomofo, Wade-Giles, Yale, GR and IPA, and back",
   argument: "<text...>",
   flags: ["notation", "from"],
   needsDictionary: false,
@@ -530,9 +549,11 @@ const ROMANIZE: Command = {
             one.bopomofo,
             12,
           )}${column(one.wadeGiles, 12)}${column(one.yale, 10)}${column(
-            one.ipa,
-            12,
-          )}${one.isExact === false ? "marks restored" : ""}`.trimEnd(),
+            one.gwoyeu,
+            10,
+          )}${column(one.ipa, 12)}${
+            one.isExact === false ? "marks restored" : ""
+          }`.trimEnd(),
         ),
         data: { text, read: true, readings: found },
       };

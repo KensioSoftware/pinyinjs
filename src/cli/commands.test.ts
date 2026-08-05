@@ -362,31 +362,39 @@ describe("the number command", () => {
 describe("the romanize command", () => {
   it("writes pinyin in every system", async () => {
     assertArrayEquals(await cli("romanize", "běijīng"), [
-      "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥",
+      "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
     ]);
   });
 
   it("reads bopomofo without being told what it is", async () => {
     assertArrayEquals(await cli("romanize", "ㄅㄟˇ"), [
-      "ㄅㄟˇ         běi       ㄅㄟˇ         pei³        běi       pei˨˩˦",
+      "ㄅㄟˇ         běi       ㄅㄟˇ         pei³        běi       beei      pei˨˩˦",
     ]);
   });
 
   it("reads Wade-Giles, marking what needed a mark put back", async () => {
     assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
-      "chu¹        zhū       ㄓㄨ          chu¹        jū        ʈʂu˥",
-      "            chū       ㄔㄨ          ch'u¹       chū       ʈʂʰu˥       marks restored",
-      "            jū        ㄐㄩ          chü¹        jyū       tɕy˥        marks restored",
-      "            qū        ㄑㄩ          ch'ü¹       chyū      tɕʰy˥       marks restored",
+      "chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥",
+      "            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored",
+      "            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored",
+      "            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored",
     ]);
   });
 
-  it("reads Yale and IPA when told which one it is", async () => {
+  it("reads Yale, GR and IPA when told which one it is", async () => {
     assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
-      "syī         xī        ㄒㄧ          hsi¹        syī       ɕi˥",
+      "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
     ]);
     assertArrayEquals(await cli("romanize", "--from", "ipa", "tɕiou˥˩"), [
-      "tɕiou˥˩     jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      tɕiou˥˩",
+      "tɕiou˥˩     jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
+    ]);
+    assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "jiow"), [
+      "jiow        jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
+    ]);
+    // GR's `-l` suffix collides with 二, so both readings come back.
+    assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "ell"), [
+      "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
+      "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
     ]);
   });
 
@@ -400,6 +408,7 @@ describe("the romanize command", () => {
           bopomofo: "ㄐㄧ",
           wadeGiles: "chi",
           yale: "ji",
+          gwoyeu: "ji",
           ipa: "tɕi",
           isExact: true,
         },
@@ -408,6 +417,7 @@ describe("the romanize command", () => {
           bopomofo: "ㄑㄧ",
           wadeGiles: "ch'i",
           yale: "chi",
+          gwoyeu: "chi",
           ipa: "tɕʰi",
           isExact: false,
         },

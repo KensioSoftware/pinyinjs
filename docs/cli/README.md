@@ -19,7 +19,7 @@ Wǒ yào qù Běijīng.
 | `syllable` | take written pinyin apart                           |
 | `sandhi`   | apply tone sandhi to written pinyin                 |
 | `number`   | read a number as Chinese numerals                   |
-| `romanize` | pinyin to bopomofo and Wade-Giles, and back         |
+| `romanize` | pinyin to bopomofo, Wade-Giles, Yale, GR and IPA    |
 | `info`     | which dictionary is loaded, and how big it is       |
 
 Run `pinyinjs <command> --help` for what a command takes.
@@ -124,19 +124,21 @@ either. See [numbers](../numerals/).
 
 ```console
 $ pinyinjs romanize běijīng
-běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 
 $ pinyinjs romanize --from wade-giles chu¹
-chu¹        zhū       ㄓㄨ          chu¹
-            chū       ㄔㄨ          ch'u¹     marks restored
-            jū        ㄐㄩ          chü¹      marks restored
-            qū        ㄑㄩ          ch'ü¹     marks restored
+chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥
+            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored
+            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored
+            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored
 ```
 
+The columns are pinyin, bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh and IPA.
 Four rows because Wade-Giles `chu` with its marks dropped is four different
-syllables. `--from` takes `pinyin`, `wade-giles` or `bopomofo`, and defaults to
-working it out: bopomofo has a script of its own, and everything else is read as
-pinyin. Needs no dictionary. See [romanisation](../romanization/).
+syllables. `--from` takes `pinyin`, `wade-giles`, `bopomofo`, `yale`, `gwoyeu`
+or `ipa`, and defaults to working it out: bopomofo has a script of its own, and
+everything else is read as pinyin. Needs no dictionary. See
+[romanisation](../romanization/).
 
 ### html
 

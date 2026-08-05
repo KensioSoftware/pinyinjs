@@ -6,9 +6,8 @@ validates and writes pinyin syllables on their own, with no dictionary.
 [https://pinyinjs.dev](https://pinyinjs.dev "PinyinJS docs website")
 
 > **Beta.** Published under the `beta` tag, so a plain `pnpm add
-@kensio/pinyinjs` will not find it until 1.0. Yale, Gwoyeu Romatzyh and IPA are
-> not built. Everything below works and is tested, but the API will change
-> before 1.0.
+@kensio/pinyinjs` will not find it until 1.0. Everything below works and is
+> tested, but the API will change before 1.0.
 
 ## Install
 
@@ -48,7 +47,7 @@ nǐhǎo  nǐ hǎo
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
 
 $ pinyinjs romanize běijīng
-běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   pei˨˩˦tɕiŋ˥
+běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 ```
 
 | Command    | Does                                                |
@@ -452,7 +451,7 @@ readNumeral(110, { style: "digits", yao: true }); // yāo yāo líng
 
 More in [numbers](docs/numerals/).
 
-## Bopomofo, Wade-Giles, Yale and IPA
+## Bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh and IPA
 
 Also dictionary-free: a romanisation is a mapping over about 420 syllables, so
 hanzi → Wade-Giles is hanzi → pinyin → Wade-Giles.
@@ -462,6 +461,7 @@ import {
   readSyllable,
   readWadeGilesLoosely,
   writeBopomofo,
+  writeGwoyeu,
   writeIpa,
   writeWadeGiles,
   writeYale,
@@ -471,7 +471,17 @@ const jiu = readSyllable("jiù");
 writeBopomofo(jiu); // "ㄐㄧㄡˋ"
 writeWadeGiles(jiu); // "chiu⁴"
 writeYale(jiu); // "jyòu"
+writeGwoyeu(jiu); // "jiow"
 writeIpa(jiu); // "tɕiou˥˩"
+```
+
+Gwoyeu Romatzyh is the odd one, and it needs no tone mark because the tone is
+spelled into the syllable — which is why 陝西 is Shaanxi in English and 山西 is
+Shanxi:
+
+```ts
+const gr = (pinyin: string) => writeGwoyeu(readSyllable(pinyin));
+[gr("shān"), gr("shán"), gr("shǎn"), gr("shàn")]; // shan, sharn, shaan, shann
 ```
 
 Reading Wade-Giles back gives an **array**, because real text drops the
@@ -535,9 +545,9 @@ Both scripts are dictionary keys, so only the locale is an option to pass.
 | `splitSyllables` / `readWord`                        | split written pinyin                              |
 | `applySandhi`                                        | 一, 不 and optional third-tone sandhi             |
 | `writeBopomofo` / `writeWadeGiles`                   | one syllable, romanised                           |
-| `writeYale` / `writeIpa`                             | the same, in Yale and IPA                         |
+| `writeYale` / `writeGwoyeu` / `writeIpa`             | the same, in Yale, GR and IPA                     |
 | `readBopomofo` / `readWadeGilesLoosely`              | and back again                                    |
-| `readYale` / `readIpa`                               | and back from those two                           |
+| `readYale` / `readGwoyeu` / `readIpa`                | and back from those three                         |
 | `applyToneMark` / `stripToneMarks` / `toneFromMarks` | tone marks                                        |
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 
