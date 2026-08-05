@@ -369,3 +369,12 @@ A coverage caveat worth knowing before expecting more from the tag-conditioned
 rules: 487,552 of 721,718 Han words carry no part-of-speech tag at all, since
 only the jieba-sourced third of the dictionary has one. Any rule conditioned on
 a tag is silently inert on two thirds of the vocabulary.
+
+<!-- card
+```ts
+convert(dictionary, "走着"); // "zǒuzhe"
+convert(dictionary, "我的"); // "wǒ de"
+convert(dictionary, "黄河"); // "Huáng Hé"
+convert(dictionary, "看看"); // "kànkan"
+```
+-->

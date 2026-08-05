@@ -169,3 +169,13 @@ Turn it on when transcribing speech rather than writing pinyin. More in
 
 The object is merged with the defaults, so `{ thirdTone: true }` leaves `yiBu`
 on.
+
+<!-- card
+```ts
+convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
+convert(dictionary, "银行", { notation: "numbers" });
+// "yin2hang2"
+convert(dictionary, "海鸥", { apostrophe: "standard" });
+// "hǎiōu"
+```
+-->

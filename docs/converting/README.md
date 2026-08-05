@@ -183,3 +183,12 @@ pieces.
 alternatives costs a second sweep of the lattice — around 1.5× the work — so
 `convert` runs the decode that does not do it. Reach for `convertPieces` when
 you want the confidence, not as the general form of `convert`.
+
+<!-- card
+```ts
+convert(dictionary, "银行"); // "yínháng"
+convert(dictionary, "行长"); // "hángzhǎng"
+convert(dictionary, "女儿"); // "nǚ'ér"
+convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+```
+-->

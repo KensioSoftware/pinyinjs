@@ -134,3 +134,12 @@ of the changed ones reads identically either way. Treat `undefined` as "either",
 not as a failure.
 
 You do not need it to convert. That is the point of keying both scripts.
+
+<!-- card
+```ts
+convert(dictionary, "垃圾"); // "lājī"
+convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
+convert(dictionary, "銀行"); // "yínháng"
+convert(dictionary, "臺灣"); // "Táiwān"
+```
+-->

@@ -110,3 +110,13 @@ Every one of them is in [options](../options/).
 - Which syllables it was unsure about: [confidence](../confidence/)
 - Marked-up output for a web page: [HTML output](../html/)
 - Pinyin without any hanzi at all: [syllables](../syllables/)
+
+<!-- card
+```ts
+const dictionary = await loadDictionary(source, "full");
+
+convert(dictionary, "银行"); // "yínháng"
+convert(dictionary, "行长"); // "hángzhǎng"
+convert(dictionary, "垃圾"); // "lājī"
+```
+-->
