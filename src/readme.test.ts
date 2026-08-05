@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -5,6 +6,7 @@ import {
   assertArrayLength,
   assertFalse,
   assertIdentical,
+  assertMapSize,
   assertNonNullable,
   assertObjectEquals,
   assertStringIncludes,
@@ -24,6 +26,7 @@ import {
   readNumeral,
 } from "./numerals/numerals.js";
 import { Dictionary } from "./dictionary/dictionary.js";
+import { COMMANDS } from "./cli/commands.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { writeBopomofo } from "./romanization/bopomofo.js";
@@ -107,6 +110,56 @@ function guesses(text: string): readonly string[] {
 function written(syllables: readonly Syllable[]): string {
   return syllables.map((syllable) => writeSyllable(syllable)).join(" ");
 }
+
+/**
+ * The README itself, read rather than transcribed.
+ *
+ * The command table listed seven of the nine commands for two releases, because
+ * nothing executed it — the same failure the accuracy table had. A table of
+ * names is checkable against the names, so it is checked.
+ */
+const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+
+/**
+ * The rows of the command table, as `name` and `does` pairs.
+ */
+function commandRows(): ReadonlyMap<string, string> {
+  // Only the table under "## Command line": the README has other two-column
+  // tables and one of them lists the library's functions.
+  const section = readme.split("\n## ").find((part) => {
+    return part.startsWith("Command line");
+  });
+  assertNonNullable(section);
+  const rows = new Map<string, string>();
+  for (const line of section.split("\n")) {
+    const found = /^\|\s*`(?<name>\w+)`\s*\|(?<does>[^|]*)\|$/u.exec(line);
+    const name = found?.groups?.["name"];
+    const does = found?.groups?.["does"];
+    if (name !== undefined && does !== undefined) {
+      rows.set(name, does.trim());
+    }
+  }
+  return rows;
+}
+
+describe("the command table in README.md", () => {
+  it("lists every command, in the order the CLI lists them", () => {
+    // The names and their order, not the wording: the README shortens two of
+    // the summaries because it has no room for them, and that is a choice
+    // rather than a defect. A missing *command* is the thing that went wrong.
+    const rows = commandRows();
+    assertArrayEquals(
+      [...rows.keys()],
+      COMMANDS.map((command) => command.name),
+    );
+    assertMapSize(rows, COMMANDS.length);
+    // And every one of them says something.
+    assertArrayLength(
+      [...rows.values()].filter((does) => does !== ""),
+      COMMANDS.length,
+    );
+  });
+});
 
 describe("the examples in README.md", () => {
   describe("converting hanzi", () => {

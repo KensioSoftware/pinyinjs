@@ -227,6 +227,29 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("capitalises the 称呼语 in front of a surname", () => {
+      assertIdentical(
+        convert(
+          dictionary,
+          "\u{6211}\u{53BB}\u{628A}\u{8001}\u{738B}\u{627E}\u{6765}\u{3002}",
+        ),
+        "W\u{1D2} q\u{F9} b\u{1CE} L\u{1CE}o W\u{E1}ng zh\u{1CE}o l\u{E1}i.",
+      );
+      assertIdentical(
+        convert(
+          dictionary,
+          "\u{90A3}\u{662F}\u{5C0F}\u{674E}\u{7684}\u{4E66}\u{3002}",
+        ),
+        "N\u{E0} shi Xi\u{1CE}o L\u{1D0} de sh\u{16B}.",
+      );
+      // 大 is deliberately not a prefix: it is also an ordinary adjective, and
+      // both of the rule's clear mistakes over the corpus were 大.
+      assertStringIncludes(
+        convert(dictionary, "\u{6CE1}\u{5927}\u{6C60}"),
+        "d\u{E0} ",
+      );
+    });
+
     it("capitalises proper nouns only under capitals: proper", () => {
       assertIdentical(
         convert(dictionary, "我要去北京。", { capitals: "proper" }),
@@ -334,9 +357,9 @@ describe("the examples in docs/", () => {
     });
 
     it("writes the gaps the page admits to", () => {
-      // jieba tags 无缝钢管 nz, so it capitalises where it should not.
+      // jieba tags 无缝钢管 nz, so it capitalises where it should not — and
+      // 6.1.6 wants it split, which is the gap the page measures out.
       assertIdentical(convert(dictionary, "无缝钢管"), "Wúfènggāngguǎn");
-      assertIdentical(convert(dictionary, "老王"), "lǎo Wáng");
     });
   });
 

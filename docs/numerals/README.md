@@ -191,8 +191,19 @@ years in citations and some are quantities like 1500 or 2000人, and nothing in
 the text separates them. Reading a quantity as a year is a reading error rather
 than a spacing one, so the rule stops where the evidence does.
 
-Dates beyond 年月日, currency, and phone numbers read as `yāo` are the same
-kind of problem and are not built either.
+**Currency symbols are not read, and that is a decision with a number behind
+it.** `$5` and `￥100` appear **9 times in 88,866 lines**. A rule would have to
+choose between 五美元 and 五块钱 on nothing, decide where the symbol goes when
+it is written after the digits, and cover the dozen symbols anybody uses — for a
+shape that turns up once in ten thousand lines. Left as written, which is what
+the identifier rule already does with it.
+
+Dates beyond 年月日 and phone numbers read as `yāo` are measured out on the same
+grounds: over the same corpus the dashed runs are 55 and about one of them is a
+date — the rest are chemical registry numbers and ISBNs — slashed dates do not
+occur at all, and an eleven-digit phone number never does. 年月日 dates already
+convert correctly with no rule about dates in them, since 三月 is `sān yuè` and
+三十一日 is `sānshíyī rì`.
 
 ## How this is measured
 
