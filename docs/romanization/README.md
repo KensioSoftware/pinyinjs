@@ -236,6 +236,70 @@ rhyme entirely. Modelling that needs a rhyme-by-rhyme table of fused forms,
 which is a phonological claim rather than a transcription convention, and it is
 not made here.
 
+### A third source, and what it settles
+
+The two Wikipedia tables above are conventions, and a convention cannot settle
+which of them is right. The IPA's **own** Illustration of Standard Chinese —
+Lee & Zee (2003), in the _Journal of the IPA_ — is a description rather than a
+convention, and it settles most of what the two disagree about by not choosing
+between them: it writes the broad symbol, and states the narrow realisation
+separately.
+
+Its example words, against this:
+
+|          | Lee & Zee | this    |
+| -------- | --------- | ------- |
+| 说 shuō  | [ʂuo˥]    | `ʂuo˥`  |
+| 虾 xiā   | [ɕia˥]    | `ɕia˥`  |
+| 花 huā   | [xua˥]    | `xua˥`  |
+| 香 xiāng | [ɕiaŋ˥]   | `ɕiaŋ˥` |
+| 哀 āi    | [ai˥]     | `ai˥`   |
+| 凹 āo    | [au˥]     | `au˥`   |
+| 欧 ōu    | [ou˥]     | `ou˥`   |
+| 黑 hēi   | [xei˥]    | `xei˥`  |
+| 衣 yī    | [i˥]      | `i˥`    |
+
+Nine words, character for character, medials and diphthongs and -ang and all.
+The narrow values are given by the same paper, in its conventions:
+
+> `[ai]=[aɪ]`, `[au]=[a̠ʊ]`, `[ou]=[o̝u]`, `[uo]=[uo̝]`, `[ei]=[e̞i]` … In
+> syllables closed by a nasal … `[a]=[a̠]`
+
+So `[aɪ]` and a backed a before -ŋ are real, **as narrow realisations of these
+symbols** — which is what _Help:IPA/Mandarin_ has taken up into its key. Two
+details are worth having, since a narrower reading is often given as neither:
+
+- the a of -ang is **retracted `[a̠]`, not back `[ɑ]`**
+- the second element of uo is **raised `[o̝]`** — closer than cardinal [o],
+  where `[ɔ]` would be opener
+
+Their tone table is headed **citation forms**, and the sandhi is a separate rule
+about compounds: `[˧˩˧]` → `[˧˥]` before another `[˧˩˧]`, and → low before
+`[˥ ˧˥ ˥˩]` or the neutral tone. That is the line this draws as well — a
+syllable in and a syllable out, with 三声 sandhi a level up, in
+[the sandhi page](../sandhi/) and behind `--third-tone`. Their own citation
+contour is the dipping `[˧˩˧]` rather than Chao's `[˨˩˦]`, which is one of the
+two tone rows in the twelve above.
+
+**Where they and this part company is the zero-initial syllable.** Their
+consonant table has 蛙 wā as [wa˥] and 鸭 yā as [ja˥], approximants, while 衣 yī
+is plain [i˥] — the glide written where a vowel follows it and not where none
+does. This writes no glide anywhere, so 我 wǒ is `uo˨˩˦` rather than [wo˨˩˦].
+It is the one place the broad column is a simplification rather than a level of
+detail, and it is a spelling convention either way: nothing about the sound is
+in dispute.
+
+#### References
+
+- Lee, Wai-Sum & Zee, Eric (2003). Standard Chinese (Beijing). _Journal of the
+  International Phonetic Association_ 33(1), 109–112.
+  [doi:10.1017/S0025100303001208](https://doi.org/10.1017/S0025100303001208)
+- [_Comparison of Standard Chinese transcription systems_](https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcription_systems),
+  Wikipedia — the 417-row syllabary in `test/fixtures/syllabary.ts`, and the IPA
+  column this follows
+- [_Help:IPA/Mandarin_](https://en.wikipedia.org/wiki/Help:IPA/Mandarin),
+  Wikipedia — the 50-row key in `test/fixtures/ipa-mandarin.ts`
+
 ## Gwoyeu Romatzyh
 
 The odd one. Every other system here writes a syllable and then marks its tone;
