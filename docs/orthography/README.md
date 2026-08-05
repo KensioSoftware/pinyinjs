@@ -195,48 +195,74 @@ Inheriting jieba's tags means inheriting its mistakes in the other direction
 too. 无缝钢管 is tagged `nz`, so it converts as `Wúfènggāngguǎn` with a capital
 it has not earned.
 
-### 姓 and 名 are written apart
+### The parts of a proper name are written apart
 
 ```ts
 convert(dictionary, "毛泽东"); // "Máo Zédōng"
-convert(dictionary, "李白"); // "Lǐ Bái"
 convert(dictionary, "司马迁"); // "Sīmǎ Qiān" — a compound surname
 convert(dictionary, "马克思"); // "Mǎkèsī" — a transliteration, left whole
+convert(dictionary, "北京大学"); // "Běijīng Dàxué"
+convert(dictionary, "上海交通大学"); // "Shànghǎi Jiāotōng Dàxué"
 ```
 
-GB/T 16159 5.1 writes a personal name as two words, each capitalised. 毛泽东 is
-a dictionary entry, though, so the decoder produces **one** word — and reading
-it as one word is what makes it read correctly at all. That makes this a split,
-and [splitting contradicts](#why-splitting-is-harder-than-joining) the
-dictionary's own claim that the characters belong together.
+GB/T 16159 5.1 writes 姓 apart from 名, **and** a proper noun apart from its
+generic, each part capitalised. Both halves of that clause are one rule here,
+because the evidence for them is the same evidence.
 
-A surname list is the obvious condition and it is not good enough. 马克思,
-高尔基, 巴赫 and 牛顿 all begin with a surname character and not one of them is
-a Chinese name; the shape is identical to 毛 + 泽东.
+毛泽东 and 北京大学 are dictionary entries, though, so the decoder produces
+**one** word each — and reading them as one word is what makes them read
+correctly at all. That makes this a split, and [splitting
+contradicts](#why-splitting-is-harder-than-joining) the dictionary's own claim
+that the characters belong together.
+
+The obvious conditions are not good enough. A surname list takes 马克思, 高尔基,
+巴赫 and 牛顿 apart, not one of which is a Chinese name — the shape is identical
+to 毛 + 泽东. And a list of generics cannot say where 上海浦东发展银行 divides.
 
 **The condition is CC-CEDICT's own capitalisation, which states the boundary
 instead of leaving it to be inferred:**
 
-| Entry  | CC-CEDICT pinyin | Boundary        |
-| ------ | ---------------- | --------------- |
-| 毛泽东 | `Mao2 Ze2 dong1` | 毛 ｜ 泽东      |
-| 司马迁 | `Si1 ma3 Qian1`  | 司马 ｜ 迁      |
-| 马克思 | `Ma3 ke4 si1`    | none — one word |
+| Entry        | CC-CEDICT pinyin                   | Divides at           |
+| ------------ | ---------------------------------- | -------------------- |
+| 毛泽东       | `Mao2 Ze2 dong1`                   | 毛 ｜ 泽东           |
+| 司马迁       | `Si1 ma3 Qian1`                    | 司马 ｜ 迁           |
+| 北京大学     | `Bei3 jing1 Da4 xue2`              | 北京 ｜ 大学         |
+| 上海交通大学 | `Shang4 hai3 Jiao1 tong1 Da4 xue2` | 上海 ｜ 交通 ｜ 大学 |
+| 马克思       | `Ma3 ke4 si1`                      | none — one word      |
 
-So a compound surname is recognised without a list of compound surnames, and a
-transliteration is excluded without a list of transliterations. It is the same
-source and the same signal that already vetoes jieba's proper-noun tags,
-extended from _whether_ a word is a proper noun to _where_ its 姓 ends. jieba's
-`nr` is required on top, because CC-CEDICT capitalises the generic in 丁青县
-`Ding1 qing1 Xian4` exactly the same way and that is the place rule's business.
+So a compound surname is recognised without a list of compound surnames, a
+generic without a list of generics, and a transliteration is excluded without a
+list of transliterations. It is the same source and the same signal that already
+vetoes jieba's proper-noun tags, extended from _whether_ a word is a proper noun
+to _where_ its parts divide.
 
-Measured over 88,866 lines of Tatoeba and zh.wikipedia the rule fires **304
-times over 127 distinct words**, and nearly all of them are a boundary the
-standard wants — 蒋介石, 孙中山, 汪精卫, 诸葛亮, 夏目漱石, and 富士山 →
-`Fùshì Shān` among the words jieba calls a name and CC-CEDICT still marks.
+**Every stated boundary is cut, not only the first**, which is what separates an
+organisation from a person: **48% of `nt` entries carrying a boundary carry more
+than one**, against 1.6% of `nr`. One cut would leave 上海交通大学 as
+`Shànghǎi Jiāotōngdàxué`.
 
-Two things it gets wrong, both inherited:
+A tag is still required, because the mark is not confined to what 5.1 covers.
+The rule takes `nr` and `nt` and no others:
 
+| Tag  | With a boundary | Why not                                                                                                              |
+| ---- | --------------: | -------------------------------------------------------------------------------------------------------------------- |
+| `ns` |           5,341 | the [place rule](#word-spacing-分词连写) has its own measured condition, and 美德 `Mei3 De2` is also `měidé`, virtue |
+| `nz` |             346 | 第二次世界大战 is `Di4 er4 Ci4 Shi4 jie4 Da4 zhan4`, which divides after 第二                                        |
+
+Measured over 88,866 lines of Tatoeba and zh.wikipedia the rule fires **548
+times over 221 distinct words** — 304 personal names and 244 organisations — and
+nearly all are a boundary the standard wants: 蒋介石, 孙中山, 诸葛亮, 夏目漱石,
+中国共产党, 汇丰银行, 黄埔军校, 中国社会科学院, and 富士山 → `Fùshì Shān` among
+the words jieba calls a name and CC-CEDICT still marks.
+
+Three things it gets wrong, all inherited:
+
+- **An abbreviation whose every element is capitalised.** 中共中央 is
+  `Zhong1 Gong4 Zhong1 yang1`, so it divides at each character and comes out
+  `Zhōng Gòng Zhōngyāng` rather than `Zhōnggòng Zhōngyāng`. **22 of the 244
+  organisation firings** have this shape. A "no one-character part" condition
+  would fix it and destroy the personal names, where a one-character 姓 is the
+  norm — 74.6% of `nr` entries with a boundary have one.
 - **A transliteration CC-CEDICT capitalised as though it were a Chinese name.**
   白求恩 is `Bai2 Qiu2 en1`, so Bethune comes out `Bái Qiú'ēn`.
 - **Names the tag misses entirely.** 习近平 is tagged `nrfg` and 周恩来 `t`,
@@ -320,15 +346,9 @@ something readable rather than something wrong:
 | --------------------------------------------------------- | ------------------------- |
 | 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit |
 | 成语 outside the curated list                             | written solid, no hyphen  |
-| an organisation apart from its generic: 北京 大学         | `Běijīngdàxué`, unsplit   |
 
-The first two are gaps by decision rather than by omission, and the decision is
-measured. The third is 5.1's other half: the same clause that puts 姓 and 名
-apart puts a proper noun apart from its generic, and the [place
-rule](#word-spacing-分词连写) does that only where jieba tags the word `ns`.
-北京大学 is an organisation, so no rule reaches it and no CC-CEDICT boundary
-does either — it is written `[Bei3 jing1 Da4 xue2]`, but jieba does not call it
-a person, which is what the [姓/名 rule](#-and-are-written-apart) requires.
+Both are gaps by decision rather than by omission, and the decision is
+measured.
 
 **Splitting a 4+ syllable compound needs to know where the boundary is, and the
 only evidence available is uncorrelated with the standard.** Over 88,866 lines

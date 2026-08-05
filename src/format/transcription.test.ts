@@ -47,7 +47,7 @@ describe("writing a conversion in another system", () => {
 
   it("keeps the capitals the conversion settled", () => {
     assertIdentical(plain("我要去北京。"), "Wo yao ch'ü Pei-ching.");
-    assertIdentical(plain("北京大学"), "Pei-ching-ta-hsüeh");
+    assertIdentical(plain("北京大学"), "Pei-ching Ta-hsüeh");
     assertIdentical(plain("银行"), "yin-hang");
   });
 
@@ -67,7 +67,7 @@ describe("writing a conversion in another system", () => {
     );
     assertIdentical(
       toTranscription(pieces, (syllables) => writeWadeGilesWord(syllables)),
-      "Pei³-ching¹-ta⁴-hsüeh²",
+      "Pei³-ching¹ Ta⁴-hsüeh²",
     );
   });
 
@@ -112,15 +112,17 @@ describe("writing a conversion in another system", () => {
     }
   });
 
-  it("inherits the grouping's judgements, including the 姓/名 boundary", () => {
+  it("inherits the grouping's judgements, including the name-parts rule", () => {
     // This asserted `Mao-tsê-tung` while the grouping wrote 毛泽东 as one word.
     // PERSONAL_NAME splits it, and the hyphen rule needed no change at all to
     // follow: a space between words and a hyphen within one is what it already
     // did. The attested form is `Mao Tse-tung`, which this now matches but for
     // the ê a real text drops along with the apostrophes.
     assertIdentical(plain("毛泽东"), "Mao Tsê-tung");
-    // 北京大学 is still one word, and still the grouping's to fix: it is an
-    // organisation rather than a person, so no 姓 boundary reaches it.
-    assertIdentical(plain("北京大学"), "Pei-ching-ta-hsüeh");
+    // 北京大学 was still one word here while the rule wanted nr only. It is
+    // an organisation, and 5.1's other half now divides it too — so what is
+    // left against the attested `Pei-ching ta-hsüeh` is the capital, since the
+    // standard capitalises a generic and the pre-1979 sources did not.
+    assertIdentical(plain("北京大学"), "Pei-ching Ta-hsüeh");
   });
 });

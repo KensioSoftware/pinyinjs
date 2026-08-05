@@ -185,7 +185,7 @@ See [orthography](../orthography/).
 | `applyGrouping`                                                                                          | 分词连写 over decoded words      |
 | `GROUPING_RULES`, `ASPECT_PARTICLES`, `SUFFIXES`, `PLACE_GENERICS`                                       | the rules                        |
 | `ADDRESS_PREFIX`                                                                                         | 老王 is `Lǎo Wáng`               |
-| `PERSONAL_NAME`                                                                                          | 毛泽东 is `Máo Zédōng`           |
+| `NAME_PARTS`                                                                                             | 毛泽东 is `Máo Zédōng`           |
 | `AABB_REDUPLICATION`, `ABAB_REDUPLICATION`                                                               | the 重叠 hyphens                 |
 | `IDIOM_HYPHENS`, `HYPHENATED_IDIOMS`, `HYPHENATED_IDIOM_FORMS`                                           | the 成语 hyphen and its list     |
 | `SPACED_WORD_LIST`, `SPACED_WORDS`, `SPACED_WORD_FORMS`, `LONGEST_SPACED_WORD`                           | the curated list                 |

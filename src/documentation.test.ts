@@ -277,10 +277,10 @@ describe("the examples in docs/", () => {
     // dictionary states the boundary, it lands after two characters for a
     // compound surname without anything knowing 司马 is one, and it is absent
     // for a transliteration — which is the whole reason Marx stays one word.
-    it("writes 姓 and 名 apart, on a boundary the dictionary states", () => {
-      assertIdentical(dictionary.lookup("毛泽东")?.nameBoundary, 1);
-      assertIdentical(dictionary.lookup("司马迁")?.nameBoundary, 2);
-      assertUndefined(dictionary.lookup("马克思")?.nameBoundary);
+    it("writes a name's parts apart, on boundaries the dictionary states", () => {
+      assertArrayEquals(dictionary.lookup("毛泽东")?.nameBoundaries ?? [], [1]);
+      assertArrayEquals(dictionary.lookup("司马迁")?.nameBoundaries ?? [], [2]);
+      assertUndefined(dictionary.lookup("马克思")?.nameBoundaries);
 
       assertIdentical(convert(dictionary, "毛泽东"), "Máo Zédōng");
       assertIdentical(convert(dictionary, "李白"), "Lǐ Bái");
@@ -300,18 +300,46 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "丁青县"), "Dīngqīng Xiàn");
     });
 
-    it("leaves an organisation unsplit, which is the gap the page records", () => {
-      // The page says 北京大学 carries a boundary and still does not split,
-      // because the rule wants jieba's nr and this is nt. Both halves of that
-      // are asserted, so the entry cannot go stale if either changes.
-      assertIdentical(dictionary.lookup("北京大学")?.nameBoundary, 2);
+    it("writes an organisation apart from its generic", () => {
+      // 5.1's other half. This asserted `Běijīngdàxué` and the gap it recorded
+      // while the rule wanted jieba's nr only.
       assertIdentical(dictionary.lookup("北京大学")?.partOfSpeech, "nt");
-      assertIdentical(convert(dictionary, "北京大学"), "Běijīngdàxué");
+      assertIdentical(convert(dictionary, "北京大学"), "Běijīng Dàxué");
+      assertIdentical(convert(dictionary, "清华大学"), "Qīnghuá Dàxué");
+      assertIdentical(convert(dictionary, "汇丰银行"), "Huìfēng Yínháng");
+    });
+
+    it("cuts every boundary the dictionary states, not only the first", () => {
+      // 48% of nt entries carrying a boundary carry more than one, and one cut
+      // would leave `Shànghǎi Jiāotōngdàxué`.
+      assertArrayEquals(
+        dictionary.lookup("上海交通大学")?.nameBoundaries ?? [],
+        [2, 4],
+      );
+      assertIdentical(
+        convert(dictionary, "上海交通大学"),
+        "Shànghǎi Jiāotōng Dàxué",
+      );
+      assertIdentical(
+        convert(dictionary, "上海浦东发展银行"),
+        "Shànghǎi Pǔdōng Fāzhǎn Yínháng",
+      );
+    });
+
+    it("cuts an abbreviation too finely, which the page records", () => {
+      // 中共中央 is `[Zhong1 Gong4 Zhong1 yang1]`: CC-CEDICT capitalises all
+      // three elements at character granularity, so 中共 comes apart. 22 of
+      // 244 nt firings over the corpus have this shape.
+      assertArrayEquals(
+        dictionary.lookup("中共中央")?.nameBoundaries ?? [],
+        [1, 2],
+      );
+      assertIdentical(convert(dictionary, "中共中央"), "Zhōng Gòng Zhōngyāng");
     });
 
     it("leaves the two the page says it gets wrong", () => {
       // CC-CEDICT capitalises Bethune as though it were a Chinese name.
-      assertIdentical(dictionary.lookup("白求恩")?.nameBoundary, 1);
+      assertArrayEquals(dictionary.lookup("白求恩")?.nameBoundaries ?? [], [1]);
       assertIdentical(convert(dictionary, "白求恩"), "Bái Qiú'ēn");
       // And a name the tag misses never reaches the rule at all.
       assertIdentical(dictionary.lookup("习近平")?.partOfSpeech, "nrfg");
@@ -1249,7 +1277,7 @@ describe("the examples in docs/", () => {
           "none",
           "我要去北京大学。",
         ),
-        ["Wo yao ch'ü Pei-ching-ta-hsüeh."],
+        ["Wo yao ch'ü Pei-ching Ta-hsüeh."],
       );
     });
 

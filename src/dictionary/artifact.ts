@@ -30,22 +30,28 @@ const ALTERNATE = ",";
 const PROPER_NOUN_FLAG = "p";
 
 /**
- * Where the 姓 ends, written as a digit after the proper-noun flag.
+ * Where a proper name divides, written after the proper-noun flag.
  *
- * `p` alone is a proper noun with no boundary stated; `p1` is one whose 姓 is
- * the first character, `p2` a compound surname. It rides in the flags column
- * rather than taking a column of its own because it is only ever present on a
- * proper noun, and only 8,205 of 723,139 keys carry one — a sixth column would
- * cost a separator on every line to say nothing on almost all of them.
+ * `p` alone is a proper noun whose parts CC-CEDICT does not divide; `p1` is one
+ * that divides after the first character, `p2.4` after the second and fourth.
+ * The positions are decimal and dot-separated rather than one digit each,
+ * because the longest word carrying any is 19 characters.
+ *
+ * It rides in the flags column rather than taking a column of its own because
+ * it is only ever present on a proper noun, and only 8,205 of 723,139 keys
+ * carry one — a sixth column would cost a separator on every line to say
+ * nothing on almost all of them.
  */
-const NAME_BOUNDARY = /^p(?<at>\d)$/u;
+const NAME_BOUNDARIES = /^p(?<at>\d+(?:\.\d+)*)$/u;
+
+const BOUNDARY_SEPARATOR = ".";
 
 /**
- * The 姓 boundary a flags column states, or undefined where it states none.
+ * The boundaries a flags column states, empty where it states none.
  */
-function nameBoundaryIn(flags: string): number | undefined {
-  const at = NAME_BOUNDARY.exec(flags)?.groups?.["at"];
-  return at === undefined ? undefined : Number(at);
+function nameBoundariesIn(flags: string): readonly number[] {
+  const at = NAME_BOUNDARIES.exec(flags)?.groups?.["at"];
+  return at === undefined ? [] : at.split(BOUNDARY_SEPARATOR).map(Number);
 }
 
 /**
@@ -253,7 +259,8 @@ export function buildArtifact(
         entry.readings.tw === undefined ? "" : encodeReading(entry.readings.tw),
         entry.partOfSpeech,
         entry.isProperNoun
-          ? `${PROPER_NOUN_FLAG}${entry.nameBoundary === undefined ? "" : String(entry.nameBoundary)}`
+          ? PROPER_NOUN_FLAG +
+            (entry.nameBoundaries ?? []).join(BOUNDARY_SEPARATOR)
           : "",
         (entry.alternates ?? [])
           .map((alternate) => encodeReading(alternate))
@@ -306,7 +313,7 @@ export function readArtifact(
       flags = "",
       alternates = "",
     ] = (lines[at] ?? "").split(COLUMN);
-    const nameBoundary = nameBoundaryIn(flags);
+    const nameBoundaries = nameBoundariesIn(flags);
 
     const stored =
       reading === ""
@@ -329,7 +336,7 @@ export function readArtifact(
       frequency: frequencies.bucketOf(at),
       partOfSpeech,
       isProperNoun: flags.includes(PROPER_NOUN_FLAG),
-      ...(nameBoundary !== undefined && { nameBoundary }),
+      ...(nameBoundaries.length > 0 && { nameBoundaries }),
       ...(alternates !== "" && {
         alternates: alternates
           .split(ALTERNATE)

@@ -113,31 +113,34 @@ function isCapitalised(reading: string): boolean {
 }
 
 /**
- * Where CC-CEDICT's own capitalisation puts a boundary inside a proper noun.
+ * Where CC-CEDICT's own capitalisation divides a proper noun into its parts.
  *
- * 毛泽东 is written `[Mao2 Ze2 dong1]` and 司马迁 `[Si1 ma3 Qian1]`: the second
- * capital is where the 姓 ends and the 名 begins, and it lands after two
- * syllables for a compound surname without anything having to know that 司马 is
- * one. GB/T 16159 5.1 writes those apart — `Máo Zédōng`, `Sīmǎ Qiān` — so this
- * is the boundary the grouping needs, stated by a source rather than guessed at
- * from a surname list.
+ * GB/T 16159 5.1 writes the parts of a proper name apart, and CC-CEDICT marks
+ * them by capitalising each one: 毛泽东 is `[Mao2 Ze2 dong1]`, 司马迁 is
+ * `[Si1 ma3 Qian1]`, 上海交通大学 is `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`. So
+ * the boundaries are stated by a source rather than guessed at from a surname
+ * list or a list of generics — and a compound surname needs no list of compound
+ * surnames.
  *
- * Returns the index of the first capitalised syllable after the first, or
- * undefined where there is none. A transliteration is the case that matters:
- * 马克思 is `[Ma3 ke4 si1]`, capitalised once and never again, so Marx comes
- * back undefined and stays one word.
+ * Returns every capitalised position after the first, which is one boundary for
+ * a personal name and often two or three for an organisation: **48% of the
+ * `nt`-tagged entries carrying any boundary carry more than one**, against 1.6%
+ * of `nr`. Taking only the first would leave 上海交通大学 as
+ * `Shànghǎi Jiāotōngdàxué`.
+ *
+ * Empty where there is none, which is the case that matters most: 马克思 is
+ * `[Ma3 ke4 si1]`, capitalised once and never again, so Marx stays one word.
  *
  * Only meaningful where the first syllable is capitalised too — an entry
- * CC-CEDICT does not consider a proper noun says nothing about 姓 and 名.
+ * CC-CEDICT does not consider a proper noun has no parts to divide.
  */
-export function nameBoundaryOf(
+export function nameBoundariesOf(
   readings: readonly string[],
-): number | undefined {
+): readonly number[] {
   if (readings.length < 2 || !isCapitalised(readings[0] ?? "")) {
-    return undefined;
+    return [];
   }
-  const at = readings.findIndex(
-    (reading, index) => index > 0 && isCapitalised(reading),
+  return readings.flatMap((reading, index) =>
+    index > 0 && isCapitalised(reading) ? [index] : [],
   );
-  return at > 0 ? at : undefined;
 }
