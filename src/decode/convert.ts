@@ -312,6 +312,38 @@ function isSpaced(before: string, after: string): boolean {
 }
 
 /**
+ * Write a run whose words are already known, a word at a time.
+ *
+ * Each group is one orthographic word and takes the 隔音符号 within itself, so
+ * a time's minutes are `sānshí` rather than `sān shí` — the same grouping the
+ * number would get if the text had written 6点30分 out in 汉字.
+ */
+function groupedPieces(
+  spelled: readonly string[],
+  said: readonly Syllable[],
+  words: readonly number[],
+  written: Written,
+): readonly ConvertedPiece[] {
+  const pieces: ConvertedPiece[] = [];
+  let at = 0;
+  for (const length of words) {
+    if (at > 0) {
+      pieces.push(plainPiece(" "));
+    }
+    const group = spelled.slice(at, at + length);
+    for (const [index, text] of markWord(group, written.apostrophe).entries()) {
+      pieces.push({
+        text,
+        syllable: said[at + index],
+        confidence: undefined,
+      });
+    }
+    at += length;
+  }
+  return pieces;
+}
+
+/**
  * Write a number's syllables as the pieces they are written with.
  *
  * A counted number is *one word*, which is what 正词法 6.1.5 asks for: 123 is
@@ -328,6 +360,11 @@ function numberPieces(
   const spelled = said.map((syllable) =>
     writeSyllable(syllable, written.notation),
   );
+  // A run that says where its words break gets them: a time is `liù diǎn
+  // sānshí fēn`, with the hour and the minutes each a word of their own.
+  if (segment.words !== undefined) {
+    return groupedPieces(spelled, said, segment.words, written);
+  }
   // A decimal is not one word either: everything after the 点 is read digit by
   // digit, so 3.14 is `sān diǎn yī sì`.
   if (segment.style === "digits" || (segment.hanzi ?? "").includes("点")) {

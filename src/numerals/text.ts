@@ -21,6 +21,15 @@ export interface NumeralSegment {
   readonly hanzi: string | undefined;
   /** How it was read, which decides whether sandhi applies to it. */
   readonly style: NumeralStyle | undefined;
+  /**
+   * Where the words break, as a syllable count each.
+   *
+   * A counted number is one word and needs none of this. A time is three or
+   * four — 6:30 is `liù diǎn sānshí fēn`, where the hour and the minutes are
+   * numbers and 点 and 分 are not — and nothing in the syllables themselves
+   * says where those breaks are.
+   */
+  readonly words?: readonly number[];
 }
 
 /**
@@ -44,6 +53,41 @@ const PERCENT = new Set(["%", "％"]);
  * reading them produced `liù:sānshí` for 6:30, which is worse than leaving it.
  */
 const IDENTIFIER = new Set([":", "：", "-", "－", "—", "–", "/", "／"]);
+
+/**
+ * A time as a writer punctuates it: 6:30, 07:05, 2：30.
+ *
+ * Sticky, because it is tried at the start of a digit run the number scanner
+ * has already found rather than searched for on its own.
+ *
+ * Two digits after the colon and no more, which is what separates a time from
+ * a ratio: 16:9 and 2:1 are proportions and scores and are read `shíliù bǐ
+ * jiǔ`, which this does not attempt. Measured over Tatoeba and zh.wikipedia,
+ * the shape catches 104 runs and every one of them is a time — none has an
+ * hour above 23 or a minute above 59, and the four colon runs that are not
+ * times all have a single digit after the colon.
+ */
+const TIME = /(\d{1,2})[:：](\d{2})(?!\d)/duy;
+
+/**
+ * The bounds a time is written within.
+ */
+const HOURS_IN_A_DAY = 24;
+const MINUTES_IN_AN_HOUR = 60;
+
+/**
+ * The minute below which the zero is said: 6:05 is 六点零五分.
+ */
+const SPOKEN_ZERO_BELOW = 10;
+
+/**
+ * The hour that is 两 rather than 二.
+ *
+ * Two o'clock is 两点 and never 二点, which is the same 两 that counts things —
+ * an hour is a quantity of hours. It is the only hour this applies to, since
+ * 12:00 is 十二点 with the 二 inside a larger number.
+ */
+const LIANG_HOUR = 2;
 
 /**
  * How many digits a year is written with, when it is a year and not a count.
@@ -102,6 +146,89 @@ function unread(text: string): NumeralSegment {
 }
 
 /**
+ * A time written out in 汉字: 6:30 is 六点三十分.
+ *
+ * The 分 is written even though a speaker often drops it, because without it
+ * 六点三十 is the decimal 6.30 said aloud — the same 点 does both jobs, and the
+ * 分 is the only thing that separates them. On the hour it is left off
+ * instead, since 六点零零分 is not something anybody says.
+ */
+function timeHanzi(
+  hours: number,
+  minutes: number,
+  options: NumeralOptions,
+): string | undefined {
+  const counted: NumeralOptions = { ...options, style: "cardinal" };
+  const hour = hours === LIANG_HOUR ? "两" : numeralHanzi(hours, counted);
+  const minute = minutes === 0 ? "" : numeralHanzi(minutes, counted);
+  /* c8 ignore next 3 -- an hour is 0 to 23 and a minute 0 to 59, and the
+     cardinal reader counts every one of them */
+  if (hour === undefined || minute === undefined) {
+    return undefined;
+  }
+  if (minute === "") {
+    return `${hour}点`;
+  }
+  const zero = minutes < SPOKEN_ZERO_BELOW ? "零" : "";
+  return `${hour}点${zero}${minute}分`;
+}
+
+/**
+ * Where a written-out time breaks into words.
+ *
+ * The hour, the 点, the minutes and the 分, which is how the same time reads
+ * when it is written 6点30分 in the first place.
+ */
+function timeWords(hanzi: string): readonly number[] {
+  const [hour = "", rest = ""] = hanzi.split("点");
+  const minutes = rest.replace("分", "");
+  return minutes === ""
+    ? [hour.length, 1]
+    : [hour.length, 1, minutes.length, 1];
+}
+
+/**
+ * Read a digit run as a time, where that is what it is.
+ *
+ * Tried before the identifier rule, which would otherwise leave the whole
+ * thing alone: a colon between digits is exactly the mark that makes 6:30 a
+ * time rather than two numbers.
+ */
+function readTime(
+  text: string,
+  from: number,
+  options: NumeralOptions,
+): NumeralSegment | undefined {
+  TIME.lastIndex = from;
+  const found = TIME.exec(text);
+  const written = found?.[1];
+  const minutes = found?.[2];
+  if (found === null || written === undefined || minutes === undefined) {
+    return undefined;
+  }
+  const hourValue = Number(written);
+  const minuteValue = Number(minutes);
+  if (hourValue >= HOURS_IN_A_DAY || minuteValue >= MINUTES_IN_AN_HOUR) {
+    return undefined;
+  }
+  const hanzi = timeHanzi(hourValue, minuteValue, options);
+  const reading =
+    hanzi === undefined ? undefined : readNumeralHanzi(hanzi, options);
+  /* c8 ignore next 3 -- the hanzi is built out of the same table that reads it
+     back, so it reads whenever it was built at all */
+  if (hanzi === undefined || reading === undefined) {
+    return undefined;
+  }
+  return {
+    text: found[0],
+    reading,
+    hanzi,
+    style: "cardinal",
+    words: timeWords(hanzi),
+  };
+}
+
+/**
  * Split a stretch of non-Han text into what is read and what is not.
  *
  * `following` is the first character of the Han that comes after this stretch,
@@ -123,6 +250,19 @@ export function readNumbersIn(
   for (const match of text.matchAll(NUMBER)) {
     const digits = match[0];
     const from = match.index;
+    // The minutes of a time the hour already took.
+    if (from < at) {
+      continue;
+    }
+    const time = readTime(text, from, options);
+    if (time !== undefined) {
+      if (from > at) {
+        segments.push(unread(text.slice(at, from)));
+      }
+      segments.push(time);
+      at = from + time.text.length;
+      continue;
+    }
     const after = text[from + digits.length] ?? "";
     if (IDENTIFIER.has(after) || IDENTIFIER.has(text[from - 1] ?? "")) {
       continue;

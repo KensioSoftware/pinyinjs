@@ -43,6 +43,42 @@ convert(dictionary, "一样"); // "yíyàng"
 convert(dictionary, "第一"); // "dìyī" — ordinal, unchanged
 ```
 
+### The 一 that is not counting
+
+That last line is a rule of its own, and it is the half most converters get
+wrong. 一 assimilates when it is **counting**; it keeps its citation tone when
+it is a digit or an ordinal:
+
+```ts
+convert(dictionary, "十一月"); // "shíyīyuè" — a last digit, not a quantity
+convert(dictionary, "十一点"); // "shíyīdiǎn"
+convert(dictionary, "第一次"); // "dìyīcì" — ordinal
+convert(dictionary, "万一你来"); // "wànyī nǐ lái"
+convert(dictionary, "31日"); // "sānshíyī rì" — the same through the digits
+convert(dictionary, "一个"); // "yí gè" — still counting, so still assimilates
+```
+
+The signal is a numeral word before the 一 with nothing numeric after it, which
+is what leaves 一百一十's middle 一 alone: 十 follows it, so it is counting the
+ten.
+
+**The pass reads syllables and never characters**, because that is all it has —
+`pinyinjs sandhi shíyī gè` is given no hanzi at all. So it cannot tell 十 from
+时 or 第 from 地, and that costs something measurable. Over 88,866 lines of
+Tatoeba and zh.wikipedia:
+
+|                             |       |
+| --------------------------- | ----: |
+| 一 conversions changed      |   561 |
+| put right                   |   520 |
+| broken — 当时一个, 兄弟一样 |    41 |
+| precision                   | 92.7% |
+
+亿 is deliberately not in the numeral set, and that is measured rather than
+assumed: no 一 in that text ends a number in 亿, while 意, 议, 义 and 議 all
+read `yì`, all precede a 一 that really is counting, and would all have lost
+their sandhi for it — 11 conversions against nothing gained.
+
 Turn both off with `sandhi: { yiBu: false }`, or `--no-sandhi` at the command
 line.
 

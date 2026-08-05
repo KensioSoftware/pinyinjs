@@ -59,6 +59,51 @@ describe("tone sandhi", () => {
       assertArrayEquals(sandhied("yì tiān"), ["yì", "tiān"]);
     });
 
+    it("keeps its citation tone as the last digit of a number", () => {
+      // 一 sandhi is about the 一 that counts. 十一月 is `shíyīyuè` and
+      // 二十一岁 is `èrshíyī suì`: the 一 is a digit rather than a quantity.
+      assertArrayEquals(sandhied("shí yī yuè"), ["shí", "yī", "yuè"]);
+      assertArrayEquals(sandhied("èr shí yī suì"), ["èr", "shí", "yī", "suì"]);
+      assertArrayEquals(sandhied("wǔ shí yī běn"), ["wǔ", "shí", "yī", "běn"]);
+      // 万一 is the same shape and wants the same answer.
+      assertArrayEquals(sandhied("wàn yī nǐ"), ["wàn", "yī", "nǐ"]);
+    });
+
+    it("still counts where a number carries on past it", () => {
+      // 一百一十's second 一 counts the ten after it, so it assimilates as
+      // usual; only a 一 with nothing numeric after it is a last digit.
+      assertArrayEquals(sandhied("yī bǎi yī shí"), ["yì", "bǎi", "yì", "shí"]);
+      assertArrayEquals(sandhied("yī qiān yī bǎi"), [
+        "yì",
+        "qiān",
+        "yì",
+        "bǎi",
+      ]);
+    });
+
+    it("keeps its citation tone as an ordinal after 第", () => {
+      assertArrayEquals(sandhied("dì yī gè"), ["dì", "yī", "gè"]);
+      assertArrayEquals(sandhied("dì yī cì"), ["dì", "yī", "cì"]);
+    });
+
+    it("still assimilates where nothing says it is not counting", () => {
+      assertArrayEquals(sandhied("yī gè"), ["yí", "gè"]);
+      assertArrayEquals(sandhied("yī bǎi"), ["yì", "bǎi"]);
+      assertArrayEquals(sandhied("mǎi yī gè"), ["mǎi", "yí", "gè"]);
+    });
+
+    it("cannot tell 十 from 时, and says so", () => {
+      // The pass sees readings and never characters, so 当时一个人 loses a
+      // sandhi it should keep. `docs/sandhi/` carries what that costs over
+      // real text — 41 conversions against 520 put right.
+      assertArrayEquals(sandhied("dāng shí yī gè"), [
+        "dāng",
+        "shí",
+        "yī",
+        "gè",
+      ]);
+    });
+
     it("does not touch another syllable spelled yi", () => {
       assertArrayEquals(sandhied("yí dòng"), ["yí", "dòng"]);
     });

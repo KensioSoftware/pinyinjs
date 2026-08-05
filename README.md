@@ -258,7 +258,8 @@ convert(dictionary, "我有3个苹果。"); // "Wǒ yǒu sān gè píngguǒ."
 convert(dictionary, "1988年之后"); // "yī jiǔ bā bā nián zhīhòu"
 convert(dictionary, "95%的人"); // "bǎifēnzhījiǔshíwǔ de rén"
 convert(dictionary, "3D打印"); // "sān D dǎyìn"
-convert(dictionary, "6:30起床"); // "6:30qǐchuáng" — a time is not a quantity
+convert(dictionary, "6:30起床"); // "liù diǎn sānshí fēn qǐchuáng"
+convert(dictionary, "16:9的"); // "16:9de" — a ratio is not a quantity
 ```
 
 `numbers: "keep"` leaves every digit alone. See [numbers](docs/numerals/).
