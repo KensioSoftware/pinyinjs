@@ -1266,6 +1266,28 @@ describe("the examples in docs/", () => {
       assertIdentical(writeIpaSymbols(one("lo")), "lɔ");
     });
 
+    it("matches Lee & Zee's own example words, as the page claims", () => {
+      // The IPA's Illustration of Standard Chinese — Lee & Zee (2003), JIPA
+      // 33(1), 109-112 — is where the page's third table comes from. It is the
+      // broad symbols this uses, with the narrow realisations stated apart from
+      // them: [ai]=[aɪ], [uo]=[uo̝], and [a]=[a̠] in a syllable closed by a
+      // nasal. So the two Wikipedia tables are a convention apart rather than
+      // one of them being wrong, and this side of it is the IPA's own.
+      for (const [pinyin, ipa] of [
+        ["shuō", "ʂuo˥"],
+        ["xiā", "ɕia˥"],
+        ["huā", "xua˥"],
+        ["xiāng", "ɕiaŋ˥"],
+        ["āi", "ai˥"],
+        ["āo", "au˥"],
+        ["ōu", "ou˥"],
+        ["hēi", "xei˥"],
+        ["yī", "i˥"],
+      ] as const) {
+        assertIdentical(writeIpa(one(pinyin)), ipa, pinyin);
+      }
+    });
+
     it("counts how many syllables each system can tell apart", () => {
       assertIdentical(
         distinct((pinyin) => writeBopomofo(one(pinyin))),
@@ -1347,6 +1369,17 @@ describe("the examples in docs/", () => {
           "我要去北京大学。",
         ),
         ["Wo yao ch'ü Pei-ching Ta-hsüeh."],
+      );
+    });
+
+    it("writes the capitals only where the system has them, as the page shows", async () => {
+      assertArrayEquals(
+        await cli("convert", "--system", "yale", "我去银行。他姓王。"),
+        ["Wǒ chyù yínháng. Tā syìng Wáng."],
+      );
+      assertArrayEquals(
+        await cli("convert", "--system", "ipa", "我去银行。他姓王。"),
+        ["uo˨˩˦ tɕʰy˥˩ in˧˥xaŋ˧˥. tʰa˥ ɕiŋ˥˩ uaŋ˧˥."],
       );
     });
 

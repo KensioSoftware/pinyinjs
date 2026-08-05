@@ -11,6 +11,7 @@ import { convertPieces } from "../decode/convert.js";
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary } from "../dictionary/source.js";
 import { writeBopomofoWord } from "../transcription/bopomofo.js";
+import { writeIpaWord } from "../transcription/ipa.js";
 import { writeWadeGilesWord } from "../transcription/wade-giles.js";
 import { readWadeGilesWord } from "../transcription/wade-giles.js";
 import { writeSyllable } from "../syllable/syllable.js";
@@ -68,6 +69,28 @@ describe("writing a conversion in another system", () => {
     assertIdentical(
       toTranscription(pieces, (syllables) => writeWadeGilesWord(syllables)),
       "Pei³-ching¹ Ta⁴-hsüeh²",
+    );
+  });
+
+  it("drops them for a system that has no capital to write", () => {
+    // IPA is not a romanisation: its letters are symbols rather than an
+    // alphabet, so [T] is not [t] made bigger but a symbol the IPA has not
+    // got, and [Tʰa˥] for 他 is nothing at all. This wrote `Uo˨˩˦ ... Uaŋ˧˥`
+    // for 我 and 王 — a sentence capital and a proper noun, both carried over
+    // from the pinyin as though the transcription spelled words.
+    const pieces = convertPieces(dictionary, "我去银行。他姓王。");
+    assertIdentical(
+      toTranscription(pieces, (syllables) => writeIpaWord(syllables), {
+        capitals: false,
+      }),
+      "uo˨˩˦ tɕʰy˥˩ in˧˥xaŋ˧˥. tʰa˥ ɕiŋ˥˩ uaŋ˧˥.",
+    );
+    // Bopomofo is a script without case, and says the same for its own reason.
+    assertIdentical(
+      toTranscription(pieces, (syllables) => writeBopomofoWord(syllables), {
+        capitals: false,
+      }),
+      "ㄨㄛˇ ㄑㄩˋ ㄧㄣˊ ㄏㄤˊ. ㄊㄚ ㄒㄧㄥˋ ㄨㄤˊ.",
     );
   });
 

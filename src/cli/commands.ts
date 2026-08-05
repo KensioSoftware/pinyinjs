@@ -218,6 +218,7 @@ const CONVERT: Command = {
         const written = toTranscription(
           inPieces(dictionaryOf(input), text, options),
           (syllables) => system.word(syllables, options.notation !== "none"),
+          { capitals: system.capitals },
         );
         return {
           lines: [written],
@@ -576,6 +577,14 @@ export interface System {
    * the flag is ignored rather than approximated.
    */
   readonly word: (syllables: readonly Syllable[], hasTones: boolean) => string;
+  /**
+   * Whether the system writes the capitals the conversion settled.
+   *
+   * The three romanisations do, since a romanisation is a way of writing
+   * Chinese in the Latin alphabet and inherits what that alphabet does with a
+   * proper noun. IPA and bopomofo do not — see {@link toTranscription}.
+   */
+  readonly capitals: boolean;
 }
 
 const BOPOMOFO: System = {
@@ -583,6 +592,7 @@ const BOPOMOFO: System = {
   write: writeBopomofo,
   separator: " ",
   word: (syllables) => writeBopomofoWord(syllables),
+  capitals: false,
 };
 
 const WADE_GILES: System = {
@@ -591,6 +601,7 @@ const WADE_GILES: System = {
   separator: "-",
   word: (syllables, hasTones) =>
     writeWadeGilesWord(syllables, hasTones ? {} : { tones: "none" }),
+  capitals: true,
 };
 
 const YALE: System = {
@@ -599,6 +610,7 @@ const YALE: System = {
   separator: "",
   word: (syllables, hasTones) =>
     writeYaleWord(syllables, hasTones ? {} : { tones: "none" }),
+  capitals: true,
 };
 
 const GWOYEU: System = {
@@ -606,6 +618,7 @@ const GWOYEU: System = {
   write: writeGwoyeu,
   separator: "",
   word: (syllables) => writeGwoyeuWord(syllables),
+  capitals: true,
 };
 
 const IPA: System = {
@@ -614,6 +627,7 @@ const IPA: System = {
   separator: "",
   word: (syllables, hasTones) =>
     writeIpaWord(syllables, hasTones ? {} : { tones: "none" }),
+  capitals: false,
 };
 
 /**

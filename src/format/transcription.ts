@@ -19,6 +19,25 @@ import type { Syllable } from "../syllable/syllable.js";
 export type WriteWord = (syllables: readonly Syllable[]) => string;
 
 /**
+ * What a system wants of the capitals the conversion settled.
+ *
+ * `capitals` is whether the system writes them at all, and it defaults to true
+ * because a romanisation does: Wade-Giles, Yale and Gwoyeu Romatzyh are ways of
+ * writing Chinese in the Latin alphabet, so a proper noun and the first word of
+ * a sentence take a capital in each of them exactly as they do in pinyin.
+ *
+ * **IPA is not a romanisation and takes none.** It is a transcription, and its
+ * letters are symbols rather than an alphabet: `[T]` is not `[t]` in a larger
+ * size but a symbol the IPA does not have, and `[Tʰa˥]` for 他 is not a louder
+ * `[tʰa˥]` but nothing at all. Bopomofo is a script without case, so it says
+ * the same thing for a different reason — nothing there has a capital to write
+ * either.
+ */
+export interface TranscriptionOptions {
+  readonly capitals?: boolean;
+}
+
+/**
  * Whether a piece was written with a capital.
  *
  * Read off the text the conversion produced rather than recomputed, because
@@ -64,11 +83,16 @@ function capitalised(text: string): string {
  *
  * Takes the pieces {@link convertPieces} produces, as `toHtml` does, so that
  * one conversion can be rendered more than one way.
+ *
+ * `{ capitals: false }` drops the capitals rather than carrying them over, for
+ * the systems that have none to write — see {@link TranscriptionOptions}.
  */
 export function toTranscription(
   pieces: readonly ConvertedPiece[],
   writeWord: WriteWord,
+  options: TranscriptionOptions = {},
 ): string {
+  const { capitals = true } = options;
   const written: string[] = [];
   let word: Syllable[] = [];
   let hasCapital = false;
@@ -78,7 +102,7 @@ export function toTranscription(
       return;
     }
     const one = writeWord(word);
-    written.push(hasCapital ? capitalised(one) : one);
+    written.push(hasCapital && capitals ? capitalised(one) : one);
     word = [];
     hasCapital = false;
   };

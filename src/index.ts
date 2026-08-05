@@ -100,6 +100,7 @@ export { convertToHtml, toHtml } from "./format/html.js";
 export {
   convertToWadeGiles,
   toTranscription,
+  type TranscriptionOptions,
   type WriteWord,
 } from "./format/transcription.js";
 export type { HtmlOptions } from "./format/html.js";

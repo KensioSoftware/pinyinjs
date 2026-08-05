@@ -50,6 +50,13 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   transcription systems_, which is where its ground truth comes from; the two
   pages differ at the medials, -ang, the empty rhyme and the diphthongs. No
   output changed — the claim did.
+- **`--system ipa` capitalised the IPA.** 我去银行。他姓王。 came out as
+  `Uo˨˩˦ ... Tʰa˥ ɕiŋ˥˩ Uaŋ˧˥`, with the sentence capital and the proper noun
+  carried over from the pinyin as though a transcription spelled words. IPA
+  letters are symbols rather than an alphabet — `[T]` is not `[t]` in a larger
+  size but a symbol the IPA does not have — so the capitals are now dropped for
+  IPA and bopomofo and kept for the three romanisations. `toTranscription`
+  takes `{ capitals: false }` for callers writing their own.
 
 ### Changed
 
