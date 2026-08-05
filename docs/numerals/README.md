@@ -219,3 +219,12 @@ The ten that do not are all one thing: a bare number CC-CEDICT reads as a label
 — 110, 88, 996, 95后 — where `convert` counts it. Nothing in running text
 separates 我有110个 from 打110, so this is a limit rather than a defect, and the
 number is recorded rather than smoothed over.
+
+<!-- card
+```ts
+numeralHanzi(12345); // "一万两千三百四十五"
+numeralHanzi(2026); // "两千零二十六"
+numeralHanzi(2026, { style: "digits" }); // "二〇二六"
+percentHanzi(95); // "百分之九十五"
+```
+-->

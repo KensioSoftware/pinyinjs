@@ -129,3 +129,12 @@ string, call `convert`.
 `convertToHtml` marks uncertain syllables for you and lists what they beat in a
 `data-alternatives` attribute — see [HTML output](../html/). The
 [`explain` command](../cli/#explain) prints the same information at a terminal.
+
+<!-- card
+```ts
+const pieces = convertPieces(dictionary, "银行");
+pieces.map((piece) => piece.text); // ["yín", "háng"]
+pieces[0]?.confidence?.isLocked; // true
+pieces[1]?.confidence?.alternatives; // xíng, héng, hàng
+```
+-->

@@ -292,3 +292,15 @@ TypeScript sources, so there is nothing to build first:
 ```bash
 ./pinyinjs convert 你好
 ```
+
+<!-- card
+```console
+$ pinyinjs convert 我要去北京。
+Wǒ yào qù Běijīng.
+
+$ pinyinjs explain 银行
+银行  yínháng
+  yín     locked
+  háng    word    xíng +24.6  héng +26.6  hàng +27.6
+```
+-->

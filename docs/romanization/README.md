@@ -615,3 +615,14 @@ a different syllable in each. See [the command line](../cli/).
 - **Postal Romanisation** (`Peking`, `Tsingtao`, `Canton`), which is not a
   system so much as a list, and is not derivable from any of this. See
   [Chungking is not Wade-Giles](#chungking-is-not-wade-giles).
+
+<!-- card
+```ts
+const jiu = readSyllable("jiù");
+writeBopomofo(jiu); // "ㄐㄧㄡˋ"
+writeWadeGiles(jiu); // "chiu⁴"
+writeYale(jiu); // "jyòu"
+writeGwoyeu(jiu); // "jiow"
+writeIpa(jiu); // "tɕiou˥˩"
+```
+-->

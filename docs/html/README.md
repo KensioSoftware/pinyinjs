@@ -130,3 +130,11 @@ $ pinyinjs html 行
 ```
 
 `--no-tone-classes` and `--no-uncertain` are the two options above.
+
+<!-- card
+```ts
+convertToHtml(dictionary, "行");
+// <span class="py-syllable py-tone-2 py-uncertain"
+//       data-alternatives="háng héng hàng">xíng</span>
+```
+-->

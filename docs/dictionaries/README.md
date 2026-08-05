@@ -180,3 +180,13 @@ The build fails rather than warns: no artifact is written unless 儿化 is
 repaired both ways, 一 and 不 sandhi is normalised out of the stored readings,
 every syllable is one the inventory knows, and every tier reads back exactly as
 it was built.
+
+<!-- card
+```ts
+const source = fetchSource("/data");
+const dictionary = await loadDictionary(source, "full");
+
+dictionary.lookup("头发")?.reading; // tóu fa
+dictionary.readingsOf("行"); // xíng, háng, héng, hàng
+```
+-->

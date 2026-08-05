@@ -227,3 +227,16 @@ Two things are deliberately outside it, because they are not the API:
 `Dictionary` is a class with a private constructor, so `Dictionary.from` and the
 loaders are the only ways to build one. New optional fields may appear on
 `WordEntry` — `nameBoundaries` did — which is additive and not a break.
+
+<!-- card
+```ts
+import {
+  convert,
+  convertPieces,
+  convertToHtml,
+  loadDictionary,
+  readSyllable,
+  writeBopomofo,
+} from "@kensio/pinyinjs";
+```
+-->

@@ -187,3 +187,13 @@ nǐhǎo  nǐ hǎo
 
 `syllable` and `sandhi` are the two commands that need no dictionary, so they
 start without loading one.
+
+<!-- card
+```ts
+readSyllable("jiù");
+// { initial: "j", final: "iou", tone: 4 }
+writeSyllable(jiu, "superscript"); // "jiu⁴"
+splitSyllables("nǐhǎo"); // ["nǐ", "hǎo"]
+splitSyllables("Xī'ān"); // ["Xī", "ān"]
+```
+-->

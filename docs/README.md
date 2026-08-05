@@ -6,6 +6,13 @@ are the same material with room to explain itself, one topic at a time.
 They are also the source for [pinyinjs.dev](https://pinyinjs.dev), which copies
 each `docs/<path>/README.md` here to a page there. Edit them here.
 
+Every page ends with a `<!-- card -->` comment holding the snippet its share
+image shows on that site. It renders nowhere, here or there, and the site's
+scaffold fails on a page without one. Six lines of sixty characters is what an
+image holds, and hanzi are drawn wide enough that anything following three of
+them mid-line collides with them — so keep a card's hanzi to two at a time, or
+put them at the end of the line.
+
 ## Start here
 
 - [Getting started](getting-started/) — install it, load a dictionary, convert

@@ -143,3 +143,13 @@ nǐhǎo  ní hǎo
 `sandhi` takes written pinyin and needs no dictionary. The same two flags —
 `--no-sandhi` and `--third-tone` — also work on `convert`, `html` and
 `explain`.
+
+<!-- card
+```ts
+convert(dictionary, "不是"); // "bú shì"
+convert(dictionary, "一个"); // "yí gè"
+convert(dictionary, "好好"); // "hǎohǎo"
+convert(dictionary, "好好", { sandhi: { thirdTone: true } });
+// "háohǎo"
+```
+-->
