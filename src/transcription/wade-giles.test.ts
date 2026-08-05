@@ -10,9 +10,8 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import { DICTIONARY_SYLLABLES, SYLLABLE_TONES } from "../syllable/inventory.js";
 import { readSyllable, writeSyllable } from "../syllable/syllable.js";
-import { TONES } from "../tone/tone.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
@@ -178,8 +177,32 @@ describe("reading Wade-Giles", () => {
 
   it("gives back more than one syllable where the system is ambiguous", () => {
     // Correctly written Wade-Giles is still not injective, in two places.
-    assertArrayEquals(read("lo²"), ["luó", "ló"]);
+    assertArrayEquals(read("lo"), ["luo", "lo"]);
     assertArrayEquals(read("o¹"), ["ō", "ē"]);
+  });
+
+  it("drops the candidates whose tone Mandarin does not write", () => {
+    // `lo` is 羅 luó and 咯 lo, and 咯 is only ever neutral, so the tone
+    // settles it wherever one is written. The neutral tone is the one place
+    // both syllables are real and the ambiguity survives.
+    assertArrayEquals(read("lo²"), ["luó"]);
+    assertArrayEquals(read("lo⁵"), ["luo", "lo"]);
+  });
+
+  it("narrows across the exact and loose readings together", () => {
+    // `pan` exactly is 半 pan, which has no second tone; the reading worth
+    // keeping is the 盤 pán of a text that dropped an apostrophe. Untoned,
+    // both are real and both come back.
+    assertArrayEquals(readLoosely("pan²"), ["pán"]);
+    assertArrayEquals(readLoosely("pan"), ["ban", "pan"]);
+  });
+
+  it("narrows to nothing, and so hands back what it had", () => {
+    // 覅 fiào is written in the fourth tone and in no other. A text writing
+    // `fiao²` has the tone wrong rather than the spelling, and saying so is
+    // not this function's job.
+    assertArrayEquals(read("fiao⁴"), ["fiào"]);
+    assertArrayEquals(read("fiao²"), ["fiáo"]);
   });
 
   it("reads the 儿化 syllable back as a suffix", () => {
@@ -238,10 +261,13 @@ describe("reading Wade-Giles that dropped its marks", () => {
 
 describe("Wade-Giles over the whole inventory", () => {
   it("writes every syllable and reads every one of them back", () => {
+    // Over the tones each syllable is written in rather than over all five of
+    // them, since reading now narrows on the tone: `lo¹` is 羅 luō and nothing
+    // else, because 咯 has no first tone to be.
     let checked = 0;
-    for (const spelling of DICTIONARY_SYLLABLES) {
+    for (const [spelling, tones] of SYLLABLE_TONES) {
       const base = syllable(spelling);
-      for (const tone of TONES) {
+      for (const tone of tones) {
         for (const erhua of [false, true]) {
           const form = { ...base, tone, ...(erhua && { erhua: true }) };
           const back = readWadeGiles(writeWadeGiles(form));
@@ -255,7 +281,15 @@ describe("Wade-Giles over the whole inventory", () => {
         }
       }
     }
-    assertIdentical(checked, 424 * 5 * 2);
+    assertIdentical(checked, 1708 * 2);
+  });
+
+  it("reads a syllable written in a tone it never takes as the other one", () => {
+    // The eight forms of the 5,088 that no longer come back, and the whole
+    // cost of narrowing: `lo` in the four contour tones, with and without the
+    // 儿化 suffix, all of them 羅 rather than a 咯 Mandarin does not write.
+    assertArrayEquals(read("lo¹"), ["luō"]);
+    assertArrayEquals(read("lo-êrh⁴"), ["luòr"]);
   });
 
   it("gives 423 spellings to 424 syllables", () => {

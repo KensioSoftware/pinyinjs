@@ -1,6 +1,6 @@
 import { characterCount } from "../script/characters.js";
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
-import { writeSyllable } from "../syllable/syllable.js";
+import { DICTIONARY_SYLLABLES, isAttestedTone } from "../syllable/inventory.js";
+import { type Syllable, writeSyllable } from "../syllable/syllable.js";
 import { traditionalForms } from "./artifact.js";
 import type { DictionaryEntry } from "./entry.js";
 
@@ -44,6 +44,19 @@ export class BuiltDictionary {
   }
 
   /**
+   * Every reading the dictionary holds, under every locale it holds one for.
+   */
+  *#readings(): Generator<readonly Syllable[]> {
+    for (const entry of this.entries) {
+      yield* [
+        entry.readings.cn,
+        entry.readings.tw ?? [],
+        ...(entry.alternates ?? []),
+      ];
+    }
+  }
+
+  /**
    * The entry for a word under either script, or undefined.
    */
   get(word: string): DictionaryEntry | undefined {
@@ -65,20 +78,35 @@ export class BuiltDictionary {
    */
   syllableInventory(): ReadonlySet<string> {
     const inventory = new Set<string>();
-    for (const entry of this.entries) {
-      for (const reading of [
-        entry.readings.cn,
-        entry.readings.tw ?? [],
-        ...(entry.alternates ?? []),
-      ]) {
-        for (const syllable of reading) {
-          inventory.add(
-            writeSyllable({ ...syllable, erhua: false, tone: undefined }),
-          );
-        }
+    for (const reading of this.#readings()) {
+      for (const syllable of reading) {
+        inventory.add(
+          writeSyllable({ ...syllable, erhua: false, tone: undefined }),
+        );
       }
     }
     return inventory;
+  }
+
+  /**
+   * Every syllable the dictionary uses that is not in the tone the inventory
+   * says that syllable is written in.
+   *
+   * The tones are read off the dictionary in the first place, so this is empty
+   * by construction — until a source refresh brings in a reading nobody has
+   * seen, which is exactly when a reader would start handing that syllable
+   * back and the table would have to be regenerated.
+   */
+  unattestedTones(): ReadonlySet<string> {
+    const unattested = new Set<string>();
+    for (const reading of this.#readings()) {
+      for (const syllable of reading) {
+        if (!isAttestedTone(syllable)) {
+          unattested.add(writeSyllable({ ...syllable, erhua: false }));
+        }
+      }
+    }
+    return unattested;
   }
 }
 
@@ -193,6 +221,19 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
       return unknown.length === 0
         ? undefined
         : `readings use ${String(unknown.length)} syllable(s) outside the inventory: ${unknown.join(", ")}`;
+    },
+  },
+  {
+    // The romanisation readers narrow an ambiguous spelling on the tone that
+    // was written — `lo²` is 羅 luó and not a 咯 that is only ever neutral —
+    // so a tone the table has never heard of is a syllable those readers will
+    // refuse to hand back. Regenerate `SYLLABLE_TONES` when this fails.
+    description: "every syllable is used in a tone the inventory knows",
+    check: (dictionary: BuiltDictionary): string | undefined => {
+      const unattested = [...dictionary.unattestedTones()];
+      return unattested.length === 0
+        ? undefined
+        : `readings use ${String(unattested.length)} syllable(s) in a tone the inventory does not list: ${unattested.join(", ")}`;
     },
   },
   {

@@ -63,7 +63,9 @@ import {
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
+  isAttestedTone,
   RARE_SYLLABLES,
+  SYLLABLE_TONES,
 } from "./syllable/inventory.js";
 import { FINALS, INITIALS } from "./syllable/phonology.js";
 import { readWord, splitSyllables } from "./syllable/split.js";
@@ -675,6 +677,16 @@ describe("the examples in docs/", () => {
       assertArrayLength(FINALS, 41);
     });
 
+    it("says which tones a syllable is written in, as the page shows", () => {
+      assertArrayEquals(SYLLABLE_TONES.get("lo"), [NEUTRAL_TONE]);
+      assertArrayEquals(SYLLABLE_TONES.get("ban"), [1, 3, 4, 5]);
+      assertFalse(isAttestedTone(one("ló")));
+      assertTrue(isAttestedTone(one("lo")));
+      // 424 syllables in five tones, of which 1,708 combinations are written.
+      assertSetSize(new Set(SYLLABLE_TONES.keys()), 424);
+      assertArrayLength([...SYLLABLE_TONES.values()].flat(), 1708);
+    });
+
     it("splits without breaking a final apart", () => {
       assertArrayEquals(splitSyllables("Zhōngguórén"), ["Zhōng", "guó", "rén"]);
     });
@@ -891,12 +903,26 @@ describe("the examples in docs/", () => {
         ["jiù"],
       );
       assertArrayEquals(
-        readWadeGiles("lo²").map((syllable) => writeSyllable(syllable)),
-        ["luó", "ló"],
+        readWadeGiles("lo").map((syllable) => writeSyllable(syllable)),
+        ["luo", "lo"],
       );
       assertArrayEquals(
         readWadeGiles("o¹").map((syllable) => writeSyllable(syllable)),
         ["ō", "ē"],
+      );
+      // The tone narrows the list, and never to nothing.
+      assertArrayEquals(
+        readWadeGiles("lo²").map((syllable) => writeSyllable(syllable)),
+        ["luó"],
+      );
+      assertArrayEquals(
+        readWadeGiles("lo⁵").map((syllable) => writeSyllable(syllable)),
+        ["luo", "lo"],
+      );
+      assertArrayEquals(loosely("pan²"), ["pán"]);
+      assertArrayEquals(
+        readWadeGiles("fiao²").map((syllable) => writeSyllable(syllable)),
+        ["fiáo"],
       );
       assertArrayEquals(loosely("chi¹"), ["jī", "qī"]);
       assertArrayEquals(loosely("chu¹"), ["zhū", "chū", "jū", "qū"]);
@@ -1103,12 +1129,16 @@ describe("the examples in docs/", () => {
         }
       }
       assertIdentical(forms, 5088);
-      assertIdentical(wade, 5088);
+      // The forms that no longer come back are the ones written in a tone
+      // their syllable never takes, where the spelling belongs to another
+      // syllable too: `lo` in the four contour tones, and the first-tone 兒
+      // that Yale, GR and IPA each spell like a syllable plus 儿化.
+      assertIdentical(wade, 5080);
       assertIdentical(bopomofo, 4240);
-      assertIdentical(yale, 4240);
-      assertIdentical(yaleNumbered, 5088);
-      assertIdentical(gwoyeu, 4240);
-      assertIdentical(ipa, 4240);
+      assertIdentical(yale, 4239);
+      assertIdentical(yaleNumbered, 5085);
+      assertIdentical(gwoyeu, 4238);
+      assertIdentical(ipa, 4239);
     });
 
     it("writes the Yale the page shows", () => {
@@ -1172,7 +1202,11 @@ describe("the examples in docs/", () => {
       );
       assertArrayEquals(
         readGwoyeu("ell").map((syllable) => writeSyllable(syllable)),
-        ["èr", "ērr"],
+        ["èr"],
+      );
+      assertArrayEquals(
+        readGwoyeu(".ell").map((syllable) => writeSyllable(syllable)),
+        ["er", "err"],
       );
       assertArrayEquals(
         readGwoyeu("nn").map((syllable) => writeSyllable(syllable)),
@@ -1312,9 +1346,9 @@ describe("the examples in docs/", () => {
       assertArrayEquals(await cli("transcribe", "--from", "yale", "syī"), [
         "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
       ]);
-      assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "ell"), [
-        "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
-        "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
+      assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", ".ell"), [
+        ".ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ",
+        "            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ",
       ]);
     });
 

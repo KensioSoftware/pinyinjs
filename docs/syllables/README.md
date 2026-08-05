@@ -107,6 +107,34 @@ source dictionaries but not in any textbook's table. Validate learner input
 against `ATTESTED_SYLLABLES`; validate dictionary data against
 `DICTIONARY_SYLLABLES`.
 
+## Which tones a syllable is written in
+
+All three of those are toneless, and a toneless inventory is only half of "is
+this a syllable of Mandarin?". 咯 `lo` is real and `ló` is not, because that
+syllable is a sentence-final particle and is only ever neutral; 半 `bàn` is real
+and `bán` is not, because that one has no second tone.
+
+```ts
+import { isAttestedTone, readSyllable, SYLLABLE_TONES } from "@kensio/pinyinjs";
+
+SYLLABLE_TONES.get("lo"); // [5]
+SYLLABLE_TONES.get("ban"); // [1, 3, 4, 5]
+isAttestedTone(readSyllable("ló")); // false
+isAttestedTone(readSyllable("lo")); // true — no tone claims nothing
+```
+
+424 syllables in five tones would be 2,120 combinations and only **1,708 of them
+are ever written**, so a fifth of that grid is empty. The table is extracted
+from the merged dictionary rather than written by hand, and a build assertion
+holds it to what the dictionary uses, so a source refresh cannot quietly add a
+reading outside it.
+
+It is what lets the [romanisation readers](../romanization/#the-tone-narrows-the-list)
+settle an ambiguous spelling on the tone that was written: Wade-Giles `lo²` is
+羅 luó and nothing else. A syllable outside the inventory is not judged —
+`isAttestedTone` answers which tones a syllable takes, not which syllables there
+are.
+
 `INITIALS` has 21 entries and `FINALS` has 41, with `isInitial`, `isFinal` and
 `isPalatalInitial` beside them.
 

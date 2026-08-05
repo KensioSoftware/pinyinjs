@@ -28,7 +28,10 @@
  * - **儿化 is the `-l` suffix**, and it is written here as a plain suffix
  *   rather than as the fusion GR actually performs. See {@link ERHUA_SUFFIX}.
  */
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import {
+  DICTIONARY_SYLLABLES,
+  narrowToAttested,
+} from "../syllable/inventory.js";
 import type { Final, Initial } from "../syllable/phonology.js";
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
@@ -524,6 +527,10 @@ function lookUp(spelling: string): readonly Syllable[] {
  * spelling behind it carries — `.yeou` is a neutral 友, which is what GR means
  * by it. Returns every syllable the spelling stands for, and nothing at all for
  * a spelling no syllable of the inventory writes.
+ *
+ * Narrowed after the dot has been applied rather than before it, since the dot
+ * is what says which tone was written: `ell` is 二 èr or a first-tone 兒 with
+ * the suffix, and there is no first-tone 兒 to be.
  */
 export function readGwoyeu(text: string): readonly Syllable[] {
   const written = text.trim().normalize("NFC").toLowerCase();
@@ -531,7 +538,9 @@ export function readGwoyeu(text: string): readonly Syllable[] {
   const found = lookUp(
     isNeutral ? written.slice(NEUTRAL_MARK.length) : written,
   );
-  return isNeutral
-    ? found.map((syllable) => ({ ...syllable, tone: NEUTRAL_TONE }))
-    : found;
+  return narrowToAttested(
+    isNeutral
+      ? found.map((syllable) => ({ ...syllable, tone: NEUTRAL_TONE }))
+      : found,
+  );
 }

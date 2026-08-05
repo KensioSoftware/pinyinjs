@@ -279,7 +279,9 @@ export type { Locale, Script } from "./script/script.js";
 export {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
+  isAttestedTone,
   RARE_SYLLABLES,
+  SYLLABLE_TONES,
 } from "./syllable/inventory.js";
 
 export {

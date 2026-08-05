@@ -12,7 +12,10 @@
  * per-mark repair for the apostrophes and diacritics real text drops. Yale and
  * IPA drop nothing, so they share the plain one.
  */
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import {
+  DICTIONARY_SYLLABLES,
+  narrowToAttested,
+} from "../syllable/inventory.js";
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 import type { Tone } from "../tone/tone.js";
 
@@ -55,6 +58,11 @@ export function indexInventory(
  * Yale's `er` is 兒 ér, and it is also 餓儿 with the suffix on it. Returning
  * both is the same answer Wade-Giles gives to an ambiguous spelling, and it is
  * the caller's to narrow.
+ *
+ * Both readings can be real; often only one of them is. The tone written is
+ * evidence about which — IPA's `aɚ˥` is 啊儿 ār and not a 兒 that is never
+ * written in a first tone — so {@link narrowToAttested} takes the candidates
+ * Mandarin does not write off the list before the caller sees it.
  */
 export function readIndexed(
   index: SpellingIndex,
@@ -73,5 +81,8 @@ export function readIndexed(
     spelling !== suffix && spelling.endsWith(suffix)
       ? spelling.slice(0, -suffix.length)
       : "";
-  return [...found(spelling, false), ...(base === "" ? [] : found(base, true))];
+  return narrowToAttested([
+    ...found(spelling, false),
+    ...(base === "" ? [] : found(base, true)),
+  ]);
 }

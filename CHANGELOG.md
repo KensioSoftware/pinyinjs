@@ -7,6 +7,32 @@ Two things are outside the version contract, for the reasons
 [the API page](docs/api/#stability) gives: the readings a conversion produces,
 which a dictionary rebuild can change, and the artifact format under `data/`.
 
+## Unreleased
+
+### Added
+
+- **`SYLLABLE_TONES` and `isAttestedTone`.** Which tones each of the 424
+  syllables is actually written in, extracted from the merged dictionary and
+  held to it by a build assertion. 424 syllables in five tones would be 2,120
+  combinations and only 1,708 of them occur, so a fifth of that grid is empty.
+
+### Changed
+
+- **Reading a romanisation narrows on the tone that was written.**
+  `readWadeGiles("lo²")` was `[luó, ló]` and is now `[luó]`: 咯 is a
+  sentence-final particle and is only ever neutral, so ló is not a syllable
+  Mandarin has. The same goes for `readWadeGilesLoosely` — `pan²` is pán alone
+  — and for `readYale`, `readIpa` and `readGwoyeu`, where it settles the 儿化
+  collisions the same way (`ell` is 二 èr, there being no first-tone 兒).
+  Narrowing never empties a list: a tone no candidate is written in leaves the
+  candidates alone, since that says the tone is wrong rather than the spelling.
+  Over the phrase corpus, taking the first candidate recovers 82.66% of
+  syllables when the tone digit is written, against 79.05% without it.
+- Eight Wade-Giles forms no longer round-trip, and one to three in each of the
+  other systems, because they are forms the language does not write: `lo` in the
+  four contour tones, a first-tone 兒, and a neutral 誒. Every attested
+  syllable-and-tone combination still comes back.
+
 ## 1.0.0
 
 The first stable release. Everything the

@@ -83,7 +83,7 @@ syllables. That is true even of correctly written Wade-Giles, in two places:
 
 ```ts
 readWadeGiles("chiu⁴"); // [jiù]
-readWadeGiles("lo²"); // [luó, ló] — the system does not distinguish them
+readWadeGiles("lo"); // [luo, lo] — 羅 and 咯, spelled alike
 readWadeGiles("o¹"); // [ō, ē]
 ```
 
@@ -104,6 +104,29 @@ spurious mark would double every candidate list to catch a mistake nobody makes.
 
 The exact readings come first in the list, so taking the head amounts to
 believing the text wrote what it meant.
+
+### The tone narrows the list
+
+A spelling that stands for two syllables is often only ambiguous on paper,
+because a syllable is written in some tones and not in others. 咯 `lo` is a
+sentence-final particle and is only ever neutral, so a `lo` with a tone digit on
+it can only be the other one:
+
+```ts
+readWadeGiles("lo²"); // [luó] — ló is not a syllable Mandarin writes
+readWadeGiles("lo⁵"); // [luo, lo] — neutral, and both are real
+readWadeGilesLoosely("pan²"); // [pán] — bán is not one either
+```
+
+That is `SYLLABLE_TONES` doing the work: 424 syllables in five tones would be
+2,120 combinations and only **1,708 of them are ever written**, so a fifth of
+what a reader could hand back is a syllable no Chinese word is read with. See
+[syllables](../syllables/#which-tones-a-syllable-is-written-in).
+
+**Narrowing never empties the list.** `fiao²` reads as fiáo, which 覅 is not: a
+tone no candidate is written in says the tone is wrong rather than the spelling,
+and refusing a spelling outright is the inventory's job, done before there is a
+candidate at all.
 
 ## Yale
 
@@ -254,7 +277,8 @@ syllabary's four GR columns.
 writeGwoyeu(readSyllable("de5")); // ".de" — the dot is in front
 writeGwoyeu(readSyllable("huār")); // "hual" — 儿化 is an -l
 readGwoyeu("shaan"); // [shǎn]
-readGwoyeu("ell"); // [èr, ērr] — 二, and the same rime in tone 1 plus -l
+readGwoyeu("ell"); // [èr] — 二; the tone-1 兒 plus -l it collides with is not one
+readGwoyeu(".ell"); // [er, err] — neutral, where both of them are real
 ```
 
 Both of those come with a caveat this module states rather than hides:
@@ -314,12 +338,19 @@ nothing about text. Weighted by how often each is actually written, over the
 | --------------------------------------- | ---------------: |
 | written with a spelling that merges     | 536,304 (52.07%) |
 | recovered by taking the first candidate | 814,220 (79.05%) |
+| the same, with the tone digit written   | 851,334 (82.66%) |
 
 So **half of running text is ambiguous once the marks are dropped**, and
 believing what was written recovers about four fifths of it. That is the honest
 ceiling for a syllable at a time; a decoder with a dictionary and neighbouring
 syllables to look at could do better, and this module deliberately does not
 guess.
+
+The last row is what [the tone](#the-tone-narrows-the-list) is worth: 37,114
+more syllables, from a digit that is often not there in the first place. Most
+Wade-Giles in the wild carries no tones at all, so the 79.05% is the figure to
+plan around and the 82.66% is the ceiling for a text that does write them.
+1.33% of the corpus is neutral and so has no digit to write either way.
 
 ## Splitting a word that dropped its hyphens
 
@@ -391,15 +422,15 @@ without 儿化 — 5,088 forms:
 
 |                                        |       |
 | -------------------------------------- | ----: |
-| Wade-Giles read back exactly           | 5,088 |
-| Yale read back exactly, `tones` marked | 4,240 |
-| Yale read back exactly, `tones` 1 to 5 | 5,088 |
+| Wade-Giles read back exactly           | 5,080 |
+| Yale read back exactly, `tones` marked | 4,239 |
+| Yale read back exactly, `tones` 1 to 5 | 5,085 |
 | bopomofo read back exactly             | 4,240 |
-| Gwoyeu Romatzyh read back exactly      | 4,240 |
-| IPA read back exactly                  | 4,240 |
+| Gwoyeu Romatzyh read back exactly      | 4,238 |
+| IPA read back exactly                  | 4,239 |
 
-Every miss in that table is a tone that the system cannot write, and there are
-only two such tones between the four of them:
+Almost every miss in that table is a tone that the system cannot write, and
+there are only two such tones between the four of them:
 
 - **bopomofo** marks the first tone by omission, so a syllable whose tone was
   never written comes back as a first tone. 848 forms.
@@ -414,8 +445,26 @@ only two such tones between the four of them:
   848 forms, and there is no option that fixes it: a letter would have to be
   invented.
 
-Wade-Giles loses nothing, because it writes all five tones as digits and never
-writes one by leaving it off. Every written tone in every system round-trips.
+Wade-Giles loses nothing to a tone it cannot write, because it writes all five
+as digits and never writes one by leaving it off.
+
+The rest of the misses — eight in Wade-Giles, one each in Yale and IPA, two in
+GR, three in numbered Yale — are the price of [narrowing on the
+tone](#the-tone-narrows-the-list), and every one of them is a form Mandarin does
+not write:
+
+- **`lo` in the four contour tones**, with and without 儿化, which is the eight.
+  Wade-Giles spells 羅 and 咯 alike and 咯 is only ever neutral.
+- **`ēr`**, in every system that spells 兒 the way it spells another syllable
+  plus 儿化. There is no first-tone 兒, so `ēr` is 啊儿 ār, `ell` is 二 èr, and
+  GR's `ērr` goes the same way.
+- **a neutral 誒 `ê`**, in numbered Yale, which is the only notation that can
+  say "neutral" over a spelling Yale shares between 額 and 誒. 誒 is written in
+  the four contour tones and not in the neutral one.
+
+A round trip through one of those is a round trip through a syllable no Chinese
+word is read with. Every form the language does write still comes back — 1,708
+syllable-and-tone combinations, with and without 儿化.
 
 How many syllables each system can tell apart, over the 424 of the inventory —
 for GR the basic form, so that all five are being asked the same question:
@@ -589,9 +638,9 @@ maotsetung  maocedong ㄇㄠ ㄘㄜ ㄉㄨㄥ   mao-ts'ê-tung  mautsedung  mhau
 $ pinyinjs transcribe --from yale syī
 syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥
 
-$ pinyinjs transcribe --from gwoyeu ell
-ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩
-            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥
+$ pinyinjs transcribe --from gwoyeu .ell
+.ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ
+            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ
 ```
 
 `--from` takes `pinyin`, `wade-giles`, `bopomofo`, `yale`, `gwoyeu` or `ipa`,
