@@ -31,7 +31,7 @@ describe("finding numbers in text", () => {
   });
 
   it("spells out a four-digit year", () => {
-    assertArrayEquals(segments("1997", "年"), ["1997=一九九七"]);
+    assertArrayEquals(segments("1998", "年"), ["1998=一九九八"]);
     // Three digits before 年 is a count of years, not a year.
     assertArrayEquals(segments("30", "年"), ["30=三十"]);
     // And four digits before anything else is a count.
@@ -125,16 +125,16 @@ describe("saying a number in context", () => {
   });
 
   it("leaves a spelled-out number alone", () => {
-    // Each digit is its own citation form, so the 一 of 1997年 stays `yī`
+    // Each digit is its own citation form, so the 一 of 1998年 stays `yī`
     // however the 年 after it is toned.
-    const [segment] = readNumbersIn("1997", "年");
+    const [segment] = readNumbersIn("1998", "年");
     assertNonNullable(segment);
     assertIdentical(segment.style, "digits");
     assertIdentical(
       saidNumeral(segment, readSyllable("nián"), undefined)
         .map((syllable) => writeSyllable(syllable))
         .join(" "),
-      "yī jiǔ jiǔ qī",
+      "yī jiǔ jiǔ bā",
     );
   });
 });

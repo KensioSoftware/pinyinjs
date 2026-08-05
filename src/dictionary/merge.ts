@@ -223,7 +223,7 @@ function nearestReading(
  *
  * Every sense equally near the reading is returned, most useful first, because
  * senses can agree about the pronunciation and still differ about the script:
- * 台湾 is `Tái wān` whether it is written 臺灣 or 台灣, and both spellings are
+ * 重复 is `chóng fù` whether it is written 重複 or 重覆, and both spellings are
  * this word. The first is the entry's 繁體 form and the rest are its
  * {@link DictionaryEntry.hantVariants}.
  *

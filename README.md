@@ -351,7 +351,7 @@ entry?.isProperNoun; // false
 entry?.partOfSpeech; // "n" — jieba's tag
 
 dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
-dictionary.lookup("臺灣")?.reading; // 臺灣 and 台灣 are both keys for 台湾
+dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true — does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng — likeliest first
 ```

@@ -198,7 +198,7 @@ it has not earned.
 ### The parts of a proper name are written apart
 
 ```ts
-convert(dictionary, "毛泽东"); // "Máo Zédōng"
+convert(dictionary, "齐白石"); // "Qí Báishí"
 convert(dictionary, "司马迁"); // "Sīmǎ Qiān" — a compound surname
 convert(dictionary, "马克思"); // "Mǎkèsī" — a transliteration, left whole
 convert(dictionary, "北京大学"); // "Běijīng Dàxué"
@@ -209,7 +209,7 @@ GB/T 16159 5.1 writes 姓 apart from 名, **and** a proper noun apart from its
 generic, each part capitalised. Both halves of that clause are one rule here,
 because the evidence for them is the same evidence.
 
-毛泽东 and 北京大学 are dictionary entries, though, so the decoder produces
+齐白石 and 北京大学 are dictionary entries, though, so the decoder produces
 **one** word each — and reading them as one word is what makes them read
 correctly at all. That makes this a split, and [splitting
 contradicts](#why-splitting-is-harder-than-joining) the dictionary's own claim
@@ -217,14 +217,14 @@ that the characters belong together.
 
 The obvious conditions are not good enough. A surname list takes 马克思, 高尔基,
 巴赫 and 牛顿 apart, not one of which is a Chinese name — the shape is identical
-to 毛 + 泽东. And a list of generics cannot say where 上海浦东发展银行 divides.
+to 齐 + 白石. And a list of generics cannot say where 上海浦东发展银行 divides.
 
 **The condition is CC-CEDICT's own capitalisation, which states the boundary
 instead of leaving it to be inferred:**
 
 | Entry        | CC-CEDICT pinyin                   | Divides at           |
 | ------------ | ---------------------------------- | -------------------- |
-| 毛泽东       | `Mao2 Ze2 dong1`                   | 毛 ｜ 泽东           |
+| 齐白石       | `Qi2 Bai2 shi2`                    | 齐 ｜ 白石           |
 | 司马迁       | `Si1 ma3 Qian1`                    | 司马 ｜ 迁           |
 | 北京大学     | `Bei3 jing1 Da4 xue2`              | 北京 ｜ 大学         |
 | 上海交通大学 | `Shang4 hai3 Jiao1 tong1 Da4 xue2` | 上海 ｜ 交通 ｜ 大学 |

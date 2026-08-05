@@ -108,11 +108,11 @@ exactly as written. Digits are the one thing that does not: they are read.
 
 ```ts
 convert(dictionary, "3D银行"); // "sān D yínháng"
-convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
 ```
 
-Which style a number takes comes from what follows it — 1997年 is a year and
+Which style a number takes comes from what follows it — 1998年 is a year and
 3个 is a count — and it needs no dictionary: `src/numerals/` is arithmetic and
 about twenty readings. [Numbers](../numerals/) has the three rules and what
 they deliberately do not guess at. `numbers: "keep"` leaves every digit exactly
@@ -189,6 +189,6 @@ you want the confidence, not as the general form of `convert`.
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "女儿"); // "nǚ'ér"
-convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 ```
 -->

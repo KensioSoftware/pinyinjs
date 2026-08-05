@@ -137,7 +137,7 @@ What the rules cover and where they stop is [orthography](../orthography/).
 
 ```ts
 convert(dictionary, "我有3个"); // "wǒ yǒu sān gè"
-convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 convert(dictionary, "我有3个", { numbers: "keep" }); // "wǒ yǒu3gè"
 ```
 

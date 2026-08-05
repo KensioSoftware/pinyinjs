@@ -98,7 +98,7 @@ const LIANG_HOUR = 2;
 /**
  * How many digits a year is written with, when it is a year and not a count.
  *
- * 1997年 is a year and is spelled out; 30年 is thirty years and is counted.
+ * 1998年 is a year and is spelled out; 30年 is thirty years and is counted.
  * Four is the length that separates them, and a two-digit year — 98年 for 1998
  * — is left counted, because 20年 meaning twenty years is far commoner than
  * 20年 meaning 2020 and nothing in the text tells them apart.
@@ -238,7 +238,7 @@ function readTime(
  * Split a stretch of non-Han text into what is read and what is not.
  *
  * `following` is the first character of the Han that comes after this stretch,
- * which is the only context a number has: 年 makes 1997 a year and 个 makes 3 a
+ * which is the only context a number has: 年 makes 1998 a year and 个 makes 3 a
  * count. Where there is nothing after it, or nothing that decides, the number
  * is counted.
  *

@@ -56,10 +56,11 @@ function capitalised(text: string): string {
  * Wade-Giles spends the apostrophe on aspiration, so `Hsi'an` would read as a
  * syllable `hsi` followed by an aspirated one.
  *
- * The output inherits the grouping's own limits along with its judgements. 毛泽东
- * is one decoded word, so this writes `Mao-tsê-tung` where the attested form is
- * `Mao Tse-tung` — a surname the grouping does not split, not a hyphen rule
- * that is wrong. See `docs/romanization/` for what that costs, counted.
+ * The output inherits the grouping's own limits along with its judgements.
+ * 清华大学 is one decoded word that the 专名 rule divides, so this writes
+ * `Ch'ing-hua Ta-hsüeh` where the attested form is `Ch'ing-hua ta-hsüeh` — a
+ * capital the grouping applies, not a hyphen rule that is wrong. See
+ * `docs/romanization/` for what that costs, counted.
  *
  * Takes the pieces {@link convertPieces} produces, as `toHtml` does, so that
  * one conversion can be rendered more than one way.

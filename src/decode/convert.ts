@@ -51,8 +51,8 @@ export interface ConvertOptions {
   /**
    * What to do with the digits in a text. Defaults to `read`.
    *
-   * `read` says them: 我有3个 is `wǒ yǒu sān gè` and 1997年 is
-   * `yī jiǔ jiǔ qī nián`. `keep` leaves every digit exactly as it was written,
+   * `read` says them: 我有3个 is `wǒ yǒu sān gè` and 1998年 is
+   * `yī jiǔ jiǔ bā nián`. `keep` leaves every digit exactly as it was written,
    * which is what this did before there was anything to read them with.
    */
   readonly numbers?: NumberStyle;
@@ -274,7 +274,7 @@ interface RunContext {
  * syllable.
  *
  * A number's only context. The character decides how it is read — 年 makes
- * 1997 a year, 个 makes 3 a count — and the syllable is what a 一 ending the
+ * 1998 a year, 个 makes 3 a count — and the syllable is what a 一 ending the
  * number assimilates to.
  */
 function following(
@@ -349,8 +349,8 @@ function groupedPieces(
  * A counted number is *one word*, which is what 正词法 6.1.5 asks for: 123 is
  * `yībǎi'èrshísān` and not three words, so the syllables run together and take
  * the 隔音符号 where one is needed. A number read out digit by digit is not a
- * word at all — it is digits — so those are written apart: 1997年 is
- * `yī jiǔ jiǔ qī nián`.
+ * word at all — it is digits — so those are written apart: 1998年 is
+ * `yī jiǔ jiǔ bā nián`.
  */
 function numberPieces(
   said: readonly Syllable[],
@@ -462,7 +462,7 @@ function convertWith(
   const converted: ConvertedPiece[] = [];
 
   // Decoded before anything is written, because a number needs to know what
-  // follows it — 1997年 is a year and 3个 is a count — and what follows it is
+  // follows it — 1998年 is a year and 3个 is a count — and what follows it is
   // in the next run.
   const runs = [...splitRuns(text)];
   const decoded = runs.map((run) =>

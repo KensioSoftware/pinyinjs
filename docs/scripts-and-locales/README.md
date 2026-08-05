@@ -28,8 +28,8 @@ dictionary:
 ```ts
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "銀行"); // "yínháng"
-convert(dictionary, "臺灣"); // "Táiwān"
-convert(dictionary, "台灣"); // "Táiwān" — the other 繁體 spelling of the same word
+convert(dictionary, "重複"); // "chóngfù"
+convert(dictionary, "重覆"); // "chóngfù" — the other 繁體 spelling of the same word
 ```
 
 Nothing is converted before a lookup. There is no "detect the script, then
@@ -69,18 +69,20 @@ traditional input has, which is why this package does not.
 ## One word, more than one 繁體 spelling
 
 A 简体 word can have more than one current 繁體 spelling, and both are the same
-word with the same reading. 台湾 is written 臺灣 and 台灣; 下面 is 下面 or 下麵
+word with the same reading. 重复 is written 重複 and 重覆; 下面 is 下面 or 下麵
 depending on whether it is a surface or a bowl of noodles, and both read
 `xià miàn`.
 
 Storing a single traditional form per entry keys one and silently drops the
-other, which is the same loss this whole design exists to prevent — 臺灣 fell
-back to character-by-character `tái wān` before this was fixed. Every attested
-spelling is keyed instead, which costs 205 extra keys in the full tier.
+other, which is the same loss this whole design exists to prevent. A spelling
+that is not a key is read character by character, which for 重覆 would give
+`zhòng fù` — the wrong word, because 重 on its own is `zhòng` and only the entry
+says this one is `chóng`. Every attested spelling is keyed instead, which costs
+205 extra keys in the full tier.
 
 ```ts
-dictionary.lookup("臺灣")?.reading; // found
-dictionary.lookup("台灣")?.reading; // also found, same entry
+dictionary.lookup("重複")?.reading; // found
+dictionary.lookup("重覆")?.reading; // also found, same entry
 ```
 
 Only spellings a source actually writes out _for that word_ are kept. Expanding
@@ -113,7 +115,7 @@ readings, and Unihan's dual `kMandarin` values give 101 character readings.
 ## Coverage is thinner in 繁體
 
 The phrase corpus that supplies the bulk of the word readings is
-simplified-only — every traditional probe (銀行, 長城, 中國, 發現, 頭髮, 臺灣)
+simplified-only — every traditional probe (銀行, 長城, 中國, 發現, 頭髮, 重複)
 is absent while every simplified equivalent is present. CC-CEDICT is the only
 source giving paired readings at scale, at 124,758 entries against 411,958.
 
@@ -140,6 +142,6 @@ You do not need it to convert. That is the point of keying both scripts.
 convert(dictionary, "垃圾"); // "lājī"
 convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 convert(dictionary, "銀行"); // "yínháng"
-convert(dictionary, "臺灣"); // "Táiwān"
+convert(dictionary, "重複"); // "chóngfù"
 ```
 -->

@@ -150,8 +150,8 @@ function claimTraditional(
  * keeps 发 on its own reading rather than the one that reached it sideways.
  *
  * An entry claims every 繁體 spelling a source attests for it, not only the one
- * it stores as {@link DictionaryEntry.hant}: 台湾 claims 臺灣 as well as 台灣,
- * since a reader typing either expects `Táiwān` rather than the character by
+ * it stores as {@link DictionaryEntry.hant}: 重复 claims 重複 and 重覆 alike,
+ * since a reader typing either expects `chóngfù` rather than the character by
  * character reading a missing key falls back to.
  */
 function claimKeys(
