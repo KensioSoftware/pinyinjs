@@ -558,6 +558,61 @@ describe("merging the sources", () => {
       });
       assertUndefined(byWord.get("垃圾")?.readings.tw);
     });
+
+    it("refuses a note that is another 普通话 sense of the word", () => {
+      // 地[de5] and 地[di4] are both CC-CEDICT entries, so `dì` is a sense of
+      // 地 rather than what 國語 does to it.
+      const { byWord } = merge({
+        phrase: new Map([["地", ["de"]]]),
+        cedict: [
+          cedictEntry("地", "地", "de5", { taiwanReadings: ["di4"] }),
+          cedictEntry("地", "地", "di4"),
+        ],
+      });
+      assertUndefined(byWord.get("地")?.readings.tw);
+    });
+
+    it("looks for that sense under the 繁體 headword too", () => {
+      // 沈's other sense is filed under the 简体 form it simplifies to, 沉.
+      const { byWord } = merge({
+        phrase: new Map([["沈", ["shěn"]]]),
+        cedict: [
+          cedictEntry("沈", "沈", "shen3", { taiwanReadings: ["chen2"] }),
+          cedictEntry("沈", "沉", "chen2"),
+        ],
+      });
+      assertUndefined(byWord.get("沈")?.readings.tw);
+    });
+
+    it("keeps a note no 普通话 sense reads that way", () => {
+      const { byWord } = merge({
+        phrase: new Map([["和", ["hé"]]]),
+        cedict: [
+          cedictEntry("和", "和", "he2", { taiwanReadings: ["han4"] }),
+          cedictEntry("和", "和", "huo4"),
+        ],
+      });
+      assertIdentical(
+        byWord
+          .get("和")
+          ?.readings.tw?.map((s) => writeSyllable(s))
+          .join(""),
+        "hàn",
+      );
+    });
+
+    it("ignores a note hung on a sense that reads otherwise", () => {
+      // CC-CEDICT marks `Taiwan pr. [zhuo2]` on 著's chess-move sense, which
+      // reads `zhāo`. The aspect particle knows nothing about it.
+      const { byWord } = merge({
+        phrase: new Map([["着", ["zhe"]]]),
+        cedict: [
+          cedictEntry("着", "着", "zhao1", { taiwanReadings: ["zhuo2"] }),
+          cedictEntry("着", "着", "zhe5"),
+        ],
+      });
+      assertUndefined(byWord.get("着")?.readings.tw);
+    });
   });
 
   describe("frequency, part of speech and proper nouns", () => {

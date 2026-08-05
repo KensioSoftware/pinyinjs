@@ -211,16 +211,13 @@ class ConstituentIndex {
 /**
  * The 國語 reading a compound inherits from its constituents, or undefined.
  *
- * Only a **multi-character** constituent may contribute. Single-character deltas
- * look like the same thing and are not: 期 carries `qí`, which 國語 really does
- * read everywhere, but 地 carries `dì`, which is the locative noun rather than
- * the adverbial particle 的地得 that 4,240 of these compounds end in. Nothing in
- * the sources separates the two cases — CC-CEDICT's `Taiwan pr.` marks a *sense*
- * of a character, not a locale-wide shift — so propagating them would rewrite
- * 一个一个地 as `yīgèyīgèdì` and 三合会 as `sānhéhuǐ`. Measured on the full
- * dictionary, allowing characters to contribute composes 8,619 entries against
- * the 100 that multi-character words compose, and the great majority of the
- * 8,619 are wrong.
+ * Only a **multi-character** constituent may contribute. A character's delta
+ * reaches every compound that character appears in, and surviving the merge's
+ * sense test — see `isOwnSense` — does not make one locale-wide. 期 carries
+ * `qí`, which 國語 really does read everywhere, but 會 carries `huǐ`, and
+ * propagating it would rewrite 三合会 as `sānhéhuǐ`. Measured on the full
+ * dictionary, allowing characters to contribute composes 3,743 entries against
+ * the 101 that multi-character words compose.
  */
 function composedReading(
   entry: DictionaryEntry,
