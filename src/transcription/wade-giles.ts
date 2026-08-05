@@ -262,14 +262,28 @@ function finalSpelling(initial: Initial, final: Final): string {
 }
 
 /**
- * The 儿化 suffix, which Wade-Giles writes as the syllable 兒 rather than as a
- * letter on the end of the one before it.
+ * The 儿化 suffix, which Wade-Giles hangs off the syllable rather than fusing
+ * into it.
  *
  * So this is the one place a syllable is written with a hyphen in it: 花儿 huār
- * is `hua-êrh`. Pinyin's `r` suffix is the later convention and the two are not
+ * is `hua¹-'rh`. Two things about that shape are worth stating, because both
+ * are decisions:
+ *
+ * - **The suffix is the reduced `'rh` rather than a full `êrh`.** 兒 as a
+ *   syllable of its own is `êrh`, and as a suffix it is written short. This is
+ *   the form en.wiktionary's Chinese entries use throughout, and it is what the
+ *   fixture in [test/fixtures/wiktionary.ts](../../test/fixtures/wiktionary.ts)
+ *   is checked against.
+ * - **The tone digit goes on the syllable, in front of the suffix.** The tone
+ *   is the base syllable's — 花儿 is a first-tone 花 with a suffix on it — and
+ *   Wade-Giles writes the digit after the syllable it belongs to. Writing
+ *   `hua-êrh¹` instead, as this module used to, says the 兒 carries a first
+ *   tone, which is not what anybody means by it.
+ *
+ * Pinyin's `r` suffix is the later convention and the two are not
  * interchangeable.
  */
-const ERHUA_SUFFIX = "-êrh";
+const ERHUA_SUFFIX = `-${APOSTROPHE}rh`;
 
 /**
  * How a Wade-Giles syllable writes its tone.
@@ -297,6 +311,9 @@ export function writeWadeGilesSpelling(syllable: Syllable): string {
  * Total over well-formed syllables, as the bopomofo writer is. An unwritten
  * tone stays unwritten rather than being invented as a first tone, which is
  * what lets the round trip come back exactly.
+ *
+ * The digit goes in front of the 儿化 suffix rather than after it — 玩儿 wánr
+ * is `wan²-'rh` — for the reason {@link ERHUA_SUFFIX} gives.
  */
 export function writeWadeGiles(
   syllable: Syllable,
@@ -308,10 +325,14 @@ export function writeWadeGiles(
   if (tone === undefined || tones === "none") {
     return spelling;
   }
-  return tones === "numbers"
-    ? `${spelling}${String(tone)}`
-    : /* c8 ignore next -- every tone has a raised digit */
-      `${spelling}${SUPERSCRIPT_TONES.get(tone) ?? ""}`;
+  const digit =
+    tones === "numbers"
+      ? String(tone)
+      : /* c8 ignore next -- every tone has a raised digit */
+        (SUPERSCRIPT_TONES.get(tone) ?? "");
+  return spelling.endsWith(ERHUA_SUFFIX)
+    ? `${spelling.slice(0, -ERHUA_SUFFIX.length)}${digit}${ERHUA_SUFFIX}`
+    : `${spelling}${digit}`;
 }
 
 /**
@@ -509,11 +530,33 @@ function isMarksDropped(spelling: string, written: string): boolean {
 }
 
 /**
+ * Take the 儿化 suffix off a normalised spelling.
+ *
+ * Done before the tone digit is read rather than after, because the digit is
+ * written in front of the suffix: `wan²-'rh` is a second-tone 玩 carrying it.
+ *
+ * Read loosely the apostrophe may have fallen off, so `-rh` is a suffix too;
+ * read exactly it is not, and neither is `-êrh` under either reading. That is
+ * the point of the reduced form: 女儿 nǚ'ér is `nü³-êrh²`, two syllables, and
+ * a suffix spelled the same way would make the two indistinguishable.
+ */
+function splitErhua(
+  spelling: string,
+  isLoose: boolean,
+): readonly [string, boolean] {
+  const suffixes = isLoose
+    ? [ERHUA_SUFFIX, withoutMarks(ERHUA_SUFFIX)]
+    : [ERHUA_SUFFIX];
+  const suffix = suffixes.find((one) => spelling.endsWith(one));
+  return suffix === undefined
+    ? [spelling, false]
+    : [spelling.slice(0, -suffix.length), true];
+}
+
+/**
  * Read a normalised spelling out of one of the two indexes.
  *
- * `toKey` is how the spelling is turned into that index's key, and it has to be
- * applied to the 儿化 suffix as well: read loosely, `hua-êrh` arrives as
- * `hua-erh`.
+ * `toKey` is how the spelling is turned into that index's key.
  *
  * The tone is written on here and not judged: the index is toneless, so what
  * comes back is every syllable of that spelling in whatever tone the text
@@ -525,21 +568,15 @@ function readFrom(
   toKey: (spelling: string) => string,
   spelling: string,
   tone: Tone | undefined,
+  isErhua: boolean,
 ): readonly Syllable[] {
-  const found = (written: string, isErhua: boolean): readonly Syllable[] =>
-    (index.get(toKey(written)) ?? [])
-      .filter((one) => isMarksDropped(one.spelling, written))
-      .map((one) => ({
-        ...one.syllable,
-        tone,
-        ...(isErhua && { erhua: true }),
-      }));
-
-  const suffix = toKey(ERHUA_SUFFIX);
-  const base = spelling.endsWith(suffix)
-    ? spelling.slice(0, -suffix.length)
-    : "";
-  return [...found(spelling, false), ...(base === "" ? [] : found(base, true))];
+  return (index.get(toKey(spelling)) ?? [])
+    .filter((one) => isMarksDropped(one.spelling, spelling))
+    .map((one) => ({
+      ...one.syllable,
+      tone,
+      ...(isErhua && { erhua: true }),
+    }));
 }
 
 /**
@@ -553,8 +590,11 @@ function readFrom(
  * the two syllables and `lo²` is 羅 luó alone. See {@link narrowToAttested}.
  */
 export function readWadeGiles(text: string): readonly Syllable[] {
-  const [spelling, tone] = splitTone(normalise(text));
-  return narrowToAttested(readFrom(INDEX.exact, (key) => key, spelling, tone));
+  const [written, isErhua] = splitErhua(normalise(text), false);
+  const [spelling, tone] = splitTone(written);
+  return narrowToAttested(
+    readFrom(INDEX.exact, (key) => key, spelling, tone, isErhua),
+  );
 }
 
 /**
@@ -574,8 +614,9 @@ export function readWadeGiles(text: string): readonly Syllable[] {
  */
 export function readWadeGilesLoosely(text: string): readonly Syllable[] {
   const exact = readWadeGiles(text);
-  const [spelling, tone] = splitTone(normalise(text));
-  const loose = readFrom(INDEX.loose, withoutMarks, spelling, tone);
+  const [written, isErhua] = splitErhua(normalise(text), true);
+  const [spelling, tone] = splitTone(written);
+  const loose = readFrom(INDEX.loose, withoutMarks, spelling, tone, isErhua);
 
   return narrowToAttested([
     ...exact,
@@ -596,7 +637,9 @@ export function readWadeGilesLoosely(text: string): readonly Syllable[] {
  * stale silently.
  */
 const LONGEST_SPELLING =
-  Math.max(...[...INDEX.exact.keys()].map((spelling) => spelling.length)) + 1;
+  Math.max(...[...INDEX.exact.keys()].map((spelling) => spelling.length)) +
+  1 +
+  ERHUA_SUFFIX.length;
 
 /**
  * The syllables Wade-Giles writes with no vowel in them at all.

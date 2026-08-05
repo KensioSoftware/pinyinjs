@@ -7,9 +7,21 @@
  * initial symbol and a final symbol, with no zero-initial forms whatever,
  * because y and w are spellings and IPA does not spell. 一 yī is simply [i].
  *
- * The transcription is the broad one of Wikipedia's *Help:IPA/Mandarin*, which
- * is what the syllabary this package checks against uses, so the table and its
- * ground truth are the same analysis. Two consequences worth knowing:
+ * The transcription is the broad one of the IPA column of Wikipedia's article
+ * on comparing the transcription systems, which is where the syllabary this
+ * package checks against comes from, so the table and its ground truth are the
+ * same analysis.
+ *
+ * That page is not the only one Wikipedia has, and it does not agree with the
+ * other. *Help:IPA/Mandarin* is the key its editors transcribe articles with,
+ * and it is narrower in four places: it writes the medials as the glides [j],
+ * [w] and [ɥ], -ang with a backed [ɑ], the empty rhyme as [ɻ̩] and [ɹ̩] after
+ * their two series, and the diphthongs as [aɪ aʊ eɪ oʊ]. Both are scored
+ * against, and where they differ this follows the broader — see
+ * [ipa-key.test.ts](ipa-key.test.ts), which records every difference rather
+ * than letting the choice go unstated.
+ *
+ * Two consequences worth knowing:
  *
  * - **The empty rhyme is [ɨ]** after both the retroflexes and the dental
  *   sibilants, where narrower transcriptions distinguish [ʐ̩] from [z̩].

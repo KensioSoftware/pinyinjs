@@ -877,9 +877,11 @@ describe("the examples in docs/", () => {
       const xiong = readBopomofo("ㄒㄩㄥˊ");
       assertNonNullable(xiong);
       assertIdentical(writeSyllable(xiong), "xióng");
-      // 事儿 has no rhyme for the ㄦ to attach to; 二儿 is ㄦㄦ.
-      assertIdentical(writeBopomofo(one("shìr")), "ㄕㄦˋ");
-      assertIdentical(writeBopomofo(one("èrr")), "ㄦㄦˋ");
+      // 事儿 has no rhyme for the ㄦ to attach to; 二儿 is ㄦㄦ. The mark goes on
+      // the nucleus, in front of the suffix.
+      assertIdentical(writeBopomofo(one("shìr")), "ㄕˋㄦ");
+      assertIdentical(writeBopomofo(one("èrr")), "ㄦˋㄦ");
+      assertIdentical(writeBopomofo(one("nǎr")), "ㄋㄚˇㄦ");
       assertIdentical(writeBopomofo(one("ǹg")), "ㄫˋ");
     });
 
@@ -1032,7 +1034,8 @@ describe("the examples in docs/", () => {
     it("splits a Wade-Giles word as the page shows", () => {
       assertArrayEquals(splitWadeGiles("maotsetung"), ["mao", "tse", "tung"]);
       assertArrayEquals(splitWadeGiles("mao-tse-tung"), ["mao", "tse", "tung"]);
-      assertArrayEquals(splitWadeGiles("hua-\u{EA}rh"), ["hua-\u{EA}rh"]);
+      assertArrayEquals(splitWadeGiles("hua\u{B9}-'rh"), ["hua\u{B9}-'rh"]);
+      assertArrayEquals(splitWadeGiles("hua-\u{EA}rh"), ["hua", "\u{EA}rh"]);
       assertArrayEquals(
         (readWadeGilesWord("pei\u{B3}ching\u{B9}") ?? []).map((syllable) =>
           writeSyllable(syllable),
@@ -1132,12 +1135,13 @@ describe("the examples in docs/", () => {
       // The forms that no longer come back are the ones written in a tone
       // their syllable never takes, where the spelling belongs to another
       // syllable too: `lo` in the four contour tones, and the first-tone 兒
-      // that Yale, GR and IPA each spell like a syllable plus 儿化.
+      // that Yale and IPA each spell like a syllable plus 儿化. GR loses 128
+      // to its 儿化 fusion, which collapses rimes the others keep apart.
       assertIdentical(wade, 5080);
       assertIdentical(bopomofo, 4240);
       assertIdentical(yale, 4239);
       assertIdentical(yaleNumbered, 5085);
-      assertIdentical(gwoyeu, 4238);
+      assertIdentical(gwoyeu, 4112);
       assertIdentical(ipa, 4239);
     });
 
@@ -1190,23 +1194,36 @@ describe("the examples in docs/", () => {
       );
     });
 
-    it("writes the neutral dot and the -l the page shows, and reads back", () => {
+    it("writes the neutral dot and the fused -l the page shows", () => {
       assertIdentical(writeGwoyeu(one("de5")), ".de");
+      // The dot keeps the tone the syllable came from where it is recorded,
+      // and takes the basic form where it is not.
+      assertIdentical(
+        writeGwoyeu({ ...one("you5"), originalTone: 3 }),
+        ".yeou",
+      );
+      assertIdentical(writeGwoyeuWord([one("méi"), one("you5")]), "mei.iou");
+      // 儿化 fuses into the rime rather than hanging off it.
       assertIdentical(writeGwoyeu(one("huār")), "hual");
-      // GR writes `perng.yeou`, keeping the tone 友 came from; a neutral pinyin
-      // syllable does not record it, so what comes out is the basic form.
-      assertIdentical(writeGwoyeuWord([one("péng"), one("you5")]), "perng.iou");
+      assertIdentical(writeGwoyeu(one("wánr")), "wal");
+      assertIdentical(writeGwoyeu(one("shìr")), "shell");
+      assertIdentical(writeGwoyeu(one("zhèr")), "jehl");
+      assertIdentical(writeGwoyeu(one("diǎnr")), "deal");
       assertArrayEquals(
         readGwoyeu("shaan").map((syllable) => writeSyllable(syllable)),
         ["shǎn"],
       );
       assertArrayEquals(
-        readGwoyeu("ell").map((syllable) => writeSyllable(syllable)),
-        ["èr"],
+        readGwoyeu("jiel").map((syllable) => writeSyllable(syllable)),
+        ["jīr", "jīnr"],
       );
       assertArrayEquals(
-        readGwoyeu(".ell").map((syllable) => writeSyllable(syllable)),
-        ["er", "err"],
+        readGwoyeu("hual").map((syllable) => writeSyllable(syllable)),
+        ["huār", "huānr"],
+      );
+      assertArrayEquals(
+        readGwoyeu("ell").map((syllable) => writeSyllable(syllable)),
+        ["èir", "ènr", "èr"],
       );
       assertArrayEquals(
         readGwoyeu("nn").map((syllable) => writeSyllable(syllable)),
@@ -1347,8 +1364,9 @@ describe("the examples in docs/", () => {
         "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
       ]);
       assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", ".ell"), [
-        ".ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ",
-        "            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ",
+        ".ell        enr       ˙ㄣㄦ         ên⁵-'rh     enr       .ell      ənɚ",
+        "            err       ˙ㄦㄦ         êrh⁵-'rh    err       .ell      aɚɚ",
+        "            er        ˙ㄦ          êrh⁵        er        .ell      aɚ",
       ]);
     });
 

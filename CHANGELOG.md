@@ -15,6 +15,41 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   syllables is actually written in, extracted from the merged dictionary and
   held to it by a build assertion. 424 syllables in five tones would be 2,120
   combinations and only 1,708 of them occur, so a fifth of that grid is empty.
+- **`Syllable.originalTone`,** the tone a neutral syllable had before it was
+  reduced. Gwoyeu Romatzyh writes the neutral tone as a dot in front of the
+  syllable _in its original tonal spelling_, so 没有 méiyou is `mei.yeou`, and
+  nothing else in a pinyin syllable records what that tone was. Optional, never
+  inferred, and used by GR alone.
+- **Two more outside sources for the transcription tables.** 148 words from
+  en.wiktionary's Mandarin pronunciation blocks, in bopomofo, Wade-Giles, Yale
+  and GR with their tones, and all 50 rows of Wikipedia's _Help:IPA/Mandarin_
+  key. The 417-row syllabary already checked was toneless, so it could say
+  nothing about tone marks, the neutral tone, 儿化 or how a word is joined —
+  which is where the four fixes below were found.
+
+### Fixed
+
+- **Bopomofo wrote the tone mark after the 儿化 ㄦ.** 哪儿 nǎr was `ㄋㄚㄦˇ` and
+  is now `ㄋㄚˇㄦ`: the mark belongs to the nucleus and the suffix is not part of
+  what it marks. A mark written after the ㄦ is still read.
+- **Wade-Giles put the tone digit on the 儿化 suffix,** so 花儿 huār was
+  `hua-êrh¹` — a first-tone 兒. It is now `hua¹-'rh`, with the digit on the
+  syllable the tone belongs to and the suffix written as the reduced `'rh` that
+  keeps it apart from 女儿 nǚ'ér's `nü³-êrh²`.
+- **Gwoyeu Romatzyh wrote 儿化 as a plain `-l` suffix.** GR fuses it into the
+  rime instead, and the rules are now implemented as _Spelling in Gwoyeu
+  Romatzyh_ gives them: 玩儿 wánr is `wal` rather than `wanl`, 事儿 shìr is
+  `shell`, 今儿 jīnr is `jiel`. The fusion is many-to-one, so `jiel` is 今儿 and
+  鸡儿 both and 128 forms no longer round-trip — every one of them a form the
+  language does not write.
+- **Gwoyeu Romatzyh wrote `.mhe` for a neutral 么.** The `-h-` is the first tone
+  of a sonorant initial, and a neutral syllable is in no tone at all; the basic
+  form goes behind the dot, so 什么 shénme is `shern.me`.
+- **The IPA module said it followed _Help:IPA/Mandarin_ and did not.** It
+  follows the broader IPA column of _Comparison of Standard Chinese
+  transcription systems_, which is where its ground truth comes from; the two
+  pages differ at the medials, -ang, the empty rhyme and the diphthongs. No
+  output changed — the claim did.
 
 ### Changed
 

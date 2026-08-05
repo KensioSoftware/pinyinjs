@@ -134,9 +134,18 @@ describe("writing Wade-Giles", () => {
     assertIdentical(writeWadeGiles(syllable("jiu")), "chiu");
   });
 
-  it("writes 儿化 as the separate syllable the system writes it as", () => {
-    assertIdentical(writeWadeGiles(syllable("wánr")), "wan-êrh²");
-    assertIdentical(spelt("gēr"), "ko-êrh");
+  it("writes 儿化 as a suffix hung off the syllable, tone and all", () => {
+    // The digit is the base syllable's and goes in front of the suffix, and
+    // the suffix is the reduced `'rh` rather than the `êrh` that 兒 is when it
+    // stands as a syllable of its own: see ERHUA_SUFFIX.
+    assertIdentical(writeWadeGiles(syllable("wánr")), "wan²-'rh");
+    assertIdentical(
+      writeWadeGiles(syllable("wánr"), { tones: "numbers" }),
+      "wan2-'rh",
+    );
+    assertIdentical(spelt("gēr"), "ko-'rh");
+    // 二 èr is the syllable, and it keeps its own spelling.
+    assertIdentical(writeWadeGiles(syllable("èr")), "êrh⁴");
   });
 
   it("hyphenates the syllables of a word", () => {
@@ -205,11 +214,16 @@ describe("reading Wade-Giles", () => {
     assertArrayEquals(read("fiao²"), ["fiáo"]);
   });
 
-  it("reads the 儿化 syllable back as a suffix", () => {
-    assertArrayEquals(read("wan-êrh²"), ["wánr"]);
-    assertArrayEquals(readLoosely("wan-erh²"), ["wánr"]);
-    // Standing alone it is 兒 itself.
+  it("reads the 儿化 suffix back off the syllable", () => {
+    assertArrayEquals(read("wan²-'rh"), ["wánr"]);
+    // The apostrophe is a mark like any other and falls off like one.
+    assertArrayEquals(readLoosely("wan²-rh"), ["wánr"]);
+    assertArrayLength(read("wan²-rh"), 0);
+    // `êrh` is 兒 itself, standing alone or hyphenated behind another
+    // syllable: 女儿 nǚ'ér is `nü³-êrh²`, which is why the suffix is not
+    // written that way.
     assertArrayEquals(read("êrh²"), ["ér"]);
+    assertArrayLength(read("wan²-êrh"), 0);
   });
 
   it("reads nothing for what is not Wade-Giles", () => {
@@ -289,7 +303,7 @@ describe("Wade-Giles over the whole inventory", () => {
     // cost of narrowing: `lo` in the four contour tones, with and without the
     // 儿化 suffix, all of them 羅 rather than a 咯 Mandarin does not write.
     assertArrayEquals(read("lo¹"), ["luō"]);
-    assertArrayEquals(read("lo-êrh⁴"), ["luòr"]);
+    assertArrayEquals(read("lo⁴-'rh"), ["luòr"]);
   });
 
   it("gives 423 spellings to 424 syllables", () => {
@@ -338,10 +352,14 @@ describe("splitting a Wade-Giles word that dropped its hyphens", () => {
   });
 
   it("keeps the 儿化 suffix, whose hyphen is not a boundary", () => {
-    // `-êrh` is part of a spelling rather than a join, so the longer head wins
+    // `-'rh` is part of a spelling rather than a join, so the longer head wins
     // and 花儿 huār stays one syllable.
-    assertArrayEquals(splitWadeGiles("hua-êrh"), ["hua-êrh"]);
-    assertArrayEquals(readingOf("hua-êrh"), ["huar"]);
+    assertArrayEquals(splitWadeGiles("hua¹-'rh"), ["hua¹-'rh"]);
+    assertArrayEquals(readingOf("hua¹-'rh"), ["huār"]);
+    // Where the same hyphen is followed by `êrh` it *is* a boundary, and the
+    // two syllables of 花兒 huā ér come back.
+    assertArrayEquals(splitWadeGiles("hua-êrh"), ["hua", "êrh"]);
+    assertArrayEquals(readingOf("hua-êrh"), ["hua", "er"]);
   });
 
   it("takes the tone digits with the syllables they belong to", () => {

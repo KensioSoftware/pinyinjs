@@ -188,10 +188,22 @@ const EMPTY_RHYME_INITIALS = new Set<Initial>([
 ]);
 
 /**
+ * The symbol 儿化 is written with.
+ *
+ * ㄦ, the same letter as the rhyme of 兒 ér itself, which is why reading it
+ * takes the position into account: see {@link parseSymbols}.
+ */
+const ERHUA_SYMBOL = "ㄦ";
+
+/**
  * The mark each tone takes.
  *
  * The neutral tone's dot goes *before* the syllable and the other four go
- * after, which is where bopomofo puts them.
+ * after — but **before a 儿化 ㄦ rather than after it**: 哪儿 nǎr is ㄋㄚˇㄦ and
+ * 玩儿 wánr is ㄨㄢˊㄦ. The mark belongs to the syllable's nucleus, and the
+ * suffix is not part of what it marks. Wikipedia's *Bopomofo*, citing 教育部's
+ * 國語注音符號手冊, says so outright, and it is what 教育部's dictionaries and
+ * Wiktionary both write.
  */
 const TONE_MARKS = new Map<Tone, string>([
   [1, "ˉ"],
@@ -251,14 +263,16 @@ export function writeBopomofo(
     INITIAL_SYMBOLS.get(initial) ?? "",
     isEmptyRhyme ? "" : (MEDIAL_SYMBOLS.get(medial) ?? ""),
     isEmptyRhyme ? "" : (RHYME_SYMBOLS.get(rhyme) ?? ""),
-    syllable.erhua === true ? "ㄦ" : "",
   ].join("");
+  const suffix = syllable.erhua === true ? ERHUA_SYMBOL : "";
 
   const mark = tone === undefined ? undefined : TONE_MARKS.get(tone);
   if (mark === undefined || (tone === 1 && options.firstTone !== "mark")) {
-    return written;
+    return `${written}${suffix}`;
   }
-  return tone === NEUTRAL_TONE ? `${mark}${written}` : `${written}${mark}`;
+  return tone === NEUTRAL_TONE
+    ? `${mark}${written}${suffix}`
+    : `${written}${mark}${suffix}`;
 }
 
 /**
@@ -347,10 +361,12 @@ interface Parsed {
 /**
  * Take the tone mark off, wherever it was written.
  *
- * The neutral dot belongs at the front and the other four at the back, but text
- * in the wild puts them either side, so both are read. A mark at each end is
- * rejected rather than resolved, which is the same call `readSyllable` makes
- * about `běi3`.
+ * Three positions, because bopomofo uses two of them and texts use the third.
+ * The neutral dot belongs at the front and the other four at the back, in front
+ * of a 儿化 ㄦ where there is one — ㄨㄢˊㄦ. A mark written after the ㄦ is not
+ * standard and is read anyway, since it is what a text that treated the suffix
+ * as part of the syllable would produce. A mark at each end is rejected rather
+ * than resolved, which is the same call `readSyllable` makes about `běi3`.
  */
 function splitTone(
   text: string,
@@ -361,9 +377,16 @@ function splitTone(
     return TONES_BY_MARK.has(rest.slice(-1)) ? undefined : [rest, leading];
   }
   const trailing = TONES_BY_MARK.get(text.slice(-1));
-  return trailing === undefined
-    ? [text, undefined]
-    : [text.slice(0, -1), trailing];
+  if (trailing !== undefined) {
+    return [text.slice(0, -1), trailing];
+  }
+  if (text.endsWith(ERHUA_SYMBOL)) {
+    const marked = TONES_BY_MARK.get(text.slice(-2, -1));
+    if (marked !== undefined) {
+      return [`${text.slice(0, -2)}${ERHUA_SYMBOL}`, marked];
+    }
+  }
+  return [text, undefined];
 }
 
 /**
@@ -393,12 +416,12 @@ function parseSymbols(text: string, hasInitial: boolean): Parsed | undefined {
   // where it is the rhyme of 儿 ér itself. That is what separates ㄦ from ㄕㄦ:
   // 事儿 shìr writes no rhyme at all, so the ㄦ can only be the suffix, and
   // 二儿 èr with a suffix is ㄦㄦ.
-  const isSuffix = at > 0 && symbols[at] === "ㄦ";
+  const isSuffix = at > 0 && symbols[at] === ERHUA_SYMBOL;
   const rhyme = isSuffix ? undefined : RHYMES_BY_SYMBOL.get(symbols[at] ?? "");
   if (rhyme !== undefined) {
     at += 1;
   }
-  const hasErhua = at > 0 && symbols[at] === "ㄦ";
+  const hasErhua = at > 0 && symbols[at] === ERHUA_SYMBOL;
   if (hasErhua) {
     at += 1;
   }

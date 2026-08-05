@@ -179,6 +179,22 @@ const TESTED_AGAINST = [
       "the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo, Wade-Giles, Yale, IPA and Gwoyeu Romatzyh tables are checked against, GR having four columns of its own",
     note: "used by the tests only; nothing in data/ is derived from it",
   },
+  {
+    name: "Help:IPA/Mandarin (Wikipedia)",
+    url: "https://en.wikipedia.org/wiki/Help:IPA/Mandarin",
+    licence: "CC BY-SA 4.0",
+    provides:
+      "the 50-row IPA key in test/fixtures/ipa-mandarin.ts, which the IPA table is scored against alongside the syllabary, the two pages differing at twelve rows",
+    note: "used by the tests only; nothing in data/ is derived from it",
+  },
+  {
+    name: "Wiktionary (en.wiktionary.org)",
+    url: "https://en.wiktionary.org/",
+    licence: "CC BY-SA 4.0",
+    provides:
+      "the 148 words of test/fixtures/wiktionary.ts, taken from the Mandarin pronunciation block of each entry, which the tone marks, the neutral tone and 儿化 are checked against in every system that writes them",
+    note: "used by the tests only; nothing in data/ is derived from it",
+  },
 ] as const;
 
 // Attribution is generated rather than hand-written, so that it cannot drift

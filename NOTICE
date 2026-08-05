@@ -38,3 +38,17 @@ Source:   https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcrip
 Licence:  CC BY-SA 4.0
 Provides: the 417-row syllabary in test/fixtures/syllabary.ts, which the bopomofo, Wade-Giles, Yale, IPA and Gwoyeu Romatzyh tables are checked against, GR having four columns of its own
 Note:     used by the tests only; nothing in data/ is derived from it
+
+## Help:IPA/Mandarin (Wikipedia)
+
+Source:   https://en.wikipedia.org/wiki/Help:IPA/Mandarin
+Licence:  CC BY-SA 4.0
+Provides: the 50-row IPA key in test/fixtures/ipa-mandarin.ts, which the IPA table is scored against alongside the syllabary, the two pages differing at twelve rows
+Note:     used by the tests only; nothing in data/ is derived from it
+
+## Wiktionary (en.wiktionary.org)
+
+Source:   https://en.wiktionary.org/
+Licence:  CC BY-SA 4.0
+Provides: the 148 words of test/fixtures/wiktionary.ts, taken from the Mandarin pronunciation block of each entry, which the tone marks, the neutral tone and 儿化 are checked against in every system that writes them
+Note:     used by the tests only; nothing in data/ is derived from it

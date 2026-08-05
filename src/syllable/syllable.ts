@@ -43,6 +43,24 @@ export interface Syllable {
    * what separates 玩儿 wánr from 女儿 nǚ'ér, where 儿 keeps its own syllable.
    */
   readonly erhua?: boolean;
+  /**
+   * The tone a neutral syllable has when it is not reduced: 快乐 kuàile is a
+   * neutral 乐, which is 乐 lè in the fourth.
+   *
+   * Pinyin never writes it, and nothing here infers it — a syllable that
+   * arrives as neutral and nothing else leaves this undefined. It is carried
+   * because **Gwoyeu Romatzyh cannot write the neutral tone without it**: GR
+   * writes a dot in front of the syllable *in its original tonal spelling*, so
+   * 没有 méiyou is `mei.yeou` with 有 yǒu's third-tone spelling behind the dot.
+   * Every other system here writes the neutral tone with a mark of its own and
+   * has no use for this.
+   *
+   * Only meaningful alongside a neutral {@link Syllable.tone}. A syllable that
+   * is neutral in its own right — 的 de, 么 me, 子 zi — has no original tone to
+   * record, which is a different thing from not knowing it, and GR writes those
+   * with the basic form.
+   */
+  readonly originalTone?: Tone;
 }
 
 /**
