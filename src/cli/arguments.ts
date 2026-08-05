@@ -1,6 +1,7 @@
 import { type ParseArgsConfig, parseArgs } from "node:util";
 
 import type { ConvertOptions } from "../decode/convert.js";
+import type { ColourDepth } from "./colour.js";
 import type { Tier } from "../dictionary/tiers.js";
 import type { HtmlOptions } from "../format/html.js";
 import type { ApostropheStyle } from "../orthography/apostrophe.js";
@@ -37,6 +38,10 @@ const FLAGS = {
   from: { type: "string" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
+  colour: { type: "boolean" },
+  color: { type: "boolean" },
+  "no-colour": { type: "boolean" },
+  "no-color": { type: "boolean" },
   json: { type: "boolean" },
   help: { type: "boolean", short: "h" },
   version: { type: "boolean", short: "v" },
@@ -53,6 +58,10 @@ export type FlagName = keyof typeof FLAGS;
 export const GLOBAL_FLAGS: readonly FlagName[] = [
   "data",
   "tier",
+  "colour",
+  "color",
+  "no-colour",
+  "no-color",
   "json",
   "help",
   "version",
@@ -203,6 +212,34 @@ const SOURCES: readonly TranscriptionSource[] = [
  */
 export function transcriptionSource(flags: Flags): TranscriptionSource {
   return chosen(flags, "from", SOURCES) ?? "auto";
+}
+
+/**
+ * How much colour a run should write, given what the terminal offered.
+ *
+ * `--colour` and `--no-colour` force it either way, and `--color` is accepted
+ * as a spelling because every other tool spells it that way and nobody should
+ * have to discover which this one chose.
+ *
+ * **`--json` is never coloured**, whatever the flags say: the option is about
+ * the plain output, and the JSON already carries the tone as a number for a
+ * caller that will do its own rendering.
+ *
+ * Forcing colour where the environment offered none — into a pipe, or past
+ * `NO_COLOR` — gets the sixteen every terminal has, because nothing is known
+ * about where that output is going.
+ */
+export function colourDepth(flags: Flags, offered: ColourDepth): ColourDepth {
+  if (flags.json === true) {
+    return 0;
+  }
+  if (flags["no-colour"] === true || flags["no-color"] === true) {
+    return 0;
+  }
+  if (flags.colour === true || flags.color === true) {
+    return offered === 0 ? 16 : offered;
+  }
+  return offered;
 }
 
 /**

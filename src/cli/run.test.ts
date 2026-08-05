@@ -3,12 +3,14 @@ import {
   assertArrayEquals,
   assertArrayLength,
   assertIdentical,
+  assertObjectEquals,
   assertStringIncludes,
   assertStringNotIncludes,
   assertThrowsErrorAsync,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import { type ColourDepth, visibleLength } from "./colour.js";
 import { COMMANDS } from "./commands.js";
 import { type CliEnvironment, type CliResult, runCli } from "./run.js";
 
@@ -20,9 +22,17 @@ const dictionary = sampleDictionary();
 function environmentOf(input = ""): CliEnvironment {
   return {
     version: "1.2.3",
+    colours: 0,
     readInput: () => Promise.resolve(input),
     loadDictionary: () => Promise.resolve(dictionary),
   };
+}
+
+/**
+ * The same, run at a terminal that offers colour.
+ */
+function colouredEnvironment(colours: ColourDepth): CliEnvironment {
+  return { ...environmentOf(), colours };
 }
 
 /**
@@ -141,5 +151,91 @@ describe("running the CLI", () => {
   it("does not ask for input for a command that takes none", async () => {
     const result = await run(["info"]);
     assertIdentical(result.status, 0);
+  });
+});
+
+/**
+ * What a run wrote, as one string, coloured or not.
+ */
+async function written(
+  argv: readonly string[],
+  environment: CliEnvironment,
+): Promise<string> {
+  const result = await runCli(argv, environment);
+  assertIdentical(result.status, 0, result.errors.join("\n"));
+  return result.output.join("\n");
+}
+
+describe("colour at the terminal", () => {
+  it("colours a terminal and leaves a pipe alone", async () => {
+    const piped = await written(["convert", "银行"], environmentOf());
+    assertIdentical(piped, "yínháng");
+
+    const coloured = await written(
+      ["convert", "银行"],
+      colouredEnvironment(16),
+    );
+    // 银行 is yín háng, second tone twice, which is the basic yellow.
+    assertStringIncludes(coloured, "\u{1B}[33m");
+    assertIdentical(visibleLength(coloured), "yínháng".length);
+  });
+
+  it("writes the depth the environment offered", async () => {
+    assertStringIncludes(
+      await written(["convert", "银行"], colouredEnvironment(256)),
+      "\u{1B}[38;5;",
+    );
+    assertStringNotIncludes(
+      await written(["convert", "银行"], colouredEnvironment(16)),
+      "\u{1B}[38;5;",
+    );
+  });
+
+  it("takes --colour and --color as the same flag", async () => {
+    const forced = await Promise.all(
+      ["--colour", "--color"].map(async (flag) =>
+        written(["convert", flag, "银行"], environmentOf()),
+      ),
+    );
+    for (const one of forced) {
+      assertStringIncludes(one, "\u{1B}[");
+      // Forced into a pipe, the sixteen every terminal has: nothing is known
+      // about where that output is going.
+      assertStringNotIncludes(one, "\u{1B}[38;5;");
+    }
+  });
+
+  it("takes --no-colour and --no-color as the same flag", async () => {
+    const refused = await Promise.all(
+      ["--no-colour", "--no-color"].map(async (flag) =>
+        written(["convert", flag, "银行"], colouredEnvironment(256)),
+      ),
+    );
+    assertArrayEquals(refused, ["yínháng", "yínháng"]);
+  });
+
+  it("keeps the depth the terminal offered when colour is forced", async () => {
+    assertStringIncludes(
+      await written(["convert", "--colour", "银行"], colouredEnvironment(256)),
+      "\u{1B}[38;5;",
+    );
+  });
+
+  it("never colours --json, whatever the flags say", async () => {
+    const document = await written(
+      ["convert", "--colour", "--json", "银行"],
+      colouredEnvironment(256),
+    );
+    assertStringNotIncludes(document, "\u{1B}[");
+    assertObjectEquals(JSON.parse(document) as unknown, {
+      text: "银行",
+      pinyin: "yínháng",
+    });
+  });
+
+  it("never colours HTML either, for the same reason", async () => {
+    const markup = await written(["html", "银行"], colouredEnvironment(256));
+    assertStringNotIncludes(markup, "\u{1B}[");
+    assertStringIncludes(markup, "py-tone-2");
   });
 });

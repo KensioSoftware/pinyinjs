@@ -575,3 +575,18 @@ export function convertGreedily(
 ): string {
   return joinPieces(convertWith(GREEDY, dictionary, text, options));
 }
+
+/**
+ * The same, kept in pieces.
+ *
+ * {@link convertPieces} for the baseline, so that a caller rendering each
+ * syllable — colouring its tone — can still ask for the comparison. The pieces
+ * carry no confidence, because the greedy decode cannot say what it rejected.
+ */
+export function convertPiecesGreedily(
+  dictionary: Dictionary,
+  text: string,
+  options: ConvertOptions = {},
+): readonly ConvertedPiece[] {
+  return convertWith(GREEDY, dictionary, text, options);
+}

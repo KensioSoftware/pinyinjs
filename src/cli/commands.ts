@@ -3,6 +3,7 @@ import {
   convert,
   convertGreedily,
   convertPieces,
+  convertPiecesGreedily,
   type ConvertedPiece,
 } from "../decode/convert.js";
 import { applySandhi, type SandhiOptions } from "../decode/sandhi.js";
@@ -18,16 +19,22 @@ import { convertToHtml } from "../format/html.js";
 import {
   isBopomofo,
   readBopomofo,
+  writeBopomofo,
   writeBopomofoWord,
 } from "../romanization/bopomofo.js";
-import { readGwoyeu, writeGwoyeuWord } from "../romanization/gwoyeu.js";
-import { readIpa, writeIpaWord } from "../romanization/ipa.js";
+import {
+  readGwoyeu,
+  writeGwoyeu,
+  writeGwoyeuWord,
+} from "../romanization/gwoyeu.js";
+import { readIpa, writeIpa, writeIpaWord } from "../romanization/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
+  writeWadeGiles,
   writeWadeGilesWord,
 } from "../romanization/wade-giles.js";
-import { readYale, writeYaleWord } from "../romanization/yale.js";
+import { readYale, writeYale, writeYaleWord } from "../romanization/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -50,6 +57,7 @@ import {
   transcriptionSource,
   UsageError,
 } from "./arguments.js";
+import { type Painter, PLAIN, visibleLength } from "./colour.js";
 
 /**
  * What a command is given to work with.
@@ -61,6 +69,15 @@ export interface CommandInput {
   /** Loaded for the commands that declare they need one. */
   readonly dictionary: Dictionary | undefined;
   readonly choice: DictionaryChoice;
+  /**
+   * How to write a syllable, which is where tone colour is applied.
+   *
+   * Handed in rather than worked out, because whether the output is a terminal
+   * is a fact about the run and not about the command. A command that writes no
+   * syllables never calls it, and `html` deliberately does not: markup is a
+   * format for a machine, exactly as `--json` is.
+   */
+  readonly paint: Painter;
 }
 
 /**
@@ -111,16 +128,22 @@ function dictionaryOf(input: CommandInput): Dictionary {
 
 /**
  * Pad a column so that what follows it lines up.
+ *
+ * Padded to what a reader sees rather than to the string's length: a coloured
+ * cell carries escape sequences that take no width on screen, and `padEnd`
+ * counts them.
  */
 function column(text: string, width: number): string {
-  return text.padEnd(width);
+  return text + " ".repeat(Math.max(0, width - visibleLength(text)));
 }
 
 /**
- * A reading written out, syllable by syllable.
+ * A reading written out, syllable by syllable, each in its tone's colour.
  */
-function written(reading: readonly Syllable[]): string {
-  return reading.map((syllable) => writeSyllable(syllable)).join(" ");
+function written(reading: readonly Syllable[], paint: Painter): string {
+  return reading
+    .map((syllable) => paint(writeSyllable(syllable), syllable.tone))
+    .join(" ");
 }
 
 /**
@@ -144,18 +167,28 @@ function stateOf(piece: ConvertedPiece): string {
  */
 function alternativesOf(
   piece: ConvertedPiece,
-  flags: Flags,
-): readonly { readonly reading: string; readonly cost: number }[] {
-  const { notation } = convertOptions(flags);
-  return (piece.confidence?.alternatives ?? []).map((alternative) => ({
-    reading: alternative.reading
-      .map((syllable) => writeSyllable(syllable, notation))
-      .join(""),
-    // Rounded because a cost is a sum of frequency buckets and a per-word
-    // charge of 4.62, which lands on 24.620000000000005 often enough to be
-    // worth not putting in front of anybody.
-    cost: Math.round(alternative.cost * 100) / 100,
-  }));
+  input: CommandInput,
+): readonly {
+  readonly reading: string;
+  readonly painted: string;
+  readonly cost: number;
+}[] {
+  const { notation } = convertOptions(input.flags);
+  return (piece.confidence?.alternatives ?? []).map((alternative) => {
+    const spelled = alternative.reading.map((syllable) =>
+      writeSyllable(syllable, notation),
+    );
+    return {
+      reading: spelled.join(""),
+      painted: spelled
+        .map((text, at) => input.paint(text, alternative.reading[at]?.tone))
+        .join(""),
+      // Rounded because a cost is a sum of frequency buckets and a per-word
+      // charge of 4.62, which lands on 24.620000000000005 often enough to be
+      // worth not putting in front of anybody.
+      cost: Math.round(alternative.cost * 100) / 100,
+    };
+  });
 }
 
 /**
@@ -168,14 +201,34 @@ const CONVERT: Command = {
   flags: [...CONVERT_FLAGS, "greedy"],
   needsDictionary: true,
   run: (input) => {
-    const decode = input.flags.greedy === true ? convertGreedily : convert;
     const options = convertOptions(input.flags);
+    const isGreedy = input.flags.greedy === true;
+    const decode = isGreedy ? convertGreedily : convert;
+    const inPieces = isGreedy ? convertPiecesGreedily : convertPieces;
     return input.texts.map((text) => {
       const pinyin = decode(dictionaryOf(input), text, options);
-      return { lines: [pinyin], data: { text, pinyin } };
+      // The pieces cost a second sweep of the lattice, so they are only asked
+      // for where there is a colour to put on them.
+      const written =
+        input.paint === PLAIN
+          ? pinyin
+          : paintedPieces(inPieces(dictionaryOf(input), text, options), input);
+      return { lines: [written], data: { text, pinyin } };
     });
   },
 };
+
+/**
+ * A conversion's pieces joined back up, each syllable in its tone's colour.
+ */
+function paintedPieces(
+  pieces: readonly ConvertedPiece[],
+  input: CommandInput,
+): string {
+  return pieces
+    .map((piece) => input.paint(piece.text, piece.syllable?.tone))
+    .join("");
+}
 
 /**
  * Convert each text to HTML, one element per syllable.
@@ -200,23 +253,31 @@ const HTML: Command = {
  */
 function explainSyllable(
   piece: ConvertedPiece,
-  flags: Flags,
+  input: CommandInput,
 ): { readonly line: string; readonly data: unknown } {
   const state = stateOf(piece);
-  const alternatives = alternativesOf(piece, flags);
+  const alternatives = alternativesOf(piece, input);
   const beaten = alternatives
     .map(
-      (alternative) => `${alternative.reading} +${alternative.cost.toFixed(1)}`,
+      (alternative) => `${alternative.painted} +${alternative.cost.toFixed(1)}`,
     )
     .join("  ");
 
   return {
-    line: `  ${column(piece.text, 8)}${column(state, 8)}${beaten}`.trimEnd(),
+    // The state stays a word. Colour means tone in every command, including
+    // this one: two scales on one line and a reader cannot tell which is which.
+    line: `  ${column(
+      input.paint(piece.text, piece.syllable?.tone),
+      8,
+    )}${column(state, 8)}${beaten}`.trimEnd(),
     data: {
       text: piece.text,
       state,
       ...(piece.syllable?.tone !== undefined && { tone: piece.syllable.tone }),
-      alternatives,
+      alternatives: alternatives.map(({ reading, cost }) => ({
+        reading,
+        cost,
+      })),
     },
   };
 }
@@ -239,11 +300,11 @@ const EXPLAIN: Command = {
       const pinyin = pieces.map((piece) => piece.text).join("");
       const syllables = pieces
         .filter((piece) => piece.syllable !== undefined)
-        .map((piece) => explainSyllable(piece, input.flags));
+        .map((piece) => explainSyllable(piece, input));
 
       return {
         lines: [
-          `${text}  ${pinyin}`,
+          `${text}  ${paintedPieces(pieces, input)}`,
           ...syllables.map((syllable) => syllable.line),
         ],
         data: {
@@ -259,7 +320,11 @@ const EXPLAIN: Command = {
 /**
  * What the dictionary holds for a word.
  */
-function entryFound(dictionary: Dictionary, word: string): Reported {
+function entryFound(
+  dictionary: Dictionary,
+  word: string,
+  paint: Painter,
+): Reported {
   const entry = dictionary.lookup(word);
   if (entry === undefined) {
     return {
@@ -276,24 +341,28 @@ function entryFound(dictionary: Dictionary, word: string): Reported {
 
   return {
     lines: [
-      `${word}  ${written(entry.reading)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
+      `${word}  ${written(entry.reading, paint)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
       ...(entry.taiwanReading === undefined
         ? []
-        : [`  zh-TW  ${written(entry.taiwanReading)}`]),
+        : [`  zh-TW  ${written(entry.taiwanReading, paint)}`]),
       ...(others.length > 0
-        ? [`  also   ${others.map((reading) => written(reading)).join(", ")}`]
+        ? [
+            `  also   ${others
+              .map((reading) => written(reading, paint))
+              .join(", ")}`,
+          ]
         : []),
     ],
     data: {
       word,
       found: true,
-      reading: written(entry.reading),
+      reading: written(entry.reading, PLAIN),
       partOfSpeech: entry.partOfSpeech,
       isProperNoun: entry.isProperNoun,
       ...(entry.taiwanReading !== undefined && {
-        taiwanReading: written(entry.taiwanReading),
+        taiwanReading: written(entry.taiwanReading, PLAIN),
       }),
-      otherReadings: others.map((reading) => written(reading)),
+      otherReadings: others.map((reading) => written(reading, PLAIN)),
     },
   };
 }
@@ -308,13 +377,18 @@ const LOOKUP: Command = {
   flags: [],
   needsDictionary: true,
   run: (input) =>
-    input.texts.map((word) => entryFound(dictionaryOf(input), word)),
+    input.texts.map((word) =>
+      entryFound(dictionaryOf(input), word, input.paint),
+    ),
 };
 
 /**
  * One written syllable, taken apart.
  */
-function syllableTaken(spelling: string): {
+function syllableTaken(
+  spelling: string,
+  paint: Painter,
+): {
   readonly line: string;
   readonly data: unknown;
 } {
@@ -342,8 +416,13 @@ function syllableTaken(spelling: string): {
   };
 
   return {
-    line: `  ${column(spelling, 10)}${column(parts.join(", "), 22)}${column(
-      Object.values(notations).join("  "),
+    line: `  ${column(paint(spelling, syllable.tone), 10)}${column(
+      parts.join(", "),
+      22,
+    )}${column(
+      Object.values(notations)
+        .map((written) => paint(written, syllable.tone))
+        .join("  "),
       22,
     )}${isAttested ? "" : "not attested"}`.trimEnd(),
     data: {
@@ -376,10 +455,16 @@ const SYLLABLE: Command = {
           data: { text, read: false },
         };
       }
-      const taken = split.map((spelling) => syllableTaken(spelling));
+      const taken = split.map((spelling) =>
+        syllableTaken(spelling, input.paint),
+      );
       return {
         lines: [
-          `${text}  ${split.join(" ")}`,
+          `${text}  ${split
+            .map((spelling) =>
+              input.paint(spelling, readSyllable(spelling)?.tone),
+            )
+            .join(" ")}`,
           ...taken.map((syllable) => syllable.line),
         ],
         data: {
@@ -410,10 +495,10 @@ const SANDHI: Command = {
           data: { text, read: false },
         };
       }
-      const pinyin = written(applySandhi(word, options));
+      const said = applySandhi(word, options);
       return {
-        lines: [`${text}  ${pinyin}`],
-        data: { text, read: true, pinyin },
+        lines: [`${text}  ${written(said, input.paint)}`],
+        data: { text, read: true, pinyin: written(said, PLAIN) },
       };
     });
   },
@@ -439,23 +524,96 @@ interface Transcribed {
 }
 
 /**
+ * One row of `transcribe`, before it is written in anything.
+ */
+interface Reading {
+  readonly syllables: readonly Syllable[];
+  /** Whether the Wade-Giles this came from was spelled exactly. */
+  readonly isExact?: boolean;
+}
+
+/**
+ * How one system writes a word: a syllable at a time, and what it joins on.
+ *
+ * The `write*Word` helpers are each a map and a join, and this takes them apart
+ * so that every syllable can be painted its own colour. That duplicates five
+ * separators, so each entry carries the helper it stands in for and
+ * `commands.test.ts` asserts the two agree over the whole inventory in every
+ * tone state — rather than the list being trusted.
+ */
+export interface System {
+  readonly write: (syllable: Syllable) => string;
+  readonly separator: string;
+  readonly word: (syllables: readonly Syllable[]) => string;
+}
+
+const BOPOMOFO: System = {
+  write: writeBopomofo,
+  separator: " ",
+  word: writeBopomofoWord,
+};
+
+const WADE_GILES: System = {
+  write: writeWadeGiles,
+  separator: "-",
+  word: writeWadeGilesWord,
+};
+
+const YALE: System = { write: writeYale, separator: "", word: writeYaleWord };
+
+const GWOYEU: System = {
+  write: writeGwoyeu,
+  separator: "",
+  word: writeGwoyeuWord,
+};
+
+const IPA: System = { write: writeIpa, separator: "", word: writeIpaWord };
+
+/**
+ * Every system `transcribe` writes a column for, for the guard above.
+ */
+export const SYSTEMS: readonly System[] = [
+  BOPOMOFO,
+  WADE_GILES,
+  YALE,
+  GWOYEU,
+  IPA,
+];
+
+/**
+ * Write a run of syllables in one system, each syllable in its tone's colour.
+ */
+export function writtenWith(
+  syllables: readonly Syllable[],
+  system: System,
+  paint: Painter,
+): string {
+  return syllables
+    .map((syllable) => paint(system.write(syllable), syllable.tone))
+    .join(system.separator);
+}
+
+/**
  * Write a run of syllables in every system.
  */
 function transcribed(
-  syllables: readonly Syllable[],
+  reading: Reading,
   flags: Flags,
-  isExact?: boolean,
+  paint: Painter,
 ): Transcribed {
   const { notation } = convertOptions(flags);
+  const { syllables, isExact } = reading;
   return {
     pinyin: syllables
-      .map((syllable) => writeSyllable(syllable, notation))
+      .map((syllable) =>
+        paint(writeSyllable(syllable, notation), syllable.tone),
+      )
       .join(""),
-    bopomofo: writeBopomofoWord(syllables),
-    wadeGiles: writeWadeGilesWord(syllables),
-    yale: writeYaleWord(syllables),
-    gwoyeu: writeGwoyeuWord(syllables),
-    ipa: writeIpaWord(syllables),
+    bopomofo: writtenWith(syllables, BOPOMOFO, paint),
+    wadeGiles: writtenWith(syllables, WADE_GILES, paint),
+    yale: writtenWith(syllables, YALE, paint),
+    gwoyeu: writtenWith(syllables, GWOYEU, paint),
+    ipa: writtenWith(syllables, IPA, paint),
     ...(isExact !== undefined && { isExact }),
   };
 }
@@ -468,13 +626,14 @@ function transcribed(
  * marks. Which candidates needed repairing is shown rather than hidden — that
  * is the one thing a person looking at Wade-Giles wants to know.
  */
-function fromWadeGiles(text: string, flags: Flags): readonly Transcribed[] {
+function fromWadeGiles(text: string): readonly Reading[] {
   const exact = new Set(
     readWadeGiles(text).map((syllable) => writeSyllable(syllable)),
   );
-  return readWadeGilesLoosely(text).map((syllable) =>
-    transcribed([syllable], flags, exact.has(writeSyllable(syllable))),
-  );
+  return readWadeGilesLoosely(text).map((syllable) => ({
+    syllables: [syllable],
+    isExact: exact.has(writeSyllable(syllable)),
+  }));
 }
 
 /**
@@ -495,21 +654,21 @@ const INDEXED_READERS = new Map<
 /**
  * Read whatever system the text is in, and say so.
  */
-function transcriptions(text: string, flags: Flags): readonly Transcribed[] {
+function transcriptions(text: string, flags: Flags): readonly Reading[] {
   const from = transcriptionSource(flags);
   if (from === "wade-giles") {
-    return fromWadeGiles(text, flags);
+    return fromWadeGiles(text);
   }
   const reader = INDEXED_READERS.get(from);
   if (reader !== undefined) {
-    return reader(text).map((syllable) => transcribed([syllable], flags));
+    return reader(text).map((syllable) => ({ syllables: [syllable] }));
   }
   // Bopomofo needs no flag to be recognised: it has a script of its own, so a
   // caller can only mean one thing by it. Wade-Giles and pinyin overlap almost
   // entirely, so those have to be declared.
   if (from === "bopomofo" || (from === "auto" && isBopomofo(text))) {
     const syllable = readBopomofo(text);
-    return syllable === undefined ? [] : [transcribed([syllable], flags)];
+    return syllable === undefined ? [] : [{ syllables: [syllable] }];
   }
   const split = splitSyllables(text);
   const syllables = (split ?? []).flatMap((spelling) => {
@@ -517,7 +676,7 @@ function transcriptions(text: string, flags: Flags): readonly Transcribed[] {
     /* c8 ignore next -- splitSyllables only emits syllables that read */
     return syllable === undefined ? [] : [syllable];
   });
-  return syllables.length === 0 ? [] : [transcribed(syllables, flags)];
+  return syllables.length === 0 ? [] : [{ syllables }];
 }
 
 /**
@@ -550,18 +709,25 @@ const TRANSCRIBE: Command = {
         };
       }
       return {
-        lines: found.map((one, index) =>
-          `${column(index === 0 ? text : "", 12)}${column(one.pinyin, 10)}${column(
-            one.bopomofo,
-            12,
-          )}${column(one.wadeGiles, 12)}${column(one.yale, 10)}${column(
-            one.gwoyeu,
+        lines: found.map((reading, index) => {
+          const one = transcribed(reading, input.flags, input.paint);
+          return `${column(index === 0 ? text : "", 12)}${column(
+            one.pinyin,
             10,
-          )}${column(one.ipa, 12)}${
+          )}${column(one.bopomofo, 12)}${column(one.wadeGiles, 12)}${column(
+            one.yale,
+            10,
+          )}${column(one.gwoyeu, 10)}${column(one.ipa, 12)}${
             one.isExact === false ? "marks restored" : ""
-          }`.trimEnd(),
-        ),
-        data: { text, read: true, readings: found },
+          }`.trimEnd();
+        }),
+        data: {
+          text,
+          read: true,
+          readings: found.map((reading) =>
+            transcribed(reading, input.flags, PLAIN),
+          ),
+        },
       };
     }),
 };
@@ -668,12 +834,20 @@ const NUMBER: Command = {
           data: { text, read: false },
         };
       }
-      const pinyin = counted(hanzi, reading, options, sandhi)
-        .map((syllable) => writeSyllable(syllable, notation))
-        .join(" ");
+      const said = counted(hanzi, reading, options, sandhi);
+      const spelled = said.map((syllable) => writeSyllable(syllable, notation));
       return {
-        lines: [`${column(text, 12)}${column(hanzi, 18)}${pinyin}`],
-        data: { text, hanzi, pinyin, style: options.style },
+        lines: [
+          `${column(text, 12)}${column(hanzi, 18)}${spelled
+            .map((written, at) => input.paint(written, said[at]?.tone))
+            .join(" ")}`,
+        ],
+        data: {
+          text,
+          hanzi,
+          pinyin: spelled.join(" "),
+          style: options.style,
+        },
       };
     });
   },
