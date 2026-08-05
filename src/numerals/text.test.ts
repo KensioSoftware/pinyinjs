@@ -48,11 +48,28 @@ describe("finding numbers in text", () => {
   });
 
   it("leaves an identifier alone, digits and all", () => {
-    // A time, a phone number and a name are not quantities, and the mark
-    // between their parts has no reading.
-    assertArrayEquals(segments("6:30"), ["6:30"]);
+    // A phone number and a name are not quantities, and the mark between
+    // their parts has no reading.
     assertArrayEquals(segments("3202-5625"), ["3202-5625"]);
     assertArrayEquals(segments("COVID-19"), ["COVID-19"]);
+    // A ratio is not a quantity either, and one digit after the colon is what
+    // tells it from a time.
+    assertArrayEquals(segments("16:9"), ["16:9"]);
+    assertArrayEquals(segments("2:1"), ["2:1"]);
+  });
+
+  it("reads a time, which is the one colon that says something", () => {
+    assertArrayEquals(segments("6:30"), ["6:30=六点三十分"]);
+    assertArrayEquals(segments("2:30"), ["2:30=两点三十分"]);
+    assertArrayEquals(segments("07:00"), ["07:00=七点"]);
+    assertArrayEquals(segments("6:05"), ["6:05=六点零五分"]);
+    assertArrayEquals(segments("2：30"), ["2：30=两点三十分"]);
+    // With something in front of it to keep, since the segments have to
+    // concatenate back to what was given.
+    assertArrayEquals(segments("(6:30)"), ["(", "6:30=六点三十分", ")"]);
+    // Not a time at all once the clock runs out.
+    assertArrayEquals(segments("25:30"), ["25:30"]);
+    assertArrayEquals(segments("6:75"), ["6:75"]);
   });
 
   it("leaves a number too large to count exactly as written", () => {

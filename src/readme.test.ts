@@ -180,7 +180,11 @@ describe("the examples in README.md", () => {
         "bǎifēnzhījiǔshíwǔ de rén",
       );
       assertIdentical(convert(dictionary, "3D打印"), "sān D dǎyìn");
-      assertIdentical(convert(dictionary, "6:30起床"), "6:30qǐchuáng");
+      assertIdentical(
+        convert(dictionary, "6:30起床"),
+        "liù diǎn sānshí fēn qǐchuáng",
+      );
+      assertIdentical(convert(dictionary, "16:9的"), "16:9de");
     });
 
     it("reads the numbers the README reads", () => {

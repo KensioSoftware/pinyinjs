@@ -157,9 +157,30 @@ for. Digits spelled out are not a word — they are digits — so 1997年 is
 `yī jiǔ jiǔ qī nián`. Sandhi crosses the boundary, so 1个 is `yí gè`: the tone
 the 一 assimilates to is in the next word.
 
-**A digit touching `:`, `-`, `/` or their full-width forms is left exactly as
-written.** 6:30 is a time, 3202-5625 is a phone number and COVID-19 is a name;
-none of them is a quantity, and the mark between the parts has no reading.
+**A digit touching `-`, `/` or their full-width forms is left exactly as
+written.** 3202-5625 is a phone number and COVID-19 is a name; neither is a
+quantity, and the mark between the parts has no reading.
+
+**A colon is the exception, because a time does have one.**
+
+```ts
+convert(dictionary, "6:30起床"); // "liù diǎn sānshí fēn qǐchuáng"
+convert(dictionary, "2:30"); // "liǎng diǎn sānshí fēn" — two o'clock is 两
+convert(dictionary, "12:00"); // "shí'èr diǎn" — no 零零分 on the hour
+convert(dictionary, "16:9的"); // "16:9de" — a ratio, and left alone
+```
+
+Two digits after the colon and no more, which is what tells a time from a
+ratio. Measured over Tatoeba and zh.wikipedia the shape catches 104 runs and
+every one is a time: none has an hour above 23 or a minute above 59, and the
+four colon runs that are _not_ times — 16:9, 2:1, 0:2, 0:1 — all have a single
+digit after the colon. Scores and proportions are read with 比 and that is not
+attempted here.
+
+The 分 is written even where a speaker would drop it, because 六点三十 without
+it is the decimal 6.30 said aloud — the same 点 does both jobs. The hour, the
+minutes and the two markers are separate words, which is the grouping the same
+time gets when the text writes 6点30分 out in 汉字 to begin with.
 
 ### What it does not guess
 

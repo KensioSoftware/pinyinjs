@@ -513,6 +513,17 @@ describe("the examples in docs/", () => {
   });
 
   describe("sandhi", () => {
+    it("keeps the 一 that is not counting, as the page shows", () => {
+      assertIdentical(convert(dictionary, "十一月"), "shíyīyuè");
+      assertIdentical(convert(dictionary, "十一点"), "shíyīdiǎn");
+      assertIdentical(convert(dictionary, "第一次"), "dìyīcì");
+      assertIdentical(convert(dictionary, "万一你来"), "wànyī nǐ lái");
+      assertIdentical(convert(dictionary, "31日"), "sānshíyī rì");
+      assertIdentical(convert(dictionary, "一个"), "yí gè");
+      // And the one it gets wrong, which the page names.
+      assertIdentical(convert(dictionary, "当时一个人"), "dāngshí yī gè rén");
+    });
+
     it("flattens 不 before a fourth tone only", () => {
       assertIdentical(convert(dictionary, "不是"), "bú shì");
       assertIdentical(convert(dictionary, "不对"), "bú duì");
@@ -638,8 +649,14 @@ describe("the examples in docs/", () => {
       );
     });
 
-    it("leaves an identifier as written, as the page says", () => {
-      assertIdentical(convert(dictionary, "6:30起床"), "6:30qǐchuáng");
+    it("reads a time and leaves an identifier as written, as the page says", () => {
+      assertIdentical(
+        convert(dictionary, "6:30起床"),
+        "liù diǎn sānshí fēn qǐchuáng",
+      );
+      assertIdentical(convert(dictionary, "2:30"), "liǎng diǎn sānshí fēn");
+      assertIdentical(convert(dictionary, "12:00"), "shí'èr diǎn");
+      assertIdentical(convert(dictionary, "16:9的"), "16:9de");
     });
 
     it("writes a counted number as one word and spells a year out", () => {

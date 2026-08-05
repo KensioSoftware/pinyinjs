@@ -281,7 +281,14 @@ describe("numbers in text", () => {
   });
 
   it("leaves an identifier exactly as written", () => {
-    assertIdentical(written("6:30的"), "6:30de");
+    assertIdentical(written("3202-5625的"), "3202-5625de");
+    assertIdentical(written("16:9的"), "16:9de");
+  });
+
+  it("reads a time, a word at a time", () => {
+    assertIdentical(written("6:30的"), "liù diǎn sānshí fēn de");
+    assertIdentical(written("2:30的"), "liǎng diǎn sānshí fēn de");
+    assertIdentical(written("12:00的"), "shí'èr diǎn de");
   });
 
   it("leaves every digit alone when asked", () => {
