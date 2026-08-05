@@ -195,6 +195,55 @@ Inheriting jieba's tags means inheriting its mistakes in the other direction
 too. 无缝钢管 is tagged `nz`, so it converts as `Wúfènggāngguǎn` with a capital
 it has not earned.
 
+### 姓 and 名 are written apart
+
+```ts
+convert(dictionary, "毛泽东"); // "Máo Zédōng"
+convert(dictionary, "李白"); // "Lǐ Bái"
+convert(dictionary, "司马迁"); // "Sīmǎ Qiān" — a compound surname
+convert(dictionary, "马克思"); // "Mǎkèsī" — a transliteration, left whole
+```
+
+GB/T 16159 5.1 writes a personal name as two words, each capitalised. 毛泽东 is
+a dictionary entry, though, so the decoder produces **one** word — and reading
+it as one word is what makes it read correctly at all. That makes this a split,
+and [splitting contradicts](#why-splitting-is-harder-than-joining) the
+dictionary's own claim that the characters belong together.
+
+A surname list is the obvious condition and it is not good enough. 马克思,
+高尔基, 巴赫 and 牛顿 all begin with a surname character and not one of them is
+a Chinese name; the shape is identical to 毛 + 泽东.
+
+**The condition is CC-CEDICT's own capitalisation, which states the boundary
+instead of leaving it to be inferred:**
+
+| Entry  | CC-CEDICT pinyin | Boundary        |
+| ------ | ---------------- | --------------- |
+| 毛泽东 | `Mao2 Ze2 dong1` | 毛 ｜ 泽东      |
+| 司马迁 | `Si1 ma3 Qian1`  | 司马 ｜ 迁      |
+| 马克思 | `Ma3 ke4 si1`    | none — one word |
+
+So a compound surname is recognised without a list of compound surnames, and a
+transliteration is excluded without a list of transliterations. It is the same
+source and the same signal that already vetoes jieba's proper-noun tags,
+extended from _whether_ a word is a proper noun to _where_ its 姓 ends. jieba's
+`nr` is required on top, because CC-CEDICT capitalises the generic in 丁青县
+`Ding1 qing1 Xian4` exactly the same way and that is the place rule's business.
+
+Measured over 88,866 lines of Tatoeba and zh.wikipedia the rule fires **304
+times over 127 distinct words**, and nearly all of them are a boundary the
+standard wants — 蒋介石, 孙中山, 汪精卫, 诸葛亮, 夏目漱石, and 富士山 →
+`Fùshì Shān` among the words jieba calls a name and CC-CEDICT still marks.
+
+Two things it gets wrong, both inherited:
+
+- **A transliteration CC-CEDICT capitalised as though it were a Chinese name.**
+  白求恩 is `Bai2 Qiu2 en1`, so Bethune comes out `Bái Qiú'ēn`.
+- **Names the tag misses entirely.** 习近平 is tagged `nrfg` and 周恩来 `t`,
+  neither of which counts as a proper noun, so both convert with no capital at
+  all — `xíjìnpíng` and `zhōu'ēnlái` — and never reach this rule. That is a
+  tagging gap rather than a boundary one.
+
 ### 老王 is Lǎo Wáng
 
 ```ts
@@ -271,8 +320,15 @@ something readable rather than something wrong:
 | --------------------------------------------------------- | ------------------------- |
 | 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit |
 | 成语 outside the curated list                             | written solid, no hyphen  |
+| an organisation apart from its generic: 北京 大学         | `Běijīngdàxué`, unsplit   |
 
-Both are gaps by decision rather than by omission, and the decision is measured.
+The first two are gaps by decision rather than by omission, and the decision is
+measured. The third is 5.1's other half: the same clause that puts 姓 and 名
+apart puts a proper noun apart from its generic, and the [place
+rule](#word-spacing-分词连写) does that only where jieba tags the word `ns`.
+北京大学 is an organisation, so no rule reaches it and no CC-CEDICT boundary
+does either — it is written `[Bei3 jing1 Da4 xue2]`, but jieba does not call it
+a person, which is what the [姓/名 rule](#-and-are-written-apart) requires.
 
 **Splitting a 4+ syllable compound needs to know where the boundary is, and the
 only evidence available is uncorrelated with the standard.** Over 88,866 lines

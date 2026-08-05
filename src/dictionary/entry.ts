@@ -47,6 +47,16 @@ export interface DictionaryEntry {
   readonly partOfSpeech: string;
   readonly isProperNoun: boolean;
   /**
+   * Where the 姓 ends, in characters, for a name written 姓 then 名.
+   *
+   * Read off CC-CEDICT's own capitalisation — 毛泽东 is `[Mao2 Ze2 dong1]` and
+   * 司马迁 `[Si1 ma3 Qian1]` — so a compound surname needs no list to be
+   * recognised. Absent where the source marks no boundary, which is what keeps
+   * 马克思 `[Ma3 ke4 si1]` in one piece. Read by `nameBoundaryOf` in
+   * `src/sources/cedict.ts`, which is where the interpretation lives.
+   */
+  readonly nameBoundary?: number;
+  /**
    * Other readings this word's single character has, most likely first.
    *
    * Only single-character entries carry these. They are the polyphone priors the

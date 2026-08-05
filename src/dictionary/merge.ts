@@ -1,5 +1,5 @@
-import { isSingleCharacter } from "../script/characters.js";
-import type { CedictEntry } from "../sources/cedict.js";
+import { characterCount, isSingleCharacter } from "../script/characters.js";
+import { type CedictEntry, nameBoundaryOf } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import {
   FREQUENCY_FIELD,
@@ -56,6 +56,8 @@ export interface MergeStats {
    * Words jieba tagged a proper noun that CC-CEDICT's lowercase pinyin vetoed.
    */
   readonly properNounVetoes: number;
+  /** Entries where CC-CEDICT's capitalisation states where the 姓 ends. */
+  readonly nameBoundaries: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
 }
@@ -385,6 +387,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
   let variantSpellings = 0;
   let taiwanReadings = 0;
   let properNounVetoes = 0;
+  let nameBoundaries = 0;
   let phraseWords = 0;
   let cedictWords = 0;
   let characters = 0;
@@ -566,6 +569,22 @@ export function mergeSources(sources: MergeSources): MergeResult {
       properNounVetoes++;
     }
 
+    // ── Where the 姓 ends, where CC-CEDICT says so ────────────
+    // Only for a word that survived the veto above: an entry no one takes for a
+    // proper noun has no 姓 to end. The boundary counts characters, so it is
+    // only meaningful where this word reads one syllable per character — 儿化
+    // reads two characters as one syllable and could not be cut by it.
+    const isAligned = characterCount(word) === reading.length;
+    const nameBoundary =
+      isProperNoun && isAligned
+        ? cedictEntries
+            .map((entry) => nameBoundaryOf(entry.readings))
+            .find((at) => at !== undefined)
+        : undefined;
+    if (nameBoundary !== undefined) {
+      nameBoundaries++;
+    }
+
     // ── Polyphone priors, for single characters only ──────────
     const characterReadings = defaults.get(word) ?? [];
     const alternates = isSingleCharacter(word)
@@ -582,6 +601,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       frequency: jiebaEntry?.frequency ?? 0,
       partOfSpeech,
       isProperNoun,
+      ...(nameBoundary !== undefined && { nameBoundary }),
       ...(alternates.length > 0 && { alternates }),
     });
 
@@ -610,6 +630,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       variantSpellings,
       taiwanReadings,
       properNounVetoes,
+      nameBoundaries,
       rejected: rejected.size,
     },
   };

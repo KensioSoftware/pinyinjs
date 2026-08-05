@@ -30,6 +30,25 @@ const ALTERNATE = ",";
 const PROPER_NOUN_FLAG = "p";
 
 /**
+ * Where the 姓 ends, written as a digit after the proper-noun flag.
+ *
+ * `p` alone is a proper noun with no boundary stated; `p1` is one whose 姓 is
+ * the first character, `p2` a compound surname. It rides in the flags column
+ * rather than taking a column of its own because it is only ever present on a
+ * proper noun, and only 8,205 of 723,139 keys carry one — a sixth column would
+ * cost a separator on every line to say nothing on almost all of them.
+ */
+const NAME_BOUNDARY = /^p(?<at>\d)$/u;
+
+/**
+ * The 姓 boundary a flags column states, or undefined where it states none.
+ */
+function nameBoundaryIn(flags: string): number | undefined {
+  const at = NAME_BOUNDARY.exec(flags)?.groups?.["at"];
+  return at === undefined ? undefined : Number(at);
+}
+
+/**
  * A compiled dictionary, in the form it is written to disk and read back.
  *
  * Three parallel pieces, all indexed by the same position: search `keys` for a
@@ -233,7 +252,9 @@ export function buildArtifact(
         isDerivable(key, reading, defaults) ? "" : reading,
         entry.readings.tw === undefined ? "" : encodeReading(entry.readings.tw),
         entry.partOfSpeech,
-        entry.isProperNoun ? PROPER_NOUN_FLAG : "",
+        entry.isProperNoun
+          ? `${PROPER_NOUN_FLAG}${entry.nameBoundary === undefined ? "" : String(entry.nameBoundary)}`
+          : "",
         (entry.alternates ?? [])
           .map((alternate) => encodeReading(alternate))
           .join(ALTERNATE),
@@ -285,6 +306,7 @@ export function readArtifact(
       flags = "",
       alternates = "",
     ] = (lines[at] ?? "").split(COLUMN);
+    const nameBoundary = nameBoundaryIn(flags);
 
     const stored =
       reading === ""
@@ -307,6 +329,7 @@ export function readArtifact(
       frequency: frequencies.bucketOf(at),
       partOfSpeech,
       isProperNoun: flags.includes(PROPER_NOUN_FLAG),
+      ...(nameBoundary !== undefined && { nameBoundary }),
       ...(alternates !== "" && {
         alternates: alternates
           .split(ALTERNATE)

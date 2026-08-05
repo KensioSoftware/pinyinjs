@@ -632,6 +632,48 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.properNounVetoes, 0);
     });
 
+    it("carries the 姓 boundary CC-CEDICT's capitalisation states", () => {
+      const { byWord, result } = merge({
+        phrase: new Map([["毛泽东", ["máo", "zé", "dōng"]]]),
+        cedict: [
+          cedictEntry("毛澤東", "毛泽东", "Mao2 Ze2 dong1", {
+            isProperNoun: true,
+          }),
+        ],
+        jieba: new Map([["毛泽东", { frequency: 5638, partOfSpeech: "nr" }]]),
+      });
+      assertIdentical(byWord.get("毛泽东")?.nameBoundary, 1);
+      assertIdentical(result.stats.nameBoundaries, 1);
+    });
+
+    it("states no boundary for a transliteration", () => {
+      // 马克思 is `Ma3 ke4 si1`: capitalised once and never again, which is
+      // what keeps Marx from coming apart as `Mǎ Kèsī`.
+      const { byWord, result } = merge({
+        phrase: new Map([["马克思", ["mǎ", "kè", "sī"]]]),
+        cedict: [
+          cedictEntry("馬克思", "马克思", "Ma3 ke4 si1", {
+            isProperNoun: true,
+          }),
+        ],
+        jieba: new Map([["马克思", { frequency: 1160, partOfSpeech: "nr" }]]),
+      });
+      assertUndefined(byWord.get("马克思")?.nameBoundary);
+      assertIdentical(result.stats.nameBoundaries, 0);
+    });
+
+    it("states no boundary on a word the veto demoted", () => {
+      // Nothing that is not a proper noun has a 姓 to end, so the boundary is
+      // not carried even where the capitalisation would otherwise state one.
+      const { byWord, result } = merge({
+        phrase: new Map([["沙发", ["shā", "fā"]]]),
+        cedict: [cedictEntry("沙發", "沙发", "sha1 Fa1")],
+        jieba: new Map([["沙发", { frequency: 862, partOfSpeech: "nz" }]]),
+      });
+      assertUndefined(byWord.get("沙发")?.nameBoundary);
+      assertIdentical(result.stats.nameBoundaries, 0);
+    });
+
     it("keeps jieba's verdict where CC-CEDICT has nothing to say", () => {
       const { byWord } = merge({
         phrase: new Map([["襄阳", ["xiāng", "yáng"]]]),

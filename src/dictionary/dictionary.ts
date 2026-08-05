@@ -16,6 +16,11 @@ const ALTERNATE = ",";
 const PROPER_NOUN_FLAG = "p";
 
 /**
+ * Where the 姓 ends, written as a digit after the proper-noun flag: `p1`, `p2`.
+ */
+const NAME_BOUNDARY = /^p(?<at>\d)$/u;
+
+/**
  * What the dictionary knows about one word.
  */
 export interface WordEntry {
@@ -26,6 +31,15 @@ export interface WordEntry {
   readonly taiwanReading?: readonly Syllable[];
   readonly partOfSpeech: string;
   readonly isProperNoun: boolean;
+  /**
+   * Where the 姓 ends, in characters, for a name written 姓 then 名.
+   *
+   * Present only where CC-CEDICT's own capitalisation states one: 毛泽东 is
+   * `[Mao2 Ze2 dong1]` and 司马迁 `[Si1 ma3 Qian1]`, so a compound surname
+   * needs no list. Absent for 马克思 `[Ma3 ke4 si1]`, which is why a
+   * transliteration stays one word.
+   */
+  readonly nameBoundary?: number;
   /**
    * Decoding cost, where lower means more likely.
    *
@@ -123,6 +137,8 @@ export class Dictionary {
         : reading;
     const decoded = decodeReading(encoded) ?? [];
     const taiwanReading = decodeReading(taiwan);
+    const boundary = NAME_BOUNDARY.exec(flags)?.groups?.["at"];
+    const nameBoundary = boundary === undefined ? undefined : Number(boundary);
 
     return {
       word,
@@ -130,6 +146,7 @@ export class Dictionary {
       ...(taiwanReading !== undefined && { taiwanReading }),
       partOfSpeech,
       isProperNoun: flags.includes(PROPER_NOUN_FLAG),
+      ...(nameBoundary !== undefined && { nameBoundary }),
       cost: this.#frequencies.costOf(at),
     };
   }

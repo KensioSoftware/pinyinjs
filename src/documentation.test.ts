@@ -272,6 +272,54 @@ describe("the examples in docs/", () => {
       );
     });
 
+    // The page's claim is about *where the boundary comes from*, so the
+    // assertion is on the mechanism and not only on the four outputs: the
+    // dictionary states the boundary, it lands after two characters for a
+    // compound surname without anything knowing 司马 is one, and it is absent
+    // for a transliteration — which is the whole reason Marx stays one word.
+    it("writes 姓 and 名 apart, on a boundary the dictionary states", () => {
+      assertIdentical(dictionary.lookup("毛泽东")?.nameBoundary, 1);
+      assertIdentical(dictionary.lookup("司马迁")?.nameBoundary, 2);
+      assertUndefined(dictionary.lookup("马克思")?.nameBoundary);
+
+      assertIdentical(convert(dictionary, "毛泽东"), "Máo Zédōng");
+      assertIdentical(convert(dictionary, "李白"), "Lǐ Bái");
+      assertIdentical(convert(dictionary, "司马迁"), "Sīmǎ Qiān");
+      assertIdentical(convert(dictionary, "马克思"), "Mǎkèsī");
+    });
+
+    it("writes the names the page counts among its 304 firings", () => {
+      assertIdentical(convert(dictionary, "蒋介石"), "Jiǎng Jièshí");
+      assertIdentical(convert(dictionary, "孙中山"), "Sūn Zhōngshān");
+      assertIdentical(convert(dictionary, "诸葛亮"), "Zhūgě Liàng");
+      assertIdentical(convert(dictionary, "夏目漱石"), "Xiàmù Shùshí");
+      // Not a person, and the page says so: jieba calls 富士山 a name and
+      // CC-CEDICT marks the generic, so the boundary is the standard's anyway.
+      assertIdentical(convert(dictionary, "富士山"), "Fùshì Shān");
+      // And the case the place rule handles instead, tagged ns rather than nr.
+      assertIdentical(convert(dictionary, "丁青县"), "Dīngqīng Xiàn");
+    });
+
+    it("leaves an organisation unsplit, which is the gap the page records", () => {
+      // The page says 北京大学 carries a boundary and still does not split,
+      // because the rule wants jieba's nr and this is nt. Both halves of that
+      // are asserted, so the entry cannot go stale if either changes.
+      assertIdentical(dictionary.lookup("北京大学")?.nameBoundary, 2);
+      assertIdentical(dictionary.lookup("北京大学")?.partOfSpeech, "nt");
+      assertIdentical(convert(dictionary, "北京大学"), "Běijīngdàxué");
+    });
+
+    it("leaves the two the page says it gets wrong", () => {
+      // CC-CEDICT capitalises Bethune as though it were a Chinese name.
+      assertIdentical(dictionary.lookup("白求恩")?.nameBoundary, 1);
+      assertIdentical(convert(dictionary, "白求恩"), "Bái Qiú'ēn");
+      // And a name the tag misses never reaches the rule at all.
+      assertIdentical(dictionary.lookup("习近平")?.partOfSpeech, "nrfg");
+      assertFalse(dictionary.lookup("习近平")?.isProperNoun ?? true);
+      assertIdentical(convert(dictionary, "习近平"), "xíjìnpíng");
+      assertIdentical(convert(dictionary, "周恩来"), "zhōu'ēnlái");
+    });
+
     it("capitalises the 称呼语 in front of a surname", () => {
       assertIdentical(
         convert(
@@ -896,17 +944,18 @@ describe("the examples in docs/", () => {
           hanzi,
         );
       }
-      // And the five the page says are word boundaries rather than hyphens:
-      // the pinyin has the same defect in the same place.
+      // 毛泽东 was one of the five the page recorded as a word boundary rather
+      // than a hyphen defect. The 姓/名 rule supplies the boundary, so both
+      // come out as the attested forms do — bar the ê a real text drops.
       assertIdentical(
         convertToWadeGiles(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}", {
           notation: "none",
         }),
-        "Mao-ts\u{EA}-tung",
+        "Mao Ts\u{EA}-tung",
       );
       assertIdentical(
         convert(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}"),
-        "M\u{E1}oz\u{E9}d\u{14D}ng",
+        "M\u{E1}o Z\u{E9}d\u{14D}ng",
       );
       // Supply the boundary and the generic case comes out attested.
       assertIdentical(
