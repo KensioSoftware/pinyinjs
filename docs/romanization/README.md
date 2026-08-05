@@ -290,7 +290,7 @@ same place.
 
 ## How ambiguous is Wade-Giles, really?
 
-`pnpm romanization` measures it. Over the 424 syllables of the
+`pnpm transcription` measures it. Over the 424 syllables of the
 [inventory](../syllables/#well-formed-is-not-the-same-as-real):
 
 |                                                   |     |
@@ -334,7 +334,7 @@ splitWadeGiles("hua-êrh"); // ["hua-êrh"] — that hyphen is part of 花儿
 readWadeGilesWord("pei³ching¹"); // 北京, běijīng
 ```
 
-`pnpm romanization` measures it over the same 411,956 multi-syllable words of
+`pnpm transcription` measures it over the same 411,956 multi-syllable words of
 the phrase corpus the ambiguity figures above come from, written in Wade-Giles
 and run together:
 
@@ -528,7 +528,7 @@ CC-CEDICT, Unihan and the phrase corpus are all pinyin — so unlike every other
 claim here, the tables could not be scored against the data that ships. They are
 scored instead against an outside syllabary: `test/fixtures/syllabary.ts` holds
 all 417 rows of Wikipedia's _Comparison of Chinese transcription systems_, and
-`src/romanization/syllabary.test.ts` asserts every one of them, in all five
+`src/transcription/syllabary.test.ts` asserts every one of them, in all five
 systems — 3,336 cells, since GR has four columns to everyone else's one.
 
 **The Yale and IPA tables were derived from those columns rather than typed and
@@ -577,8 +577,11 @@ ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥�
             ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥
 ```
 
-`--from` takes `wade-giles`, `yale`, `gwoyeu` or `ipa`. Bopomofo needs none of
-them: it has a script of its own. See [the command line](../cli/).
+`--from` takes `pinyin`, `wade-giles`, `bopomofo`, `yale`, `gwoyeu` or `ipa`,
+and defaults to working it out. Bopomofo is the only one detection can be sure
+of, since it has a script of its own; everything else is read as pinyin unless
+declared, because `chi` is well formed in both pinyin and Wade-Giles and means
+a different syllable in each. See [the command line](../cli/).
 
 ## What is not built
 

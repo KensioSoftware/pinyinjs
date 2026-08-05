@@ -16,19 +16,19 @@
  * spelling out of 400 and it is an extremely common one.
  *
  * The tables themselves are checked against an independent syllabary in
- * `src/romanization/syllabary.test.ts`, which is where correctness lives; this
+ * `src/transcription/syllabary.test.ts`, which is where correctness lives; this
  * script is about what the mapping can and cannot do.
  */
 import {
   readBopomofo,
   writeBopomofo,
-} from "../../src/romanization/bopomofo.js";
-import { readGwoyeu, writeGwoyeu } from "../../src/romanization/gwoyeu.js";
+} from "../../src/transcription/bopomofo.js";
+import { readGwoyeu, writeGwoyeu } from "../../src/transcription/gwoyeu.js";
 import {
   readIpa,
   writeIpa,
   writeIpaSymbols,
-} from "../../src/romanization/ipa.js";
+} from "../../src/transcription/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
@@ -36,12 +36,12 @@ import {
   splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesSpelling,
-} from "../../src/romanization/wade-giles.js";
+} from "../../src/transcription/wade-giles.js";
 import {
   readYale,
   writeYale,
   writeYaleSpelling,
-} from "../../src/romanization/yale.js";
+} from "../../src/transcription/yale.js";
 import { parsePhrasePinyin } from "../../src/sources/phrase-pinyin.js";
 import { DICTIONARY_SYLLABLES } from "../../src/syllable/inventory.js";
 import {

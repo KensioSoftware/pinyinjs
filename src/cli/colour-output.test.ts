@@ -37,7 +37,7 @@ const terminal: CliEnvironment = { ...environment, colours: 256 };
 /**
  * Every syllable of the inventory in every tone state, with and without 儿化.
  *
- * The 5,088 forms `pnpm romanization` scores, since what is being checked here
+ * The 5,088 forms `pnpm transcription` scores, since what is being checked here
  * is that taking each system's word writer apart changes nothing it writes.
  */
 function everyForm(): readonly Syllable[] {

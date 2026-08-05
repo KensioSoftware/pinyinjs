@@ -202,7 +202,7 @@ describe("Yale over the whole inventory", () => {
         for (const erhua of [false, true]) {
           const form = { ...base, tone, ...(erhua && { erhua: true }) };
           // Numbered, because the marks cannot write the neutral tone: see
-          // the round trip in `pnpm romanization`.
+          // the round trip in `pnpm transcription`.
           const back = readYale(writeYale(form, { tones: "numbers" }));
           const found = back.find(
             (candidate) =>

@@ -10,9 +10,9 @@ import { describe, it } from "vitest";
 import { convertPieces } from "../decode/convert.js";
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary } from "../dictionary/source.js";
-import { writeBopomofoWord } from "../romanization/bopomofo.js";
-import { writeWadeGilesWord } from "../romanization/wade-giles.js";
-import { readWadeGilesWord } from "../romanization/wade-giles.js";
+import { writeBopomofoWord } from "../transcription/bopomofo.js";
+import { writeWadeGilesWord } from "../transcription/wade-giles.js";
+import { readWadeGilesWord } from "../transcription/wade-giles.js";
 import { writeSyllable } from "../syllable/syllable.js";
 import { convertToWadeGiles, toTranscription } from "./transcription.js";
 

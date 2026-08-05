@@ -165,14 +165,35 @@ Proper nouns always; the first word of a sentence only where the source is
 punctuated as one. That punctuation is the only thing separating 学生 looked up
 as a word from 这是我的书。written as a sentence, and a comma does not count.
 
-Proper-noun detection comes from jieba's part-of-speech tags — `nr` person,
-`ns` place, `nt` organisation, `nz` other. Personal names absent from every
-dictionary are recovered from a closed surname list of about 500 entries plus
-"the next one or two characters are the given name", which is what gets
-`Lǐ Huá`.
+A proper noun is a flag on a dictionary entry, set from jieba's part-of-speech
+tags — `nr` person, `ns` place, `nt` organisation, `nz` other — and demoted
+again where CC-CEDICT writes the headword's pinyin in lower case. There is no
+name rule of any kind: no surname list, and nothing that looks at what follows
+a surname.
 
-Inheriting jieba's tags means inheriting its mistakes. 无缝钢管 is tagged `nz`,
-so it converts as `Wúfènggāngguǎn` with a capital it has not earned.
+`Lǐ Huá` falls out of the dictionary being consulted a character at a time.
+李华 is not an entry, so it decodes as two single-character words, and 李 and 华
+each carry the flag on their own — 李 tagged `nr`, and 华 tagged `ns`, a place
+name rather than anything about given names. Both capitals and the space
+between them come from that, not from recognising a person.
+
+Which means it works where the characters happen to be flagged and nowhere
+else, and the gaps are easy to find. 42 of the first hundred 百家姓 surnames
+carry no flag at all, so the surname loses its capital:
+
+```ts
+convert(dictionary, "李华"); // "Lǐ Huá"
+convert(dictionary, "钱华"); // "qián Huá" — 钱 is not flagged
+convert(dictionary, "孙华"); // "sūn Huá"
+convert(dictionary, "李華"); // "Lǐ huá" — 華 is not flagged where 华 is
+```
+
+A surname list would capitalise all four of those. That the last three come out
+this way is what says there is not one.
+
+Inheriting jieba's tags means inheriting its mistakes in the other direction
+too. 无缝钢管 is tagged `nz`, so it converts as `Wúfènggāngguǎn` with a capital
+it has not earned.
 
 ### 老王 is Lǎo Wáng
 

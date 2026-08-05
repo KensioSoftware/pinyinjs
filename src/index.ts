@@ -165,8 +165,8 @@ export {
   readBopomofo,
   writeBopomofo,
   writeBopomofoWord,
-} from "./romanization/bopomofo.js";
-export type { BopomofoOptions } from "./romanization/bopomofo.js";
+} from "./transcription/bopomofo.js";
+export type { BopomofoOptions } from "./transcription/bopomofo.js";
 
 export {
   readWadeGiles,
@@ -174,30 +174,30 @@ export {
   writeWadeGiles,
   writeWadeGilesSpelling,
   writeWadeGilesWord,
-} from "./romanization/wade-giles.js";
-export type { WadeGilesOptions } from "./romanization/wade-giles.js";
+} from "./transcription/wade-giles.js";
+export type { WadeGilesOptions } from "./transcription/wade-giles.js";
 
 export {
   readYale,
   writeYale,
   writeYaleSpelling,
   writeYaleWord,
-} from "./romanization/yale.js";
-export type { YaleOptions } from "./romanization/yale.js";
+} from "./transcription/yale.js";
+export type { YaleOptions } from "./transcription/yale.js";
 
 export {
   readGwoyeu,
   writeGwoyeu,
   writeGwoyeuWord,
-} from "./romanization/gwoyeu.js";
+} from "./transcription/gwoyeu.js";
 
 export {
   readIpa,
   writeIpa,
   writeIpaSymbols,
   writeIpaWord,
-} from "./romanization/ipa.js";
-export type { IpaOptions } from "./romanization/ipa.js";
+} from "./transcription/ipa.js";
+export type { IpaOptions } from "./transcription/ipa.js";
 
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";

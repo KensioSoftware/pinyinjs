@@ -22,13 +22,13 @@ import {
   readBopomofo,
   writeBopomofo,
   writeBopomofoWord,
-} from "../romanization/bopomofo.js";
+} from "../transcription/bopomofo.js";
 import {
   readGwoyeu,
   writeGwoyeu,
   writeGwoyeuWord,
-} from "../romanization/gwoyeu.js";
-import { readIpa, writeIpa, writeIpaWord } from "../romanization/ipa.js";
+} from "../transcription/gwoyeu.js";
+import { readIpa, writeIpa, writeIpaWord } from "../transcription/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
@@ -36,8 +36,8 @@ import {
   splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesWord,
-} from "../romanization/wade-giles.js";
-import { readYale, writeYale, writeYaleWord } from "../romanization/yale.js";
+} from "../transcription/wade-giles.js";
+import { readYale, writeYale, writeYaleWord } from "../transcription/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -212,7 +212,7 @@ const CONVERT: Command = {
     const system = systemNamed(transcriptionSystem(input.flags));
     if (system !== undefined) {
       // hanzi → pinyin → the system, which is the shape ROADMAP.md predicted
-      // for the whole of `romanization`. See toTranscription for why the word
+      // for the whole of `transcription`. See toTranscription for why the word
       // grouping is shared and only the join is the system's.
       return input.texts.map((text) => {
         const written = toTranscription(
