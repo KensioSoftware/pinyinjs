@@ -9,7 +9,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { type CedictEntry, parseCedict } from "./cedict.js";
+import { type CedictEntry, nameBoundaryOf, parseCedict } from "./cedict.js";
 
 /**
  * Real lines from CC-CEDICT, kept verbatim so the parser is tested against the
@@ -109,6 +109,30 @@ describe("CC-CEDICT source", () => {
       const entry = entryFor(parseCedict(SAMPLE), "A圈兒");
       assertNonNullable(entry);
       assertTrue(entry.isProperNoun);
+    });
+  });
+
+  describe("where the 姓 ends", () => {
+    it("reads the boundary off the second capital", () => {
+      assertIdentical(nameBoundaryOf(["Mao2", "Ze2", "dong1"]), 1);
+    });
+
+    it("puts it after a compound surname without knowing what one is", () => {
+      assertIdentical(nameBoundaryOf(["Si1", "ma3", "Qian1"]), 2);
+    });
+
+    it("finds none in a transliteration, which is what keeps Marx whole", () => {
+      assertUndefined(nameBoundaryOf(["Ma3", "ke4", "si1"]));
+    });
+
+    it("finds none where the first syllable is not capitalised", () => {
+      // A common noun says nothing about 姓 and 名, even if some later
+      // syllable happens to be capitalised: 阿Q正传 is not a person.
+      assertUndefined(nameBoundaryOf(["yin2", "Hang2"]));
+    });
+
+    it("finds none in a single syllable", () => {
+      assertUndefined(nameBoundaryOf(["Mao2"]));
     });
   });
 

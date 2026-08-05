@@ -290,6 +290,62 @@ export const ADDRESS_PREFIX: GroupingRule = {
 };
 
 /**
+ * 姓 and 名 are written apart: 毛泽东 is `Máo Zédōng`.
+ *
+ * GB/T 16159 5.1 writes a personal name as two words, each capitalised. The
+ * decoder produces one, because 毛泽东 is a dictionary entry and reading it as
+ * one word is what makes it read correctly at all — so this is a *split*, and
+ * splitting contradicts the dictionary's own claim that the characters are one
+ * word. That needs a condition strong enough to survive the whole dictionary,
+ * and the usual one — a surname list — is not it: 马克思, 高尔基, 巴赫 and 牛顿
+ * all begin with a surname character and none of them is a Chinese name.
+ *
+ * **The condition is CC-CEDICT's own capitalisation**, which states the
+ * boundary outright rather than leaving it to be inferred: 毛泽东 is
+ * `[Mao2 Ze2 dong1]`, 司马迁 is `[Si1 ma3 Qian1]`, and 马克思 is
+ * `[Ma3 ke4 si1]` with no second capital at all. So a compound surname is
+ * recognised without a list of compound surnames, and a transliteration is
+ * excluded without a list of transliterations. It is the same source and the
+ * same signal the proper-noun veto already trusts — see "jieba's 专名 tags need
+ * a second opinion" in ROADMAP.md — extended from *whether* a word is a proper
+ * noun to *where* its 姓 ends.
+ *
+ * jieba's `nr` is required on top, because the stored boundary is not only
+ * about people: CC-CEDICT capitalises the generic in 丁青县 `[Ding1 qing1
+ * Xian4]` the same way, and that is `PLACE_GENERICS`' business.
+ *
+ * Both halves are proper nouns — 名 takes a capital of its own, `Máo Zédōng`
+ * and not `Máo zédōng`.
+ *
+ * Measured over 88,866 lines of Tatoeba and zh.wikipedia it fires **304 times
+ * over 127 distinct words**, and what it produces is a boundary GB/T 16159
+ * wants in all but a handful: 蒋介石, 孙中山, 毛泽东, 邓小平, 诸葛亮 and
+ * 夏目漱石 among the names, and 富士山 → `Fùshì Shān`, 柏林墙 → `Bólín Qiáng`
+ * among the words jieba calls a name and CC-CEDICT still marks. See
+ * `docs/orthography/` for the ones it gets wrong.
+ */
+export const PERSONAL_NAME: GroupingRule = {
+  name: "personal-name",
+  apply: (words, dictionary) =>
+    words.flatMap((word) => {
+      const at = dictionary.lookup(word.text)?.nameBoundary;
+      if (
+        at === undefined ||
+        !word.isProperNoun ||
+        word.partOfSpeech !== "nr"
+      ) {
+        return [word];
+      }
+      const split = splitAt(word, at);
+      if (split === undefined) {
+        return [word];
+      }
+      // 名 is a proper noun in its own right, so it takes its own capital.
+      return split.map((part) => ({ ...part, isProperNoun: true }));
+    }),
+};
+
+/**
  * The rules applied by default, in order.
  *
  * The hyphens come last, because every rule before them moves word boundaries
@@ -299,6 +355,7 @@ export const GROUPING_RULES: readonly GroupingRule[] = [
   ASPECT_PARTICLES,
   SUFFIXES,
   PLACE_GENERICS,
+  PERSONAL_NAME,
   SPACED_WORD_LIST,
   ADDRESS_PREFIX,
   AABB_REDUPLICATION,

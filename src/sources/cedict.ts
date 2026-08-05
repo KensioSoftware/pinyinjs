@@ -111,3 +111,33 @@ function isCapitalised(reading: string): boolean {
   const first = reading.slice(0, 1);
   return first !== first.toLowerCase();
 }
+
+/**
+ * Where CC-CEDICT's own capitalisation puts a boundary inside a proper noun.
+ *
+ * 毛泽东 is written `[Mao2 Ze2 dong1]` and 司马迁 `[Si1 ma3 Qian1]`: the second
+ * capital is where the 姓 ends and the 名 begins, and it lands after two
+ * syllables for a compound surname without anything having to know that 司马 is
+ * one. GB/T 16159 5.1 writes those apart — `Máo Zédōng`, `Sīmǎ Qiān` — so this
+ * is the boundary the grouping needs, stated by a source rather than guessed at
+ * from a surname list.
+ *
+ * Returns the index of the first capitalised syllable after the first, or
+ * undefined where there is none. A transliteration is the case that matters:
+ * 马克思 is `[Ma3 ke4 si1]`, capitalised once and never again, so Marx comes
+ * back undefined and stays one word.
+ *
+ * Only meaningful where the first syllable is capitalised too — an entry
+ * CC-CEDICT does not consider a proper noun says nothing about 姓 and 名.
+ */
+export function nameBoundaryOf(
+  readings: readonly string[],
+): number | undefined {
+  if (readings.length < 2 || !isCapitalised(readings[0] ?? "")) {
+    return undefined;
+  }
+  const at = readings.findIndex(
+    (reading, index) => index > 0 && isCapitalised(reading),
+  );
+  return at > 0 ? at : undefined;
+}

@@ -496,7 +496,7 @@ Read back word by word — the hyphens keep the boundaries, so the only thing th
 can be lost is Wade-Giles's own non-injectivity — **99.50% of 140,163 words**
 over 20,000 Tatoeba sentences come back as the pinyin they were written from.
 
-Against the forms in general use before 1979, hand-checked, **10 of 15 match
+Against the forms in general use before 1979, hand-checked, **11 of 15 match
 exactly**:
 
 |        |                   |
@@ -512,14 +512,26 @@ exactly**:
 | 广东   | `Kuang-tung`      |
 | 西安   | `Hsi-an`          |
 
-**The five that do not are word boundaries, and the hyphen rule is not wrong in
-any of the fifteen.** 毛泽东 comes out `Mao-tsê-tung` where the attested form is
-`Mao Tse-tung`, and 北京大学 comes out `Pei-ching-ta-hsüeh` against
-`Pei-ching ta-hsüeh` — and the pinyin has exactly the same defect in exactly the
-same place, `Máozédōng` and `Běijīngdàxué`, where GB/T 16159 5.1 wants 姓 and 名
-apart and a proper noun apart from its generic. Supply the boundary by hand and
-`北京 大学` gives `Pei-ching ta-hsüeh` outright. That is the grouping's to fix,
-and it is on Phase 4's list rather than this one.
+**It was 10 of 15, and every one of the five misses was a word boundary the
+hyphen rule had no part in.** The [姓/名
+rule](../orthography/#-and-are-written-apart) supplies three of those
+boundaries, and what is left of the five is worth separating:
+
+|          | now                   | attested              |
+| -------- | --------------------- | --------------------- |
+| 孙中山   | `Sun Chung-shan`      | `Sun Chung-shan`      |
+| 毛泽东   | `Mao Tsê-tung`        | `Mao Tse-tung`        |
+| 邓小平   | `Têng Hsiao-p'ing`    | `Teng Hsiao-p'ing`    |
+| 清华大学 | `Ch'ing-hua-ta-hsüeh` | `Ch'ing-hua ta-hsüeh` |
+| 北京大学 | `Pei-ching-ta-hsüeh`  | `Pei-ching ta-hsüeh`  |
+
+孙中山 now matches outright. 毛泽东 and 邓小平 are down to the `ê` — correct
+Wade-Giles for those syllables, and a diacritic the attested forms drop along
+with the apostrophes, so the _boundary_ is right and the spelling is stricter
+than the source. The remaining two are organisations rather than people, so no
+姓 boundary reaches them: `Běijīngdàxué` has the same defect in the same place,
+and supplying it by hand gives `Pei-ching ta-hsüeh` outright. That is still the
+grouping's to fix.
 
 ## How the tables were checked
 
@@ -589,10 +601,12 @@ a different syllable in each. See [the command line](../cli/).
   suffix written here, and **the etymological tone behind a neutral syllable's
   dot**, which pinyin does not record. Both are set out under
   [Gwoyeu Romatzyh](#gwoyeu-romatzyh) above.
-- **姓 and 名 written apart**, which is the one thing standing between this and
-  the attested forms of personal names. GB/T 16159 5.1 asks for it and the
-  grouping does not do it, in pinyin either — see
-  [what it inherits](#what-it-gets-right-and-what-it-inherits).
+- **A proper noun written apart from its generic**, which is what keeps
+  清华大学 and 北京大学 off the attested forms. GB/T 16159 5.1 asks for it and
+  the grouping does it for places tagged `ns` but not for organisations — see
+  [what it inherits](#what-it-gets-right-and-what-it-inherits). 姓 and 名 were
+  on this list until the [姓/名 rule](../orthography/#-and-are-written-apart)
+  was built.
 - **Postal Romanisation** (`Peking`, `Tsingtao`, `Canton`), which is not a
   system so much as a list, and is not derivable from any of this. See
   [Chungking is not Wade-Giles](#chungking-is-not-wade-giles).

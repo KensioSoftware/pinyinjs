@@ -98,6 +98,19 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "李华", pinyin: "Lǐ Huá", script: "Hans", tags: ["proper-noun", "personal-name"] },
   { hanzi: "黄河", pinyin: "Huáng Hé", script: "Hans", tags: ["proper-noun", "orthography"] },
 
+  // ── 姓 and 名 written apart, GB/T 16159 5.1 ────────────────
+  // A dictionary entry decodes as one word, so these are a split rather than a
+  // join, and the boundary comes from CC-CEDICT's own capitalisation. The
+  // compound surnames are here because nothing in the rule knows they are
+  // compound, and 马克思 because a transliteration must survive it whole.
+  { hanzi: "毛泽东", pinyin: "Máo Zédōng", script: "Hans", tags: ["proper-noun", "personal-name"] },
+  { hanzi: "毛澤東", pinyin: "Máo Zédōng", script: "Hant", tags: ["proper-noun", "personal-name", "traditional"] },
+  { hanzi: "邓小平", pinyin: "Dèng Xiǎopíng", script: "Hans", tags: ["proper-noun", "personal-name"] },
+  { hanzi: "李白", pinyin: "Lǐ Bái", script: "Hans", tags: ["proper-noun", "personal-name"] },
+  { hanzi: "司马迁", pinyin: "Sīmǎ Qiān", script: "Hans", tags: ["proper-noun", "personal-name"] },
+  { hanzi: "诸葛亮", pinyin: "Zhūgě Liàng", script: "Hans", tags: ["proper-noun", "personal-name"] },
+  { hanzi: "马克思", pinyin: "Mǎkèsī", script: "Hans", tags: ["proper-noun", "personal-name"] },
+
   // ── Orthography: particles, affixes, measure words ─────────
   { hanzi: "我的书", pinyin: "wǒ de shū", script: "Hans", tags: ["orthography", "particle"] },
   { hanzi: "他看了", pinyin: "tā kànle", script: "Hans", tags: ["orthography", "particle"] },

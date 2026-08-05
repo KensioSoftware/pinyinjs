@@ -93,9 +93,10 @@ describe("writing a conversion in another system", () => {
   });
 
   it("matches the attested Wade-Giles for the names that have one", () => {
-    // Hand-checked against the forms in general use before 1979. The five that
-    // do not match are word boundaries, not hyphens — see the docs page.
+    // Hand-checked against the forms in general use before 1979. It was 10 of
+    // 15 until the 姓/名 boundary arrived; 孙中山 is the one that moved.
     for (const [hanzi, attested] of [
+      ["孙中山", "Sun Chung-shan"],
       ["重庆", "Ch'ung-ch'ing"],
       ["青岛", "Ch'ing-tao"],
       ["台北", "T'ai-pei"],
@@ -111,11 +112,15 @@ describe("writing a conversion in another system", () => {
     }
   });
 
-  it("inherits the grouping's limits along with its judgements", () => {
-    // 毛泽东 is one decoded word, so this writes it as one. GB/T 16159 5.1
-    // wants 姓 and 名 apart and the pinyin has the same defect in the same
-    // place — `Máozédōng` — so it is the grouping's to fix, not the hyphen's.
-    assertIdentical(plain("毛泽东"), "Mao-tsê-tung");
+  it("inherits the grouping's judgements, including the 姓/名 boundary", () => {
+    // This asserted `Mao-tsê-tung` while the grouping wrote 毛泽东 as one word.
+    // PERSONAL_NAME splits it, and the hyphen rule needed no change at all to
+    // follow: a space between words and a hyphen within one is what it already
+    // did. The attested form is `Mao Tse-tung`, which this now matches but for
+    // the ê a real text drops along with the apostrophes.
+    assertIdentical(plain("毛泽东"), "Mao Tsê-tung");
+    // 北京大学 is still one word, and still the grouping's to fix: it is an
+    // organisation rather than a person, so no 姓 boundary reaches it.
     assertIdentical(plain("北京大学"), "Pei-ching-ta-hsüeh");
   });
 });

@@ -18,6 +18,7 @@ import {
   ADDRESS_PREFIX,
   applyGrouping,
   ASPECT_PARTICLES,
+  PERSONAL_NAME,
   PLACE_GENERICS,
   SPACED_WORD_LIST,
   SUFFIXES,
@@ -283,6 +284,105 @@ describe("the 正词法 word list rule", () => {
 function capitals(...words: readonly DecodedWord[]): readonly boolean[] {
   return ADDRESS_PREFIX.apply(words, dictionary).map((one) => one.isProperNoun);
 }
+
+describe("姓 and 名 written apart", () => {
+  const names = dictionaryOf([
+    entry("毛泽东", "máo zé dōng", {
+      isProperNoun: true,
+      partOfSpeech: "nr",
+      nameBoundary: 1,
+    }),
+    // A compound surname, which nothing in the rule knows is compound.
+    entry("司马迁", "sī mǎ qiān", {
+      isProperNoun: true,
+      partOfSpeech: "nr",
+      nameBoundary: 2,
+    }),
+    // A transliteration: CC-CEDICT capitalises it once and never again.
+    entry("马克思", "mǎ kè sī", { isProperNoun: true, partOfSpeech: "nr" }),
+    // A place jieba tags ns, whose generic CC-CEDICT capitalises the same way.
+    entry("丁青县", "dīng qīng xiàn", {
+      isProperNoun: true,
+      partOfSpeech: "ns",
+      nameBoundary: 2,
+    }),
+    // A boundary on a word the veto demoted: not a proper noun, so not a name.
+    entry("未名", "wèi míng", { partOfSpeech: "nr", nameBoundary: 1 }),
+    // 儿化 reads two characters as one syllable, so there is nothing to cut.
+    entry("花儿", "huār", {
+      isProperNoun: true,
+      partOfSpeech: "nr",
+      nameBoundary: 1,
+    }),
+  ]);
+
+  /**
+   * The words a decode of one dictionary word leaves after grouping.
+   */
+  function split(text: string): readonly string[] {
+    const found = names.lookup(text);
+    assertNonNullable(found);
+    return applyGrouping(
+      [
+        {
+          text,
+          reading: found.reading,
+          isProperNoun: found.isProperNoun,
+          partOfSpeech: found.partOfSpeech,
+          isKnown: true,
+        },
+      ],
+      names,
+      [PERSONAL_NAME],
+    ).map((result) => result.text);
+  }
+
+  it("cuts where the dictionary says the 姓 ends", () => {
+    assertArrayEquals(split("毛泽东"), ["毛", "泽东"]);
+  });
+
+  it("takes a compound surname whole, with no list of compound surnames", () => {
+    assertArrayEquals(split("司马迁"), ["司马", "迁"]);
+  });
+
+  it("leaves a transliteration in one piece", () => {
+    // The condition that would break this is a surname list: 马 is one.
+    assertArrayEquals(split("马克思"), ["马克思"]);
+  });
+
+  it("capitalises the 名 as well as the 姓", () => {
+    const parts = applyGrouping(
+      [
+        {
+          text: "毛泽东",
+          reading: reading("máo zé dōng"),
+          isProperNoun: true,
+          partOfSpeech: "nr",
+          isKnown: true,
+        },
+      ],
+      names,
+      [PERSONAL_NAME],
+    );
+    assertArrayEquals(
+      parts.map((part) => part.isProperNoun),
+      [true, true],
+    );
+  });
+
+  it("needs jieba's nr, since a place carries the same mark", () => {
+    assertArrayEquals(split("丁青县"), ["丁青县"]);
+  });
+
+  it("needs the word to be a proper noun at all", () => {
+    assertArrayEquals(split("未名"), ["未名"]);
+  });
+
+  it("leaves a reading it cannot cut", () => {
+    // 儿化 is one syllable over two characters, so there are no halves.
+    assertArrayEquals(split("花儿"), ["花儿"]);
+  });
+});
 
 describe("the 称呼语 in front of a surname", () => {
   const wang = word("王", "wáng", "nr", true);
