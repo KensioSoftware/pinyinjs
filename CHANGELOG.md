@@ -66,6 +66,17 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   size but a symbol the IPA does not have — so the capitals are now dropped for
   IPA and bopomofo and kept for the three romanisations. `toTranscription`
   takes `{ capitals: false }` for callers writing their own.
+- **A compound lost the zh-TW reading its own parts carry.** 垃圾分類 read
+  `lājīfēnlèi` under `zh-TW`, because CC-CEDICT marks `Taiwan pr.` on 垃圾 and
+  垃圾桶 and on no other compound, and the decoder prefers the longer word — so
+  the entry that had the delta was never consulted. 104 compounds now compose
+  one from their constituents, 垃圾 accounting for 14 of them and 比肩, 玳瑁,
+  从容, 骨头, 蜗牛 and 说服 for most of the rest. Three guards keep it honest:
+  the constituent has to survive segmentation (運行狀況 contains 行狀 but reads
+  運行 + 狀況), it has to be read in the compound exactly as its own entry reads
+  it, and it has to be a whole word — never a bare character, since 地's `dì` is
+  the locative noun and not a locale-wide shift, and propagating characters
+  would rewrite 4,240 adverbs ending in the particle 地.
 
 ### Changed
 
@@ -139,13 +150,13 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 105-case gold corpus, which is committed to the repository — not to
+Over the 107-case gold corpus, which is committed to the repository — not to
 the published package — and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.1%** |           92.4% |
-| reading accuracy |     99.7% |           98.6% |
+| exact match      | **97.2%** |           92.5% |
+| reading accuracy |     99.7% |           98.7% |
 | spacing (F1)     | **99.7%** |           97.0% |
 
 Every figure in that table is asserted against the scorer by

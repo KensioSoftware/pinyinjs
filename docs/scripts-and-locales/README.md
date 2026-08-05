@@ -112,6 +112,48 @@ overwhelming majority of entries.
 Sources for the two: CC-CEDICT's inline `Taiwan pr.` annotations give 540 word
 readings, and Unihan's dual `kMandarin` values give 101 character readings.
 
+### A compound inherits its constituents' delta
+
+A source marks the delta on whichever headword it happened to list. CC-CEDICT
+marks 垃圾 and 垃圾桶 and no other compound, and the decoder prefers the longest
+word it finds — so 垃圾分類 was decoded whole and 垃圾's delta was never
+consulted:
+
+```ts
+convert(dictionary, "垃圾分類", { locale: "zh-TW" }); // was "lājīfēnlèi"
+```
+
+Patching entries one at a time cannot keep up: the compounds are open-class and
+the marked words are not. The build composes the delta instead, and 104
+compounds get one. Three conditions have to hold, and each rules out a way the
+inference goes wrong:
+
+| Condition                                   | What it rules out                                   |
+| ------------------------------------------- | --------------------------------------------------- |
+| The constituent survives segmentation       | 運行狀況 contains 行狀 but reads 運行 + 狀況        |
+| The compound reads it as its own entry does | 渾身解數 is `jiě shù`; the marked 解數 is `xiè shù` |
+| The constituent is a word, not a character  | see below                                           |
+
+**Single characters never contribute.** A character's delta looks like the same
+thing and is not. 期 carries `qí`, which 國語 really does read throughout, but 地
+carries `dì` — the locative noun, not the adverbial particle that 4,240 of these
+compounds end in — and 會 carries `huǐ`, which would turn 三合會 into
+`sānhéhuǐ`. Nothing in the sources separates the two cases, because CC-CEDICT's
+`Taiwan pr.` marks a _sense_ of a character rather than a locale-wide shift.
+Measured on the full dictionary, letting characters contribute composes 8,619
+entries against the 100 that words compose, and most of the 8,619 are wrong.
+
+The cost of that decision is real and worth stating: 星期 stays `xīngqī` under
+`zh-TW` where 教育部's dictionary gives `xīngqí`, and so does every other
+compound whose only locale difference is carried by a character. Closing that
+needs a per-character judgement the sources do not contain.
+
+What survives all three conditions is a homograph — two words spelled and read
+alike in 普通话, of which only one shifts. 相親 is `xiāngqīn` when it means
+"mutually close" and `xiàngqīn` in Taiwan when it means a matchmaking meeting,
+so 相親相愛 is excluded by name in `src/dictionary/locale.ts`. Three exclusions
+against 104 compounds is the measured ratio.
+
 ## Coverage is thinner in 繁體
 
 The phrase corpus that supplies the bulk of the word readings is

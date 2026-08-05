@@ -198,6 +198,30 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
     },
   },
   {
+    // The gap composeLocaleDeltas closes, and the two ways it must not close
+    // it. 運行狀況 contains the marked word 行狀 and cuts elsewhere; 一个个地
+    // ends in a character whose delta is a different sense of 地 entirely.
+    description:
+      "垃圾分類 inherits 垃圾's 國語 reading, 運行狀況 inherits nothing",
+    check: (dictionary: BuiltDictionary): string | undefined => {
+      const taiwan = (word: string): string | undefined =>
+        dictionary
+          .get(word)
+          ?.readings.tw?.map((syllable) => writeSyllable(syllable))
+          .join(" ");
+      const composed = taiwan("垃圾分类");
+      if (composed !== "lè sè fēn lèi") {
+        return `垃圾分类 reads ${composed ?? "nothing"} in zh-TW, expected lè sè fēn lèi`;
+      }
+      const wrong = ["运行状况", "一个个地", "相亲相爱"].filter(
+        (word) => taiwan(word) !== undefined,
+      );
+      return wrong.length === 0
+        ? undefined
+        : `composed a zh-TW reading for: ${wrong.join(", ")}`;
+    },
+  },
+  {
     description: "头发 derives 頭髮 rather than 頭發",
     check: (dictionary: BuiltDictionary): string | undefined => {
       const hant = dictionary.get("头发")?.hant;

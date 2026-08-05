@@ -82,6 +82,13 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("长大", "zhǎng dà", { hant: "長大", partOfSpeech: "ns" }),
   entry("李", "lǐ"),
   entry("们", "men"),
+  entry("垃圾分类", "lā jī fēn lèi", {
+    hant: "垃圾分類",
+    readings: {
+      cn: reading("lā jī fēn lèi"),
+      tw: reading("lè sè fēn lèi"),
+    },
+  }),
 ];
 
 describe("build assertions", () => {
