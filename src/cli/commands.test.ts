@@ -66,6 +66,25 @@ describe("the convert command", () => {
     ]);
   });
 
+  it("writes the conversion in another system", async () => {
+    assertArrayEquals(await cli("convert", "--system", "wade-giles", "北京"), [
+      "Pei³-ching¹",
+    ]);
+  });
+
+  it("leaves the capital off the systems that have none", async () => {
+    // 北京 is a proper noun and takes a capital in the three romanisations,
+    // which are ways of writing Chinese in the Latin alphabet. IPA is not one:
+    // it writes symbols, and [P] is not [p] made bigger but a symbol the IPA
+    // has not got. Bopomofo is a script without case and says the same.
+    assertArrayEquals(await cli("convert", "--system", "ipa", "北京"), [
+      "pei˨˩˦tɕiŋ˥",
+    ]);
+    assertArrayEquals(await cli("convert", "--system", "bopomofo", "北京"), [
+      "ㄅㄟˇ ㄐㄧㄥ",
+    ]);
+  });
+
   it("decodes with the greedy baseline when asked", async () => {
     // The one case the two decoders read differently: greedy takes 银行 because
     // it is the longest match at the first character and never revisits it.

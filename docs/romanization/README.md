@@ -607,6 +607,28 @@ Wade-Giles, Yale and IPA. Bopomofo marks the tone with a symbol of the script
 and Gwoyeu Romatzyh spells it into the syllable, so for those two there is
 nothing to leave off and the flag is ignored rather than approximated.
 
+### The capitals belong to the romanisations only
+
+What the grouping settles about a capital — a proper noun, and the first word of
+a sentence — carries over to Wade-Giles, Yale and Gwoyeu Romatzyh, because a
+romanisation is a way of writing Chinese in the Latin alphabet and inherits what
+that alphabet does. **IPA is not a romanisation and takes none of them.** Its
+letters are symbols rather than an alphabet: `[T]` is not `[t]` in a larger size
+but a symbol the IPA does not have, so `[Tʰa˥]` for 他 is not a capitalised
+`[tʰa˥]` but nothing at all. Bopomofo is a script without case, and says the
+same thing for a different reason.
+
+```console
+$ pinyinjs convert --system yale 我去银行。他姓王。
+Wǒ chyù yínháng. Tā syìng Wáng.
+
+$ pinyinjs convert --system ipa 我去银行。他姓王。
+uo˨˩˦ tɕʰy˥˩ in˧˥xaŋ˧˥. tʰa˥ ɕiŋ˥˩ uaŋ˧˥.
+```
+
+`toTranscription` takes `{ capitals: false }` for the same reason, since a
+caller writing IPA from its own pieces wants it too.
+
 ### What it gets right, and what it inherits
 
 Read back word by word — the hyphens keep the boundaries, so the only thing that

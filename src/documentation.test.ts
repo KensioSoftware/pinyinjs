@@ -1350,6 +1350,17 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("writes the capitals only where the system has them, as the page shows", async () => {
+      assertArrayEquals(
+        await cli("convert", "--system", "yale", "我去银行。他姓王。"),
+        ["Wǒ chyù yínháng. Tā syìng Wáng."],
+      );
+      assertArrayEquals(
+        await cli("convert", "--system", "ipa", "我去银行。他姓王。"),
+        ["uo˨˩˦ tɕʰy˥˩ in˧˥xaŋ˧˥. tʰa˥ ɕiŋ˥˩ uaŋ˧˥."],
+      );
+    });
+
     it("converts with the locale flag", async () => {
       assertArrayEquals(await cli("convert", "--locale", "zh-TW", "垃圾"), [
         "lèsè",
