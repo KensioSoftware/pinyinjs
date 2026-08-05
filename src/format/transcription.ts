@@ -4,13 +4,13 @@ import {
   convertPieces,
 } from "../decode/convert.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
-import { writeWadeGilesWord } from "../romanization/wade-giles.js";
+import { writeWadeGilesWord } from "../transcription/wade-giles.js";
 import type { Syllable } from "../syllable/syllable.js";
 
 /**
  * How a system writes a run of syllables that are one word.
  *
- * Every system in `src/romanization/` exports one: `writeWadeGilesWord`,
+ * Every system in `src/transcription/` exports one: `writeWadeGilesWord`,
  * `writeBopomofoWord` and the rest. What each of them decides is only the
  * join* — Wade-Giles hyphenates, Yale and Gwoyeu Romatzyh write solid,
  * bopomofo spaces — which is the whole of the difference between them at this
@@ -101,7 +101,7 @@ export function toTranscription(
  * Convert hanzi to Wade-Giles, end to end.
  *
  * hanzi → pinyin → Wade-Giles, which is the shape ROADMAP.md predicted for the
- * whole `romanization` package: a transcription needs no dictionary of its own,
+ * whole `transcription` module: a transcription needs no dictionary of its own,
  * so the only hard problem is the one {@link convertPieces} already solved.
  *
  * Tones are raised digits by default, as {@link writeWadeGilesWord} writes

@@ -279,7 +279,7 @@ describe("Wade-Giles over the whole inventory", () => {
   });
 
   it("merges 219 of the 424 once their marks are dropped", () => {
-    // The number `pnpm romanization` reports, asserted here so that a change to
+    // The number `pnpm transcription` reports, asserted here so that a change to
     // the tables cannot move it quietly.
     const merged = [...DICTIONARY_SYLLABLES].filter((pinyin) => {
       const dropped = writeWadeGilesSpelling(syllable(pinyin)).replaceAll(
@@ -351,7 +351,7 @@ describe("splitting a Wade-Giles word that dropped its hyphens", () => {
     // Every two-syllable pair the inventory can make is too many; this walks
     // the syllables in order and pairs each with the next, which covers all 424
     // in both positions. What a pair splits *into* is the 99.19% `pnpm
-    // romanization` measures over real vocabulary; what is asserted here is
+    // transcription` measures over real vocabulary; what is asserted here is
     // that it splits at all.
     const nasals = new Set(["ng", "m", "n", "hm", "hng"]);
     const spellings = [...DICTIONARY_SYLLABLES].map((pinyin) =>

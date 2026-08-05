@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -15,6 +16,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import * as api from "./index.js";
 import { paletteAt, stripColour, visibleLength } from "./cli/colour.js";
 import { runCli } from "./cli/run.js";
 import type { CliEnvironment } from "./cli/run.js";
@@ -37,13 +39,13 @@ import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
 import { convertToWadeGiles } from "./format/transcription.js";
-import { readBopomofo, writeBopomofo } from "./romanization/bopomofo.js";
+import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
 import {
   readGwoyeu,
   writeGwoyeu,
   writeGwoyeuWord,
-} from "./romanization/gwoyeu.js";
-import { readIpa, writeIpa, writeIpaSymbols } from "./romanization/ipa.js";
+} from "./transcription/gwoyeu.js";
+import { readIpa, writeIpa, writeIpaSymbols } from "./transcription/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
@@ -52,8 +54,12 @@ import {
   writeWadeGiles,
   writeWadeGilesSpelling,
   writeWadeGilesWord,
-} from "./romanization/wade-giles.js";
-import { readYale, writeYale, writeYaleSpelling } from "./romanization/yale.js";
+} from "./transcription/wade-giles.js";
+import {
+  readYale,
+  writeYale,
+  writeYaleSpelling,
+} from "./transcription/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
@@ -163,6 +169,29 @@ function said(value: string | number, options: NumeralOptions = {}): string {
   );
 }
 
+/**
+ * The API page itself, read rather than transcribed.
+ *
+ * It opens by claiming to list *everything the package exports*, and nothing
+ * executed that claim: 18 of 153 exports were absent from it — the whole of
+ * Yale, Gwoyeu Romatzyh and IPA, both end-to-end transcription functions, and
+ * every 重叠 and 成语 rule. The same failure as the README's command table, and
+ * checkable the same way.
+ */
+const apiPage = await readFile(
+  new URL("../docs/api/README.md", import.meta.url),
+  "utf8",
+);
+
+describe("the API page", () => {
+  it("names every export the package has", () => {
+    const missing = Object.keys(api).filter(
+      (name) => !apiPage.includes(`\`${name}\``),
+    );
+    assertArrayEquals(missing, []);
+  });
+});
+
 describe("the examples in docs/", () => {
   describe("getting-started", () => {
     it("converts the four texts the page opens on", () => {
@@ -185,6 +214,19 @@ describe("the examples in docs/", () => {
       assertIdentical(
         convertGreedily(dictionary, "研究生命起源"),
         "yánjiūshēng mìng qǐyuán",
+      );
+    });
+
+    // The page said digits passed through untouched and that reading them was
+    // unbuilt, next to an example showing 3 read as `sān`. The example was
+    // executed and the sentence was not, so what is asserted here is the claim
+    // the sentence makes: a digit is read by default and only `keep` stops it.
+    it("reads the digits in a non-Han run, and keeps them when asked", () => {
+      assertIdentical(convert(dictionary, "3D银行"), "sān D yínháng");
+      assertIdentical(convert(dictionary, "1997年"), "yī jiǔ jiǔ qī nián");
+      assertIdentical(
+        convert(dictionary, "3D银行", { numbers: "keep" }),
+        "3Dyínháng",
       );
     });
 
@@ -328,6 +370,33 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "李华"), "Lǐ Huá");
       assertIdentical(convert(dictionary, "长江"), "Cháng Jiāng");
       assertIdentical(convert(dictionary, "上海"), "Shànghǎi");
+    });
+
+    // The page used to say `Lǐ Huá` came from a surname list, and this example
+    // passed anyway — for a different reason than the prose gave. So the
+    // mechanism is asserted rather than only the output: 李华 is no entry, both
+    // characters carry the flag alone, and a surname whose character does not
+    // carry it gets no capital. A surname list would break the last of those.
+    it("capitalises 李华 from two flagged characters, with no surname list", () => {
+      assertUndefined(dictionary.lookup("李华"));
+      for (const character of ["李", "华"]) {
+        const entry = dictionary.lookup(character);
+        assertNonNullable(entry);
+        assertTrue(entry.isProperNoun);
+      }
+      assertIdentical(convert(dictionary, "李华"), "Lǐ Huá");
+
+      // 钱 and 孙 are surnames the dictionary does not flag, and 華 is the 繁體
+      // 华 without the flag its 简体 spelling carries. All three stay lower
+      // case, which no surname list would allow.
+      for (const character of ["钱", "孙", "華"]) {
+        const entry = dictionary.lookup(character);
+        assertNonNullable(entry);
+        assertFalse(entry.isProperNoun);
+      }
+      assertIdentical(convert(dictionary, "钱华"), "qián Huá");
+      assertIdentical(convert(dictionary, "孙华"), "sūn Huá");
+      assertIdentical(convert(dictionary, "李華"), "Lǐ huá");
     });
 
     it("handles 儿 three different ways", () => {
@@ -695,7 +764,7 @@ describe("the examples in docs/", () => {
     });
   });
 
-  describe("romanization", () => {
+  describe("transcription", () => {
     it("writes the syllable the page opens on in every system", () => {
       assertIdentical(writeBopomofo(one("jiù")), "ㄐㄧㄡˋ");
       assertIdentical(writeWadeGiles(one("jiù")), "chiu⁴");
@@ -1161,6 +1230,28 @@ describe("the examples in docs/", () => {
         "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
         "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
       ]);
+    });
+
+    // The romanisation page listed four of `--from`'s six values and said
+    // bopomofo was not one of them, where the CLI page listed all six. Both
+    // pages describe the same flag, so the two that were missing are asserted:
+    // `pinyin` is a value, `bopomofo` is a value *and* is what detection falls
+    // on, and `chi` reads as pinyin rather than Wade-Giles when left to auto.
+    it("takes pinyin and bopomofo by name, and detects only bopomofo", async () => {
+      const asPinyin = [
+        "chi         chi       ㄔ           ch'ih       chr       chy       ʈʂʰɨ",
+      ];
+      assertArrayEquals(
+        await cli("transcribe", "--from", "pinyin", "chi"),
+        asPinyin,
+      );
+      assertArrayEquals(await cli("transcribe", "chi"), asPinyin);
+      assertArrayEquals(
+        await cli("transcribe", "--from", "bopomofo", "ㄅㄟˇ"),
+        [
+          "ㄅㄟˇ         běi       ㄅㄟˇ         pei³        běi       beei      pei˨˩˦",
+        ],
+      );
     });
 
     describe("colour", () => {

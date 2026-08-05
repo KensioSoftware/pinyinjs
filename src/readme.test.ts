@@ -29,14 +29,14 @@ import { Dictionary } from "./dictionary/dictionary.js";
 import { COMMANDS } from "./cli/commands.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
-import { writeBopomofo } from "./romanization/bopomofo.js";
-import { writeGwoyeu } from "./romanization/gwoyeu.js";
-import { writeIpa } from "./romanization/ipa.js";
+import { writeBopomofo } from "./transcription/bopomofo.js";
+import { writeGwoyeu } from "./transcription/gwoyeu.js";
+import { writeIpa } from "./transcription/ipa.js";
 import {
   readWadeGilesLoosely,
   writeWadeGiles,
-} from "./romanization/wade-giles.js";
-import { writeYale } from "./romanization/yale.js";
+} from "./transcription/wade-giles.js";
+import { writeYale } from "./transcription/yale.js";
 import {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,

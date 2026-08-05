@@ -81,16 +81,29 @@ See [numbers](../numerals/).
 
 See [romanisation](../romanization/).
 
-| Export                                 | Is                                       |
-| -------------------------------------- | ---------------------------------------- |
-| `writeBopomofo`, `writeBopomofoWord`   | syllable, or word → 注音符號             |
-| `readBopomofo`                         | 注音符號 → syllable                      |
-| `isBopomofo`                           | whether the text is written in it at all |
-| `writeWadeGiles`, `writeWadeGilesWord` | syllable, or word → Wade-Giles           |
-| `writeWadeGilesSpelling`               | the same without the tone                |
-| `readWadeGiles`                        | Wade-Giles → every syllable it can be    |
-| `readWadeGilesLoosely`                 | the same, allowing for dropped marks     |
-| `BopomofoOptions`, `WadeGilesOptions`  | types                                    |
+| Export                                               | Is                                       |
+| ---------------------------------------------------- | ---------------------------------------- |
+| `writeBopomofo`, `writeBopomofoWord`                 | syllable, or word → 注音符號             |
+| `readBopomofo`                                       | 注音符號 → syllable                      |
+| `isBopomofo`                                         | whether the text is written in it at all |
+| `writeWadeGiles`, `writeWadeGilesWord`               | syllable, or word → Wade-Giles           |
+| `writeWadeGilesSpelling`                             | the same without the tone                |
+| `readWadeGiles`                                      | Wade-Giles → every syllable it can be    |
+| `readWadeGilesLoosely`                               | the same, allowing for dropped marks     |
+| `splitWadeGiles`, `readWadeGilesWord`                | a word that dropped its hyphens          |
+| `writeYale`, `writeYaleWord`, `writeYaleSpelling`    | syllable, word, or the toneless spelling |
+| `readYale`                                           | Yale → every syllable it can be          |
+| `writeGwoyeu`, `writeGwoyeuWord`, `readGwoyeu`       | Gwoyeu Romatzyh, both directions         |
+| `writeIpa`, `writeIpaWord`, `writeIpaSymbols`        | IPA, with or without the tone letters    |
+| `readIpa`                                            | IPA → every syllable it can be           |
+| `convertToWadeGiles`, `toTranscription`              | hanzi → a system, end to end             |
+| `BopomofoOptions`, `WadeGilesOptions`, `YaleOptions` | types                                    |
+| `IpaOptions`, `WriteWord`                            | types                                    |
+
+The syllable tables live in `src/transcription/` — not `src/romanization/`,
+since bopomofo has a script of its own and IPA is a transcription rather than a
+spelling, so half of them are not romanisations. The docs path keeps the older
+name because it is published.
 
 ## HTML
 
@@ -171,6 +184,9 @@ See [orthography](../orthography/).
 | -------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `applyGrouping`                                                                                          | 分词连写 over decoded words      |
 | `GROUPING_RULES`, `ASPECT_PARTICLES`, `SUFFIXES`, `PLACE_GENERICS`                                       | the rules                        |
+| `ADDRESS_PREFIX`                                                                                         | 老王 is `Lǎo Wáng`               |
+| `AABB_REDUPLICATION`, `ABAB_REDUPLICATION`                                                               | the 重叠 hyphens                 |
+| `IDIOM_HYPHENS`, `HYPHENATED_IDIOMS`, `HYPHENATED_IDIOM_FORMS`                                           | the 成语 hyphen and its list     |
 | `SPACED_WORD_LIST`, `SPACED_WORDS`, `SPACED_WORD_FORMS`, `LONGEST_SPACED_WORD`                           | the curated list                 |
 | `capitaliseSentences`, `capitaliseSentenceParts`, `capitaliseWord`, `isSentence`                         | capitals                         |
 | `markWord`, `joinWord`                                                                                   | apostrophes                      |

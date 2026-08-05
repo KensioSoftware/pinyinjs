@@ -103,15 +103,24 @@ own domain can add to them or decode with none.
 
 ## Non-Han text
 
-Digits, Latin letters, punctuation and anything else that was never Han pass
-through exactly as written.
+Latin letters, punctuation and anything else that was never Han pass through
+exactly as written. Digits are the one thing that does not: they are read.
 
 ```ts
 convert(dictionary, "3D银行"); // "sān D yínháng"
+convert(dictionary, "1997年"); // "yī jiǔ jiǔ qī nián"
+convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
 ```
 
-Reading numbers aloud — 3 as `sān`, 2024 as a year — is a separate problem and
-a separate package, not yet built. `3` stays `3`.
+Which style a number takes comes from what follows it — 1997年 is a year and
+3个 is a count — and it needs no dictionary: `src/numerals/` is arithmetic and
+about twenty readings. [Numbers](../numerals/) has the three rules and what
+they deliberately do not guess at. `numbers: "keep"` leaves every digit exactly
+as it was written, which is what this did before there was anything to read
+them with.
+
+Once a digit _has_ been read, the letters beside it are being said too, which
+is why `3D银行` gains a space it keeps none of under `numbers: "keep"`.
 
 Full-width punctuation is the exception, because it is Chinese text rather than
 foreign text: `。，、；：？！` are rewritten as their Latin equivalents by
@@ -151,7 +160,7 @@ to be right here — this is the ambiguity that does not cross a polyphone — s
 what it costs is the spacing.
 
 Measured on 20,139 hand-labelled polyphonic characters, the lattice reads
-89.04% correctly against greedy's 88.81%: 76 characters it gets right that
+89.04% correctly against greedy's 88.82%: 75 characters it gets right that
 greedy does not, against 30 the other way. Small, but real. Use `convert`;
 `convertGreedily` is there to be compared against, and `pnpm accuracy` and
 `pnpm polyphones` in the repository are what compare them.

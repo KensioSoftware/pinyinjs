@@ -179,7 +179,7 @@ describe("IPA over the whole inventory", () => {
   it("cannot say that a tone is neutral, and so loses it", () => {
     // The one thing the transcription cannot represent, and the exact mirror
     // of bopomofo's inability to say "no tone at all". 848 of the 5,088 forms
-    // `pnpm romanization` measures come back this way.
+    // `pnpm transcription` measures come back this way.
     const read = readIpa(writeIpa({ ...syllable("de"), tone: NEUTRAL_TONE }));
     assertUndefined(read[0]?.tone);
   });
