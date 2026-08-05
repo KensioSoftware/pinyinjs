@@ -97,6 +97,11 @@ export {
 } from "./decode/decode.js";
 
 export { convertToHtml, toHtml } from "./format/html.js";
+export {
+  convertToWadeGiles,
+  toTranscription,
+  type WriteWord,
+} from "./format/transcription.js";
 export type { HtmlOptions } from "./format/html.js";
 
 export { decodeGreedily } from "./decode/greedy.js";

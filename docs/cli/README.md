@@ -35,9 +35,16 @@ yin2hang2
 
 $ pinyinjs convert --locale zh-TW 垃圾
 lèsè
+
+$ pinyinjs convert --system wade-giles --notation none 我要去北京。
+Wo yao ch'ü Pei-ching.
 ```
 
 Writes the pinyin and nothing else, so it drops straight into a pipeline.
+`--system` writes it in `bopomofo`, `wade-giles`, `yale`, `gwoyeu` or `ipa`
+instead — the same word grouping with that system's join, which for Wade-Giles
+means a hyphen between the syllables of a word. See
+[romanisation](../romanization/#hanzi-to-wade-giles-end-to-end).
 
 ### explain
 
@@ -184,7 +191,8 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 | `--third-tone`          | `sandhi: { thirdTone: true }` |
 | `--no-sandhi`           | `sandhi: { yiBu: false }`     |
 
-`convert` also takes `--greedy`, which decodes with the old longest-match
+`convert` also takes `--system`, which writes the conversion in another
+transcription system, and `--greedy`, which decodes with the old longest-match
 baseline instead of the lattice — see [converting](../converting/#the-greedy-baseline).
 `html` also takes `--no-tone-classes` and `--no-uncertain`. `sandhi` takes
 `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,

@@ -16,6 +16,7 @@ import {
 } from "../numerals/numerals.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { convertToHtml } from "../format/html.js";
+import { toTranscription } from "../format/transcription.js";
 import {
   isBopomofo,
   readBopomofo,
@@ -57,6 +58,7 @@ import {
   htmlOptions,
   type TranscriptionSource,
   transcriptionSource,
+  transcriptionSystem,
   UsageError,
 } from "./arguments.js";
 import { type Painter, PLAIN, visibleLength } from "./colour.js";
@@ -200,13 +202,29 @@ const CONVERT: Command = {
   name: "convert",
   summary: "hanzi to pinyin",
   argument: "[text...]",
-  flags: [...CONVERT_FLAGS, "greedy"],
+  flags: [...CONVERT_FLAGS, "greedy", "system"],
   needsDictionary: true,
   run: (input) => {
     const options = convertOptions(input.flags);
     const isGreedy = input.flags.greedy === true;
     const decode = isGreedy ? convertGreedily : convert;
     const inPieces = isGreedy ? convertPiecesGreedily : convertPieces;
+    const system = systemNamed(transcriptionSystem(input.flags));
+    if (system !== undefined) {
+      // hanzi → pinyin → the system, which is the shape ROADMAP.md predicted
+      // for the whole of `romanization`. See toTranscription for why the word
+      // grouping is shared and only the join is the system's.
+      return input.texts.map((text) => {
+        const written = toTranscription(
+          inPieces(dictionaryOf(input), text, options),
+          (syllables) => system.word(syllables, options.notation !== "none"),
+        );
+        return {
+          lines: [written],
+          data: { text, system: system.name, transcription: written },
+        };
+      });
+    }
     return input.texts.map((text) => {
       const pinyin = decode(dictionaryOf(input), text, options);
       // The pieces cost a second sweep of the lattice, so they are only asked
@@ -544,32 +562,59 @@ interface Reading {
  * tone state — rather than the list being trusted.
  */
 export interface System {
+  /** What `--from` and `--system` call it. */
+  readonly name: TranscriptionSource;
   readonly write: (syllable: Syllable) => string;
   readonly separator: string;
-  readonly word: (syllables: readonly Syllable[]) => string;
+  /**
+   * How the system writes a word, with its tones or without them.
+   *
+   * `--notation none` can only be honoured where the tone is written
+   * separately*: Wade-Giles, Yale and IPA all have a way to leave it off.
+   * Bopomofo marks it with a symbol of the script and Gwoyeu Romatzyh spells
+   * it into the syllable, so for those two there is nothing to leave off and
+   * the flag is ignored rather than approximated.
+   */
+  readonly word: (syllables: readonly Syllable[], hasTones: boolean) => string;
 }
 
 const BOPOMOFO: System = {
+  name: "bopomofo",
   write: writeBopomofo,
   separator: " ",
-  word: writeBopomofoWord,
+  word: (syllables) => writeBopomofoWord(syllables),
 };
 
 const WADE_GILES: System = {
+  name: "wade-giles",
   write: writeWadeGiles,
   separator: "-",
-  word: writeWadeGilesWord,
+  word: (syllables, hasTones) =>
+    writeWadeGilesWord(syllables, hasTones ? {} : { tones: "none" }),
 };
 
-const YALE: System = { write: writeYale, separator: "", word: writeYaleWord };
+const YALE: System = {
+  name: "yale",
+  write: writeYale,
+  separator: "",
+  word: (syllables, hasTones) =>
+    writeYaleWord(syllables, hasTones ? {} : { tones: "none" }),
+};
 
 const GWOYEU: System = {
+  name: "gwoyeu",
   write: writeGwoyeu,
   separator: "",
-  word: writeGwoyeuWord,
+  word: (syllables) => writeGwoyeuWord(syllables),
 };
 
-const IPA: System = { write: writeIpa, separator: "", word: writeIpaWord };
+const IPA: System = {
+  name: "ipa",
+  write: writeIpa,
+  separator: "",
+  word: (syllables, hasTones) =>
+    writeIpaWord(syllables, hasTones ? {} : { tones: "none" }),
+};
 
 /**
  * Every system `transcribe` writes a column for, for the guard above.
@@ -581,6 +626,15 @@ export const SYSTEMS: readonly System[] = [
   GWOYEU,
   IPA,
 ];
+
+/**
+ * The system a `--system` or `--from` name stands for.
+ */
+export function systemNamed(
+  name: TranscriptionSource | undefined,
+): System | undefined {
+  return SYSTEMS.find((system) => system.name === name);
+}
 
 /**
  * Write a run of syllables in one system, each syllable in its tone's colour.

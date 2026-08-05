@@ -442,6 +442,85 @@ the tone as well. Over the same inventory in all four tones:
 The one collision is 唔 `nn`, which the syllabary does not list and GR has no
 attested spelling for.
 
+## hanzi to Wade-Giles, end to end
+
+hanzi → pinyin → Wade-Giles, which is the shape this package was designed
+around: a transcription needs no dictionary of its own, so the only hard problem
+is the one the decoder already solved.
+
+```js
+convertToWadeGiles(dictionary, "我要去北京。", { notation: "none" });
+// "Wo yao ch'ü Pei-ching."
+convertToWadeGiles(dictionary, "北京");
+// "Pei³-ching¹"
+```
+
+```console
+$ pinyinjs convert --system wade-giles --notation none 我要去北京大学。
+Wo yao ch'ü Pei-ching-ta-hsüeh.
+
+$ pinyinjs convert --system bopomofo 我要去北京大学。
+ㄨㄛˇ ㄧㄠˋ ㄑㄩˋ ㄅㄟˇ ㄐㄧㄥ ㄉㄚˋ ㄒㄩㄝˊ.
+```
+
+### The word segmentation is shared and only the join changes
+
+This is the question the roadmap left open, and it comes apart into two.
+
+GB/T 16159 分词连写 decides what a **word** is, and that is a fact about the
+language rather than about pinyin: 北京大学 is two words in any system anybody
+writes it in. What the standard _also_ decides — that a word's syllables are run
+together, with a 隔音符号 where the boundary would otherwise be lost — is a
+pinyin spelling rule, and Wade-Giles has one of its own: a hyphen between every
+syllable of a word, and a space between words. So the grouping is reused and the
+join is the system's.
+
+Two things follow:
+
+- **The 隔音符号 is not written.** 西安 is `Hsi-an`, not `Hsi'an`. It would be
+  wrong twice over — the hyphen has already marked the boundary, and Wade-Giles
+  spends the apostrophe on aspiration, so `Hsi'an` reads as `hsi` followed by an
+  aspirated syllable.
+- **Every other system gets the same treatment**, since each already declares
+  its own join: bopomofo spaces its syllables, Yale and Gwoyeu Romatzyh write
+  them solid as pinyin does. `--system` takes any of the five.
+
+`--notation none` leaves the tone off where the system writes it separately —
+Wade-Giles, Yale and IPA. Bopomofo marks the tone with a symbol of the script
+and Gwoyeu Romatzyh spells it into the syllable, so for those two there is
+nothing to leave off and the flag is ignored rather than approximated.
+
+### What it gets right, and what it inherits
+
+Read back word by word — the hyphens keep the boundaries, so the only thing that
+can be lost is Wade-Giles's own non-injectivity — **99.50% of 140,163 words**
+over 20,000 Tatoeba sentences come back as the pinyin they were written from.
+
+Against the forms in general use before 1979, hand-checked, **10 of 15 match
+exactly**:
+
+|        |                   |
+| ------ | ----------------- |
+| 重庆   | `Ch'ung-ch'ing`   |
+| 青岛   | `Ch'ing-tao`      |
+| 台北   | `T'ai-pei`        |
+| 国民党 | `Kuo-min-tang`    |
+| 北京   | `Pei-ching`       |
+| 南京   | `Nan-ching`       |
+| 黑龙江 | `Hei-lung-chiang` |
+| 四川   | `Ssŭ-ch'uan`      |
+| 广东   | `Kuang-tung`      |
+| 西安   | `Hsi-an`          |
+
+**The five that do not are word boundaries, and the hyphen rule is not wrong in
+any of the fifteen.** 毛泽东 comes out `Mao-tsê-tung` where the attested form is
+`Mao Tse-tung`, and 北京大学 comes out `Pei-ching-ta-hsüeh` against
+`Pei-ching ta-hsüeh` — and the pinyin has exactly the same defect in exactly the
+same place, `Máozédōng` and `Běijīngdàxué`, where GB/T 16159 5.1 wants 姓 and 名
+apart and a proper noun apart from its generic. Supply the boundary by hand and
+`北京 大学` gives `Pei-ching ta-hsüeh` outright. That is the grouping's to fix,
+and it is on Phase 4's list rather than this one.
+
 ## How the tables were checked
 
 No source in this package's data pipeline carries any of these systems —
@@ -507,10 +586,10 @@ them: it has a script of its own. See [the command line](../cli/).
   suffix written here, and **the etymological tone behind a neutral syllable's
   dot**, which pinyin does not record. Both are set out under
   [Gwoyeu Romatzyh](#gwoyeu-romatzyh) above.
-- **hanzi → Wade-Giles end to end.** `convertPieces` already hands back a
-  `Syllable` per piece, so the mapping is a few lines; what is not decided is
-  what the _orthography_ should be — 正词法's word spacing is a pinyin standard,
-  and Wade-Giles hyphenates instead.
+- **姓 and 名 written apart**, which is the one thing standing between this and
+  the attested forms of personal names. GB/T 16159 5.1 asks for it and the
+  grouping does not do it, in pinyin either — see
+  [what it inherits](#what-it-gets-right-and-what-it-inherits).
 - **Postal Romanisation** (`Peking`, `Tsingtao`, `Canton`), which is not a
   system so much as a list, and is not derivable from any of this. See
   [Chungking is not Wade-Giles](#chungking-is-not-wade-giles).

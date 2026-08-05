@@ -36,6 +36,7 @@ import {
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
+import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./romanization/bopomofo.js";
 import {
   readGwoyeu,
@@ -782,6 +783,71 @@ describe("the examples in docs/", () => {
       assertArrayLength(believed, 312);
     });
 
+    it("writes hanzi in Wade-Giles as the page shows", () => {
+      assertIdentical(
+        convertToWadeGiles(
+          dictionary,
+          "\u{6211}\u{8981}\u{53BB}\u{5317}\u{4EAC}\u{3002}",
+          {
+            notation: "none",
+          },
+        ),
+        "Wo yao ch'\u{FC} Pei-ching.",
+      );
+      assertIdentical(
+        convertToWadeGiles(dictionary, "\u{5317}\u{4EAC}"),
+        "Pei\u{B3}-ching\u{B9}",
+      );
+      // The 隔音符号 is not written: Wade-Giles spends the apostrophe on
+      // aspiration and the hyphen has marked the boundary already.
+      assertIdentical(
+        convertToWadeGiles(dictionary, "\u{897F}\u{5B89}", {
+          notation: "none",
+        }),
+        "Hsi-an",
+      );
+    });
+
+    it("matches the attested forms the page tabulates", () => {
+      for (const [hanzi, attested] of [
+        ["\u{91CD}\u{5E86}", "Ch'ung-ch'ing"],
+        ["\u{9752}\u{5C9B}", "Ch'ing-tao"],
+        ["\u{53F0}\u{5317}", "T'ai-pei"],
+        ["\u{56FD}\u{6C11}\u{515A}", "Kuo-min-tang"],
+        ["\u{5317}\u{4EAC}", "Pei-ching"],
+        ["\u{5357}\u{4EAC}", "Nan-ching"],
+        ["\u{9ED1}\u{9F99}\u{6C5F}", "Hei-lung-chiang"],
+        ["\u{56DB}\u{5DDD}", "Ss\u{16D}-ch'uan"],
+        ["\u{5E7F}\u{4E1C}", "Kuang-tung"],
+        ["\u{897F}\u{5B89}", "Hsi-an"],
+      ] as const) {
+        assertIdentical(
+          convertToWadeGiles(dictionary, hanzi, { notation: "none" }),
+          attested,
+          hanzi,
+        );
+      }
+      // And the five the page says are word boundaries rather than hyphens:
+      // the pinyin has the same defect in the same place.
+      assertIdentical(
+        convertToWadeGiles(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}", {
+          notation: "none",
+        }),
+        "Mao-ts\u{EA}-tung",
+      );
+      assertIdentical(
+        convert(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}"),
+        "M\u{E1}oz\u{E9}d\u{14D}ng",
+      );
+      // Supply the boundary and the generic case comes out attested.
+      assertIdentical(
+        convertToWadeGiles(dictionary, "\u{5317}\u{4EAC} \u{5927}\u{5B66}", {
+          notation: "none",
+        }),
+        "Pei-ching ta-hs\u{FC}eh",
+      );
+    });
+
     it("splits a Wade-Giles word as the page shows", () => {
       assertArrayEquals(splitWadeGiles("maotsetung"), ["mao", "tse", "tung"]);
       assertArrayEquals(splitWadeGiles("mao-tse-tung"), ["mao", "tse", "tung"]);
@@ -1038,6 +1104,35 @@ describe("the examples in docs/", () => {
         "垃圾  lā jī  n",
         "  zh-TW  lè sè",
       ]);
+    });
+
+    it("writes a conversion in another system, as the page shows", async () => {
+      assertArrayEquals(
+        await cli(
+          "convert",
+          "--system",
+          "wade-giles",
+          "--notation",
+          "none",
+          "我要去北京。",
+        ),
+        ["Wo yao ch'ü Pei-ching."],
+      );
+      assertArrayEquals(
+        await cli("convert", "--system", "bopomofo", "我要去北京大学。"),
+        ["ㄨㄛˇ ㄧㄠˋ ㄑㄩˋ ㄅㄟˇ ㄐㄧㄥ ㄉㄚˋ ㄒㄩㄝˊ."],
+      );
+      assertArrayEquals(
+        await cli(
+          "convert",
+          "--system",
+          "wade-giles",
+          "--notation",
+          "none",
+          "我要去北京大学。",
+        ),
+        ["Wo yao ch'ü Pei-ching-ta-hsüeh."],
+      );
     });
 
     it("converts with the locale flag", async () => {
