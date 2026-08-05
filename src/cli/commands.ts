@@ -31,6 +31,8 @@ import { readIpa, writeIpa, writeIpaWord } from "../romanization/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
+  readWadeGilesWord,
+  splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesWord,
 } from "../romanization/wade-giles.js";
@@ -625,8 +627,29 @@ function transcribed(
  * the interesting case at a command line is the spelling that dropped its
  * marks. Which candidates needed repairing is shown rather than hidden — that
  * is the one thing a person looking at Wade-Giles wants to know.
+ *
+ * **A word gets one row and a syllable gets every candidate**, which is the
+ * only honest way to show both. `chu` stands for four syllables and all four
+ * fit on the screen; `maotsetung` splits five ways before any of its syllables
+ * has been chosen, so what is shown is the reading
+ * {@link readWadeGilesWord} settles on — 56.02% of markless words, by the
+ * measurement in `docs/romanization/`.
  */
 function fromWadeGiles(text: string): readonly Reading[] {
+  const split = splitWadeGiles(text);
+  if (split !== undefined && split.length > 1) {
+    const word = readWadeGilesWord(text);
+    return word === undefined
+      ? /* c8 ignore next -- a run that splits always reads */ []
+      : [
+          {
+            syllables: word,
+            isExact: split.every(
+              (spelling) => readWadeGiles(spelling).length > 0,
+            ),
+          },
+        ];
+  }
   const exact = new Set(
     readWadeGiles(text).map((syllable) => writeSyllable(syllable)),
   );
@@ -680,6 +703,42 @@ function transcriptions(text: string, flags: Flags): readonly Reading[] {
 }
 
 /**
+ * How wide each of `transcribe`'s columns is when its cells are narrow.
+ *
+ * A floor rather than the width: a whole word is wider than a syllable, and
+ * `mao-tsʻê-tung` is thirteen characters in a column sized for `ch'ü¹`. The
+ * widths are kept as a floor so that a single syllable still lines up with the
+ * next answer down when a file is piped through, and so that widening one row
+ * does not move every example in the docs.
+ */
+const TRANSCRIBE_WIDTHS: readonly number[] = [12, 10, 12, 12, 10, 10, 12, 0];
+
+/**
+ * Lay rows of cells out in columns, each as wide as it needs to be.
+ */
+function laidOut(rows: readonly (readonly string[])[]): readonly string[] {
+  const widths = TRANSCRIBE_WIDTHS.map((floor, at) =>
+    Math.max(
+      floor,
+      ...rows.map((row) => {
+        // A cell needs one space after it at least, which is what the floor
+        // gives the widest syllable already. Only a cell that does not fit
+        // widens the column, and then it takes two — so a single syllable is
+        // laid out exactly as it was before words could arrive.
+        const width = visibleLength(row[at] ?? "");
+        return width + 1 > floor ? width + 2 : 0;
+      }),
+    ),
+  );
+  return rows.map((row) =>
+    row
+      .map((cell, at) => column(cell, widths[at] ?? 0))
+      .join("")
+      .trimEnd(),
+  );
+}
+
+/**
  * Write pinyin in every other system, and read any of them back.
  *
  * Not `romanize`, for two reasons: bopomofo has a script of its own and IPA is
@@ -709,18 +768,21 @@ const TRANSCRIBE: Command = {
         };
       }
       return {
-        lines: found.map((reading, index) => {
-          const one = transcribed(reading, input.flags, input.paint);
-          return `${column(index === 0 ? text : "", 12)}${column(
-            one.pinyin,
-            10,
-          )}${column(one.bopomofo, 12)}${column(one.wadeGiles, 12)}${column(
-            one.yale,
-            10,
-          )}${column(one.gwoyeu, 10)}${column(one.ipa, 12)}${
-            one.isExact === false ? "marks restored" : ""
-          }`.trimEnd();
-        }),
+        lines: laidOut(
+          found.map((reading, index) => {
+            const one = transcribed(reading, input.flags, input.paint);
+            return [
+              index === 0 ? text : "",
+              one.pinyin,
+              one.bopomofo,
+              one.wadeGiles,
+              one.yale,
+              one.gwoyeu,
+              one.ipa,
+              one.isExact === false ? "marks restored" : "",
+            ];
+          }),
+        ),
         data: {
           text,
           read: true,

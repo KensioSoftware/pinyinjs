@@ -46,6 +46,8 @@ import { readIpa, writeIpa, writeIpaSymbols } from "./romanization/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
+  readWadeGilesWord,
+  splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesSpelling,
   writeWadeGilesWord,
@@ -755,6 +757,41 @@ describe("the examples in docs/", () => {
         return first !== undefined && writeSyllable(first, "none") === pinyin;
       });
       assertArrayLength(believed, 312);
+    });
+
+    it("splits a Wade-Giles word as the page shows", () => {
+      assertArrayEquals(splitWadeGiles("maotsetung"), ["mao", "tse", "tung"]);
+      assertArrayEquals(splitWadeGiles("mao-tse-tung"), ["mao", "tse", "tung"]);
+      assertArrayEquals(splitWadeGiles("hua-\u{EA}rh"), ["hua-\u{EA}rh"]);
+      assertArrayEquals(
+        (readWadeGilesWord("pei\u{B3}ching\u{B9}") ?? []).map((syllable) =>
+          writeSyllable(syllable),
+        ),
+        ["b\u{11B}i", "j\u{12B}ng"],
+      );
+    });
+
+    it("refuses the Postal Romanisation the page says it refuses", () => {
+      for (const name of [
+        "chungking",
+        "tsingtao",
+        "peking",
+        "nanking",
+        "canton",
+      ]) {
+        assertUndefined(splitWadeGiles(name), name);
+      }
+      // And the three that really are Wade-Giles do split.
+      for (const name of ["maotsetung", "taipei", "kuomintang"]) {
+        assertNonNullable(splitWadeGiles(name), name);
+      }
+    });
+
+    it("bars the syllabic nasals the page names from a split", () => {
+      for (const nasal of ["ng", "m", "n", "hm", "hng"]) {
+        assertArrayEquals(splitWadeGiles(nasal), [nasal], nasal);
+      }
+      assertUndefined(splitWadeGiles("shung"));
     });
 
     it("round-trips every form except the tone each system cannot write", () => {

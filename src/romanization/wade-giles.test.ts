@@ -5,6 +5,8 @@ import {
   assertNonNullable,
   assertObjectEquals,
   assertSetSize,
+  assertTrue,
+  assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
@@ -14,6 +16,8 @@ import { TONES } from "../tone/tone.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
+  readWadeGilesWord,
+  splitWadeGiles,
   writeWadeGiles,
   writeWadeGilesSpelling,
   writeWadeGilesWord,
@@ -49,6 +53,13 @@ function read(spelling: string): readonly string[] {
  */
 function readLoosely(spelling: string): readonly string[] {
   return readWadeGilesLoosely(spelling).map((found) => writeSyllable(found));
+}
+
+/**
+ * What a whole Wade-Giles word reads back as, written out.
+ */
+function readingOf(text: string): readonly string[] {
+  return (readWadeGilesWord(text) ?? []).map((one) => writeSyllable(one));
 }
 
 describe("writing Wade-Giles", () => {
@@ -278,5 +289,103 @@ describe("Wade-Giles over the whole inventory", () => {
       return readWadeGilesLoosely(dropped).length > 1;
     });
     assertArrayLength(merged, 219);
+  });
+});
+
+describe("splitting a Wade-Giles word that dropped its hyphens", () => {
+  it("splits a name written solid", () => {
+    assertArrayEquals(splitWadeGiles("maotsetung"), ["mao", "tse", "tung"]);
+    assertArrayEquals(splitWadeGiles("kuomintang"), ["kuo", "min", "tang"]);
+  });
+
+  it("honours the hyphen where the text kept it", () => {
+    assertArrayEquals(splitWadeGiles("mao-tse-tung"), ["mao", "tse", "tung"]);
+    assertArrayEquals(splitWadeGiles("ch'ang-ch'eng"), ["ch'ang", "ch'eng"]);
+  });
+
+  it("keeps the 儿化 suffix, whose hyphen is not a boundary", () => {
+    // `-êrh` is part of a spelling rather than a join, so the longer head wins
+    // and 花儿 huār stays one syllable.
+    assertArrayEquals(splitWadeGiles("hua-êrh"), ["hua-êrh"]);
+    assertArrayEquals(readingOf("hua-êrh"), ["huar"]);
+  });
+
+  it("takes the tone digits with the syllables they belong to", () => {
+    assertArrayEquals(splitWadeGiles("pei³ching¹"), ["pei³", "ching¹"]);
+    assertArrayEquals(readingOf("pei³ching¹"), ["běi", "jīng"]);
+  });
+
+  it("splits one syllable as one syllable", () => {
+    assertArrayEquals(splitWadeGiles("chu"), ["chu"]);
+  });
+
+  it("refuses a run that is not Wade-Giles at all", () => {
+    assertUndefined(splitWadeGiles(""));
+    assertUndefined(splitWadeGiles("xyz"));
+  });
+
+  it("refuses the Postal Romanisation it is usually asked for", () => {
+    // `Chungking` and `Tsingtao` are the names ROADMAP.md named for this, and
+    // neither is Wade-Giles: `king`, `tsing` and `pe` are Postal Romanisation
+    // spellings and are not syllables this system has. 重慶 in Wade-Giles is
+    // `chʻung²-chʻing⁴` and 青島 is `chʻing¹-tao³`.
+    assertUndefined(splitWadeGiles("chungking"));
+    assertUndefined(splitWadeGiles("tsingtao"));
+    assertUndefined(splitWadeGiles("peking"));
+  });
+
+  it("reads a whole word, taking the first candidate for each syllable", () => {
+    assertArrayEquals(readingOf("maotsetung"), ["mao", "ce", "dong"]);
+    // Believing what was written costs the aspiration nobody typed: 台北 is
+    // Táiběi and `tai` unmarked is 代 dài first. That is the 56.02% figure
+    // showing up in one word.
+    assertArrayEquals(readingOf("taipei"), ["dai", "bei"]);
+    assertArrayEquals(readingOf("t'ai³pei³"), ["tǎi", "běi"]);
+  });
+
+  it("says nothing where the run does not split", () => {
+    assertUndefined(readWadeGilesWord("chungking"));
+  });
+
+  it("splits every pair of inventory syllables written solid", () => {
+    // Every two-syllable pair the inventory can make is too many; this walks
+    // the syllables in order and pairs each with the next, which covers all 424
+    // in both positions. What a pair splits *into* is the 99.19% `pnpm
+    // romanization` measures over real vocabulary; what is asserted here is
+    // that it splits at all.
+    const nasals = new Set(["ng", "m", "n", "hm", "hng"]);
+    const spellings = [...DICTIONARY_SYLLABLES].map((pinyin) =>
+      writeWadeGilesSpelling(syllable(pinyin)),
+    );
+    const unsplit = spellings.filter((first, at) => {
+      const second = spellings[(at + 1) % spellings.length] ?? "";
+      return splitWadeGiles(`${first}${second}`) === undefined;
+    });
+    // The only pairs that do not are the ones a syllabic nasal is part of,
+    // which is the bar below rather than a gap.
+    assertArrayLength(unsplit, 9);
+    for (const first of unsplit) {
+      const at = spellings.indexOf(first);
+      const second = spellings[(at + 1) % spellings.length] ?? "";
+      assertTrue(nasals.has(first) || nasals.has(second), `${first}${second}`);
+    }
+  });
+
+  it("refuses a syllabic nasal as a piece of a longer run", () => {
+    // 嗯 `ng`, 呣 `m`, 唔 `n`, 噷 `hm` and 哼 `hng` are syllables and read as
+    // such on their own — but not one of the 411,956 multi-syllable words of
+    // the phrase corpus contains one, and letting `ng` be a piece would hand
+    // back `shung` as `shu`-`ng`. `shung` is regular Wade-Giles for a syllable
+    // Mandarin does not have, which is what the index exists to refuse.
+    for (const nasal of ["ng", "m", "n", "hm", "hng"]) {
+      assertArrayEquals(splitWadeGiles(nasal), [nasal], nasal);
+      // `hsieh` is 些 and no `hsieh`+nasal is a syllable of its own, so the
+      // only way these could split is through the nasal.
+      assertUndefined(splitWadeGiles(`hsieh${nasal}`), nasal);
+    }
+    assertUndefined(splitWadeGiles("shung"));
+    // `shun` is 順 and stays one syllable, which is why the bar is on the
+    // nasal being a *piece* rather than on the letters it is made of.
+    assertArrayEquals(splitWadeGiles("shun"), ["shun"]);
   });
 });
