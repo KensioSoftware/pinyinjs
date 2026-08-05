@@ -359,21 +359,21 @@ describe("the number command", () => {
   });
 });
 
-describe("the romanize command", () => {
+describe("the transcribe command", () => {
   it("writes pinyin in every system", async () => {
-    assertArrayEquals(await cli("romanize", "běijīng"), [
+    assertArrayEquals(await cli("transcribe", "běijīng"), [
       "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
     ]);
   });
 
   it("reads bopomofo without being told what it is", async () => {
-    assertArrayEquals(await cli("romanize", "ㄅㄟˇ"), [
+    assertArrayEquals(await cli("transcribe", "ㄅㄟˇ"), [
       "ㄅㄟˇ         běi       ㄅㄟˇ         pei³        běi       beei      pei˨˩˦",
     ]);
   });
 
   it("reads Wade-Giles, marking what needed a mark put back", async () => {
-    assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
+    assertArrayEquals(await cli("transcribe", "--from", "wade-giles", "chu¹"), [
       "chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥",
       "            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored",
       "            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored",
@@ -382,58 +382,62 @@ describe("the romanize command", () => {
   });
 
   it("reads Yale, GR and IPA when told which one it is", async () => {
-    assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
+    assertArrayEquals(await cli("transcribe", "--from", "yale", "syī"), [
       "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
     ]);
-    assertArrayEquals(await cli("romanize", "--from", "ipa", "tɕiou˥˩"), [
+    assertArrayEquals(await cli("transcribe", "--from", "ipa", "tɕiou˥˩"), [
       "tɕiou˥˩     jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
     ]);
-    assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "jiow"), [
+    assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "jiow"), [
       "jiow        jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
     ]);
     // GR's `-l` suffix collides with 二, so both readings come back.
-    assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "ell"), [
+    assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "ell"), [
       "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
       "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
     ]);
   });
 
   it("reports the readings as data", async () => {
-    assertObjectEquals(await json("romanize", "--from", "wade-giles", "chi"), {
-      text: "chi",
-      read: true,
-      readings: [
-        {
-          pinyin: "ji",
-          bopomofo: "ㄐㄧ",
-          wadeGiles: "chi",
-          yale: "ji",
-          gwoyeu: "ji",
-          ipa: "tɕi",
-          isExact: true,
-        },
-        {
-          pinyin: "qi",
-          bopomofo: "ㄑㄧ",
-          wadeGiles: "ch'i",
-          yale: "chi",
-          gwoyeu: "chi",
-          ipa: "tɕʰi",
-          isExact: false,
-        },
-      ],
-    });
+    assertObjectEquals(
+      await json("transcribe", "--from", "wade-giles", "chi"),
+      {
+        text: "chi",
+        read: true,
+        readings: [
+          {
+            pinyin: "ji",
+            bopomofo: "ㄐㄧ",
+            wadeGiles: "chi",
+            yale: "ji",
+            gwoyeu: "ji",
+            ipa: "tɕi",
+            isExact: true,
+          },
+          {
+            pinyin: "qi",
+            bopomofo: "ㄑㄧ",
+            wadeGiles: "ch'i",
+            yale: "chi",
+            gwoyeu: "chi",
+            ipa: "tɕʰi",
+            isExact: false,
+          },
+        ],
+      },
+    );
   });
 
   it("says so when it cannot read the text at all", async () => {
-    assertArrayEquals(await cli("romanize", "zzz"), ["zzz  not readable"]);
+    assertArrayEquals(await cli("transcribe", "zzz"), ["zzz  not readable"]);
     // A regular Wade-Giles spelling of a syllable Mandarin does not have.
-    assertArrayEquals(await cli("romanize", "--from", "wade-giles", "shung"), [
-      "shung  not readable",
-    ]);
+    assertArrayEquals(
+      await cli("transcribe", "--from", "wade-giles", "shung"),
+      ["shung  not readable"],
+    );
   });
 
-  it("loads no dictionary, since a romanisation needs none", async () => {
+  it("loads no dictionary, since a transcription needs none", async () => {
     let loaded = 0;
     const counted = {
       ...environment,
@@ -442,7 +446,7 @@ describe("the romanize command", () => {
         return Promise.resolve(dictionary);
       },
     };
-    await runCli(["romanize", "běijīng"], counted);
+    await runCli(["transcribe", "běijīng"], counted);
     assertIdentical(loaded, 0);
   });
 });

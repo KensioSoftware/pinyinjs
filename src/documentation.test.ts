@@ -966,19 +966,22 @@ describe("the examples in docs/", () => {
     });
 
     it("romanises pinyin and reads sloppy Wade-Giles back", async () => {
-      assertArrayEquals(await cli("romanize", "běijīng"), [
+      assertArrayEquals(await cli("transcribe", "běijīng"), [
         "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
       ]);
-      assertArrayEquals(await cli("romanize", "--from", "wade-giles", "chu¹"), [
-        "chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥",
-        "            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored",
-        "            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored",
-        "            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored",
-      ]);
-      assertArrayEquals(await cli("romanize", "--from", "yale", "syī"), [
+      assertArrayEquals(
+        await cli("transcribe", "--from", "wade-giles", "chu¹"),
+        [
+          "chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥",
+          "            chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored",
+          "            jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored",
+          "            qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored",
+        ],
+      );
+      assertArrayEquals(await cli("transcribe", "--from", "yale", "syī"), [
         "syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥",
       ]);
-      assertArrayEquals(await cli("romanize", "--from", "gwoyeu", "ell"), [
+      assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "ell"), [
         "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
         "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
       ]);

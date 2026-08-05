@@ -415,19 +415,19 @@ about them is special.
 ## On the command line
 
 ```console
-$ pinyinjs romanize běijīng
+$ pinyinjs transcribe běijīng
 běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 
-$ pinyinjs romanize --from wade-giles chu¹
+$ pinyinjs transcribe --from wade-giles chu¹
 chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu˥
             chū       ㄔㄨ          ch'u¹       chū       chu       ʈʂʰu˥       marks restored
             jū        ㄐㄩ          chü¹        jyū       jiu       tɕy˥        marks restored
             qū        ㄑㄩ          ch'ü¹       chyū      chiu      tɕʰy˥       marks restored
 
-$ pinyinjs romanize --from yale syī
+$ pinyinjs transcribe --from yale syī
 syī         xī        ㄒㄧ          hsi¹        syī       shi       ɕi˥
 
-$ pinyinjs romanize --from gwoyeu ell
+$ pinyinjs transcribe --from gwoyeu ell
 ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩
             ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥
 ```

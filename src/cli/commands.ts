@@ -46,8 +46,8 @@ import {
   type Flags,
   type FlagName,
   htmlOptions,
-  type RomanizationSource,
-  romanizationSource,
+  type TranscriptionSource,
+  transcriptionSource,
   UsageError,
 } from "./arguments.js";
 
@@ -422,7 +422,7 @@ const SANDHI: Command = {
 /**
  * One syllable or word, in every system.
  */
-interface Romanised {
+interface Transcribed {
   readonly pinyin: string;
   readonly bopomofo: string;
   readonly wadeGiles: string;
@@ -441,11 +441,11 @@ interface Romanised {
 /**
  * Write a run of syllables in every system.
  */
-function romanised(
+function transcribed(
   syllables: readonly Syllable[],
   flags: Flags,
   isExact?: boolean,
-): Romanised {
+): Transcribed {
   const { notation } = convertOptions(flags);
   return {
     pinyin: syllables
@@ -468,12 +468,12 @@ function romanised(
  * marks. Which candidates needed repairing is shown rather than hidden — that
  * is the one thing a person looking at Wade-Giles wants to know.
  */
-function fromWadeGiles(text: string, flags: Flags): readonly Romanised[] {
+function fromWadeGiles(text: string, flags: Flags): readonly Transcribed[] {
   const exact = new Set(
     readWadeGiles(text).map((syllable) => writeSyllable(syllable)),
   );
   return readWadeGilesLoosely(text).map((syllable) =>
-    romanised([syllable], flags, exact.has(writeSyllable(syllable))),
+    transcribed([syllable], flags, exact.has(writeSyllable(syllable))),
   );
 }
 
@@ -484,7 +484,7 @@ function fromWadeGiles(text: string, flags: Flags): readonly Romanised[] {
  * bopomofo is not because it needs no flag at all.
  */
 const INDEXED_READERS = new Map<
-  RomanizationSource,
+  TranscriptionSource,
   (text: string) => readonly Syllable[]
 >([
   ["yale", readYale],
@@ -495,21 +495,21 @@ const INDEXED_READERS = new Map<
 /**
  * Read whatever system the text is in, and say so.
  */
-function romanisations(text: string, flags: Flags): readonly Romanised[] {
-  const from = romanizationSource(flags);
+function transcriptions(text: string, flags: Flags): readonly Transcribed[] {
+  const from = transcriptionSource(flags);
   if (from === "wade-giles") {
     return fromWadeGiles(text, flags);
   }
   const reader = INDEXED_READERS.get(from);
   if (reader !== undefined) {
-    return reader(text).map((syllable) => romanised([syllable], flags));
+    return reader(text).map((syllable) => transcribed([syllable], flags));
   }
   // Bopomofo needs no flag to be recognised: it has a script of its own, so a
   // caller can only mean one thing by it. Wade-Giles and pinyin overlap almost
   // entirely, so those have to be declared.
   if (from === "bopomofo" || (from === "auto" && isBopomofo(text))) {
     const syllable = readBopomofo(text);
-    return syllable === undefined ? [] : [romanised([syllable], flags)];
+    return syllable === undefined ? [] : [transcribed([syllable], flags)];
   }
   const split = splitSyllables(text);
   const syllables = (split ?? []).flatMap((spelling) => {
@@ -517,26 +517,32 @@ function romanisations(text: string, flags: Flags): readonly Romanised[] {
     /* c8 ignore next -- splitSyllables only emits syllables that read */
     return syllable === undefined ? [] : [syllable];
   });
-  return syllables.length === 0 ? [] : [romanised(syllables, flags)];
+  return syllables.length === 0 ? [] : [transcribed(syllables, flags)];
 }
 
 /**
  * Write pinyin in every other system, and read any of them back.
  *
- * Needs no dictionary, for the same reason `syllable` does: a romanisation is
+ * Not `romanize`, for two reasons: bopomofo has a script of its own and IPA is
+ * a transcription rather than a spelling, so half the columns are not
+ * romanisations — and the input is pinyin, which already is one. *Comparison of
+ * Standard Chinese transcription systems*, the syllabary these tables are
+ * checked against, is the source of the word as well as of the columns.
+ *
+ * Needs no dictionary, for the same reason `syllable` does: a transcription is
  * a mapping over syllables and there is nothing to look up. Several rows come
  * back where Wade-Giles is ambiguous, which is most of it once the apostrophes
  * and diacritics have been dropped.
  */
-const ROMANIZE: Command = {
-  name: "romanize",
+const TRANSCRIBE: Command = {
+  name: "transcribe",
   summary: "pinyin to bopomofo, Wade-Giles, Yale, GR and IPA, and back",
   argument: "<text...>",
   flags: ["notation", "from"],
   needsDictionary: false,
   run: (input) =>
     input.texts.map((text) => {
-      const found = romanisations(text, input.flags);
+      const found = transcriptions(text, input.flags);
       if (found.length === 0) {
         return {
           lines: [`${text}  not readable`],
@@ -684,7 +690,7 @@ export const COMMANDS: readonly Command[] = [
   SYLLABLE,
   SANDHI,
   NUMBER,
-  ROMANIZE,
+  TRANSCRIBE,
   INFO,
 ];
 

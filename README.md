@@ -46,7 +46,7 @@ nǐhǎo  nǐ hǎo
   nǐ        n + i, tone 3         nǐ  ni3  ni³
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
 
-$ pinyinjs romanize běijīng
+$ pinyinjs transcribe běijīng
 běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 ```
 

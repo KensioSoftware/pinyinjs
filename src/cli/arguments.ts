@@ -178,17 +178,17 @@ const PUNCTUATION: readonly PunctuationStyle[] = ["latin", "keep"];
 const TIERS: readonly Tier[] = ["core", "standard", "full"];
 
 /**
- * Which system the text handed to `romanize` is written in.
+ * Which system the text handed to `transcribe` is written in.
  *
  * `auto` reads bopomofo as bopomofo and everything else as pinyin, which is as
  * far as detection can honestly go: bopomofo has a script of its own, while
  * `chi` is a well-formed spelling in both pinyin and Wade-Giles and means
  * different syllables in each.
  */
-export type RomanizationSource =
+export type TranscriptionSource =
   "auto" | "pinyin" | "wade-giles" | "bopomofo" | "yale" | "gwoyeu" | "ipa";
 
-const SOURCES: readonly RomanizationSource[] = [
+const SOURCES: readonly TranscriptionSource[] = [
   "auto",
   "pinyin",
   "wade-giles",
@@ -201,7 +201,7 @@ const SOURCES: readonly RomanizationSource[] = [
 /**
  * Read the `--from` flag.
  */
-export function romanizationSource(flags: Flags): RomanizationSource {
+export function transcriptionSource(flags: Flags): TranscriptionSource {
   return chosen(flags, "from", SOURCES) ?? "auto";
 }
 

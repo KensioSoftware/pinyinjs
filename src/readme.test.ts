@@ -312,7 +312,7 @@ describe("the examples in README.md", () => {
     });
 
     it("romanises from the command line as the README shows", async () => {
-      assertArrayEquals(await cli("romanize", "běijīng"), [
+      assertArrayEquals(await cli("transcribe", "běijīng"), [
         "běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥",
       ]);
     });
