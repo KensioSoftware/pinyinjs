@@ -15,6 +15,7 @@ import { describe, it } from "vitest";
 import type { DecodedWord } from "../decode/word.js";
 import { writeSyllable } from "../syllable/syllable.js";
 import {
+  ADDRESS_PREFIX,
   applyGrouping,
   ASPECT_PARTICLES,
   PLACE_GENERICS,
@@ -273,5 +274,59 @@ describe("the 正词法 word list rule", () => {
       ),
       2,
     );
+  });
+});
+
+/**
+ * Whether each word came out marked a proper noun.
+ */
+function capitals(...words: readonly DecodedWord[]): readonly boolean[] {
+  return ADDRESS_PREFIX.apply(words, dictionary).map((one) => one.isProperNoun);
+}
+
+describe("the 称呼语 in front of a surname", () => {
+  const wang = word("王", "wáng", "nr", true);
+
+  it("marks 老 and 小 before a one-character surname", () => {
+    assertArrayEquals(capitals(word("老", "lǎo"), wang), [true, true]);
+    assertArrayEquals(capitals(word("小", "xiǎo"), wang), [true, true]);
+  });
+
+  it("leaves 大 alone, which is the one that goes wrong", () => {
+    // 泡大池 is a big pool and 那头大熊 is a big bear. Both are 大, and both
+    // are what the rule would have got wrong — see docs/orthography/.
+    assertArrayEquals(capitals(word("大", "dà"), wang), [false, true]);
+  });
+
+  it("needs a surname rather than any word after it", () => {
+    // A common noun.
+    assertArrayEquals(capitals(word("老", "lǎo"), word("市", "shì")), [
+      false,
+      false,
+    ]);
+    // A proper noun of more than one character is a name, not a surname.
+    assertArrayEquals(
+      capitals(word("小", "xiǎo"), word("南京", "nán jīng", "ns", true)),
+      [false, true],
+    );
+    // And nothing at all after it.
+    assertArrayEquals(capitals(word("老", "lǎo")), [false]);
+  });
+
+  it("does not fire across a hyphen", () => {
+    // A hyphen means the two are one orthographic word already, so there is no
+    // separate prefix to capitalise.
+    assertArrayEquals(
+      capitals(word("小", "xiǎo"), { ...wang, separator: "-" }),
+      [false, true],
+    );
+  });
+
+  it("leaves everything else exactly as it was", () => {
+    assertArrayEquals(capitals(word("我", "wǒ"), word("去", "qù"), wang), [
+      false,
+      false,
+      true,
+    ]);
   });
 });

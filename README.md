@@ -50,15 +50,17 @@ $ pinyinjs transcribe běijīng
 běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 ```
 
-| Command    | Does                                                |
-| ---------- | --------------------------------------------------- |
-| `convert`  | hanzi to pinyin                                     |
-| `html`     | the same, as HTML                                   |
-| `explain`  | each syllable, how settled it was, and what it beat |
-| `lookup`   | what the dictionary holds for a word                |
-| `syllable` | take written pinyin apart                           |
-| `sandhi`   | apply tone sandhi to written pinyin                 |
-| `info`     | which dictionary is loaded, and how big it is       |
+| Command      | Does                                                |
+| ------------ | --------------------------------------------------- |
+| `convert`    | hanzi to pinyin                                     |
+| `html`       | the same, as HTML                                   |
+| `explain`    | each syllable, how settled it was, and what it beat |
+| `lookup`     | what the dictionary holds for a word                |
+| `syllable`   | take written pinyin apart                           |
+| `sandhi`     | apply tone sandhi to written pinyin                 |
+| `number`     | read a number as Chinese numerals                   |
+| `transcribe` | pinyin to bopomofo, Wade-Giles, Yale, GR and IPA    |
+| `info`       | which dictionary is loaded, and how big it is       |
 
 Every conversion option below is a flag: `--notation`, `--locale`,
 `--apostrophe`, `--capitals`, `--punctuation`, `--no-grouping`, `--third-tone`,

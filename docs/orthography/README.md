@@ -174,6 +174,28 @@ dictionary are recovered from a closed surname list of about 500 entries plus
 Inheriting jieba's tags means inheriting its mistakes. 无缝钢管 is tagged `nz`,
 so it converts as `Wúfènggāngguǎn` with a capital it has not earned.
 
+### 老王 is Lǎo Wáng
+
+```ts
+convert(dictionary, "我去把老王找来。"); // "Wǒ qù bǎ Lǎo Wáng zhǎo lái."
+convert(dictionary, "那是小李的书。"); // "Nà shi Xiǎo Lǐ de shū."
+```
+
+GB/T 16159 writes the 称呼语 in front of a surname apart and with a capital of
+its own. The words were already apart; what was missing was the capital, so the
+rule marks the prefix a proper noun and lets the writer do what it already does
+with one.
+
+The surname is the evidence: a one-character word the dictionary marks a proper
+noun is what 老 and 小 attach to. **大 is deliberately not included.** It is
+written the same way in 大李, but it is also an ordinary adjective in front of
+anything at all, and it is the one that goes wrong — over 88,866 lines the three
+prefixes fire 49 times together and both clear mistakes are 大, in 泡大池 (a big
+pool) and 那头大熊 (a big bear). Without it the rule fires **38 times over 12
+distinct pairs** — 小王, 小李, 老王, 小丁 and eight more — and every one of them
+read in context is a real form of address, including 小萨米·戴维斯, where 小 is
+doing the work of "Jr".
+
 ## Apostrophes (隔音符号)
 
 ```ts
@@ -224,11 +246,27 @@ build refuses to write an artifact unless 儿化 round-trips both ways.
 The standard is larger than what is built. Known gaps, all of which degrade to
 something readable rather than something wrong:
 
-| GB/T 16159 says                                           | What happens now                           |
-| --------------------------------------------------------- | ------------------------------------------ |
-| 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit                  |
-| 老王 → `Lǎo Wáng`                                         | `lǎo Wáng` — 老 is not treated as a prefix |
-| 成语 outside the curated list                             | written solid, no hyphen                   |
+| GB/T 16159 says                                           | What happens now          |
+| --------------------------------------------------------- | ------------------------- |
+| 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit |
+| 成语 outside the curated list                             | written solid, no hyphen  |
+
+Both are gaps by decision rather than by omission, and the decision is measured.
+
+**Splitting a 4+ syllable compound needs to know where the boundary is, and the
+only evidence available is uncorrelated with the standard.** Over 88,866 lines
+the decoder produces 9,210 words of four syllables or more, 4,462 of them
+distinct. Asking whether the word cuts into two dictionary words — the same
+condition the 成语 hyphen rejected — leaves 58.11% with exactly one cut, 4.62%
+with several and 37.27% with none. And that one cut is the standard's boundary
+only about a fifth of the time: of the 2,593 one-cut words, **20.83% are tagged
+`i` and 16.08% `l`** — 成语 and 习语, which the standard writes solid or
+hyphenates, so splitting them would be actively wrong — against 21.91% tagged
+`n`, the nouns 6.1.6 is actually about. A further **21.52% carry no tag at all**,
+which is the caveat below arriving in practice. Conditioning on `n` looks better
+in a sample and still fires on 登峰造极 and 天马行空, both 成语 that jieba tags
+`n`. Since splitting a decoded word overrides positive evidence that it is one
+word, that is not a strong enough condition and the rule is not written.
 
 A coverage caveat worth knowing before expecting more from the tag-conditioned
 rules: 487,552 of 721,718 Han words carry no part-of-speech tag at all, since
