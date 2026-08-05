@@ -16,6 +16,7 @@ const FLAG_HELP = new Map<string, string>([
   ["third-tone", "write third-tone sandhi: nǐ hǎo becomes ní hǎo"],
   ["no-sandhi", "do not write 一 and 不 sandhi"],
   ["greedy", "decode with the old longest-match baseline"],
+  ["system", "write it in bopomofo, wade-giles, yale, gwoyeu or ipa"],
   ["no-tone-classes", "leave the tone classes off"],
   ["no-uncertain", "do not mark uncertain readings"],
   ["from", "pinyin, wade-giles or bopomofo (auto by default)"],
@@ -39,6 +40,7 @@ const COMMAND_WIDTH =
  */
 const VALUE_FLAGS = new Set([
   "from",
+  "system",
   "notation",
   "locale",
   "apostrophe",

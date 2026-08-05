@@ -344,6 +344,17 @@ describe("the examples in README.md", () => {
       assertArrayEquals(await cli("convert", "我要去北京。"), [
         "Wǒ yào qù Běijīng.",
       ]);
+      assertArrayEquals(
+        await cli(
+          "convert",
+          "--system",
+          "wade-giles",
+          "--notation",
+          "none",
+          "我要去北京。",
+        ),
+        ["Wo yao ch'ü Pei-ching."],
+      );
       assertArrayEquals(await cli("convert", "--notation", "numbers", "银行"), [
         "yin2hang2",
       ]);

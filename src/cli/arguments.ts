@@ -36,6 +36,7 @@ const FLAGS = {
   "no-liang": { type: "boolean" },
   percent: { type: "boolean" },
   from: { type: "string" },
+  system: { type: "string" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
   colour: { type: "boolean" },
@@ -212,6 +213,30 @@ const SOURCES: readonly TranscriptionSource[] = [
  */
 export function transcriptionSource(flags: Flags): TranscriptionSource {
   return chosen(flags, "from", SOURCES) ?? "auto";
+}
+
+/**
+ * Which system a conversion should be written in.
+ *
+ * `pinyin` is not a value: writing pinyin is what `convert` does with no flag
+ * at all, and offering a name for the default would suggest the others are
+ * alternatives to it rather than things it is put through afterwards.
+ */
+const SYSTEMS_WRITTEN: readonly TranscriptionSource[] = [
+  "bopomofo",
+  "wade-giles",
+  "yale",
+  "gwoyeu",
+  "ipa",
+];
+
+/**
+ * Read the `--system` flag.
+ */
+export function transcriptionSystem(
+  flags: Flags,
+): TranscriptionSource | undefined {
+  return chosen(flags, "system", SYSTEMS_WRITTEN);
 }
 
 /**

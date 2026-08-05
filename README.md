@@ -46,6 +46,9 @@ nǐhǎo  nǐ hǎo
   nǐ        n + i, tone 3         nǐ  ni3  ni³
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
 
+$ pinyinjs convert --system wade-giles --notation none 我要去北京。
+Wo yao ch'ü Pei-ching.
+
 $ pinyinjs transcribe běijīng
 běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeijing  pei˨˩˦tɕiŋ˥
 ```

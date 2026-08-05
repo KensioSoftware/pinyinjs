@@ -110,7 +110,7 @@ describe("writing a word one syllable at a time", () => {
         const word = forms.slice(at, at + 2);
         assertIdentical(
           writtenWith(word, system, PLAIN),
-          system.word(word),
+          system.word(word, true),
           word.map((syllable) => writeSyllable(syllable)).join(""),
         );
       }
