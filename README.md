@@ -68,6 +68,12 @@ A command given no arguments reads standard input, one text per line, so
 `cat article.txt | pinyinjs convert` works. `syllable` and `sandhi` need no
 dictionary at all and start without loading one.
 
+At a terminal each syllable is written in its tone's colour, in
+[MDBG](https://www.mdbg.net)'s palette — red, yellow, green, blue, and the
+terminal's own colour for the neutral tone. It is off for a pipe, `NO_COLOR` is
+honoured, `--colour` and `--no-colour` force it either way, and `--json` is
+never coloured. See [the command line](docs/cli/#colour).
+
 ### Calling it from something else
 
 `convert` writes the pinyin and nothing else, so it drops straight into a

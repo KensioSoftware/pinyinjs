@@ -74,6 +74,7 @@ const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
  */
 const environment: CliEnvironment = {
   version: "0.0.0",
+  colours: 0,
   readInput: () => Promise.resolve(""),
   loadDictionary: () => Promise.resolve(dictionary),
 };

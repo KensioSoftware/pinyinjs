@@ -195,16 +195,54 @@ baseline instead of the lattice — see [converting](../converting/#the-greedy-b
 
 These work on every command:
 
-| Flag              | Does                                    |
-| ----------------- | --------------------------------------- |
-| `--data <dir>`    | read the dictionary from this directory |
-| `--tier <tier>`   | `core`, `standard` or `full` (default)  |
-| `--json`          | write one JSON document per answer      |
-| `-h`, `--help`    | show help                               |
-| `-v`, `--version` | show the version                        |
+| Flag                        | Does                                    |
+| --------------------------- | --------------------------------------- |
+| `--data <dir>`              | read the dictionary from this directory |
+| `--tier <tier>`             | `core`, `standard` or `full` (default)  |
+| `--colour`, `--color`       | colour the tones, terminal or not       |
+| `--no-colour`, `--no-color` | leave the tones uncoloured              |
+| `--json`                    | write one JSON document per answer      |
+| `-h`, `--help`              | show help                               |
+| `-v`, `--version`           | show the version                        |
 
 `syllable`, `sandhi`, `number` and `transcribe` need no dictionary at all and
 start without loading one, so `--data` and `--tier` do nothing on them.
+
+## Colour
+
+At a terminal, every syllable is written in its tone's colour — in `convert`,
+`explain`, `lookup`, `syllable`, `sandhi`, `number` and `transcribe`. The
+palette is [MDBG](https://www.mdbg.net)'s, because a colour key is arbitrary
+and the tiebreak is what a reader has already learned:
+
+| Tone   | MDBG      | In the terminal           |
+| ------ | --------- | ------------------------- |
+| 1 阴平 | `#ff0000` | red                       |
+| 2 阳平 | `#d09000` | yellow                    |
+| 3 上声 | `#00a000` | green                     |
+| 4 去声 | `#0044ff` | blue                      |
+| 5 轻声 | `#000000` | the terminal's own colour |
+
+**The fifth tone is uncoloured, and that is MDBG's answer rather than a
+shortcut.** Its fifth colour is `#000000` on a light page and `#ffffff` on a
+dark one — the plain text colour, which in a terminal means writing no escape
+at all. A syllable whose tone was never written is left alone too: MDBG has no
+colour for one, and [an unwritten tone is not the neutral
+tone](../syllables/#tones).
+
+Colour is on for a terminal and off for a pipe, so a redirected file never
+fills up with escape sequences, and `NO_COLOR` is honoured. `--colour` and
+`--no-colour` force it either way, and `--color` is accepted as a spelling.
+`--json` is never coloured whatever the flags say — it already carries the tone
+as a number, for a caller that will do its own rendering — and neither is
+`html`, which carries `py-tone-1` to `py-tone-5` classes for a stylesheet to
+act on.
+
+A terminal that reports 256 colours gets the closest match to MDBG's values
+that stays legible on a dark background _and_ a light one, since it cannot say
+which it has. One that reports only the basic sixteen gets the nearest of those,
+which is a visibly worse fit for the second and third tones — there is no amber
+in sixteen colours, and the only yellow contrasts 1.70:1 against white.
 
 ## Standard input
 

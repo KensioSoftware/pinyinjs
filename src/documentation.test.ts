@@ -8,11 +8,14 @@ import {
   assertNonNullable,
   assertObjectEquals,
   assertSetSize,
+  assertStringIncludes,
+  assertStringNotIncludes,
   assertTrue,
   assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import { paletteAt, stripColour, visibleLength } from "./cli/colour.js";
 import { runCli } from "./cli/run.js";
 import type { CliEnvironment } from "./cli/run.js";
 import { isUncertain } from "./decode/confidence.js";
@@ -949,6 +952,7 @@ describe("the examples in docs/", () => {
      */
     const environment: CliEnvironment = {
       version: "0.0.0",
+      colours: 0,
       readInput: () => Promise.resolve(""),
       loadDictionary: () => Promise.resolve(dictionary),
     };
@@ -1002,6 +1006,78 @@ describe("the examples in docs/", () => {
         "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
         "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
       ]);
+    });
+
+    describe("colour", () => {
+      /**
+       * The same run at a terminal that reports 256 colours.
+       */
+      const terminal: CliEnvironment = { ...environment, colours: 256 };
+
+      async function coloured(
+        ...argv: readonly string[]
+      ): Promise<readonly string[]> {
+        const result = await runCli(argv, terminal);
+        assertIdentical(result.status, 0, result.errors.join("\n"));
+        return result.output;
+      }
+
+      it("carries the MDBG values the page's table quotes", () => {
+        assertArrayEquals(
+          paletteAt(256).map((entry) => `${String(entry.tone)} ${entry.mdbg}`),
+          ["1 #ff0000", "2 #d09000", "3 #00a000", "4 #0044ff"],
+        );
+      });
+
+      it("leaves the fifth tone the terminal's own colour", async () => {
+        // 我的 is wǒ de, third tone then neutral: one syllable painted and one
+        // not, in a line that is otherwise identical either way.
+        assertArrayEquals(await cli("convert", "我的"), ["wǒ de"]);
+        const [line] = await coloured("convert", "我的");
+        assertNonNullable(line);
+        assertIdentical(stripColour(line), "wǒ de");
+        assertStringIncludes(line, "de");
+        assertStringNotIncludes(line, "\u{1B}[38;5;0m");
+      });
+
+      it("colours at a terminal and not into a pipe", async () => {
+        assertArrayEquals(await cli("convert", "银行"), ["yínháng"]);
+        const written = await coloured("convert", "银行");
+        assertIdentical(visibleLength(written.join("")), "yínháng".length);
+      });
+
+      it("colours every command the page lists and no others", async () => {
+        const painted = await Promise.all(
+          [
+            ["convert", "银行"],
+            ["explain", "银行"],
+            ["lookup", "银行"],
+            ["syllable", "yínháng"],
+            ["sandhi", "bùshì"],
+            ["number", "26"],
+            ["transcribe", "běijīng"],
+          ].map(async (argv) => [argv, await coloured(...argv)] as const),
+        );
+        for (const [argv, lines] of painted) {
+          assertStringIncludes(lines.join("\n"), "\u{1B}[", argv.join(" "));
+        }
+
+        const plain = await Promise.all(
+          [["html", "银行"], ["info"], ["convert", "--json", "银行"]].map(
+            async (argv) => [argv, await coloured(...argv)] as const,
+          ),
+        );
+        for (const [argv, lines] of plain) {
+          assertStringNotIncludes(lines.join("\n"), "\u{1B}[", argv.join(" "));
+        }
+      });
+
+      it("says which flags force it, in the help", async () => {
+        const shown = await cli("convert", "--help");
+        const help = shown.join("\n");
+        assertStringIncludes(help, "--colour, --color");
+        assertStringIncludes(help, "--no-colour, --no-color");
+      });
     });
 
     it("applies sandhi from the command line", async () => {

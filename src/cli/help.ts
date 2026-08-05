@@ -24,11 +24,6 @@ const FLAG_HELP = new Map<string, string>([
 ]);
 
 /**
- * How wide the flag column is, which is the longest flag plus a gap.
- */
-const FLAG_WIDTH = 23;
-
-/**
  * How wide the command column is in the listing.
  *
  * Derived from the longest name rather than fixed, because a fixed 10 was
@@ -38,19 +33,6 @@ const FLAG_WIDTH = 23;
  */
 const COMMAND_WIDTH =
   Math.max(...COMMANDS.map((command) => command.name.length)) + 2;
-
-/**
- * The global flags, listed under every command's help.
- */
-const GLOBAL_HELP: readonly string[] = (
-  [
-    ["--data <dir>", "read the dictionary from this directory"],
-    ["--tier <tier>", "core, standard or full (default)"],
-    ["--json", "write one JSON document per answer"],
-    ["-h, --help", "show this help"],
-    ["-v, --version", "show the version"],
-  ] as const
-).map(([flag, help]) => `  ${flag.padEnd(FLAG_WIDTH)}${help}`);
 
 /**
  * The flags that take a value after them, as opposed to standing alone.
@@ -65,12 +47,49 @@ const VALUE_FLAGS = new Set([
 ]);
 
 /**
+ * A flag as the help writes it, before its description.
+ */
+function flagWritten(name: string): string {
+  return `--${name}${VALUE_FLAGS.has(name) ? " <value>" : ""}`;
+}
+
+/**
+ * The global flags, listed under every command's help.
+ *
+ * Both spellings of the colour flags are listed rather than one being a quiet
+ * alias: nobody should have to discover which of the two this command chose.
+ */
+const GLOBAL_FLAG_HELP = [
+  ["--data <dir>", "read the dictionary from this directory"],
+  ["--tier <tier>", "core, standard or full (default)"],
+  ["--colour, --color", "colour the tones, terminal or not"],
+  ["--no-colour, --no-color", "leave the tones uncoloured"],
+  ["--json", "write one JSON document per answer"],
+  ["-h, --help", "show this help"],
+  ["-v, --version", "show the version"],
+] as const;
+
+/**
+ * How wide the flag column is, which is the longest flag written plus a gap.
+ *
+ * Derived for the same reason {@link COMMAND_WIDTH} is: it was a fixed 23, and
+ * `--no-colour, --no-color` is exactly 23 characters long.
+ */
+const FLAG_WIDTH =
+  Math.max(
+    ...GLOBAL_FLAG_HELP.map(([flag]) => flag.length),
+    ...[...FLAG_HELP.keys()].map((name) => flagWritten(name).length),
+  ) + 2;
+
+const GLOBAL_HELP: readonly string[] = GLOBAL_FLAG_HELP.map(
+  ([flag, help]) => `  ${flag.padEnd(FLAG_WIDTH)}${help}`,
+);
+
+/**
  * A flag as the help lists it.
  */
 function flagLine(name: string): string {
-  const hasValue = VALUE_FLAGS.has(name);
-  const written = `--${name}${hasValue ? " <value>" : ""}`;
-  return `  ${written.padEnd(FLAG_WIDTH)}${FLAG_HELP.get(name) ?? ""}`;
+  return `  ${flagWritten(name).padEnd(FLAG_WIDTH)}${FLAG_HELP.get(name) ?? ""}`;
 }
 
 /**

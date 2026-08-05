@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary } from "../dictionary/source.js";
+import { type ColourDepth, depthFrom } from "./colour.js";
 import type { CliEnvironment } from "./run.js";
 
 /**
@@ -73,11 +74,31 @@ async function version(): Promise<string> {
 }
 
 /**
+ * What this process's terminal says about itself.
+ *
+ * The reading half only: {@link depthFrom} decides what it means, so that the
+ * decision is a pure function with a test rather than a sniff at the point of
+ * use. Standard output is the stream asked about, since that is where a
+ * command's answer goes.
+ */
+/* c8 ignore start -- the real process; depthFrom does the deciding */
+function terminalColours(): ColourDepth {
+  return depthFrom({
+    isTerminal: process.stdout.isTTY,
+    noColour: process.env["NO_COLOR"],
+    term: process.env["TERM"],
+    colorterm: process.env["COLORTERM"],
+  });
+}
+/* c8 ignore stop */
+
+/**
  * Wire the CLI up to Node.
  */
 export async function nodeEnvironment(): Promise<CliEnvironment> {
   return {
     version: await version(),
+    colours: terminalColours(),
     readInput,
     loadDictionary: async (choice) =>
       loadDictionary(

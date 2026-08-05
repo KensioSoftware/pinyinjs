@@ -1,12 +1,14 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import {
   checkFlags,
+  colourDepth,
   type DictionaryChoice,
   dictionaryChoice,
   GLOBAL_FLAGS,
   parseArguments,
   UsageError,
 } from "./arguments.js";
+import { type ColourDepth, painterFor } from "./colour.js";
 import { type Command, commandNamed } from "./commands.js";
 import { commandHelp, generalHelp } from "./help.js";
 
@@ -21,6 +23,16 @@ export interface CliEnvironment {
   /** Standard input, or the empty string where there is none to read. */
   readonly readInput: () => Promise<string>;
   readonly loadDictionary: (choice: DictionaryChoice) => Promise<Dictionary>;
+  /**
+   * How much colour the output can carry, before any flag has its say.
+   *
+   * Here rather than sniffed inside a command, because a command reaching for
+   * `process.stdout.isTTY` would put a decision in the one place the coverage
+   * gate cannot see. An environment states the answer and a test can ask for
+   * either one. `depthFrom` in `colour.ts` is how the Node adapter arrives at
+   * it, and is a pure function for the same reason.
+   */
+  readonly colours: ColourDepth;
 }
 
 /**
@@ -87,8 +99,9 @@ async function runCommand(
   const dictionary = command.needsDictionary
     ? await environment.loadDictionary(choice)
     : undefined;
+  const paint = painterFor(colourDepth(flags, environment.colours));
 
-  const reported = command.run({ texts, flags, dictionary, choice });
+  const reported = command.run({ texts, flags, dictionary, choice, paint });
 
   return {
     // One JSON document per answer rather than one array for the run, so that

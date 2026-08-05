@@ -22,6 +22,7 @@ const dictionary = sampleDictionary();
 
 const environment: CliEnvironment = {
   version: "0.0.0",
+  colours: 0,
   readInput: () => Promise.resolve(""),
   loadDictionary: () => Promise.resolve(dictionary),
 };
