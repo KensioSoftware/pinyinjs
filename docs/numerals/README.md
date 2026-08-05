@@ -147,14 +147,14 @@ Three rules decide it, and they are deliberately few:
 
 | The text              | What happens     | Why                                        |
 | --------------------- | ---------------- | ------------------------------------------ |
-| four digits before 年 | spelled out      | 1997年 is a year; 30年 is thirty years     |
+| four digits before 年 | spelled out      | 1998年 is a year; 30年 is thirty years     |
 | digits before % or ％ | 百分之, reversed | the sign is read, and read first           |
 | anything else         | counted          | what almost every digit in running text is |
 
 A number that has been read is a **word**: 25个 is `èrshíwǔ gè`, one word for
 the number and a space before the measure word, which is what 正词法 6.1.5 asks
-for. Digits spelled out are not a word — they are digits — so 1997年 is
-`yī jiǔ jiǔ qī nián`. Sandhi crosses the boundary, so 1个 is `yí gè`: the tone
+for. Digits spelled out are not a word — they are digits — so 1998年 is
+`yī jiǔ jiǔ bā nián`. Sandhi crosses the boundary, so 1个 is `yí gè`: the tone
 the 一 assimilates to is in the next word.
 
 **A digit touching `-`, `/` or their full-width forms is left exactly as

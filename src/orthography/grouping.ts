@@ -298,13 +298,13 @@ export const ADDRESS_PREFIX: GroupingRule = {
 const DIVIDED_TAGS = new Set(["nr", "nt"]);
 
 /**
- * The parts of a proper name are written apart: 毛泽东 is `Máo Zédōng`.
+ * The parts of a proper name are written apart: 齐白石 is `Qí Báishí`.
  *
  * GB/T 16159 5.1 writes 姓 apart from 名 and a proper noun apart from its
  * generic, each part capitalised. Both halves of that clause are this rule,
  * because the evidence for them is the same evidence.
  *
- * 毛泽东 and 北京大学 are dictionary entries, so the decoder produces **one**
+ * 齐白石 and 北京大学 are dictionary entries, so the decoder produces **one**
  * word each — and reading them as one word is what makes them read correctly at
  * all. That makes this a *split*, and splitting contradicts the dictionary's own
  * claim that the characters belong together. It needs a condition strong enough
@@ -313,7 +313,7 @@ const DIVIDED_TAGS = new Set(["nr", "nt"]);
  * and a list of generics cannot say where 上海浦东发展银行 divides.
  *
  * **The condition is CC-CEDICT's own capitalisation**, which states the
- * boundaries outright: 毛泽东 is `[Mao2 Ze2 dong1]`, 司马迁 `[Si1 ma3 Qian1]`,
+ * boundaries outright: 齐白石 is `[Qi2 Bai2 shi2]`, 司马迁 `[Si1 ma3 Qian1]`,
  * 上海交通大学 `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`, and 马克思 `[Ma3 ke4 si1]`
  * with no second capital at all. So a compound surname is recognised without a
  * list of compound surnames, a generic without a list of generics, and a
@@ -346,7 +346,7 @@ export const NAME_PARTS: GroupingRule = {
       }
       const parts = divideAt(word, boundaries);
       // Every part is a proper noun in its own right, so each takes a capital:
-      // `Máo Zédōng`, `Běijīng Dàxué`.
+      // `Qí Báishí`, `Běijīng Dàxué`.
       return parts.map((part) => ({ ...part, isProperNoun: true }));
     }),
 };

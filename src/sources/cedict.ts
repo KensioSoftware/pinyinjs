@@ -116,7 +116,7 @@ function isCapitalised(reading: string): boolean {
  * Where CC-CEDICT's own capitalisation divides a proper noun into its parts.
  *
  * GB/T 16159 5.1 writes the parts of a proper name apart, and CC-CEDICT marks
- * them by capitalising each one: 毛泽东 is `[Mao2 Ze2 dong1]`, 司马迁 is
+ * them by capitalising each one: 齐白石 is `[Qi2 Bai2 shi2]`, 司马迁 is
  * `[Si1 ma3 Qian1]`, 上海交通大学 is `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`. So
  * the boundaries are stated by a source rather than guessed at from a surname
  * list or a list of generics — and a compound surname needs no list of compound

@@ -30,8 +30,8 @@ export interface DictionaryEntry {
    * Other 繁體 spellings of this same word, where a source attests one.
    *
    * Simplification was many-to-one, so a 简体 word can have more than one
-   * 繁體 spelling and both be current: 台湾 is written 臺灣 and 台灣, and a
-   * reader of either expects it read `Táiwān`. Keying only
+   * 繁體 spelling and both be current: 重复 is written 重複 and 重覆, and a
+   * reader of either expects it read `chóngfù`. Keying only
    * {@link DictionaryEntry.hant} would leave the other spelling converting
    * character by character, which is precisely the loss SCRIPTS-AND-LOCALES.md
    * makes 繁體 a first-class key to avoid.
@@ -49,7 +49,7 @@ export interface DictionaryEntry {
   /**
    * Where a proper name divides into its parts, in characters.
    *
-   * Read off CC-CEDICT's own capitalisation — 毛泽东 is `[Mao2 Ze2 dong1]`,
+   * Read off CC-CEDICT's own capitalisation — 齐白石 is `[Qi2 Bai2 shi2]`,
    * 司马迁 `[Si1 ma3 Qian1]`, 上海交通大学 `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`
    * — so a compound surname needs no list of compound surnames and a generic no
    * list of generics. One boundary for a personal name, often two or three for

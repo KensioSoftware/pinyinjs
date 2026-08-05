@@ -225,7 +225,7 @@ describe("the examples in docs/", () => {
     // the sentence makes: a digit is read by default and only `keep` stops it.
     it("reads the digits in a non-Han run, and keeps them when asked", () => {
       assertIdentical(convert(dictionary, "3D银行"), "sān D yínháng");
-      assertIdentical(convert(dictionary, "1997年"), "yī jiǔ jiǔ qī nián");
+      assertIdentical(convert(dictionary, "1998年"), "yī jiǔ jiǔ bā nián");
       assertIdentical(
         convert(dictionary, "3D银行", { numbers: "keep" }),
         "3Dyínháng",
@@ -280,11 +280,11 @@ describe("the examples in docs/", () => {
     // compound surname without anything knowing 司马 is one, and it is absent
     // for a transliteration — which is the whole reason Marx stays one word.
     it("writes a name's parts apart, on boundaries the dictionary states", () => {
-      assertArrayEquals(dictionary.lookup("毛泽东")?.nameBoundaries ?? [], [1]);
+      assertArrayEquals(dictionary.lookup("齐白石")?.nameBoundaries ?? [], [1]);
       assertArrayEquals(dictionary.lookup("司马迁")?.nameBoundaries ?? [], [2]);
       assertUndefined(dictionary.lookup("马克思")?.nameBoundaries);
 
-      assertIdentical(convert(dictionary, "毛泽东"), "Máo Zédōng");
+      assertIdentical(convert(dictionary, "齐白石"), "Qí Báishí");
       assertIdentical(convert(dictionary, "李白"), "Lǐ Bái");
       assertIdentical(convert(dictionary, "司马迁"), "Sīmǎ Qiān");
       assertIdentical(convert(dictionary, "马克思"), "Mǎkèsī");
@@ -753,16 +753,25 @@ describe("the examples in docs/", () => {
     it("converts either script without being told which", () => {
       assertIdentical(convert(dictionary, "银行"), "yínháng");
       assertIdentical(convert(dictionary, "銀行"), "yínháng");
-      assertIdentical(convert(dictionary, "臺灣"), "Táiwān");
-      assertIdentical(convert(dictionary, "台灣"), "Táiwān");
+      assertIdentical(convert(dictionary, "重複"), "chóngfù");
+      assertIdentical(convert(dictionary, "重覆"), "chóngfù");
     });
 
-    it("keys both 繁體 spellings of 台湾 to the same entry", () => {
-      const first = dictionary.lookup("臺灣");
-      const second = dictionary.lookup("台灣");
+    it("keys both 繁體 spellings of 重复 to the same entry", () => {
+      const first = dictionary.lookup("重複");
+      const second = dictionary.lookup("重覆");
       assertNonNullable(first);
       assertNonNullable(second);
       assertIdentical(written(first.reading), written(second.reading));
+    });
+
+    // The page's point is what a *missing* key costs, so the assertion is on
+    // the reading the character-by-character fallback would give: 重 alone is
+    // `zhòng`, and only the entry says this word takes `chóng`.
+    it("reads a 繁體 spelling that is not keyed character by character", () => {
+      assertUndefined(dictionary.lookup("重覄"));
+      assertIdentical(convert(dictionary, "重覄"), "zhòng fù");
+      assertIdentical(convert(dictionary, "重"), "zhòng");
     });
   });
 
@@ -856,7 +865,7 @@ describe("the examples in docs/", () => {
 
     it("writes a counted number as one word and spells a year out", () => {
       assertIdentical(convert(dictionary, "25个"), "èrshíwǔ gè");
-      assertIdentical(convert(dictionary, "1997年"), "yī jiǔ jiǔ qī nián");
+      assertIdentical(convert(dictionary, "1998年"), "yī jiǔ jiǔ bā nián");
       assertIdentical(convert(dictionary, "1个"), "yí gè");
     });
   });
@@ -1009,18 +1018,18 @@ describe("the examples in docs/", () => {
           hanzi,
         );
       }
-      // 毛泽东 was one of the five the page recorded as a word boundary rather
+      // 李时珍 was one of the five the page recorded as a word boundary rather
       // than a hyphen defect. The 姓/名 rule supplies the boundary, so both
       // come out as the attested forms do — bar the ê a real text drops.
       assertIdentical(
-        convertToWadeGiles(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}", {
+        convertToWadeGiles(dictionary, "\u{674E}\u{65F6}\u{73CD}", {
           notation: "none",
         }),
-        "Mao Ts\u{EA}-tung",
+        "Li Shih-ch\u{EA}n",
       );
       assertIdentical(
-        convert(dictionary, "\u{6BDB}\u{6CFD}\u{4E1C}"),
-        "M\u{E1}o Z\u{E9}d\u{14D}ng",
+        convert(dictionary, "\u{674E}\u{65F6}\u{73CD}"),
+        "L\u{1D0} Sh\u{ED}zh\u{113}n",
       );
       // Supply the boundary and the generic case comes out attested.
       assertIdentical(

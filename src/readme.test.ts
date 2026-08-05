@@ -502,12 +502,12 @@ describe("the examples in README.md", () => {
 
     it("finds a word under either of its 繁體 spellings", () => {
       assertIdentical(
-        written(dictionary.lookup("臺灣")?.reading ?? []),
-        "tái wān",
+        written(dictionary.lookup("重複")?.reading ?? []),
+        "chóng fù",
       );
       assertIdentical(
-        written(dictionary.lookup("台灣")?.reading ?? []),
-        "tái wān",
+        written(dictionary.lookup("重覆")?.reading ?? []),
+        "chóng fù",
       );
     });
 

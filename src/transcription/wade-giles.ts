@@ -791,7 +791,7 @@ export function splitWadeGiles(text: string): readonly string[] | undefined {
 }
 
 /**
- * Read a whole Wade-Giles word, splitting it first: `maotsetung` is 毛澤東.
+ * Read a whole Wade-Giles word, splitting it first: `lishihchen` is 李時珍.
  *
  * Takes the first candidate for each syllable rather than every combination,
  * which is the same choice {@link readWadeGilesLoosely}'s ordering offers and

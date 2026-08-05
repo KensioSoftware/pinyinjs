@@ -263,7 +263,7 @@ describe("numbers in text", () => {
   });
 
   it("spells out a four-digit year and spaces its digits", () => {
-    assertIdentical(written("1997年"), "yī jiǔ jiǔ qī nián");
+    assertIdentical(written("1998年"), "yī jiǔ jiǔ bā nián");
     // Two digits before 年 is a count of years.
     assertIdentical(written("30年"), "sānshí nián");
   });

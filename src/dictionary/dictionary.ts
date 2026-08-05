@@ -40,8 +40,8 @@ export interface WordEntry {
   /**
    * Where a proper name divides into its parts, in characters.
    *
-   * Present only where CC-CEDICT's own capitalisation divides it: 毛泽东 is
-   * `[Mao2 Ze2 dong1]`, 司马迁 `[Si1 ma3 Qian1]`, 上海交通大学
+   * Present only where CC-CEDICT's own capitalisation divides it: 齐白石 is
+   * `[Qi2 Bai2 shi2]`, 司马迁 `[Si1 ma3 Qian1]`, 上海交通大学
    * `[Shang4 hai3 Jiao1 tong1 Da4 xue2]`. Absent for 马克思 `[Ma3 ke4 si1]`,
    * which is why a transliteration stays one word.
    */

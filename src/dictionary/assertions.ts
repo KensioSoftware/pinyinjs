@@ -154,8 +154,8 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("头发", "tóu fa", "CC-CEDICT wins on the neutral tone"),
   reads("还是", "hái shi", "CC-CEDICT wins on the neutral tone"),
   reads("頭髮", "tóu fa", "繁體 derived using the reading, and keyed directly"),
-  reads("臺灣", "tái wān", "the second 繁體 spelling is keyed too"),
-  reads("台灣", "tái wān", "as is the first"),
+  reads("重複", "chóng fù", "one of two 繁體 spellings, both keyed"),
+  reads("重覆", "chóng fù", "the other, on the same entry"),
   reads("下麵", "xià miàn", "both spellings of a word CC-CEDICT writes twice"),
   // kHanyuPinlu writes 李 as `li(36)`, with no tone mark. Read as 轻声 — which
   // is what an unmarked reading means everywhere else in source data — 李华
@@ -187,9 +187,9 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   {
     // The veto only demotes. These stay proper nouns, and 人民政府 is the
     // control that shows the veto still fires on an institution.
-    description: "毛泽东, 国务院 and 湖北 stay proper nouns",
+    description: "齐白石, 国务院 and 湖北 stay proper nouns",
     check: (dictionary: BuiltDictionary): string | undefined => {
-      const wrong = ["毛泽东", "国务院", "湖北"].filter(
+      const wrong = ["齐白石", "国务院", "湖北"].filter(
         (word) => dictionary.get(word)?.isProperNoun !== true,
       );
       return wrong.length === 0

@@ -637,13 +637,13 @@ boundary in all five, and what is left is worth separating:
 |          | now                   | attested              |
 | -------- | --------------------- | --------------------- |
 | 孙中山   | `Sun Chung-shan`      | `Sun Chung-shan`      |
-| 毛泽东   | `Mao Tsê-tung`        | `Mao Tse-tung`        |
+| 李时珍   | `Li Shih-chên`        | `Li Shih-chen`        |
 | 邓小平   | `Têng Hsiao-p'ing`    | `Teng Hsiao-p'ing`    |
 | 清华大学 | `Ch'ing-hua Ta-hsüeh` | `Ch'ing-hua ta-hsüeh` |
 | 北京大学 | `Pei-ching Ta-hsüeh`  | `Pei-ching ta-hsüeh`  |
 
 孙中山 now matches outright, and the count is 11 of 15. **The other four are no
-longer boundary errors, and that is the whole of what changed.** 毛泽东 and
+longer boundary errors, and that is the whole of what changed.** 李时珍 and
 邓小平 are down to the `ê` — correct Wade-Giles for those syllables, and a
 diacritic the attested forms drop along with the apostrophes, so the spelling is
 stricter than the source rather than wrong.
