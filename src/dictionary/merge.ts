@@ -10,6 +10,7 @@ import type { Syllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { attachErhua, isErFinal, NON_ERHUA_ER_WORDS } from "./erhua.js";
+import { composeLocaleDeltas } from "./locale.js";
 import { OVERRIDE_READINGS } from "./overrides.js";
 import {
   ERHUA_TOKEN,
@@ -50,8 +51,10 @@ export interface MergeStats {
   readonly scriptPairs: number;
   /** Entries a source writes more than one 繁體 spelling of. */
   readonly variantSpellings: number;
-  /** Entries carrying a zh-TW reading delta. */
+  /** Entries carrying a zh-TW reading delta a source stated. */
   readonly taiwanReadings: number;
+  /** Compounds given a zh-TW delta composed from their constituents. */
+  readonly composedTaiwanReadings: number;
   /**
    * Words jieba tagged a proper noun that CC-CEDICT's lowercase pinyin vetoed.
    */
@@ -616,8 +619,14 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
   }
 
+  // ── zh-TW deltas the sources marked only on a constituent ──
+  // Last, because it segments each compound against the finished entries: the
+  // readings, both scripts' keys and the frequencies all have to be settled
+  // before a compound can be asked what it is made of.
+  const localised = composeLocaleDeltas(entries);
+
   return {
-    entries,
+    entries: localised.entries,
     rejected,
     stats: {
       characters,
@@ -629,6 +638,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       scriptPairs,
       variantSpellings,
       taiwanReadings,
+      composedTaiwanReadings: localised.composed,
       properNounVetoes,
       nameBoundaries,
       rejected: rejected.size,

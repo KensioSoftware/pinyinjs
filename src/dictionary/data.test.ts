@@ -10,6 +10,7 @@ import {
   assertNonNullable,
   assertNumberBetween,
   assertTrue,
+  assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
@@ -80,6 +81,18 @@ class Tier {
       ?.map((syllable) => writeSyllable(syllable))
       .join(" ");
   }
+
+  /**
+   * A word's 國語 reading, or undefined where it takes the 普通话 one.
+   *
+   * Never derived from the characters the way {@link Tier.reading} is: the
+   * zh-TW column is a delta, and an absent one means the locales agree.
+   */
+  taiwanReading(word: string): string | undefined {
+    return decodeReading(this.columns(word)?.[1] ?? "")
+      ?.map((syllable) => writeSyllable(syllable))
+      .join(" ");
+  }
 }
 
 const full = new Tier("full");
@@ -143,14 +156,37 @@ describe("the committed dictionary", () => {
     });
 
     it("carries a zh-TW reading where the locales differ", () => {
-      const columns = full.columns("垃圾");
-      assertNonNullable(columns);
-      assertIdentical(
-        decodeReading(columns[1] ?? "")
-          ?.map((syllable) => writeSyllable(syllable))
-          .join(" "),
-        "lè sè",
-      );
+      assertIdentical(full.taiwanReading("垃圾"), "lè sè");
+    });
+
+    it("carries it on the compounds too, in both scripts", () => {
+      // CC-CEDICT marks 垃圾 and 垃圾桶 and stops there, so every other compound
+      // used to fall back to the 普通话 reading and the locale switch looked
+      // broken on them. Composed from the constituent instead — see locale.ts.
+      assertIdentical(full.taiwanReading("垃圾分類"), "lè sè fēn lèi");
+      assertIdentical(full.taiwanReading("垃圾分类"), "lè sè fēn lèi");
+      assertIdentical(full.reading("垃圾分類"), "lā jī fēn lèi");
+      assertIdentical(full.taiwanReading("太空垃圾"), "tài kōng lè sè");
+      assertIdentical(full.taiwanReading("垃圾車"), "lè sè chē");
+    });
+
+    it("composes from a word and never from a bare character", () => {
+      // 从容 is a word with a marked reading, so 从容地 takes it — but the 地
+      // beside it keeps `de`, because 地's own delta is the locative noun `dì`
+      // and not a locale-wide shift. Propagating characters would rewrite 4,240
+      // adverbs this way.
+      assertIdentical(full.taiwanReading("从容地"), "cōng róng de");
+      assertUndefined(full.taiwanReading("一个个地"));
+    });
+
+    it("leaves a compound the segmentation cuts elsewhere alone", () => {
+      // 运行状况 contains the marked word 行状, but reads 运行 + 状况.
+      assertUndefined(full.taiwanReading("运行状况"));
+      // 皮夹克 is 皮 + 夹克, not the wallet 皮夹.
+      assertUndefined(full.taiwanReading("皮夹克"));
+      // A homograph no alignment check can see: this 相亲 is the reciprocal
+      // one, so it is excluded by name.
+      assertUndefined(full.taiwanReading("相亲相爱"));
     });
 
     it("carries polyphone priors on a character", () => {

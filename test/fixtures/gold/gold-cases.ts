@@ -178,5 +178,10 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // ── Locale readings ───────────────────────────────────────
   { hanzi: "垃圾", pinyin: "lājī", script: "Hans", locale: "zh-CN", tags: ["locale"] },
   { hanzi: "垃圾", pinyin: "lèsè", script: "Hant", locale: "zh-TW", tags: ["locale"] },
+  // The compound no source marks. CC-CEDICT annotates 垃圾 and 垃圾桶 and stops,
+  // and the decoder prefers the longer word, so 垃圾分類 used to read `lājī` in
+  // 國語 and the locale switch looked like it did nothing.
+  { hanzi: "垃圾分類", pinyin: "lājīfēnlèi", script: "Hant", locale: "zh-CN", tags: ["locale"] },
+  { hanzi: "垃圾分類", pinyin: "lèsèfēnlèi", script: "Hant", locale: "zh-TW", tags: ["locale"] },
   { hanzi: "亞洲", pinyin: "Yàzhōu", script: "Hant", locale: "zh-CN", tags: ["locale", "proper-noun"] },
 ];
