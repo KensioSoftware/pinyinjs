@@ -34,8 +34,15 @@ jobs:
       - run: pnpm fta
 
   test:
-    name: Test
+    name: Test on Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor `engines` states, and the version .nvmrc develops against.
+        # A package this data-heavy is worth proving on both rather than
+        # assuming the older one from a passing build on the newer.
+        node: ["22", "24"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,7 +50,7 @@ jobs:
       - uses: pnpm/action-setup@v6.0.9
       - uses: actions/setup-node@v7.0.0
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:coverage
@@ -63,3 +70,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:check
       - run: pnpm build
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.0.9
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # What gets published is the tarball, not the working tree, and the two
+      # differ in ways nothing else here would catch.
+      - run: pnpm pack:check

@@ -7,13 +7,10 @@ guide for each thing it touches on the way.
 ## Install
 
 ```bash
-pnpm add @kensio/pinyinjs@beta
+pnpm add @kensio/pinyinjs
 ```
 
-The `@beta` matters: the package is published under the `beta` dist-tag until
-1.0, so a plain `pnpm add @kensio/pinyinjs` will not find it.
-
-Node 24+, or any browser. The package is ESM only, and the core imports no Node
+Node 22+, or any browser. The package is ESM only, and the core imports no Node
 built-ins — the one Node-specific entry point is `@kensio/pinyinjs/node`, and
 nothing in the browser path reaches it.
 

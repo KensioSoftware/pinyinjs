@@ -5,17 +5,13 @@ validates and writes pinyin syllables on their own, with no dictionary.
 
 [https://pinyinjs.dev](https://pinyinjs.dev "PinyinJS docs website")
 
-> **Beta.** Published under the `beta` tag, so a plain `pnpm add
-@kensio/pinyinjs` will not find it until 1.0. Everything below works and is
-> tested, but the API will change before 1.0.
-
 ## Install
 
 ```bash
-pnpm add @kensio/pinyinjs@beta
+pnpm add @kensio/pinyinjs
 ```
 
-Node 24+, or any browser. The core imports no Node built-ins, and the package is
+Node 22+, or any browser. The core imports no Node built-ins, and the package is
 ESM only.
 
 The dictionaries ship inside the package, which is what makes it a 4 MB
