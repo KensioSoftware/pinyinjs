@@ -1,3 +1,4 @@
+import { toCharacters } from "../script/characters.js";
 import { type RewriteCharacters, rewriteParts } from "./parts.js";
 
 /**
@@ -16,15 +17,41 @@ export type CapitalStyle = "auto" | "proper" | "none";
 const SENTENCE_ENDINGS = new Set([".", "!", "?", "。", "！", "？"]);
 
 /**
+ * A digit either side of a full stop, which is what makes it a decimal point.
+ */
+const DIGIT = /\d/u;
+
+/**
+ * Whether a character ends a sentence where it stands.
+ *
+ * A full stop with a digit either side of it is the point of a decimal rather
+ * than the end of anything: 75.5元 is a price and not two sentences, so the
+ * stop in it neither makes the text a sentence nor starts a new one. Only the
+ * half-width stop can be a decimal point; 。 is never one.
+ */
+function isEnding(
+  character: string,
+  characters: readonly string[],
+  at: number,
+): boolean {
+  if (!SENTENCE_ENDINGS.has(character)) {
+    return false;
+  }
+  return !(
+    character === "." &&
+    DIGIT.test(characters[at - 1] ?? "") &&
+    DIGIT.test(characters[at + 1] ?? "")
+  );
+}
+
+/**
  * Whether text is punctuated as a sentence rather than quoted as a word.
  */
 export function isSentence(text: string): boolean {
-  for (const character of text) {
-    if (SENTENCE_ENDINGS.has(character)) {
-      return true;
-    }
-  }
-  return false;
+  const characters = toCharacters(text);
+  return characters.some((character, at) =>
+    isEnding(character, characters, at),
+  );
 }
 
 /**
@@ -71,12 +98,12 @@ export function capitaliseSentenceParts(
 const capitaliseCharacters: RewriteCharacters = (characters) => {
   let isPending = true;
 
-  return characters.map((character) => {
+  return characters.map((character, at) => {
     if (isPending && character.toLowerCase() !== character.toUpperCase()) {
       isPending = false;
       return character.toUpperCase();
     }
-    if (SENTENCE_ENDINGS.has(character)) {
+    if (isEnding(character, characters, at)) {
       isPending = true;
     }
     return character;

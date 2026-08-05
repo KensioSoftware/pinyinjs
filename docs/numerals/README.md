@@ -157,6 +157,15 @@ for. Digits spelled out are not a word — they are digits — so 1998年 is
 `yī jiǔ jiǔ bā nián`. Sandhi crosses the boundary, so 1个 is `yí gè`: the tone
 the 一 assimilates to is in the next word.
 
+**A decimal is that word, and then digits.** The counted part is the word it
+would be on its own, and everything from the 点 onwards is read one digit at a
+time and written apart:
+
+```ts
+convert(dictionary, "一共75.5元"); // "yígòng qīshíwǔ diǎn wǔ yuán"
+convert(dictionary, "3.14"); // "sān diǎn yī sì"
+```
+
 **A digit touching `-`, `/` or their full-width forms is left exactly as
 written.** 3202-5625 is a phone number and COVID-19 is a name; neither is a
 quantity, and the mark between the parts has no reading.

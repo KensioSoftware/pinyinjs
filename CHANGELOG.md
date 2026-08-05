@@ -29,6 +29,15 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **A decimal lost the grouping of its counted part.** 一共75.5元 was
+  `yígòng qī shí wǔ diǎn wǔ yuán`, with the 75 in loose syllables, and is now
+  `yígòng qīshíwǔ diǎn wǔ yuán` — the same word 一共75元 already got. Only what
+  follows the 点 is read a digit at a time, and that part is unchanged: 3.14 is
+  still `sān diǎn yī sì`, and sandhi still stops at the point.
+- **A decimal point was read as a full stop.** 一共75.5元 came back as
+  `Yígòng …`, capitalised as though the text were a sentence, and a conversion
+  keeping its digits capitalised again after the point: 我有75.5个。was
+  `Wǒ yǒu75.5Gè.` A stop between two digits now ends no sentence.
 - **Bopomofo wrote the tone mark after the 儿化 ㄦ.** 哪儿 nǎr was `ㄋㄚㄦˇ` and
   is now `ㄋㄚˇㄦ`: the mark belongs to the nucleus and the suffix is not part of
   what it marks. A mark written after the ㄦ is still read.
