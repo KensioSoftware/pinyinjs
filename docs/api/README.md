@@ -207,7 +207,23 @@ See [scripts and locales](../scripts-and-locales/).
 
 ## Stability
 
-The package is beta. The short table at the top is the part that is settled in
-shape; the decoder internals and the build pipeline are exported because they
-are useful and testable, not because their signatures are fixed. Expect the API
-to change before 1.0.
+**Everything on this page is covered by semantic versioning from 1.0.0.** That
+includes the decoder internals and the build pipeline, which were exported
+because they are useful and testable rather than because anyone needed them —
+committing to them is the price of having exported them, and the alternative was
+to withdraw them at 1.0 for the sake of a smaller promise.
+
+Two things are deliberately outside it, because they are not the API:
+
+- **The readings themselves.** A dictionary rebuild can change what a word
+  converts to — that is what a source refresh is for, and every rule this
+  package adds is measured in exactly those terms. The figures in
+  `docs/orthography/` and the accuracy harnesses are where those changes are
+  recorded.
+- **The artifact format under `data/`.** It is loaded by `loadDictionary` and
+  read by nothing else; `./data/*` is exported so a page can be served the
+  files, not so they can be parsed by hand.
+
+`Dictionary` is a class with a private constructor, so `Dictionary.from` and the
+loaders are the only ways to build one. New optional fields may appear on
+`WordEntry` — `nameBoundaries` did — which is additive and not a break.

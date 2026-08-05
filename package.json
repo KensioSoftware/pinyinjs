@@ -1,6 +1,6 @@
 {
   "name": "@kensio/pinyinjs",
-  "version": "0.1.0-beta.0",
+  "version": "1.0.0",
   "description": "Chinese hanzi to pinyin conversion",
   "repository": "https://github.com/KensioSoftware/pinyinjs",
   "homepage": "https://pinyinjs.dev",
@@ -26,6 +26,7 @@
     "dist",
     "data",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
     "NOTICE"
   ],
@@ -37,16 +38,17 @@
   },
   "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "prepack": "pnpm build",
     "cli": "node --import jiti/register src/cli/main.ts",
     "build:check": "tsc -p tsconfig.json --noEmit",
     "fmt": "eslint --fix . && prettier --write .",
     "lint": "eslint . && prettier --check .",
     "fta": "./scripts/sh/fta.sh",
+    "pack:check": "./scripts/sh/pack-check.sh",
     "build:data": "node --import jiti/register scripts/build-data/build.ts",
     "fetch:data": "node --import jiti/register scripts/build-data/fetch.ts",
     "test": "vitest run",
