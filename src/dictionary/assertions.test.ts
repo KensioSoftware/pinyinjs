@@ -133,6 +133,17 @@ describe("build assertions", () => {
       assertSetSize(inventory, 1);
       assertTrue(inventory.has("wan"));
     });
+
+    it("names the readings written in a tone the inventory does not list", () => {
+      // 咯 lo is only ever neutral, so a source that started reading it as ló
+      // would put a syllable the romanisation readers refuse into the data.
+      const unattested = new BuiltDictionary([
+        entry("咯", "ló"),
+        entry("罗", "luó"),
+      ]).unattestedTones();
+      assertSetSize(unattested, 1);
+      assertTrue(unattested.has("ló"));
+    });
   });
 
   describe("checkBuild", () => {

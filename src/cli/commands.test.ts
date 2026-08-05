@@ -393,10 +393,15 @@ describe("the transcribe command", () => {
     assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "jiow"), [
       "jiow        jiù       ㄐㄧㄡˋ        chiu⁴       jyòu      jiow      tɕiou˥˩",
     ]);
-    // GR's `-l` suffix collides with 二, so both readings come back.
+    // GR's `-l` suffix collides with 二, and the tone settles it: `ell` is
+    // 二 alone, since the rime it collides with has no first tone. Neutral,
+    // both are real and both come back.
     assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", "ell"), [
       "ell         èr        ㄦˋ          êrh⁴        èr        ell       aɚ˥˩",
-      "            ērr       ㄦㄦ          êrh-êrh¹    ērr       ell       aɚɚ˥",
+    ]);
+    assertArrayEquals(await cli("transcribe", "--from", "gwoyeu", ".ell"), [
+      ".ell        er        ˙ㄦ          êrh⁵        er        .el       aɚ",
+      "            err       ˙ㄦㄦ         êrh-êrh⁵    err       .ell      aɚɚ",
     ]);
   });
 

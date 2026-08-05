@@ -24,8 +24,15 @@
  * {@link readWadeGiles} takes the spelling as written, and
  * {@link readWadeGilesLoosely} allows for the marks that fell off. How much
  * that costs is measured — see `docs/romanization/`.
+ *
+ * The tone digit, where a text writes one, cuts that list back down: the
+ * inventory knows which tones each syllable is written in, so `lo²` is 羅 luó
+ * and not the 咯 that is only ever neutral. See {@link narrowToAttested}.
  */
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import {
+  DICTIONARY_SYLLABLES,
+  narrowToAttested,
+} from "../syllable/inventory.js";
 import type { Final, Initial } from "../syllable/phonology.js";
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 import { normaliseSuperscript, SUPERSCRIPT_TONES } from "../tone/tone-mark.js";
@@ -507,6 +514,11 @@ function isMarksDropped(spelling: string, written: string): boolean {
  * `toKey` is how the spelling is turned into that index's key, and it has to be
  * applied to the 儿化 suffix as well: read loosely, `hua-êrh` arrives as
  * `hua-erh`.
+ *
+ * The tone is written on here and not judged: the index is toneless, so what
+ * comes back is every syllable of that spelling in whatever tone the text
+ * carried, and narrowing that to the tones Mandarin actually writes belongs to
+ * the callers, which have the whole candidate list to weigh.
  */
 function readFrom(
   index: ReadonlyMap<string, readonly Spelt[]>,
@@ -536,10 +548,13 @@ function readFrom(
  * Returns every syllable the spelling stands for, which is one for all but a
  * handful of them — `lo` is both 羅 luó and 咯 lo, and `o` is both 俄 é and
  * 哦 ó. Empty for anything that is not Wade-Giles at all.
+ *
+ * A written tone narrows that: 咯 is only ever neutral, so `lo` on its own is
+ * the two syllables and `lo²` is 羅 luó alone. See {@link narrowToAttested}.
  */
 export function readWadeGiles(text: string): readonly Syllable[] {
   const [spelling, tone] = splitTone(normalise(text));
-  return readFrom(INDEX.exact, (key) => key, spelling, tone);
+  return narrowToAttested(readFrom(INDEX.exact, (key) => key, spelling, tone));
 }
 
 /**
@@ -550,13 +565,19 @@ export function readWadeGiles(text: string): readonly Syllable[] {
  * readings come first, so a caller that wants to believe what was written can
  * take the head of the list and one that wants every possibility can take the
  * lot.
+ *
+ * Narrowed over the whole list rather than over each half of it, because the
+ * two halves are rivals: `pan²` written exactly is a bán that Mandarin does not
+ * have, and the reading worth keeping is the 盤 pán of a text that dropped an
+ * apostrophe. Read exactly, `pan²` is still bán — there is nothing there to
+ * prefer it to.
  */
 export function readWadeGilesLoosely(text: string): readonly Syllable[] {
   const exact = readWadeGiles(text);
   const [spelling, tone] = splitTone(normalise(text));
   const loose = readFrom(INDEX.loose, withoutMarks, spelling, tone);
 
-  return [
+  return narrowToAttested([
     ...exact,
     ...loose.filter((syllable) =>
       exact.every(
@@ -564,7 +585,7 @@ export function readWadeGilesLoosely(text: string): readonly Syllable[] {
           !isSameSyllable(other, syllable) || other.erhua !== syllable.erhua,
       ),
     ),
-  ];
+  ]);
 }
 
 /**

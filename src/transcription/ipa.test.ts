@@ -9,15 +9,17 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import { DICTIONARY_SYLLABLES, SYLLABLE_TONES } from "../syllable/inventory.js";
 import { readSyllable, writeSyllable } from "../syllable/syllable.js";
-import { NEUTRAL_TONE, TONES } from "../tone/tone.js";
+import { NEUTRAL_TONE, type Tone, TONES } from "../tone/tone.js";
 import { readIpa, writeIpa, writeIpaSymbols, writeIpaWord } from "./ipa.js";
 
 /**
  * The four tones that have a contour, which are the ones IPA can write.
  */
-const CONTOUR_TONES = TONES.filter((tone) => tone !== NEUTRAL_TONE);
+const CONTOUR_TONES: ReadonlySet<Tone> = new Set(
+  TONES.filter((tone) => tone !== NEUTRAL_TONE),
+);
 
 /**
  * A pinyin syllable, parsed, for a readable expectation.
@@ -156,10 +158,13 @@ describe("reading IPA", () => {
 
 describe("IPA over the whole inventory", () => {
   it("transcribes every syllable and reads every one of them back", () => {
+    // Over the tones each syllable is written in, since reading narrows on
+    // the tone: `aɚ˥` is 啊儿 ār, there being no 兒 in a first tone.
     let checked = 0;
-    for (const spelling of DICTIONARY_SYLLABLES) {
+    for (const [spelling, tones] of SYLLABLE_TONES) {
       const base = syllable(spelling);
-      for (const tone of CONTOUR_TONES) {
+      const contour = tones.filter((one) => CONTOUR_TONES.has(one));
+      for (const tone of contour) {
         for (const erhua of [false, true]) {
           const form = { ...base, tone, ...(erhua && { erhua: true }) };
           const back = readIpa(writeIpa(form));
@@ -173,7 +178,7 @@ describe("IPA over the whole inventory", () => {
         }
       }
     }
-    assertIdentical(checked, 424 * 4 * 2);
+    assertIdentical(checked, 1403 * 2);
   });
 
   it("cannot say that a tone is neutral, and so loses it", () => {

@@ -158,6 +158,8 @@ See [syllables](../syllables/).
 | `ATTESTED_SYLLABLES`                                             | the 415-syllable standard inventory        |
 | `RARE_SYLLABLES`                                                 | the 9 the dictionary adds                  |
 | `DICTIONARY_SYLLABLES`                                           | both, as a set                             |
+| `SYLLABLE_TONES`                                                 | which tones each syllable is written in    |
+| `isAttestedTone`                                                 | is this syllable written in that tone?     |
 | `INITIALS`, `FINALS`, `isInitial`, `isFinal`, `isPalatalInitial` | phonology                                  |
 | `SEPARABLE_VOWELS`, `isSeparableStart`                           | what triggers an apostrophe                |
 | `Syllable`, `Initial`, `Final`, `ToneNotation`                   | types                                      |

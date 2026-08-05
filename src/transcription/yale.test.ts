@@ -9,9 +9,9 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import { DICTIONARY_SYLLABLES, SYLLABLE_TONES } from "../syllable/inventory.js";
 import { readSyllable, writeSyllable } from "../syllable/syllable.js";
-import { NEUTRAL_TONE, TONES } from "../tone/tone.js";
+import { NEUTRAL_TONE } from "../tone/tone.js";
 import {
   readYale,
   writeYale,
@@ -195,10 +195,12 @@ describe("reading Yale", () => {
 
 describe("Yale over the whole inventory", () => {
   it("writes every syllable and reads every one of them back", () => {
+    // Over the tones each syllable is written in, since reading narrows on
+    // the tone: `ēr` is 啊儿 ār, there being no 兒 in a first tone.
     let checked = 0;
-    for (const spelling of DICTIONARY_SYLLABLES) {
+    for (const [spelling, tones] of SYLLABLE_TONES) {
       const base = syllable(spelling);
-      for (const tone of TONES) {
+      for (const tone of tones) {
         for (const erhua of [false, true]) {
           const form = { ...base, tone, ...(erhua && { erhua: true }) };
           // Numbered, because the marks cannot write the neutral tone: see
@@ -214,7 +216,7 @@ describe("Yale over the whole inventory", () => {
         }
       }
     }
-    assertIdentical(checked, 424 * 5 * 2);
+    assertIdentical(checked, 1708 * 2);
   });
 
   it("gives 423 spellings to 424 syllables", () => {

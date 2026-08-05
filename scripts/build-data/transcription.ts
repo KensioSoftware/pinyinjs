@@ -358,12 +358,34 @@ const merges = new Map(
   reads.map((read) => [read.pinyin, read.loose.length > 1]),
 );
 
+/**
+ * Whether the first candidate is the right one for a *toned* reading.
+ *
+ * The count above asks this of the toneless spelling, which is the fair
+ * question for a text that writes no tones — most of the Wade-Giles anybody
+ * meets. Where the digits are there they are evidence, since a syllable is
+ * written in some tones and not others, and this is what they are worth: a
+ * `pan²` that could be bán or pán is only ever pán.
+ */
+const isTonedHeadRight = (reading: string): boolean => {
+  const syllable = readSyllable(reading);
+  if (syllable?.tone === undefined) {
+    return false;
+  }
+  const written = `${sloppy(writeWadeGilesSpelling(syllable))}${String(syllable.tone)}`;
+  const [first] = readWadeGilesLoosely(written);
+  return first !== undefined && writeSyllable(first) === reading;
+};
+
 const entries = parsePhrasePinyin(await readSource(SOURCE_FILES.phrasePinyin));
 let syllables = 0;
 let ambiguousSyllables = 0;
 let recovered = 0;
+let recoveredToned = 0;
 let unreadable = 0;
+let toneless = 0;
 const spellings = new Map<string, string>();
+const tonedHeads = new Map<string, boolean>();
 
 for (const readings of entries.values()) {
   for (const reading of readings) {
@@ -372,6 +394,7 @@ for (const readings of entries.values()) {
       const syllable = readSyllable(reading);
       spelling = syllable === undefined ? "" : writeSyllableSpelling(syllable);
       spellings.set(reading, spelling);
+      tonedHeads.set(reading, isTonedHeadRight(reading));
     }
     syllables += 1;
     const doesMerge = merges.get(spelling);
@@ -382,6 +405,16 @@ for (const readings of entries.values()) {
     }
     if (headRight.has(spelling)) {
       recovered += 1;
+    }
+    // A neutral syllable is written with no mark, so there is no digit to
+    // narrow on and the toneless answer is the only one there is.
+    if (reading === spelling) {
+      toneless += 1;
+      if (headRight.has(spelling)) {
+        recoveredToned += 1;
+      }
+    } else if (tonedHeads.get(reading) === true) {
+      recoveredToned += 1;
     }
   }
 }
@@ -399,6 +432,14 @@ count(
 count(
   "recovered by taking the first",
   `${recovered.toLocaleString("en-GB")} (${share(recovered)})`,
+);
+count(
+  "the same, with the tone digit written",
+  `${recoveredToned.toLocaleString("en-GB")} (${share(recoveredToned)})`,
+);
+count(
+  "  of which had no tone to write",
+  `${toneless.toLocaleString("en-GB")} (${share(toneless)})`,
 );
 // ── And what a splitter can do with a word ──────────────
 //

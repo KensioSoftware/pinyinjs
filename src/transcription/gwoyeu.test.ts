@@ -8,7 +8,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { DICTIONARY_SYLLABLES } from "../syllable/inventory.js";
+import { DICTIONARY_SYLLABLES, SYLLABLE_TONES } from "../syllable/inventory.js";
 import { readSyllable, writeSyllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE, type Tone, TONES } from "../tone/tone.js";
 import { readGwoyeu, writeGwoyeu, writeGwoyeuWord } from "./gwoyeu.js";
@@ -219,8 +219,11 @@ describe("reading Gwoyeu Romatzyh", () => {
     assertArrayEquals(read("hual"), ["huār"]);
     assertArrayEquals(read("shyhl"), ["shìr"]);
     // `ell` is 二 èr itself, and it is also the same rime in the first tone
-    // with the suffix on the end — the collision Yale's `er` has too.
-    assertArrayEquals(read("ell"), ["èr", "ērr"]);
+    // with the suffix on the end — the collision Yale's `er` has too. That
+    // rime has no first tone, so the collision is settled and 二 is what
+    // comes back; the neutral `.ell` is where both are real.
+    assertArrayEquals(read("ell"), ["èr"]);
+    assertArrayEquals(read(".ell"), ["er", "err"]);
   });
 
   it("gives back both syllables where the spellings collide", () => {
@@ -243,10 +246,13 @@ describe("reading Gwoyeu Romatzyh", () => {
 
 describe("Gwoyeu Romatzyh over the whole inventory", () => {
   it("writes every syllable in every tone and reads it back", () => {
+    // Over the tones each syllable is written in, since reading narrows on
+    // the tone: `ell` is 二 èr, there being no first-tone 兒 for the -l to
+    // have been suffixed to.
     let checked = 0;
-    for (const spelling of DICTIONARY_SYLLABLES) {
+    for (const [spelling, tones] of SYLLABLE_TONES) {
       const base = syllable(spelling);
-      for (const tone of TONES) {
+      for (const tone of tones) {
         for (const erhua of [false, true]) {
           const form = { ...base, tone, ...(erhua && { erhua: true }) };
           const back = readGwoyeu(writeGwoyeu(form));
@@ -264,7 +270,7 @@ describe("Gwoyeu Romatzyh over the whole inventory", () => {
         }
       }
     }
-    assertIdentical(checked, 424 * 5 * 2);
+    assertIdentical(checked, 1708 * 2);
   });
 
   it("gives every one of the 424 syllables its own basic form", () => {
