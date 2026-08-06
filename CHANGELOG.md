@@ -11,6 +11,9 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`TEACHING_JIAO` and `COUNTED_MEASURE`,** two more lattice rules, and
+  `QUANTITY_CHARACTERS`, the 汉字 a quantity is written with that the second of
+  them asks about. See the fixes below for what they do and what they measure.
 - **`counts` on the numeral options.** Whether the number stands immediately in
   front of something it counts, which is what makes a lone 2 两:
   `numeralHanzi(2, { counts: true })` is `两` and `numeralHanzi(2)` is `二`.
@@ -35,6 +38,45 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **教 was `jiào` even where it was teaching.** 他在北京大学教了三年书 came out
+  `jiàole sān nián shū`, and 我教英语, 谁教你法语 and 她教我如何游泳 with it.
+  The dictionary stores 教 as `jiào` with `jiāo` as an alternate, and `jiào` is
+  right for the compounds — 教育, 教师, 宗教, 主教 — which are words and reach
+  their reading through the word; what is left is the 教 standing as a word of
+  its own, and that one is the verb. The object is what says so: a pronoun, a
+  noun or a name after it, or an aspect particle, since only a verb takes 了,
+  过 or 得. Forcing the character's own reading was not enough on its own,
+  because a two-character reading carries its 教 into the position from
+  outside — 王老师教我们汉语 read `jiào` off 师教 and 来教我 off 来教 — so an
+  untagged pair ending in 教 goes too, while every tagged word keeps its
+  reading: 任教, 宗教, 主教, 佛教, 传教, 执教, 请教, 家教. Over 88,866 lines
+  181 教 decode as a word of their own and every one read `jiào`; 158 are now
+  `jiāo`, three of them wrongly — 统一教创始人, 方法教深思 and 做到了教政分离,
+  where a nominal compound takes an object's shape. CPP's polyphone score is
+  89.05%, up from 89.04%.
+- **A 量词 was swallowed by the word behind it.** 三个人 was `sān gèrén`, three
+  _personals_, because 个人 is a common noun and nothing weighed it against the
+  个 belonging to the 三 in front of it. It is now `sān gè rén`, and so are
+  两家人, 三杯水, 四匹马, 十八层楼 and 一段长时间. What makes it decidable is
+  that the dictionary tags the 量词: 个, 次, 天 and 杯 are `q`, while the
+  characters that only look like measure words in this position are not — 分 is
+  a verb, 部 and 成 are nouns, 年 and 点 are numerals — so 五分钟, 三部分,
+  五成分, 五年级 and 三点钟 are untouched, and those are exactly the words a
+  blanket rule would break. Nor does an ordinal count anything (第三集团军), nor
+  a numeral inside a longer word (唯一道路), and a number and its measure
+  written solid survive whole where the dictionary has them: 一辈子, 一会儿,
+  一口气 and 两口子 are unchanged. Over 88,866 lines the rule forbids 561 edges
+  and moves 53 decodes, three of them wrongly — 一批评, 这一名词 and 六七股灾,
+  where the 一 and the 六七 count nothing. Exactly one reading changes in the
+  whole corpus and it is a fix: 已经下了两天雨了 read 天雨 as `tiān yù`.
+- **The Han after a number was decoded without it.** 2个人 was `liǎng gèrén`
+  while 两个人 written out was already `liǎng gè rén`, because a Han run was
+  decoded on its own and had no idea a number preceded it. A run is now decoded
+  with the 汉字 the digits stand for in front of it, and reported without them,
+  so digits and 汉字 reach the same decode. `decodeRun` and `decodeRunScored`
+  take that context as a fourth argument; where a reading would straddle the
+  join — 1点儿事, whose 一点儿 is one `yìdiǎnr` over both sides of it — the run
+  is decoded alone, as before.
 - **A lone 2 in front of a 量词 was read 二.** 我们买了2个西瓜 came out as
   `wǒmen mǎile èr gè xīguā`, and a 2 standing immediately in front of what it
   counts is 两: it is now `liǎng gè`, and 2岁 is `liǎng suì`, 2点 `liǎng diǎn`
@@ -183,14 +225,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 110-case gold corpus, which is committed to the repository rather than
+Over the 118-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.3%** |           90.9% |
-| reading accuracy |     99.7% |           98.7% |
-| spacing (F1)     | **99.7%** |           96.3% |
+| exact match      | **97.5%** |           88.1% |
+| reading accuracy |     99.7% |           98.3% |
+| spacing (F1)     | **99.8%** |           96.3% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is

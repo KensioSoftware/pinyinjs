@@ -1,6 +1,7 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { toCharacters } from "../script/characters.js";
 import { scoreReadings, type ScoredUnit } from "./confidence.js";
-import { buildLattice, cutPoints, type Lattice } from "./lattice.js";
+import { allEdges, buildLattice, cutPoints, type Lattice } from "./lattice.js";
 import {
   isSettled,
   projectReadings,
@@ -134,20 +135,97 @@ function ruledLattice(
 }
 
 /**
+ * A lattice to decode over, and where in it the run itself starts.
+ */
+interface RunLattice {
+  readonly lattice: Lattice;
+  readonly at: number;
+}
+
+/**
+ * Whether any reading in the lattice would hold the two sides of a join
+ * together.
+ *
+ * A reading of one syllable per character can be cut anywhere; anything else —
+ * 儿化, a character with no reading — is a single claim about its whole span,
+ * so a claim spanning the join cannot be reported for the run alone. 1点儿事
+ * is that case: 一点儿 is one `yìdiǎnr` over the 一 the context supplied and
+ * the 点儿 the run did.
+ */
+function isJoinedAt(lattice: Lattice, at: number): boolean {
+  return allEdges(lattice).some(
+    (edge) =>
+      edge.from < at &&
+      edge.to > at &&
+      edge.reading.length !== edge.to - edge.from,
+  );
+}
+
+/**
+ * The lattice a run decodes over, with whatever context stands in front of it.
+ *
+ * The context is dropped where a reading would hold it to the run, leaving the
+ * run decoded on its own, which is what it would have been before there was any
+ * context to give.
+ */
+function runLattice(
+  dictionary: Dictionary,
+  run: string,
+  rules: readonly EdgeRule[],
+  before: string,
+): RunLattice {
+  const alone = (): RunLattice => ({
+    lattice: ruledLattice(dictionary, run, rules),
+    at: 0,
+  });
+  if (before === "") {
+    return alone();
+  }
+  const lattice = ruledLattice(dictionary, before + run, rules);
+  const at = toCharacters(before).length;
+  return isJoinedAt(lattice, at) ? alone() : { lattice, at };
+}
+
+/**
+ * Cut a decode of the whole lattice down to the run at the end of it.
+ *
+ * Everything before `at` was context rather than run — 汉字 a caller put in
+ * front so that the decode could see them — and is dropped once it has done its
+ * work.
+ */
+function runGroups<Unit extends ReadingUnit>(
+  { lattice, at }: RunLattice,
+  units: readonly Unit[],
+): readonly (readonly Unit[])[] {
+  return groupUnits(
+    units.filter((unit) => unit.from >= at),
+    decodeSpacing(lattice).filter((from) => from >= at),
+  );
+}
+
+/**
  * Decode a Han run with the lattice: the recommended path.
  *
  * Stages 1 to 3 of ALGORITHM.md end to end — build every candidate reading,
  * lock the positions that cannot vary, score the rest — where the greedy
  * baseline commits to the longest match at each position and never revisits it.
+ *
+ * `before` is 汉字 standing in front of the run that the decode should see and
+ * not report: the 汉字 a number written in digits would have been written with.
+ * A run is decoded on its own without it, and a run reached that way has no idea
+ * what preceded it — 个人 alone is the word `gèrén`, while the 两 of 2个人 makes
+ * 两个 the word and leaves 人 to itself.
  */
 export function decodeRun(
   dictionary: Dictionary,
   run: string,
   rules: readonly EdgeRule[] = READING_RULES,
+  before = "",
 ): readonly DecodedWord[] {
-  const lattice = ruledLattice(dictionary, run, rules);
+  const held = runLattice(dictionary, run, rules, before);
+  const { lattice } = held;
   const units = decodeReadings(lattice, projectReadings(lattice));
-  return groupUnits(units, decodeSpacing(lattice)).map((group) =>
+  return runGroups(held, units).map((group) =>
     wordFrom(dictionary, lattice, group),
   );
 }
@@ -159,16 +237,22 @@ export function decodeRun(
  * candidates kept rather than discarded. Separate because the extra sweep is
  * only worth running for a caller that will use the answer — rendering
  * uncertain readings differently, or reporting them.
+ *
+ * `before` is the context {@link decodeRun} takes, and means the same here: it
+ * is decoded with the run and reported with neither words nor confidence of its
+ * own.
  */
 export function decodeRunScored(
   dictionary: Dictionary,
   run: string,
   rules: readonly EdgeRule[] = READING_RULES,
+  before = "",
 ): readonly ScoredWord[] {
-  const lattice = ruledLattice(dictionary, run, rules);
+  const held = runLattice(dictionary, run, rules, before);
+  const { lattice } = held;
   const units = scoreReadings(lattice, projectReadings(lattice));
 
-  return groupUnits<ScoredUnit>(units, decodeSpacing(lattice)).map((group) => ({
+  return runGroups<ScoredUnit>(held, units).map((group) => ({
     word: wordFrom(dictionary, lattice, group),
     confidence: group.flatMap((unit) =>
       unit.reading.map(() => ({

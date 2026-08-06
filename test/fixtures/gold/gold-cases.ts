@@ -73,6 +73,12 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "他跑得很快", pinyin: "tā pǎo de hěn kuài", script: "Hans", tags: ["polyphone", "rule-override"] },
   { hanzi: "得到", pinyin: "dédào", script: "Hans", tags: ["polyphone"] },
 
+  // ── 教: jiāo teaches, jiào is the noun and the compounds ──
+  { hanzi: "他在北京大学教了三年书。", pinyin: "Tā zài Běijīng Dàxué jiāole sān nián shū.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "我教英语", pinyin: "wǒ jiāo Yīngyǔ", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
+
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },
   { hanzi: "一天", pinyin: "yì tiān", script: "Hans", tags: ["sandhi-yi"] },
@@ -153,6 +159,14 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "25个", pinyin: "èrshíwǔ gè", script: "Hans", tags: ["numbers", "orthography"] },
   { hanzi: "95%的人", pinyin: "bǎifēnzhījiǔshíwǔ de rén", script: "Hans", tags: ["numbers"] },
   { hanzi: "3D打印", pinyin: "sān D dǎyìn", script: "Hans", tags: ["numbers"] },
+  // The 量词 after the digits belongs to them, not to the noun behind it: 个人
+  // is a common noun and 2个人 is two people. The 汉字 the digits stand for are
+  // decoded with the run, so this is the same case as 两个人 written out.
+  { hanzi: "我有2个人", pinyin: "wǒ yǒu liǎng gè rén", script: "Hans", tags: ["numbers", "segmentation"] },
+  { hanzi: "三个人", pinyin: "sān gè rén", script: "Hans", tags: ["segmentation", "orthography"] },
+  // And the words a rule firing on every character after a number would break.
+  { hanzi: "5分钟", pinyin: "wǔ fēnzhōng", script: "Hans", tags: ["numbers", "segmentation"] },
+  { hanzi: "第三集团军", pinyin: "dìsān jítuánjūn", script: "Hans", tags: ["segmentation"] },
 
   // ── Sentences ─────────────────────────────────────────────
   { hanzi: "我要去北京玩儿。", pinyin: "Wǒ yào qù Běijīng wánr.", script: "Hans", tags: ["sentence", "erhua", "proper-noun"] },

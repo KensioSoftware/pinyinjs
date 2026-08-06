@@ -133,8 +133,10 @@ export type { EdgeContext, EdgeRule, EdgeVerdict } from "./decode/rules.js";
 
 export {
   ATTESTED_ERHUA,
+  COUNTED_MEASURE,
   MODAL_DE,
   READING_RULES,
+  TEACHING_JIAO,
 } from "./decode/reading-rules.js";
 
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
@@ -148,6 +150,7 @@ export type { CardinalOptions } from "./numerals/cardinal.js";
 export {
   DIGIT_CHARACTERS,
   numeralSyllable,
+  QUANTITY_CHARACTERS,
   UNIT_VALUES,
   yaoSyllable,
 } from "./numerals/characters.js";

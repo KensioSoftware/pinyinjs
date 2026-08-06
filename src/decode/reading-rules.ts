@@ -1,3 +1,5 @@
+import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
+import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import {
   type EdgeContext,
@@ -116,6 +118,197 @@ export const ATTESTED_ERHUA: EdgeRule = {
 };
 
 /**
+ * Whether a syllable is `jiāo`, the verbal reading of 教.
+ */
+function isJiao(syllable: Syllable | undefined): boolean {
+  return (
+    syllable?.initial === "j" && syllable.final === "iao" && syllable.tone === 1
+  );
+}
+
+/**
+ * What a 教 that is teaching governs: the thing or the person taught.
+ *
+ * A pronoun, a common noun, a name or one of the tags jieba gives a subject —
+ * 教我, 教英语, 教历史, 教孩子, 教玛丽. `ns` is deliberately absent, since the
+ * only 教 with a place tag after it over the corpus is 教青局, an office.
+ */
+const TAUGHT_TAGS = new Set(["r", "n", "nz", "nr", "nt", "ng"]);
+
+/**
+ * What follows a 教 that is teaching where no object does: aspect and the
+ * complement marker, which only a verb takes.
+ *
+ * 他教了三年书, 他教过我英语, 她教书教得很快乐. Matched as characters rather
+ * than through their tags, because what the dictionary has starting at a 得 is
+ * as likely to be 得很 as the particle itself.
+ */
+const ASPECT = new Set(["了", "过", "過", "着", "著", "得"]);
+
+/**
+ * The tag prefix jieba gives a particle, which nothing teaching can follow.
+ */
+const PARTICLE_TAG = "u";
+
+/**
+ * Whether the 教 at a position is teaching something to somebody.
+ *
+ * The object is what says so, which is the same shape the modal 得 rule takes:
+ * a 教 with a pronoun, a noun or a name after it is governing it, and a 教 with
+ * 了, 过, 着 or 得 after it is a verb whatever follows that. A particle in front
+ * of it rules it out, since a verb does not follow one.
+ */
+function isTeachingAt(context: EdgeContext, at: number): boolean {
+  if (tagOf(context, wordEndingAt(context, at)).startsWith(PARTICLE_TAG)) {
+    return false;
+  }
+  return (
+    ASPECT.has(context.characters[at + 1] ?? "") ||
+    TAUGHT_TAGS.has(tagOf(context, wordStartingAt(context, at + 1)))
+  );
+}
+
+/**
+ * 教 read as `jiāo` where it is teaching rather than a religion.
+ *
+ * The dictionary stores 教 as `jiào` with `jiāo` as an alternate, and `jiào` is
+ * right for the compounds — 教育, 教师, 宗教, 主教 — which are words and reach
+ * their reading through the word. What is left is the 教 that stands as a word
+ * of its own, and that one is the verb: 他在北京大学教了三年书 came out
+ * `jiàole sān nián shū`, and 我教英语, 谁教你法语 and 她教我如何游泳 with it.
+ * 教书 is a word and was always `jiāo shū`; nothing carried that across a 了.
+ *
+ * See {@link isTeachingAt} for what decides it. Forcing the single-character
+ * edge is not enough on its own, because a reading spanning two characters
+ * carries its own 教 into the position: 王老师教我们汉语 read `jiào` off 师教,
+ * and 来教我 off 来教. Those are pairs the dictionary holds with no part of
+ * speech and at the cost of a word nothing has ever counted — a reading rather
+ * than a word — so a *tagged* word ending in 教 is left alone, which is every
+ * one that matters: 任教, 宗教, 主教, 佛教, 传教, 执教, 请教, 家教.
+ *
+ * Measured over 88,866 lines of Tatoeba and zh.wikipedia, 181 教 decode as a
+ * word of their own and every one of them read `jiào`. This moves 158 to
+ * `jiāo` and is wrong on three: 统一教创始人, 方法教深思 and 做到了教政分离,
+ * where a nominal compound takes an object's shape, the last of them because
+ * 做到了 is a word and so the 了 in front is not a particle to look at. Of the
+ * 21 it leaves, 8 are right — 诸教中, 教外别传, 董教总, 风教, 教青局 twice, a
+ * 教室 reached through a bad split, and a 教 used as a bare noun — and 13 are
+ * misses, where jieba tags the object something this does not name.
+ */
+export const TEACHING_JIAO: EdgeRule = {
+  name: "teaching-jiao",
+  verdictFor: (context: EdgeContext) => {
+    const { edge } = context;
+    if (edge.text === "教") {
+      return isJiao(edge.reading[0]) && isTeachingAt(context, edge.from)
+        ? "force"
+        : "keep";
+    }
+    return edge.partOfSpeech === "" &&
+      edge.text.endsWith("教") &&
+      edge.reading.length === edge.to - edge.from &&
+      !isJiao(edge.reading.at(-1)) &&
+      isTeachingAt(context, edge.to - 1)
+      ? "forbid"
+      : "keep";
+  },
+};
+
+/**
+ * The tag the dictionary gives a 量词.
+ */
+const MEASURE = "q";
+
+/**
+ * The mark that makes the number after it a position rather than a count.
+ *
+ * 第三集团军 is the Third Army Group and not three 集团军, so the 集 the
+ * dictionary tags `q` is counting nothing and 集团军 is a word like any other.
+ */
+const ORDINAL = "第";
+
+/**
+ * Where the number counting the character at a position starts, or undefined
+ * where nothing counts it.
+ *
+ * Two things stop a numeral in front of a 量词 from counting it. An ordinal
+ * names a position, so 第十级别 is the tenth 级别 rather than ten 级; and a
+ * numeral inside a longer word belongs to that word, so the 一 of 唯一道路 is
+ * counting no 道 and the 二 of 十二月 no 月.
+ */
+function countedFrom(context: EdgeContext, at: number): number | undefined {
+  const { characters } = context;
+  let from = at;
+  while (from > 0 && QUANTITY_CHARACTERS.has(characters[from - 1] ?? "")) {
+    from--;
+  }
+  if (from === at || characters[from - 1] === ORDINAL) {
+    return undefined;
+  }
+  const before = wordEndingAt(context, at);
+  const held = before === undefined ? at : at - toCharacters(before).length;
+  return held < from ? undefined : from;
+}
+
+/**
+ * A 量词 with a number in front of it does not start the next word.
+ *
+ * 三个人 is three people and came out `sān gèrén`, three *personals*, because
+ * 个人 is a common noun and nothing weighed it against the 个 belonging to the
+ * 三 in front of it. The same swallow takes 一杯水 into 杯水, 两家俱乐部 into
+ * 家俱 and 一天天 into 天天; digits reach it too, since a run decoded after a
+ * number sees that number — see `decodeRun` — so 2个人 is the same case.
+ *
+ * What makes it decidable is that the dictionary tags the 量词: 个, 次, 天, 位,
+ * 杯 and 匹 are `q`, while the characters that only look like measure words in
+ * this position are not — 分 is `v`, 部 and 成 are `n`, 年 and 点 are `m`. So
+ * 五分钟, 三部分, 五成分, 五年级 and 三点钟 are untouched, and those are exactly
+ * the words a blanket rule would break. A word that is itself a 量词 is kept as
+ * well, since 分钟 and 点钟 are units rather than something being counted.
+ *
+ * Only the edge *starting at the 量词* is forbidden, so a number and its
+ * measure written solid survive whole where the dictionary has them: 一辈子 and
+ * 一会儿 are entries covering the number too, and the decode still reaches them.
+ *
+ * Measured over the same 88,866 lines of Tatoeba and zh.wikipedia the other
+ * rules were sized against, it forbids 561 edges across 144 shapes — 个人 203
+ * of them, then 杯水, 天一, 口气, 些小 and 家人 — and moves 53 decodes, since
+ * most of what it takes away the cost model was not going to choose anyway.
+ * Three of the 53 are wrong: 一批评, 这一名词 and 六七股灾, where the 一 and the
+ * 六七 count nothing and no tag says so. Exactly one reading changes over the
+ * corpus and it is a fix, 下了两天雨 having read 天雨 as `tiān yù`.
+ */
+export const COUNTED_MEASURE: EdgeRule = {
+  name: "counted-measure",
+  verdictFor: (context: EdgeContext) => {
+    const { characters, edge } = context;
+    // A reading of a different length from its span says something about how
+    // the characters are read rather than only about where they break: 份儿 is
+    // `fènr` over two characters, and taking the edge away would take the 儿化
+    // with it.
+    if (
+      edge.to - edge.from < 2 ||
+      edge.reading.length !== edge.to - edge.from
+    ) {
+      return "keep";
+    }
+    const counted = countedFrom(context, edge.from);
+    if (counted === undefined) {
+      return "keep";
+    }
+    return tagOf(context, characters[edge.from]) === MEASURE &&
+      edge.partOfSpeech !== MEASURE
+      ? "forbid"
+      : "keep";
+  },
+};
+
+/**
  * The rules the lattice decode applies, in order.
  */
-export const READING_RULES: readonly EdgeRule[] = [MODAL_DE, ATTESTED_ERHUA];
+export const READING_RULES: readonly EdgeRule[] = [
+  MODAL_DE,
+  TEACHING_JIAO,
+  ATTESTED_ERHUA,
+  COUNTED_MEASURE,
+];

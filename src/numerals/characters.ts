@@ -1,3 +1,4 @@
+import { toCharacters } from "../script/characters.js";
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 
 /**
@@ -57,6 +58,24 @@ const READINGS: ReadonlyMap<string, string> = new Map([
   ["分", "fēn"],
   ["之", "zhī"],
   ["百分之", "bǎi fēn zhī"],
+]);
+
+/**
+ * The 汉字 a quantity is written with: the digits, 两, and the places.
+ *
+ * Less than {@link numeralSyllable} reads, and deliberately so. 点, 分, 之 and
+ * 负 are parts of how a number is *said* rather than quantities in themselves,
+ * so a 量词 after one of them is not being counted by it — which is the only
+ * question this set is asked.
+ */
+export const QUANTITY_CHARACTERS: ReadonlySet<string> = new Set([
+  ...toCharacters(DIGIT_CHARACTERS),
+  "〇",
+  "两",
+  "兩",
+  ...UNIT_VALUES.keys(),
+  "萬",
+  "億",
 ]);
 
 /**
