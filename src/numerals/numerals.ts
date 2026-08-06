@@ -124,7 +124,12 @@ export function numeralHanzi(
     if (!Number.isSafeInteger(quantity) || quantity > LARGEST_CARDINAL) {
       return undefined;
     }
-    whole = cardinalHanzi(quantity, options);
+    // A whole part with a point after it is not what counts: 2.5个 is
+    // 二点五个, where the 两 of 两个 would be reading the 2 on its own.
+    whole = cardinalHanzi(quantity, {
+      ...options,
+      counts: options.counts === true && parsed.fraction === "",
+    });
   }
 
   const point =
@@ -183,7 +188,9 @@ export function percentHanzi(
   value: string | number,
   options: NumeralOptions = {},
 ): string | undefined {
-  const written = numeralHanzi(value, options);
+  // 百分之二 counts hundredths rather than whatever follows the sign, so the
+  // 两 of 两个 has nothing to attach to here.
+  const written = numeralHanzi(value, { ...options, counts: false });
   return written === undefined ? undefined : `百分之${written}`;
 }
 
@@ -198,8 +205,9 @@ export function fractionHanzi(
   denominator: string | number,
   options: NumeralOptions = {},
 ): string | undefined {
-  const top = numeralHanzi(numerator, options);
-  const bottom = numeralHanzi(denominator, options);
+  const parts: NumeralOptions = { ...options, counts: false };
+  const top = numeralHanzi(numerator, parts);
+  const bottom = numeralHanzi(denominator, parts);
   return top === undefined || bottom === undefined
     ? undefined
     : `${bottom}分之${top}`;

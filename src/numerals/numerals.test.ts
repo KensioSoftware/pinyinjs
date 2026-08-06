@@ -109,6 +109,35 @@ describe("cardinals", () => {
     assertIdentical(cardinalHanzi(20_000, { liang: "never" }), "二万");
   });
 
+  it("writes a lone 2 as 两 when it is counting something", () => {
+    // 两个西瓜, 两个人, 两岁: a 2 in front of a 量词 is 两 and never 二.
+    assertIdentical(cardinalHanzi(2, { counts: true }), "两");
+    // The 二 of 十二个 or 一万零二个 is a digit inside a larger number, so
+    // only the lone 2 moves.
+    assertIdentical(cardinalHanzi(12, { counts: true }), "十二");
+    assertIdentical(cardinalHanzi(22, { counts: true }), "二十二");
+    assertIdentical(cardinalHanzi(10_002, { counts: true }), "一万零二");
+    assertIdentical(cardinalHanzi(200, { counts: true }), "二百");
+    // Counting nothing is the default, since a bare 2 counts nothing.
+    assertIdentical(cardinalHanzi(2), "二");
+    // And 二 throughout still means 二 throughout.
+    assertIdentical(cardinalHanzi(2, { counts: true, liang: "never" }), "二");
+    assertIdentical(cardinalHanzi(2, { counts: true, liang: "leading" }), "两");
+  });
+
+  it("does not count with the whole part of a decimal", () => {
+    // 2.5个 是二点五个: the 两 of 两个 would be reading the 2 on its own.
+    assertIdentical(numeralHanzi("2.5", { counts: true }), "二点五");
+    assertIdentical(numeralHanzi(2, { counts: true }), "两");
+  });
+
+  it("counts nothing in a percentage or a fraction", () => {
+    // 百分之二 counts hundredths and 二分之一 names a half; neither has a 量词
+    // for the 两 to attach to.
+    assertIdentical(percentHanzi(2, { counts: true }), "百分之二");
+    assertIdentical(fractionHanzi(1, 2, { counts: true }), "二分之一");
+  });
+
   it("refuses what it cannot write", () => {
     for (const value of [-1, 1.5, 10 ** 17]) {
       assertInstanceOf(

@@ -444,6 +444,7 @@ import { numeralHanzi, percentHanzi, readNumeral } from "@kensio/pinyinjs";
 numeralHanzi(12345); // "一万两千三百四十五"
 numeralHanzi(1005); // "一千零五", a skipped place is spoken
 numeralHanzi(2000); // "两千", a leading lone 2 before a big unit
+numeralHanzi(2, { counts: true }); // "两", as in 两个西瓜, never 二个
 percentHanzi(95); // "百分之九十五", the order reverses
 ```
 

@@ -13,8 +13,12 @@ import { readNumbersIn, saidNumeral } from "./text.js";
  * What a stretch of text is broken into: the source of each segment, with the
  * 汉字 of any that was read.
  */
-function segments(text: string, following = ""): readonly string[] {
-  return readNumbersIn(text, following).map((segment) =>
+function segments(
+  text: string,
+  following = "",
+  preceding = "",
+): readonly string[] {
+  return readNumbersIn(text, { following, preceding }).map((segment) =>
     segment.hanzi === undefined
       ? segment.text
       : `${segment.text}=${segment.hanzi}`,
@@ -37,6 +41,53 @@ describe("finding numbers in text", () => {
     assertArrayEquals(segments("30", "年"), ["30=三十"]);
     // And four digits before anything else is a count.
     assertArrayEquals(segments("2000", "人"), ["2000=两千"]);
+  });
+
+  it("writes 两 for a lone 2 in front of what it counts", () => {
+    assertArrayEquals(segments("2", "个"), ["2=两"]);
+    assertArrayEquals(segments("2", "人"), ["2=两"]);
+    assertArrayEquals(segments("2", "岁"), ["2=两"]);
+    assertArrayEquals(segments("2", "点"), ["2=两"]);
+    // 千, 万 and 亿 are the same 两 the number takes on its own, so a unit
+    // written as 汉字 reads as one written in digits: 2万 是两万, 20,000 too.
+    assertArrayEquals(segments("2", "万"), ["2=两"]);
+    assertArrayEquals(segments("20000"), ["20000=两万"]);
+  });
+
+  it("keeps 二 where the 2 names rather than counts", () => {
+    // A bare number counts nothing, whatever it is beside.
+    assertArrayEquals(segments("2"), ["2=二"]);
+    // 2月 is February and 2号 is the second of the month.
+    assertArrayEquals(segments("2", "月"), ["2=二"]);
+    assertArrayEquals(segments("2", "日"), ["2=二"]);
+    assertArrayEquals(segments("2", "号"), ["2=二"]);
+    // 第2次 is an ordinal, however ordinary the 次 after it.
+    assertArrayEquals(segments("2", "次", "第"), ["2=二"]);
+    // And 200 是二百 written either way.
+    assertArrayEquals(segments("2", "百"), ["2=二"]);
+    assertArrayEquals(segments("200", "个"), ["200=二百"]);
+  });
+
+  it("counts only where the number touches what it counts", () => {
+    // The 个 counts the 3; there is a 、 between it and the 2.
+    assertArrayEquals(segments("2、3", "个"), ["2=二", "、", "3=三"]);
+    // The sign is what these digits belong to.
+    assertArrayEquals(segments("2%", "的"), ["2%=百分之二"]);
+    // And the 2 of a larger number is a digit inside it.
+    assertArrayEquals(segments("12", "个"), ["12=十二"]);
+    assertArrayEquals(segments("22", "个"), ["22=二十二"]);
+    assertArrayEquals(segments("10002", "个"), ["10002=一万零二"]);
+    // A whole part with a point after it is not counting on its own.
+    assertArrayEquals(segments("2.5", "个"), ["2.5=二点五"]);
+  });
+
+  it("leaves the 两 of a count to the liang setting", () => {
+    assertArrayEquals(
+      readNumbersIn("2", { following: "个", preceding: "" }, { liang: "never" })
+        .map((segment) => segment.hanzi)
+        .filter((hanzi) => hanzi !== undefined),
+      ["二"],
+    );
   });
 
   it("reverses a percentage and takes the sign with it", () => {
@@ -77,12 +128,12 @@ describe("finding numbers in text", () => {
     // The counted part is the same word it is without the point — 75 is
     // `qīshíwǔ` either way — and everything from the 点 on is read a digit at a
     // time, so 75.5 is `qīshíwǔ diǎn wǔ` rather than four loose syllables.
-    const [decimal] = readNumbersIn("75.5", "");
+    const [decimal] = readNumbersIn("75.5", { following: "", preceding: "" });
     assertNonNullable(decimal);
     assertIdentical(decimal.hanzi, "七十五点五");
     assertArrayEquals(decimal.words ?? [], [3, 1, 1]);
     // A whole number is one word and has no breaks to report.
-    const [whole] = readNumbersIn("75", "");
+    const [whole] = readNumbersIn("75", { following: "", preceding: "" });
     assertNonNullable(whole);
     assertUndefined(whole.words);
   });
@@ -97,7 +148,7 @@ describe("finding numbers in text", () => {
   it("concatenates back to what it was given", () => {
     for (const text of ["3D", "(2)", "95%", "a1b2c3", "6:30", "no digits"]) {
       assertIdentical(
-        readNumbersIn(text, "")
+        readNumbersIn(text, { following: "", preceding: "" })
           .map((segment) => segment.text)
           .join(""),
         text,
@@ -110,7 +161,7 @@ describe("finding numbers in text", () => {
  * How a number is said, with an optional syllable after it for context.
  */
 function said(text: string, following?: string): string {
-  const [segment] = readNumbersIn(text, "");
+  const [segment] = readNumbersIn(text, { following: "", preceding: "" });
   if (segment === undefined) {
     return "";
   }
@@ -142,7 +193,7 @@ describe("saying a number in context", () => {
   it("leaves a spelled-out number alone", () => {
     // Each digit is its own citation form, so the 一 of 1998年 stays `yī`
     // however the 年 after it is toned.
-    const [segment] = readNumbersIn("1998", "年");
+    const [segment] = readNumbersIn("1998", { following: "年", preceding: "" });
     assertNonNullable(segment);
     assertIdentical(segment.style, "digits");
     assertIdentical(

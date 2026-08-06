@@ -18,9 +18,23 @@ export interface CardinalOptions {
    *
    * None of them touches a 2 that is not a multiplier of a big unit: 12 is
    * 十二, 20 is 二十, 200 is 二百, and 120,000 is 十二万, where the 二 is the
-   * units digit of 12.
+   * units digit of 12. A lone 2 in front of what it counts is {@link counts}
+   * rather than this.
    */
   readonly liang?: "always" | "leading" | "never";
+  /**
+   * Whether the number stands immediately in front of something it counts.
+   *
+   * Only a lone 2 changes, and it is not a variable choice the way
+   * {@link liang} is: 两个西瓜 and 两个人 are what the language has, and 二个 is
+   * simply wrong. Nothing about the number says whether it is counting, so the
+   * caller says, which is the same division of labour the numeral style has.
+   *
+   * Off by default, because a number with nothing after it is not counting
+   * anything: 2 on its own is 二, and so is the 2 of 第2次, which names rather
+   * than counts. `liang: "never"` still overrides it.
+   */
+  readonly counts?: boolean;
 }
 
 /**
@@ -137,7 +151,14 @@ export function cardinalHanzi(
   if (value === 0) {
     return "零";
   }
-  const { liang = "always" } = options;
+  const { liang = "always", counts = false } = options;
+  // A lone 2 counting something is 两 and nothing else: 两个西瓜. It is the
+  // only value this touches, since the 二 of 十二个 or 一万零二个 is a digit
+  // inside a larger number rather than the number standing in front of the
+  // 量词.
+  if (value === 2 && counts && isLiang(liang, true)) {
+    return "两";
+  }
 
   const groups: number[] = [];
   for (let rest = value; rest > 0; rest = Math.floor(rest / 10_000)) {

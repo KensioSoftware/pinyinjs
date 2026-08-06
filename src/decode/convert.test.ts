@@ -270,6 +270,11 @@ describe("numbers in text", () => {
     entry("我", "wǒ", { frequency: 60_000 }),
     entry("有", "yǒu", { frequency: 50_000 }),
     entry("的", "de", { frequency: 99_000 }),
+    entry("月", "yuè", { frequency: 40_000 }),
+    entry("第", "dì", { frequency: 30_000 }),
+    entry("次", "cì", { frequency: 20_000 }),
+    entry("买", "mǎi", { frequency: 10_000 }),
+    entry("了", "le", { frequency: 95_000 }),
   ]);
   const written = (text: string, options?: ConvertOptions): string =>
     convert_(counting, text, options);
@@ -280,6 +285,19 @@ describe("numbers in text", () => {
 
   it("writes a counted number as one word, as 正词法 asks", () => {
     assertIdentical(written("我有25个"), "wǒ yǒu èrshíwǔ gè");
+  });
+
+  it("says a lone counted 2 as 两", () => {
+    // 我买了2个 is 两个 and never 二个, which is what a 量词 after the digit
+    // does to it.
+    assertIdentical(written("我买了2个"), "wǒ mǎi le liǎng gè");
+    assertIdentical(written("2人"), "liǎng rén");
+    // 2月 is February, 第2次 is an ordinal, and a bare 2 counts nothing.
+    assertIdentical(written("2月"), "èr yuè");
+    assertIdentical(written("第2次"), "dì èr cì");
+    assertIdentical(written("我有2"), "wǒ yǒu èr");
+    // The 二 of a larger number is a digit inside it.
+    assertIdentical(written("22个"), "èrshí'èr gè");
   });
 
   it("keeps the counted part of a decimal one word", () => {

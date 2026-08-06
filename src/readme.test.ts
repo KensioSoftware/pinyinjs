@@ -245,6 +245,7 @@ describe("the examples in README.md", () => {
       assertIdentical(numeralHanzi(12_345), "一万两千三百四十五");
       assertIdentical(numeralHanzi(1005), "一千零五");
       assertIdentical(numeralHanzi(2000), "两千");
+      assertIdentical(numeralHanzi(2, { counts: true }), "两");
       assertIdentical(percentHanzi(95), "百分之九十五");
       assertIdentical(numeralHanzi(2026), "两千零二十六");
       assertIdentical(numeralHanzi(2026, { style: "digits" }), "二〇二六");

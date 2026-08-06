@@ -58,6 +58,20 @@ numeralHanzi(12_000, { liang: "leading" }); // "一万二千", the 词典's own 
 numeralHanzi(12_000, { liang: "never" }); // "一万二千", and 二千 for 2,000 too
 ```
 
+**A lone 2 in front of what it counts is also 两, and that one is not a
+choice.** 两个西瓜 and 两个人 are what the language has; 二个 is simply wrong.
+Nothing about the number says whether it is counting, so `counts` is the
+caller's to set, exactly as the style is:
+
+```ts
+numeralHanzi(2); // "二", a number counting nothing
+numeralHanzi(2, { counts: true }); // "两", 两个西瓜
+numeralHanzi(12, { counts: true }); // "十二", the 二 of 十二个 is inside the number
+numeralHanzi(200, { counts: true }); // "二百", and so is the 二 of 二百个
+```
+
+Only the lone 2 moves, and `liang: "never"` still writes 二.
+
 ## Spelling digits out
 
 ```ts
@@ -150,6 +164,29 @@ Three rules decide it, and they are deliberately few:
 | four digits before 年 | spelled out      | 1998年 is a year; 30年 is thirty years     |
 | digits before % or ％ | 百分之, reversed | the sign is read, and read first           |
 | anything else         | counted          | what almost every digit in running text is |
+
+**A lone 2 touching the Han after it is counting it, so it is 两.** This is the
+`counts` above, and the following character is what sets it:
+
+```ts
+convert(dictionary, "我们买了2个西瓜"); // "wǒmen mǎile liǎng gè xīguā"
+convert(dictionary, "他2岁"); // "tā liǎng suì"
+convert(dictionary, "2点"); // "liǎng diǎn", the same 两 as 2:00
+convert(dictionary, "2万人"); // "liǎng wàn rén", as 20,000 is 两万
+```
+
+The measure words a 2 can count with are an open list, so 两 is the default and
+the exceptions are named: the positions a digit **labels** rather than counts,
+being 月, 日, 号, 楼, 路, 班 and 期, and an ordinal, which the 第 in front of it
+marks. 十 and 百 are excepted for the other reason — 200 是二百 whether the unit
+is written as a digit or as a character.
+
+```ts
+convert(dictionary, "2月"); // "èr yuè", February
+convert(dictionary, "2号"); // "èr hào", the second of the month
+convert(dictionary, "第2次"); // "dì èr cì", an ordinal names a position
+convert(dictionary, "12个"); // "shí'èr gè", a 2 inside a larger number
+```
 
 A number that has been read is a **word**: 25个 is `èrshíwǔ gè`, one word for
 the number and a space before the measure word, which is what 正词法 6.1.5 asks
