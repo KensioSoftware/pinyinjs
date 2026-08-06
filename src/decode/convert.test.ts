@@ -264,8 +264,11 @@ describe("word grouping", () => {
 
 describe("numbers in text", () => {
   const counting = dictionaryOf([
-    entry("个", "gè", { frequency: 90_000 }),
+    entry("个", "gè", { partOfSpeech: "q", frequency: 90_000 }),
     entry("人", "rén", { frequency: 80_000 }),
+    // Common enough that the spacing decode takes it over 个 and 人 apart,
+    // which is what makes 2个人 a case at all.
+    entry("个人", "gè rén", { partOfSpeech: "n", frequency: 20_000 }),
     entry("年", "nián", { frequency: 70_000 }),
     entry("我", "wǒ", { frequency: 60_000 }),
     entry("有", "yǒu", { frequency: 50_000 }),
@@ -298,6 +301,17 @@ describe("numbers in text", () => {
     assertIdentical(written("我有2"), "wǒ yǒu èr");
     // The 二 of a larger number is a digit inside it.
     assertIdentical(written("22个"), "èrshí'èr gè");
+  });
+
+  it("keeps a 量词 after the digits out of the word behind it", () => {
+    // 个人 is a common noun and 2个人 is two people. The Han run is decoded
+    // with the 汉字 the digits stand for in front of it, so the 个 is seen to
+    // belong to the number rather than to the 人 after it.
+    assertIdentical(written("2个人"), "liǎng gè rén");
+    assertIdentical(written("我有3个人"), "wǒ yǒu sān gè rén");
+    // And with the digits kept there is no number to count with, so the word
+    // stands: this is the decode of 个人 on its own.
+    assertIdentical(written("2个人", { numbers: "keep" }), "2gèrén");
   });
 
   it("keeps the counted part of a decimal one word", () => {

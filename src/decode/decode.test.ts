@@ -23,6 +23,7 @@ import {
 } from "./decode.js";
 import { buildLattice } from "./lattice.js";
 import { projectReadings } from "./locking.js";
+import { READING_RULES } from "./reading-rules.js";
 
 const dictionary = sampleDictionary();
 
@@ -145,6 +146,41 @@ describe("the spacing decode", () => {
     // wanted to split 玩 from 儿 could not be allowed to.
     assertArrayEquals(words("玩儿"), ["玩儿"]);
     assertArrayLength(decodeRun(dictionary, "玩儿")[0]?.reading ?? [], 1);
+  });
+});
+
+/**
+ * The words a run decodes into with context in front of it.
+ */
+function after(before: string, run: string): readonly string[] {
+  return decodeRun(dictionary, run, READING_RULES, before).map(
+    (word) => word.text,
+  );
+}
+
+describe("the Han in front of a run", () => {
+  it("changes what the run decodes to, and is not reported", () => {
+    // 行长 on its own is one word. Put a 银 in front and the 行 belongs to
+    // 银行 instead, leaving 长 to itself — and the 银 is the caller's, so it
+    // comes back with neither a word nor a reading of its own.
+    assertArrayEquals(words("行长"), ["行长"]);
+    assertArrayEquals(after("银", "行长"), ["行", "长"]);
+    assertIdentical(
+      decodeRun(dictionary, "行长", READING_RULES, "银")
+        .flatMap((word) => word.reading.map((s) => writeSyllable(s)))
+        .join(" "),
+      "háng zhǎng",
+    );
+  });
+
+  it("decodes the run alone where a reading straddles the join", () => {
+    // 玩儿 is `wánr`, one syllable over the 玩 the context supplied and the 儿
+    // the run did, and no part of it can be handed back on its own.
+    assertArrayEquals(after("玩", "儿"), ["儿"]);
+  });
+
+  it("is nothing by default, which is every other caller", () => {
+    assertArrayEquals(after("", "行长"), words("行长"));
   });
 });
 

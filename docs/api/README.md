@@ -56,7 +56,7 @@ rather than on `convert`: `buildLattice`, `allEdges`, `cutPoints`,
 `ReadingUnit`, `DecodedWord`, `ScoredWord`, `TextRun`, `CostOf`.
 
 The rules that run over the lattice are exported with them: `READING_RULES`,
-`MODAL_DE`, `ATTESTED_ERHUA`, `applyEdgeRules`, `wordEndingAt`,
+`MODAL_DE`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `applyEdgeRules`, `wordEndingAt`,
 `wordStartingAt`, `tagOf`, and the types `EdgeRule`, `EdgeContext`,
 `EdgeVerdict`, since `decodeRun` and `decodeRunScored` take their own list and
 an application with its own vocabulary may want to add to it, or pass `[]` to
@@ -66,16 +66,17 @@ decode with none.
 
 See [numbers](../numerals/).
 
-| Export                                                | Is                              |
-| ----------------------------------------------------- | ------------------------------- |
-| `numeralHanzi`                                        | number → 汉字                   |
-| `readNumeral`                                         | number → syllables              |
-| `readNumeralHanzi`                                    | written numerals → syllables    |
-| `percentHanzi`, `fractionHanzi`                       | 百分之九十五, 四分之三          |
-| `cardinalHanzi`                                       | the counting half on its own    |
-| `numeralSyllable`, `yaoSyllable`                      | one numeral character's reading |
-| `DIGIT_CHARACTERS`, `UNIT_VALUES`, `LARGEST_CARDINAL` | the tables                      |
-| `NumeralOptions`, `NumeralStyle`, `CardinalOptions`   | types                           |
+| Export                                                | Is                                  |
+| ----------------------------------------------------- | ----------------------------------- |
+| `numeralHanzi`                                        | number → 汉字                       |
+| `readNumeral`                                         | number → syllables                  |
+| `readNumeralHanzi`                                    | written numerals → syllables        |
+| `percentHanzi`, `fractionHanzi`                       | 百分之九十五, 四分之三              |
+| `cardinalHanzi`                                       | the counting half on its own        |
+| `numeralSyllable`, `yaoSyllable`                      | one numeral character's reading     |
+| `DIGIT_CHARACTERS`, `UNIT_VALUES`, `LARGEST_CARDINAL` | the tables                          |
+| `QUANTITY_CHARACTERS`                                 | the 汉字 a quantity is written with |
+| `NumeralOptions`, `NumeralStyle`, `CardinalOptions`   | types                               |
 
 ## Romanisation
 

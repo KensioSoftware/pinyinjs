@@ -244,6 +244,28 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "他得到了"), "tā dédàole");
     });
 
+    it("keeps a counted 量词 out of the word behind it", () => {
+      assertIdentical(convert(dictionary, "三个人"), "sān gè rén");
+      assertIdentical(convert(dictionary, "个人"), "gèrén");
+      assertIdentical(convert(dictionary, "五分钟"), "wǔ fēnzhōng");
+      // The page's other three: a rule firing on every character after a
+      // number would break all of them.
+      assertIdentical(convert(dictionary, "三部分"), "sān bùfen");
+      assertIdentical(convert(dictionary, "五成分"), "wǔ chéngfèn");
+      assertIdentical(convert(dictionary, "五年级"), "wǔ niánjí");
+      // An ordinal counts nothing, and a numeral inside a longer word is not
+      // counting either.
+      assertIdentical(convert(dictionary, "第三集团军"), "dìsān jítuánjūn");
+      // 道路 stays one word, which is the page's claim; the 一 of 唯一 taking
+      // a sandhi it should not is a separate miss and not this rule's.
+      assertStringIncludes(convert(dictionary, "唯一道路"), "dàolù");
+    });
+
+    it("decodes the Han after a number with that number in front of it", () => {
+      assertIdentical(convert(dictionary, "2个人"), "liǎng gè rén");
+      assertIdentical(convert(dictionary, "两个人"), "liǎng gè rén");
+    });
+
     it("keeps 儿 off its own where the 儿化 is attested", () => {
       assertIdentical(convert(dictionary, "那边儿"), "nà biānr");
       assertIdentical(convert(dictionary, "女儿"), "nǚ'ér");

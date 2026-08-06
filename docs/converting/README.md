@@ -97,9 +97,33 @@ leaves 儿 stranded as `ér` is taken off the lattice. That asserts nothing new:
 GB/T 16159 wants, since 那边儿 is one word and this writes two, because the word
 it would need is precisely the one missing.
 
+The third keeps a 量词 out of the word behind it where a number is counting
+with it:
+
+```ts
+convert(dictionary, "三个人"); // "sān gè rén", three people
+convert(dictionary, "个人"); // "gèrén", the word, with nothing counting
+convert(dictionary, "五分钟"); // "wǔ fēnzhōng", untouched
+```
+
+个人 is a common noun, so 三个人 read as three _personals_ and nothing weighed
+that against the 个 belonging to the 三 in front of it. What makes it decidable
+is the dictionary's own tagging: 个, 次, 天 and 杯 are 量词 and the characters
+that merely look like one here are not — 分 is a verb, 部 and 成 are nouns, 年
+and 点 are numerals — so 五分钟, 三部分, 五成分 and 五年级 are left alone, and
+those are exactly the words a rule firing on every character after a number
+would break. An ordinal counts nothing, so 第三集团军 is left alone too, and a
+numeral inside a longer word is not counting either: the 一 of 唯一道路 belongs
+to 唯一.
+
+Over 88,866 lines it forbids 561 edges and moves 53 decodes, of which three are
+wrong: 一批评, 这一名词 and 六七股灾, where the 一 and the 六七 are not counting
+anything and no tag says so. One reading changes in the whole corpus, and it is
+a fix — 下了两天雨 read 天雨 as `tiān yù`.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `ATTESTED_ERHUA`,
-`applyEdgeRules`) and `decodeRun` takes its own list, so an application with its
-own domain can add to them or decode with none.
+`COUNTED_MEASURE`, `applyEdgeRules`) and `decodeRun` takes its own list, so an
+application with its own domain can add to them or decode with none.
 
 ## Non-Han text
 
@@ -111,6 +135,13 @@ convert(dictionary, "3D银行"); // "sān D yínháng"
 convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
 ```
+
+**The Han after a number is decoded with that number in front of it**, as the
+汉字 it would have been written with. Without it a run has no idea what preceded
+it, and 2个人 read as `liǎng gèrén`, two _personals_, where 两个人 written out
+has always been `liǎng gè rén`. The digits are read first — what decides how
+they are said is the character after them, which needs no decode — and the run
+is then decoded knowing them.
 
 Which style a number takes comes from what follows it, since 1998年 is a year
 and 3个 is a count, and it needs no dictionary: `src/numerals/` is arithmetic and

@@ -13,6 +13,7 @@ import {
   toLatinPunctuationParts,
 } from "../orthography/punctuation.js";
 import {
+  type NumeralContext,
   type NumeralSegment,
   readNumbersIn,
   saidNumeral,
@@ -27,6 +28,7 @@ import {
 import type { ReadingConfidence } from "./confidence.js";
 import { decodeRun, decodeRunScored } from "./decode.js";
 import { decodeGreedily } from "./greedy.js";
+import { READING_RULES } from "./reading-rules.js";
 import { splitRuns, type TextRun } from "./runs.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
@@ -171,25 +173,45 @@ function writeWord(
  * How a Han run is turned into words, with whatever the decoder can say about
  * how settled they were.
  */
-type Decode = (dictionary: Dictionary, run: string) => readonly ScoredWord[];
+type Decode = (
+  dictionary: Dictionary,
+  run: string,
+  before: string,
+) => readonly ScoredWord[];
 
 /**
  * A decoder that reports no confidence at all, which is every decoder but one.
  */
 function unscored(
-  decode: (dictionary: Dictionary, run: string) => readonly DecodedWord[],
+  decode: (
+    dictionary: Dictionary,
+    run: string,
+    before: string,
+  ) => readonly DecodedWord[],
 ): Decode {
-  return (dictionary, run) =>
-    decode(dictionary, run).map((word) => ({ word, confidence: [] }));
+  return (dictionary, run, before) =>
+    decode(dictionary, run, before).map((word) => ({ word, confidence: [] }));
 }
 
 /**
  * The lattice decoder, reporting nothing about its own confidence.
  */
-const LATTICE: Decode = unscored(decodeRun);
+const LATTICE: Decode = unscored((dictionary, run, before) =>
+  decodeRun(dictionary, run, READING_RULES, before),
+);
+
+/**
+ * The lattice decoder, with what each reading was chosen over.
+ */
+const SCORED: Decode = (dictionary, run, before) =>
+  decodeRunScored(dictionary, run, READING_RULES, before);
 
 /**
  * The greedy baseline, which has nothing to report either way.
+ *
+ * The context in front of a run goes unused: longest-match has no way to weigh
+ * one segmentation against another, which is the whole reason it is the
+ * baseline, and a 汉字 it cannot report would only be another thing to trim.
  */
 const GREEDY: Decode = unscored(decodeGreedily);
 
@@ -280,44 +302,64 @@ interface RunContext {
     readonly character: string;
     readonly syllable: Syllable | undefined;
   };
-  /** The last character of the Han before the run, or the empty string. */
-  readonly before: string;
   /** Whether pinyin was written immediately before this run. */
   readonly isAfterHan: boolean;
 }
 
 /**
- * The Han either side of a run: the character before it, and the character
- * after it with its first syllable.
+ * The Han either side of a run, as the two characters a number goes on.
  *
- * A number's only context. The characters decide how it is read — 年 makes
- * 1998 a year, 个 makes 3 a count and 第 makes 2 an ordinal — and the syllable
- * is what a 一 ending the number assimilates to.
+ * A number's context, bar one syllable of it. The characters decide how it is
+ * read — 年 makes 1998 a year, 个 makes 3 a count and 2 两, and 第 makes 2 an
+ * ordinal — and characters are all they are, so this is known before anything
+ * has been decoded. Which is what lets the numbers be read first and the decode
+ * of the Han after them see what the digits stood for.
+ */
+function surroundingCharacters(
+  runs: readonly TextRun[],
+  at: number,
+): NumeralContext {
+  const previous = runs[at - 1];
+  const next = runs[at + 1];
+  return {
+    following: next?.isHan === true ? (toCharacters(next.text)[0] ?? "") : "",
+    preceding:
+      previous?.isHan === true
+        ? (toCharacters(previous.text).at(-1) ?? "")
+        : "",
+  };
+}
+
+/**
+ * What surrounds a run once it has been decoded: the character after it, and
+ * the syllable that character is read as.
+ *
+ * The syllable is the one part of a number's context that a decode has to
+ * supply, and it is what a 一 ending the number assimilates to.
  */
 function surrounding(
   runs: readonly TextRun[],
   decoded: readonly (readonly ScoredWord[])[],
   at: number,
 ): RunContext {
-  const previous = runs[at - 1];
-  const isAfterHan = previous?.isHan === true;
-  const before = isAfterHan ? (toCharacters(previous.text).at(-1) ?? "") : "";
-  const next = runs[at + 1];
-  if (next?.isHan !== true) {
-    return {
-      after: { character: "", syllable: undefined },
-      before,
-      isAfterHan,
-    };
-  }
   return {
     after: {
-      character: toCharacters(next.text)[0] ?? "",
+      character: surroundingCharacters(runs, at).following,
       syllable: decoded[at + 1]?.[0]?.word.reading[0],
     },
-    before,
-    isAfterHan,
+    isAfterHan: runs[at - 1]?.isHan === true,
   };
+}
+
+/**
+ * The 汉字 a number in front of a Han run stands for, for that run's decode.
+ *
+ * Only the last segment of the run before, because only that one touches the
+ * Han: the D of 3D银行 comes between them, and a decode of 银行 that saw 三
+ * beside it would be reading a text nobody wrote.
+ */
+function numeralBefore(segments: readonly NumeralSegment[]): string {
+  return segments.at(-1)?.hanzi ?? "";
 }
 
 /**
@@ -424,20 +466,11 @@ function runEdge(isHan: boolean): string {
  */
 function writeNumbers(
   text: string,
+  segments: readonly NumeralSegment[],
   context: RunContext,
   written: Written,
-  options: {
-    readonly numbers: NumberStyle;
-    readonly sandhi: SandhiOptions | undefined;
-  },
+  options: { readonly sandhi: SandhiOptions | undefined },
 ): readonly ConvertedPiece[] {
-  const segments =
-    options.numbers === "keep"
-      ? []
-      : readNumbersIn(text, {
-          following: context.after.character,
-          preceding: context.before,
-        });
   if (segments.every((segment) => segment.reading === undefined)) {
     return [plainPiece(text)];
   }
@@ -490,13 +523,25 @@ function convertWith(
   const written: Written = { notation, apostrophe, capitals };
   const converted: ConvertedPiece[] = [];
 
-  // Decoded before anything is written, because a number needs to know what
-  // follows it — 1998年 is a year and 3个 is a count — and what follows it is
-  // in the next run.
   const runs = [...splitRuns(text)];
-  const decoded = runs.map((run) =>
+  // Read before anything is decoded, because a number needs to know what
+  // follows it — 1998年 is a year and 3个 is a count — and the character that
+  // decides it is there for the reading without a decode of its own.
+  const read = runs.map((run, at) =>
+    run.isHan || numbers === "keep"
+      ? []
+      : readNumbersIn(run.text, surroundingCharacters(runs, at)),
+  );
+  // Decoded before anything is written, because a number's sandhi needs the
+  // syllable after it, and because a Han run needs the number in front of it:
+  // 2个人 is `liǎng gè rén` and 个人 on its own is the word `gèrén`.
+  const decoded = runs.map((run, at) =>
     run.isHan
-      ? wordsOf(decode(dictionary, run.text), dictionary, grouping)
+      ? wordsOf(
+          decode(dictionary, run.text, numeralBefore(read[at - 1] ?? [])),
+          dictionary,
+          grouping,
+        )
       : [],
   );
 
@@ -507,10 +552,13 @@ function convertWith(
       continue;
     }
     converted.push(
-      ...writeNumbers(run.text, surrounding(runs, decoded, at), written, {
-        numbers,
-        sandhi,
-      }),
+      ...writeNumbers(
+        run.text,
+        read[at] ?? [],
+        surrounding(runs, decoded, at),
+        written,
+        { sandhi },
+      ),
     );
   }
   let pieces: readonly ConvertedPiece[] = converted;
@@ -580,7 +628,7 @@ export function convertPieces(
   text: string,
   options: ConvertOptions = {},
 ): readonly ConvertedPiece[] {
-  return convertWith(decodeRunScored, dictionary, text, options);
+  return convertWith(SCORED, dictionary, text, options);
 }
 
 /**

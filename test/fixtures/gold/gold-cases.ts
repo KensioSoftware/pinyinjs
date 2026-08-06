@@ -153,6 +153,14 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "25个", pinyin: "èrshíwǔ gè", script: "Hans", tags: ["numbers", "orthography"] },
   { hanzi: "95%的人", pinyin: "bǎifēnzhījiǔshíwǔ de rén", script: "Hans", tags: ["numbers"] },
   { hanzi: "3D打印", pinyin: "sān D dǎyìn", script: "Hans", tags: ["numbers"] },
+  // The 量词 after the digits belongs to them, not to the noun behind it: 个人
+  // is a common noun and 2个人 is two people. The 汉字 the digits stand for are
+  // decoded with the run, so this is the same case as 两个人 written out.
+  { hanzi: "我有2个人", pinyin: "wǒ yǒu liǎng gè rén", script: "Hans", tags: ["numbers", "segmentation"] },
+  { hanzi: "三个人", pinyin: "sān gè rén", script: "Hans", tags: ["segmentation", "orthography"] },
+  // And the words a rule firing on every character after a number would break.
+  { hanzi: "5分钟", pinyin: "wǔ fēnzhōng", script: "Hans", tags: ["numbers", "segmentation"] },
+  { hanzi: "第三集团军", pinyin: "dìsān jítuánjūn", script: "Hans", tags: ["segmentation"] },
 
   // ── Sentences ─────────────────────────────────────────────
   { hanzi: "我要去北京玩儿。", pinyin: "Wǒ yào qù Běijīng wánr.", script: "Hans", tags: ["sentence", "erhua", "proper-noun"] },
