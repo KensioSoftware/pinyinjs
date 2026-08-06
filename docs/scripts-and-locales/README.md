@@ -29,7 +29,7 @@ dictionary:
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "銀行"); // "yínháng"
 convert(dictionary, "重複"); // "chóngfù"
-convert(dictionary, "重覆"); // "chóngfù" — the other 繁體 spelling of the same word
+convert(dictionary, "重覆"); // "chóngfù", the other 繁體 spelling of the same word
 ```
 
 Nothing is converted before a lookup. There is no "detect the script, then
@@ -76,7 +76,7 @@ depending on whether it is a surface or a bowl of noodles, and both read
 Storing a single traditional form per entry keys one and silently drops the
 other, which is the same loss this whole design exists to prevent. A spelling
 that is not a key is read character by character, which for 重覆 would give
-`zhòng fù` — the wrong word, because 重 on its own is `zhòng` and only the entry
+`zhòng fù`, the wrong word, because 重 on its own is `zhòng` and only the entry
 says this one is `chóng`. Every attested spelling is keyed instead, which costs
 205 extra keys in the full tier.
 
@@ -87,8 +87,8 @@ dictionary.lookup("重覆")?.reading; // also found, same entry
 
 Only spellings a source actually writes out _for that word_ are kept. Expanding
 every character to its variant set and keying every combination would add
-229,482 keys, almost all of them spellings nobody writes — 方麵 for 方面, 公裡
-for 公里. The reading disambiguates a character in the word it was read in, not
+229,482 keys, almost all of them spellings nobody writes, such as 方麵 for 方面
+and 公裡 for 公里. The reading disambiguates a character in the word it was read in, not
 everywhere that character appears: 头发 is `tóu fà` so its 发 is 髮, and that
 says nothing about 出发.
 
@@ -124,15 +124,15 @@ value is as often that headword's second reading as it is a Taiwan one:
                             地 [di4] /earth; ground; field/
 ```
 
-Read as a locale shift, that says 國語 turns the adverbial particle into `dì` —
+Read as a locale shift, that says 國語 turns the adverbial particle into `dì`,
 which it does not, and 4,240 entries end in that particle. The test that
 separates the two is whether the offered reading is one the word already has in
 普通话: CC-CEDICT lists 地[di4] itself, so `dì` is a sense. Nothing lists 和 as
 `hàn`, 期 as `qí` or 垃 as `lè`, so those are the real thing. 71 characters and 3
 words fail that test, 都, 着, 应, 差, 称, 斗, 舍, 薄 and 万 among them, and the
 delta is dropped for all of them. The senses of a 繁體 headword are filed under
-whichever 简体 form each one simplifies to — 沈 is `chén` under 沉 and 誰 `shéi`
-under 谁 — so both scripts are searched.
+whichever 简体 form each one simplifies to, so that 沈 is `chén` under 沉 and 誰
+`shéi` under 谁, and both scripts are searched.
 
 A note is also only read off a sense that matches the reading the entry settled
 on. `Taiwan pr. [zhuo2]` sits on 著's chess-move sense, which reads `zhāo`;
@@ -143,7 +143,7 @@ reaching across for it gave the aspect particle 着 a 國語 reading of `zhuó`,
 
 A source marks the delta on whichever headword it happened to list. CC-CEDICT
 marks 垃圾 and 垃圾桶 and no other compound, and the decoder prefers the longest
-word it finds — so 垃圾分類 was decoded whole and 垃圾's delta was never
+word it finds, so 垃圾分類 was decoded whole and 垃圾's delta was never
 consulted:
 
 ```ts
@@ -172,7 +172,7 @@ The cost of that decision is real and worth stating: 星期 stays `xīngqī` und
 compound whose only locale difference is carried by a character. Closing that
 needs a per-character judgement the sources do not contain.
 
-What survives all three conditions is a homograph — two words spelled and read
+What survives all three conditions is a homograph: two words spelled and read
 alike in 普通话, of which only one shifts. 相親 is `xiāngqīn` when it means
 "mutually close" and `xiàngqīn` in Taiwan when it means a matchmaking meeting,
 so 相親相愛 is excluded by name in `src/dictionary/locale.ts`. Three exclusions
@@ -181,12 +181,12 @@ against 104 compounds is the measured ratio.
 ## Coverage is thinner in 繁體
 
 The phrase corpus that supplies the bulk of the word readings is
-simplified-only — every traditional probe (銀行, 長城, 中國, 發現, 頭髮, 重複)
+simplified-only: every traditional probe (銀行, 長城, 中國, 發現, 頭髮, 重複)
 is absent while every simplified equivalent is present. CC-CEDICT is the only
 source giving paired readings at scale, at 124,758 entries against 411,958.
 
 The pipeline closes some of that gap by deriving traditional forms for
-simplified-only entries, using the stored reading to resolve the ambiguity —
+simplified-only entries, using the stored reading to resolve the ambiguity:
 头发 `tóu fà` means its 发 must be 髮, giving 頭髮. For the 70 merge characters
 whose readings differ, that is deterministic. For the other 736 the readings
 are identical, so a wrong pick cannot change the pronunciation; it only affects
@@ -195,8 +195,8 @@ whether a traditional user's text matches that key.
 ## detectScript
 
 `detectScript(text, hansOnly, hantOnly)` is exported, but it is a low-level
-helper rather than part of the conversion path — you have to supply the variant
-sets. It returns `undefined` for script-neutral text, which is the common case:
+helper rather than part of the conversion path, since you have to supply the
+variant sets. It returns `undefined` for script-neutral text, which is the common case:
 most characters are unchanged by simplification, so a sentence containing none
 of the changed ones reads identically either way. Treat `undefined` as "either",
 not as a failure.

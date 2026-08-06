@@ -11,7 +11,7 @@ pnpm add @kensio/pinyinjs
 ```
 
 Node 22+, or any browser. The package is ESM only, and the core imports no Node
-built-ins — the one Node-specific entry point is `@kensio/pinyinjs/node`, and
+built-ins: the one Node-specific entry point is `@kensio/pinyinjs/node`, and
 nothing in the browser path reaches it.
 
 It is a 4 MB download, because `data/` is 10 MB of compiled dictionaries and
@@ -38,7 +38,7 @@ Every option the library takes is a flag, and every command writes JSON with
 ## Load a dictionary
 
 Converting needs a dictionary. It is a fetchable file rather than a JavaScript
-module — that is what keeps it out of your bundle — so loading it is
+module, which is what keeps it out of your bundle, so loading it is
 asynchronous.
 
 In Node, read it off disk:
@@ -67,7 +67,7 @@ compressing. `DecompressionStream` has no brotli, so decompressing in
 JavaScript is not an option worth taking.
 
 Load the dictionary once and keep it. It is immutable, safe to share, and
-decodes entries lazily — building it twice is pure waste.
+decodes entries lazily, so building it twice is pure waste.
 
 ## Pick a tier
 
@@ -87,7 +87,7 @@ arrives. More in [dictionaries](../dictionaries/).
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
+convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
 The two readings of 行 are the whole reason this package is not a lookup table:

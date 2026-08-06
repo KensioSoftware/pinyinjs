@@ -70,7 +70,7 @@ A command given no arguments reads standard input, one text per line, so
 dictionary at all and start without loading one.
 
 At a terminal each syllable is written in its tone's colour, in
-[MDBG](https://www.mdbg.net)'s palette — red, yellow, green, blue, and the
+[MDBG](https://www.mdbg.net)'s palette of red, yellow, green, blue, and the
 terminal's own colour for the neutral tone. It is off for a pipe, `NO_COLOR` is
 honoured, `--colour` and `--no-colour` force it either way, and `--json` is
 never coloured. See [the command line](docs/cli/#colour).
@@ -85,9 +85,8 @@ $ pinyinjs convert 银行
 yínháng
 ```
 
-Everything else has columns for a person to read. Add `--json` — to any
-command — and it writes one JSON document per answer instead, which is what
-`jq` wants:
+Everything else has columns for a person to read. Add `--json` to any command
+and it writes one JSON document per answer instead, which is what `jq` wants:
 
 ```console
 $ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'
@@ -149,16 +148,16 @@ first, convert with it, and reload as `full` arrives.
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
+convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
 A reading the dictionary cannot settle on its own is settled by context, with
 typed rules over the lattice rather than tweaks to the output:
 
 ```ts
-convert(dictionary, "我得走了"); // "wǒ děi zǒule" — modal 得
-convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài" — the particle
-convert(dictionary, "那边儿"); // "nà biānr" — 儿 does not stand on its own
+convert(dictionary, "我得走了"); // "wǒ děi zǒule", modal 得
+convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài", the particle
+convert(dictionary, "那边儿"); // "nà biānr", 儿 does not stand on its own
 ```
 
 See [converting](docs/converting/#rules-where-the-cost-model-cannot-reach).
@@ -226,7 +225,7 @@ writes in a way no rule reaches.
 
 ```ts
 convert(dictionary, "他看了"); // "tā kànle"
-convert(dictionary, "我还给你了。"); // "Wǒ huán gěi nǐ le." — sentence-final 了
+convert(dictionary, "我还给你了。"); // "Wǒ huán gěi nǐ le.", sentence-final 了
 convert(dictionary, "作者"); // "zuòzhě"
 convert(dictionary, "南京市"); // "Nánjīng Shì"
 convert(dictionary, "南京市", { grouping: false }); // "Nánjīngshì"
@@ -246,7 +245,7 @@ a boundary inside it.
 ```ts
 convert(dictionary, "干干净净"); // "gāngān-jìngjìng"
 convert(dictionary, "研究研究"); // "yánjiū-yánjiū"
-convert(dictionary, "爸爸妈妈"); // "bàba māma" — that shape, but two words
+convert(dictionary, "爸爸妈妈"); // "bàba māma", that shape, but two words
 ```
 
 **A 成语 that can be read as two disyllables** takes the same hyphen, from a
@@ -254,7 +253,7 @@ curated list of 117; the rest are written solid, as the standard writes them.
 
 ```ts
 convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
-convert(dictionary, "不亦乐乎"); // "búyìlèhū" — cannot be halved
+convert(dictionary, "不亦乐乎"); // "búyìlèhū", cannot be halved
 ```
 
 **Digits are read**, and the rest of a non-Han run passes through exactly as
@@ -266,7 +265,7 @@ convert(dictionary, "1988年之后"); // "yī jiǔ bā bā nián zhīhòu"
 convert(dictionary, "95%的人"); // "bǎifēnzhījiǔshíwǔ de rén"
 convert(dictionary, "3D打印"); // "sān D dǎyìn"
 convert(dictionary, "6:30起床"); // "liù diǎn sānshí fēn qǐchuáng"
-convert(dictionary, "16:9的"); // "16:9de" — a ratio is not a quantity
+convert(dictionary, "16:9的"); // "16:9de", a ratio is not a quantity
 ```
 
 `numbers: "keep"` leaves every digit alone. See [numbers](docs/numerals/).
@@ -282,13 +281,13 @@ import { convertPieces, isUncertain, writeSyllable } from "@kensio/pinyinjs";
 const pieces = convertPieces(dictionary, "银行");
 pieces.map((piece) => piece.text); // ["yín", "háng"]
 pieces[1]?.syllable; // { initial: "h", final: "ang", tone: 2 }
-pieces[0]?.confidence?.isLocked; // true — nothing else can be read here
+pieces[0]?.confidence?.isLocked; // true, nothing else can be read here
 pieces[1]?.confidence?.alternatives.map((found) =>
   found.reading.map((syllable) => writeSyllable(syllable)).join(""),
 ); // ["xíng", "héng", "hàng"]
 ```
 
-A piece with no `syllable` is the text between two of them — a space, or a run
+A piece with no `syllable` is the text between two of them: a space, or a run
 that was never Han. `joinPieces(pieces)` gives back exactly what `convert`
 returns.
 
@@ -306,8 +305,8 @@ const guesses = (text: string) =>
     (piece) => piece.confidence !== undefined && isUncertain(piece.confidence),
   );
 
-guesses("行").map((piece) => piece.text); // ["xíng"] — nothing but a prior chose it
-guesses("银行").map((piece) => piece.text); // [] — the word settles both syllables
+guesses("行").map((piece) => piece.text); // ["xíng"], nothing but a prior chose it
+guesses("银行").map((piece) => piece.text); // [], the word settles both syllables
 ```
 
 An alternative's `cost` says how much more the cheapest conversion taking it
@@ -327,7 +326,7 @@ convertToHtml(dictionary, "行");
 One element per syllable, with `py-tone-1` to `py-tone-5` (5 is the neutral
 tone), and `py-uncertain` plus the rejected readings where the decoder was
 guessing. Text that is not Han is escaped, not marked up. No styles are
-included — write your own:
+included, so write your own:
 
 ```css
 .py-tone-1 {
@@ -348,12 +347,12 @@ have.
 const entry = dictionary.lookup("头发");
 entry?.reading; // [{ initial: "t", final: "ou", tone: 2 }, { initial: "f", final: "a", tone: 5 }]
 entry?.isProperNoun; // false
-entry?.partOfSpeech; // "n" — jieba's tag
+entry?.partOfSpeech; // "n", jieba's tag
 
 dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
-dictionary.hasPrefix("银"); // true — does any word start with this?
-dictionary.readingsOf("行"); // xíng, háng, héng, hàng — likeliest first
+dictionary.hasPrefix("银"); // true, does any word start with this?
+dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
 ```
 
 Both scripts are keys in the same dictionary, so nothing is converted before a
@@ -367,12 +366,12 @@ The syllable layer needs no dictionary and no network.
 import { isSyllable, readSyllable, writeSyllable } from "@kensio/pinyinjs";
 
 readSyllable("jiù"); // { initial: "j", final: "iou", tone: 4 }
-readSyllable("jiu4"); // the same — both notations parse
+readSyllable("jiu4"); // the same, both notations parse
 readSyllable("lv4"); // { initial: "l", final: "ü", tone: 4 }
 readSyllable("hello"); // undefined
-readSyllable("běi3"); // undefined — one notation at a time
+readSyllable("běi3"); // undefined, one notation at a time
 
-isSyllable("wánr"); // true — 儿化 is a suffix, not a syllable of its own
+isSyllable("wánr"); // true, 儿化 is a suffix, not a syllable of its own
 ```
 
 Initials and finals are the _underlying_ forms rather than the spelling, so 就 is
@@ -390,7 +389,7 @@ Input takes either notation, the `v` and `u:` conventions for ü, and raised ton
 digits. Output is standard diacritics unless asked otherwise.
 
 Parsing answers whether a spelling is _well formed_, not whether Mandarin uses
-it — `shong` parses and is not a real syllable. The attested inventory is
+it: `shong` parses and is not a real syllable. The attested inventory is
 separate:
 
 ```ts
@@ -410,7 +409,7 @@ splitSyllables("nǐhǎo"); // ["nǐ", "hǎo"]
 splitSyllables("Xī'ān"); // ["Xī", "ān"]
 splitSyllables("yinhang"); // ["yin", "hang"]
 splitSyllables("guórén"); // ["guó", "rén"], not ["guór", "én"]
-splitSyllables("hǎiōu"); // ["hǎi", "ōu"] — missing apostrophe, read anyway
+splitSyllables("hǎiōu"); // ["hǎi", "ōu"], missing apostrophe, read anyway
 readWord("yínháng"); // the same, parsed into Syllable objects
 ```
 
@@ -436,20 +435,20 @@ written at all.
 
 ## Numbers
 
-Reading a number needs no dictionary — arithmetic and about twenty readings —
-so this works with nothing loaded.
+Reading a number needs no dictionary, just arithmetic and about twenty
+readings, so this works with nothing loaded.
 
 ```ts
 import { numeralHanzi, percentHanzi, readNumeral } from "@kensio/pinyinjs";
 
 numeralHanzi(12345); // "一万两千三百四十五"
-numeralHanzi(1005); // "一千零五" — a skipped place is spoken
-numeralHanzi(2000); // "两千" — a leading lone 2 before a big unit
-percentHanzi(95); // "百分之九十五" — the order reverses
+numeralHanzi(1005); // "一千零五", a skipped place is spoken
+numeralHanzi(2000); // "两千", a leading lone 2 before a big unit
+percentHanzi(95); // "百分之九十五", the order reverses
 ```
 
-The same digits are read two ways and nothing in the number says which — 2026年
-is spelled out and 2026个 is counted — so the style is the caller's:
+The same digits are read two ways and nothing in the number says which, since
+2026年 is spelled out and 2026个 is counted, so the style is the caller's:
 
 ```ts
 numeralHanzi(2026); // "两千零二十六"
@@ -484,7 +483,7 @@ writeIpa(jiu); // "tɕiou˥˩"
 ```
 
 Gwoyeu Romatzyh is the odd one, and it needs no tone mark because the tone is
-spelled into the syllable — which is why 陝西 is Shaanxi in English and 山西 is
+spelled into the syllable, which is why 陝西 is Shaanxi in English and 山西 is
 Shanxi:
 
 ```ts
@@ -496,7 +495,7 @@ Reading Wade-Giles back gives an **array**, because real text drops the
 apostrophes and diacritics that carry the distinctions:
 
 ```ts
-readWadeGilesLoosely("chi¹"); // [jī, qī] — chi is jī, ch'i is qī
+readWadeGilesLoosely("chi¹"); // [jī, qī]: chi is jī, ch'i is qī
 readWadeGilesLoosely("chu¹"); // [zhū, chū, jū, qū]
 ```
 
@@ -514,7 +513,7 @@ array, so it can be switched off and works across word boundaries.
 import { applySandhi, readWord } from "@kensio/pinyinjs";
 
 const buShi = readWord("bùshì") ?? [];
-applySandhi(buShi); // bú shì — 不 flattens before a fourth tone
+applySandhi(buShi); // bú shì, 不 flattens before a fourth tone
 applySandhi(buShi, { yiBu: false }); // unchanged
 
 const niHao = readWord("nǐhǎo") ?? [];

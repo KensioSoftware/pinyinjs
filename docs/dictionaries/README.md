@@ -13,7 +13,7 @@ convert(dictionary, "银行"); // "yínháng"
 ```
 
 Load it once and keep it. It is immutable, safe to share across requests, and
-decodes individual entries lazily — there is nothing to gain from building a
+decodes individual entries lazily, so there is nothing to gain from building a
 second one.
 
 ## Sources
@@ -41,7 +41,7 @@ const dictionary = await loadDictionary(fetchSource("/data"), "standard");
 ```
 
 Serve the package's `data/` directory at that URL and leave the artifacts
-uncompressed — let HTTP `Content-Encoding: br` do the compressing.
+uncompressed, letting HTTP `Content-Encoding: br` do the compressing.
 `DecompressionStream` has no brotli, so decompressing in JavaScript is not a
 real alternative.
 
@@ -53,7 +53,7 @@ real alternative.
 | `standard` |  66,730 |            376 KB | the most common words  |
 | `full`     | 461,623 |          2,381 KB | every word             |
 
-`full` is the default, and is what a server should use — 2.4 MB is nothing
+`full` is the default, and is what a server should use: 2.4 MB is nothing
 there, and the extra words are exactly what stops a rare name being read
 character by character.
 
@@ -96,13 +96,13 @@ The dictionary is useful on its own, not only as an argument to `convert`.
 const entry = dictionary.lookup("头发");
 entry?.reading; // [{ initial: "t", final: "ou", tone: 2 }, { initial: "f", final: "a", tone: 5 }]
 entry?.isProperNoun; // false
-entry?.partOfSpeech; // "n" — jieba's tag
+entry?.partOfSpeech; // "n", jieba's tag
 
 dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
-dictionary.hasPrefix("银"); // true — does any word start with this?
-dictionary.readingsOf("行"); // xíng, háng, héng, hàng — likeliest first
-dictionary.size; // 723139 — keys in the full tier, not entries
+dictionary.hasPrefix("银"); // true, does any word start with this?
+dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
+dictionary.size; // 723139, keys in the full tier, not entries
 ```
 
 Both scripts are keys in the same dictionary, so nothing is converted before a
@@ -138,9 +138,9 @@ dictionary
 // ["xíng", "háng", "héng", "hàng"]
 ```
 
-`hasPrefix` is what makes the lattice cheap to build — "does any word start
-here?" is the question that decides whether to keep walking — and it is
-answered by the same binary search as a lookup, with no second index beside it.
+`hasPrefix` is what makes the lattice cheap to build, since "does any word start
+here?" is the question that decides whether to keep walking, and it is answered
+by the same binary search as a lookup, with no second index beside it.
 
 ## What it costs in memory
 

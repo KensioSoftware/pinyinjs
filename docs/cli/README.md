@@ -42,7 +42,7 @@ Wo yao ch'ü Pei-ching.
 
 Writes the pinyin and nothing else, so it drops straight into a pipeline.
 `--system` writes it in `bopomofo`, `wade-giles`, `yale`, `gwoyeu` or `ipa`
-instead — the same word grouping with that system's join, which for Wade-Giles
+instead: the same word grouping with that system's join, which for Wade-Giles
 means a hyphen between the syllables of a word. See
 [romanisation](../romanization/#hanzi-to-wade-giles-end-to-end).
 
@@ -148,9 +148,9 @@ everything else is read as pinyin. Needs no dictionary. See
 [romanisation](../romanization/).
 
 It is `transcribe` rather than `romanize` because half of what it writes are
-not romanisations — bopomofo has a script of its own, and IPA is a transcription
-rather than a spelling — and because the input is pinyin, which is a
-romanisation already.
+not romanisations, since bopomofo has a script of its own and IPA is a
+transcription rather than a spelling, and because the input is pinyin, which is
+a romanisation already.
 
 ### html
 
@@ -193,7 +193,7 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 
 `convert` also takes `--system`, which writes the conversion in another
 transcription system, and `--greedy`, which decodes with the old longest-match
-baseline instead of the lattice — see [converting](../converting/#the-greedy-baseline).
+baseline instead of the lattice; see [converting](../converting/#the-greedy-baseline).
 `html` also takes `--no-tone-classes` and `--no-uncertain`. `sandhi` takes
 `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
 `--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
@@ -218,7 +218,7 @@ start without loading one, so `--data` and `--tier` do nothing on them.
 
 ## Colour
 
-At a terminal, every syllable is written in its tone's colour — in `convert`,
+At a terminal, every syllable is written in its tone's colour, in `convert`,
 `explain`, `lookup`, `syllable`, `sandhi`, `number` and `transcribe`. The
 palette is [MDBG](https://www.mdbg.net)'s, because a colour key is arbitrary
 and the tiebreak is what a reader has already learned:
@@ -233,23 +233,23 @@ and the tiebreak is what a reader has already learned:
 
 **The fifth tone is uncoloured, and that is MDBG's answer rather than a
 shortcut.** Its fifth colour is `#000000` on a light page and `#ffffff` on a
-dark one — the plain text colour, which in a terminal means writing no escape
-at all. A syllable whose tone was never written is left alone too: MDBG has no
+dark one, the plain text colour, which in a terminal means writing no escape at
+all. A syllable whose tone was never written is left alone too: MDBG has no
 colour for one, and [an unwritten tone is not the neutral
 tone](../syllables/#tones).
 
 Colour is on for a terminal and off for a pipe, so a redirected file never
 fills up with escape sequences, and `NO_COLOR` is honoured. `--colour` and
 `--no-colour` force it either way, and `--color` is accepted as a spelling.
-`--json` is never coloured whatever the flags say — it already carries the tone
-as a number, for a caller that will do its own rendering — and neither is
+`--json` is never coloured whatever the flags say, since it already carries the
+tone as a number for a caller that will do its own rendering, and neither is
 `html`, which carries `py-tone-1` to `py-tone-5` classes for a stylesheet to
 act on.
 
 A terminal that reports 256 colours gets the closest match to MDBG's values
 that stays legible on a dark background _and_ a light one, since it cannot say
 which it has. One that reports only the basic sixteen gets the nearest of those,
-which is a visibly worse fit for the second and third tones — there is no amber
+which is a visibly worse fit for the second and third tones: there is no amber
 in sixteen colours, and the only yellow contrasts 1.70:1 against white.
 
 ## Standard input
@@ -266,8 +266,8 @@ any size.
 ## JSON output
 
 `convert` writes bare pinyin, which is what a pipeline wants. Everything else
-lays its answer out in columns for a person to read. Add `--json` — to any
-command — and it writes one JSON document per answer instead:
+lays its answer out in columns for a person to read. Add `--json` to any command
+and it writes one JSON document per answer instead:
 
 ```console
 $ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'

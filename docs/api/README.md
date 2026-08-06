@@ -55,10 +55,10 @@ rather than on `convert`: `buildLattice`, `allEdges`, `cutPoints`,
 `splitRuns`, with the types `Lattice`, `LatticeEdge`, `ReadingProjection`,
 `ReadingUnit`, `DecodedWord`, `ScoredWord`, `TextRun`, `CostOf`.
 
-The rules that run over the lattice are exported with them — `READING_RULES`,
+The rules that run over the lattice are exported with them: `READING_RULES`,
 `MODAL_DE`, `ATTESTED_ERHUA`, `applyEdgeRules`, `wordEndingAt`,
 `wordStartingAt`, `tagOf`, and the types `EdgeRule`, `EdgeContext`,
-`EdgeVerdict` — since `decodeRun` and `decodeRunScored` take their own list and
+`EdgeVerdict`, since `decodeRun` and `decodeRunScored` take their own list and
 an application with its own vocabulary may want to add to it, or pass `[]` to
 decode with none.
 
@@ -100,7 +100,7 @@ See [romanisation](../romanization/).
 | `BopomofoOptions`, `WadeGilesOptions`, `YaleOptions` | types                                    |
 | `IpaOptions`, `WriteWord`                            | types                                    |
 
-The syllable tables live in `src/transcription/` — not `src/romanization/`,
+The syllable tables live in `src/transcription/` rather than `src/romanization/`,
 since bopomofo has a script of its own and IPA is a transcription rather than a
 spelling, so half of them are not romanisations. The docs path keeps the older
 name because it is published.
@@ -124,7 +124,7 @@ See [dictionaries](../dictionaries/).
 | `loadDictionary`                                             | build a `Dictionary` from a source and a tier          |
 | `loadArtifact`                                               | the artifact without the `Dictionary` around it        |
 | `fetchSource`                                                | an HTTP source                                         |
-| `fileSource`                                                 | a filesystem source — from `@kensio/pinyinjs/node`     |
+| `fileSource`                                                 | a filesystem source, from `@kensio/pinyinjs/node`      |
 | `tierFiles`                                                  | which files a tier needs                               |
 | `Dictionary`                                                 | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
 | `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier` | the tiers                                              |
@@ -211,14 +211,14 @@ See [scripts and locales](../scripts-and-locales/).
 
 **Everything on this page is covered by semantic versioning from 1.0.0.** That
 includes the decoder internals and the build pipeline, which were exported
-because they are useful and testable rather than because anyone needed them —
-committing to them is the price of having exported them, and the alternative was
+because they are useful and testable rather than because anyone needed them.
+Committing to them is the price of having exported them, and the alternative was
 to withdraw them at 1.0 for the sake of a smaller promise.
 
 Two things are deliberately outside it, because they are not the API:
 
 - **The readings themselves.** A dictionary rebuild can change what a word
-  converts to — that is what a source refresh is for, and every rule this
+  converts to, which is what a source refresh is for, and every rule this
   package adds is measured in exactly those terms. The figures in
   `docs/orthography/` and the accuracy harnesses are where those changes are
   recorded.
@@ -228,7 +228,7 @@ Two things are deliberately outside it, because they are not the API:
 
 `Dictionary` is a class with a private constructor, so `Dictionary.from` and the
 loaders are the only ways to build one. New optional fields may appear on
-`WordEntry` — `nameBoundaries` did — which is additive and not a break.
+`WordEntry`, as `nameBoundaries` did, which is additive and not a break.
 
 <!-- card
 ```ts

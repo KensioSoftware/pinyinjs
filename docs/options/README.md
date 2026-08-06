@@ -19,7 +19,7 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
-`convertToHtml` takes all of these plus two of its own — see
+`convertToHtml` takes all of these plus two of its own; see
 [HTML output](../html/#options).
 
 ## locale
@@ -33,7 +33,7 @@ convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 
 Only about 490 items differ at all, so `zh-TW` is stored as a delta over
 `zh-CN` and most words are unaffected by this option. Note that locale is not
-the same axis as script — see [scripts and locales](../scripts-and-locales/).
+the same axis as script; see [scripts and locales](../scripts-and-locales/).
 
 ## notation
 
@@ -54,8 +54,8 @@ convert(dictionary, "银行", { notation: "none" }); // "yinhang"
 | `"none"`        | no tone at all: `yinhang`                  |
 
 The neutral tone is 5 in the numbered notations and unmarked in `marks`.
-`superscript` is the useful one for prose that has to stay searchable — a
-reader can ignore the digits, and `yin` still matches `yin²`.
+`superscript` is the useful one for prose that has to stay searchable: a reader
+can ignore the digits, and `yin` still matches `yin²`.
 
 ## apostrophe
 
@@ -163,7 +163,7 @@ convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 | `thirdTone` | `false` | third tone before third tone: `nǐ hǎo` → `ní hǎo` |
 
 Third-tone sandhi is off by default because standard orthography writes the
-underlying tone — 你好 is written `nǐ hǎo` even though it is said `ní hǎo`.
+underlying tone: 你好 is written `nǐ hǎo` even though it is said `ní hǎo`.
 Turn it on when transcribing speech rather than writing pinyin. More in
 [sandhi](../sandhi/).
 

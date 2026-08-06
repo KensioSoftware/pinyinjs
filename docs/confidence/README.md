@@ -10,14 +10,14 @@ import { convertPieces, isUncertain, writeSyllable } from "@kensio/pinyinjs";
 const pieces = convertPieces(dictionary, "银行");
 pieces.map((piece) => piece.text); // ["yín", "háng"]
 pieces[1]?.syllable; // { initial: "h", final: "ang", tone: 2 }
-pieces[0]?.confidence?.isLocked; // true — nothing else can be read here
+pieces[0]?.confidence?.isLocked; // true, nothing else can be read here
 pieces[1]?.confidence?.alternatives.map((found) =>
   found.reading.map((syllable) => writeSyllable(syllable)).join(""),
 ); // ["xíng", "héng", "hàng"]
 ```
 
 Greedy longest-match cannot do this. A scored decode can, and for a
-learner-facing tool that is a feature rather than a diagnostic — an uncertain
+learner-facing tool that is a feature rather than a diagnostic: an uncertain
 reading can be rendered differently instead of being presented as fact.
 
 ## Pieces
@@ -55,26 +55,26 @@ const guesses = (text: string) =>
     (piece) => piece.confidence !== undefined && isUncertain(piece.confidence),
   );
 
-guesses("行").map((piece) => piece.text); // ["xíng"] — nothing but a prior chose it
-guesses("银行").map((piece) => piece.text); // [] — the word settles both syllables
+guesses("行").map((piece) => piece.text); // ["xíng"], nothing but a prior chose it
+guesses("银行").map((piece) => piece.text); // [], the word settles both syllables
 ```
 
 **Locked** means the lattice offers one reading at that position across every
 path through it. No amount of scoring can move it, so the decoder does not even
-try — locked positions are skipped before the shortest-path decode runs.
+try: locked positions are skipped before the shortest-path decode runs.
 
 A reading a [rule](../converting/#rules-where-the-cost-model-cannot-reach)
 settled reports as locked too, and for the same reason: the rules run over the
 lattice before anything is decoded, so the 得 of 我得走了 has one reading left by
 the time the decode sees it. What the flag says is that nothing downstream chose
-it, which stays true — but the 1.46% below is measured over positions the data
+it, which stays true, but the 1.46% below is measured over positions the data
 locked, not over these.
 
 **Backed by a word** means other readings existed, but reaching any of them
 would have meant breaking apart a word the dictionary attests. 长江大桥 reads
 `Cháng` rather than `zhǎng` on that basis.
 
-**Uncertain** means a rival reading was available without breaking a word up —
+**Uncertain** means a rival reading was available without breaking a word up,
 usually a bare polyphone falling back on a character-level prior. That is the
 decoder saying it had very little to go on.
 
@@ -87,7 +87,7 @@ pieces[0]?.confidence?.alternatives;
 ```
 
 An alternative's `cost` is how much more the cheapest conversion taking it
-would have cost, in the decoder's own units — including what taking it would
+would have cost, in the decoder's own units, including what taking it would
 have forced on its neighbours. It is computed by one forward and one backward
 sweep of the lattice, which prices every distinct reading a stretch offers.
 
@@ -127,7 +127,7 @@ string, call `convert`.
 ## Showing it to a reader
 
 `convertToHtml` marks uncertain syllables for you and lists what they beat in a
-`data-alternatives` attribute — see [HTML output](../html/). The
+`data-alternatives` attribute; see [HTML output](../html/). The
 [`explain` command](../cli/#explain) prints the same information at a terminal.
 
 <!-- card

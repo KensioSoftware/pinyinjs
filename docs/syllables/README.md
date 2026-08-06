@@ -8,10 +8,10 @@ answers whether a spelling is well formed.
 import { isSyllable, readSyllable, writeSyllable } from "@kensio/pinyinjs";
 
 readSyllable("jiù"); // { initial: "j", final: "iou", tone: 4 }
-readSyllable("jiu4"); // the same — both notations parse
+readSyllable("jiu4"); // the same, both notations parse
 readSyllable("lv4"); // { initial: "l", final: "ü", tone: 4 }
 readSyllable("hello"); // undefined
-readSyllable("běi3"); // undefined — one notation at a time
+readSyllable("běi3"); // undefined, one notation at a time
 ```
 
 This is the half of the package that is not about hanzi at all. If you are
@@ -61,7 +61,7 @@ readSyllable("lv4"); // the same
 readSyllable("lu:4"); // the same
 ```
 
-Not both notations at once — `běi3` is undefined, because a syllable carries
+Not both notations at once: `běi3` is undefined, because a syllable carries
 one tone and that spelling states two.
 
 `normaliseUmlaut` does the `v`/`u:` rewrite on its own if you need it earlier:
@@ -99,7 +99,7 @@ There are three of these and they are not the same size:
 | ---------------------- | ---: | ------------------------------------------------------ |
 | `ATTESTED_SYLLABLES`   |  415 | the standard toneless syllable inventory               |
 | `RARE_SYLLABLES`       |    9 | spellings the dictionary uses that the inventory omits |
-| `DICTIONARY_SYLLABLES` |  424 | the two together — what the build validates against    |
+| `DICTIONARY_SYLLABLES` |  424 | the two together, what the build validates against     |
 
 The nine rare ones are `bong`, `cei`, `din`, `eng`, `fiao`, `lo`, `rua`, `sei`
 and `tei`: interjections, dialect readings and onomatopoeia that appear in the
@@ -120,7 +120,7 @@ import { isAttestedTone, readSyllable, SYLLABLE_TONES } from "@kensio/pinyinjs";
 SYLLABLE_TONES.get("lo"); // [5]
 SYLLABLE_TONES.get("ban"); // [1, 3, 4, 5]
 isAttestedTone(readSyllable("ló")); // false
-isAttestedTone(readSyllable("lo")); // true — no tone claims nothing
+isAttestedTone(readSyllable("lo")); // true, no tone claims nothing
 ```
 
 424 syllables in five tones would be 2,120 combinations and only **1,708 of them
@@ -131,7 +131,7 @@ reading outside it.
 
 It is what lets the [romanisation readers](../romanization/#the-tone-narrows-the-list)
 settle an ambiguous spelling on the tone that was written: Wade-Giles `lo²` is
-羅 luó and nothing else. A syllable outside the inventory is not judged —
+羅 luó and nothing else. A syllable outside the inventory is not judged, since
 `isAttestedTone` answers which tones a syllable takes, not which syllables there
 are.
 
@@ -147,7 +147,7 @@ splitSyllables("nǐhǎo"); // ["nǐ", "hǎo"]
 splitSyllables("Xī'ān"); // ["Xī", "ān"]
 splitSyllables("yinhang"); // ["yin", "hang"]
 splitSyllables("guórén"); // ["guó", "rén"], not ["guór", "én"]
-splitSyllables("hǎiōu"); // ["hǎi", "ōu"] — missing apostrophe, read anyway
+splitSyllables("hǎiōu"); // ["hǎi", "ōu"], missing apostrophe, read anyway
 readWord("yínháng"); // the same, parsed into Syllable objects
 ```
 
@@ -188,7 +188,7 @@ toneFromMarks("hao"); // undefined
 
 `applyToneMark` puts the mark on the right vowel for you, which is not a
 one-liner. The standard places it on `a`, failing that on `o` or `e`, failing
-that on the last remaining vowel — and it is that last clause which puts the
+that on the last remaining vowel, and it is that last clause which puts the
 mark on the `u` of `iu` and the `i` of `ui`. Any mark already present is
 replaced, and text with nothing that can carry one comes back unchanged.
 
@@ -196,9 +196,9 @@ replaced, and text with nothing that can carry one comes back unchanged.
 
 `Syllable.tone` is `Tone | undefined`, and the two mean different things:
 
-- **`5` (`NEUTRAL_TONE`)** — this syllable is toneless, and that is a fact
+- **`5` (`NEUTRAL_TONE`)** says this syllable is toneless, and that is a fact
   about the word. The `de` in 我的.
-- **`undefined`** — no tone was written. The `bei` in a typed `beijing`, where
+- **`undefined`** says no tone was written. The `bei` in a typed `beijing`, where
   the writer simply did not say.
 
 `toneFromMarks("hao")` is `undefined` rather than `5` for the same reason: an

@@ -8,7 +8,7 @@ the same answer.
 convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "行长"); // "hángzhǎng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
-convert(dictionary, "3D银行"); // "sān D yínháng" — the digit is read, the letter is not
+convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
 The signature is `convert(dictionary, text, options?)`. Options are documented
@@ -17,7 +17,7 @@ two arguments and the string that comes back.
 
 ## Why it is not a lookup table
 
-行 has four readings — `xíng`, `háng`, `héng`, `hàng` — and nothing about the
+行 has four readings, `xíng`, `háng`, `héng` and `hàng`, and nothing about the
 character says which one to write. 银行 is `yínháng` and 行长 is `hángzhǎng`.
 A per-character table cannot get both right, and picking the commonest reading
 gets one of them wrong every time.
@@ -29,7 +29,7 @@ two disagree about whether 长 is `cháng` or `zhǎng`.
 
 ## What the decoder does
 
-Every dictionary match at every position goes into a lattice — a graph where
+Every dictionary match at every position goes into a lattice, a graph where
 each edge is a word and carries the reading that word has. Converting is then
 choosing a path.
 
@@ -49,7 +49,7 @@ Two things about this are worth knowing as a user.
 **Most positions never get scored.** After the lattice is built, the decoder
 asks at each position how many distinct readings survive across every path
 through it. Where the answer is one, the position is _locked_ and no amount of
-scoring can move it — about two thirds of positions in running text. Only the
+scoring can move it, which is about two thirds of positions in running text. Only the
 short stretches between locked positions get a shortest-path decode, and they
 are typically two to six characters long.
 
@@ -66,13 +66,13 @@ choosing, and will tell you: see [confidence](../confidence/).
 
 Some readings are settled by context rather than by evidence about the
 characters, and no amount of frequency data reaches them. Those are handled by
-typed rules that run over the lattice — after it is built, before anything is
-decoded — and that may only take candidates away, never invent one.
+typed rules that run over the lattice, after it is built and before anything is
+decoded, and that may only take candidates away, never invent one.
 
 ```ts
-convert(dictionary, "我得走了"); // "wǒ děi zǒule" — modal
-convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài" — particle
-convert(dictionary, "他得到了"); // "tā dédàole" — the word decides
+convert(dictionary, "我得走了"); // "wǒ děi zǒule", modal
+convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài", particle
+convert(dictionary, "他得到了"); // "tā dédàole", the word decides
 ```
 
 得 is one character with three readings. The dictionary can only carry a
@@ -86,16 +86,16 @@ should not:
 
 ```ts
 convert(dictionary, "那边儿"); // "nà biānr", not "nàbian ér"
-convert(dictionary, "女儿"); // "nǚ'ér" — a syllable of its own, and stays one
+convert(dictionary, "女儿"); // "nǚ'ér", a syllable of its own, and stays one
 ```
 
 儿化 is a per-word dictionary fact, and 2,009 of the 2,067 words ending in 儿
-carry it — but 那边儿 is not listed while 这边儿, 上边儿 and 旁边儿 are. Where
+carry it, but 那边儿 is not listed while 这边儿, 上边儿 and 旁边儿 are. Where
 the character in front of a 儿 makes an attested 儿化 word, the reading that
 leaves 儿 stranded as `ér` is taken off the lattice. That asserts nothing new:
 边儿 is `biānr` because the dictionary says so. The spacing is still not what
-GB/T 16159 wants — 那边儿 is one word, and this writes two — because the word it
-would need is precisely the one missing.
+GB/T 16159 wants, since 那边儿 is one word and this writes two, because the word
+it would need is precisely the one missing.
 
 Rules are exported (`READING_RULES`, `MODAL_DE`, `ATTESTED_ERHUA`,
 `applyEdgeRules`) and `decodeRun` takes its own list, so an application with its
@@ -112,8 +112,8 @@ convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
 ```
 
-Which style a number takes comes from what follows it — 1998年 is a year and
-3个 is a count — and it needs no dictionary: `src/numerals/` is arithmetic and
+Which style a number takes comes from what follows it, since 1998年 is a year
+and 3个 is a count, and it needs no dictionary: `src/numerals/` is arithmetic and
 about twenty readings. [Numbers](../numerals/) has the three rules and what
 they deliberately do not guess at. `numbers: "keep"` leaves every digit exactly
 as it was written, which is what this did before there was anything to read
@@ -142,7 +142,7 @@ All of that is [orthography](../orthography/), including what it does not do.
 
 ## The greedy baseline
 
-`convertGreedily` decodes with longest-match instead — take the longest
+`convertGreedily` decodes with longest-match instead: take the longest
 dictionary word at each position, never reconsider. It is kept because it is
 what the previous generation of this library did, and because having a baseline
 in the repository is how the lattice's accuracy gets measured rather than
@@ -156,7 +156,7 @@ convertGreedily(dictionary, "研究生命起源"); // "yánjiūshēng mìng qǐy
 ```
 
 Greedy takes 研究生 because it is longer, and 生命 loses. Both readings happen
-to be right here — this is the ambiguity that does not cross a polyphone — so
+to be right here, this being the ambiguity that does not cross a polyphone, so
 what it costs is the spacing.
 
 Measured on 20,139 hand-labelled polyphonic characters, the lattice reads
@@ -167,12 +167,12 @@ greedy does not, against 30 the other way. Small, but real. Use `convert`;
 
 ## Getting more than a string back
 
-| You want                               | Use                                                    |
-| -------------------------------------- | ------------------------------------------------------ |
-| the pinyin                             | `convert`                                              |
-| one piece at a time, with confidence   | `convertPieces` — [confidence](../confidence/)         |
-| marked-up HTML                         | `convertToHtml` — [HTML output](../html/)              |
-| what the dictionary holds for one word | `dictionary.lookup` — [dictionaries](../dictionaries/) |
+| You want                               | Use                                                   |
+| -------------------------------------- | ----------------------------------------------------- |
+| the pinyin                             | `convert`                                             |
+| one piece at a time, with confidence   | `convertPieces`, [confidence](../confidence/)         |
+| marked-up HTML                         | `convertToHtml`, [HTML output](../html/)              |
+| what the dictionary holds for one word | `dictionary.lookup`, [dictionaries](../dictionaries/) |
 
 `convertPieces` is the general one. `convertToHtml` is exactly
 `toHtml(convertPieces(…))`, and `joinPieces(convertPieces(…))` gives back what
@@ -180,7 +180,7 @@ greedy does not, against 30 the other way. Small, but real. Use `convert`;
 pieces.
 
 `convert` does not call `convertPieces` internally, though. Pricing the
-alternatives costs a second sweep of the lattice — around 1.5× the work — so
+alternatives costs a second sweep of the lattice, around 1.5× the work, so
 `convert` runs the decode that does not do it. Reach for `convertPieces` when
 you want the confidence, not as the general form of `convert`.
 
