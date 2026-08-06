@@ -56,7 +56,8 @@ rather than on `convert`: `buildLattice`, `allEdges`, `cutPoints`,
 `ReadingUnit`, `DecodedWord`, `ScoredWord`, `TextRun`, `CostOf`.
 
 The rules that run over the lattice are exported with them: `READING_RULES`,
-`MODAL_DE`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `applyEdgeRules`, `wordEndingAt`,
+`MODAL_DE`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
+`applyEdgeRules`, `wordEndingAt`,
 `wordStartingAt`, `tagOf`, and the types `EdgeRule`, `EdgeContext`,
 `EdgeVerdict`, since `decodeRun` and `decodeRunScored` take their own list and
 an application with its own vocabulary may want to add to it, or pass `[]` to

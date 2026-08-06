@@ -11,9 +11,9 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
-- **`COUNTED_MEASURE`,** a third lattice rule, and `QUANTITY_CHARACTERS`, the
-  汉字 a quantity is written with that it asks about. See the fix below for
-  what it does and what it measures.
+- **`TEACHING_JIAO` and `COUNTED_MEASURE`,** two more lattice rules, and
+  `QUANTITY_CHARACTERS`, the 汉字 a quantity is written with that the second of
+  them asks about. See the fixes below for what they do and what they measure.
 - **`counts` on the numeral options.** Whether the number stands immediately in
   front of something it counts, which is what makes a lone 2 两:
   `numeralHanzi(2, { counts: true })` is `两` and `numeralHanzi(2)` is `二`.
@@ -38,6 +38,22 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **教 was `jiào` even where it was teaching.** 他在北京大学教了三年书 came out
+  `jiàole sān nián shū`, and 我教英语, 谁教你法语 and 她教我如何游泳 with it.
+  The dictionary stores 教 as `jiào` with `jiāo` as an alternate, and `jiào` is
+  right for the compounds — 教育, 教师, 宗教, 主教 — which are words and reach
+  their reading through the word; what is left is the 教 standing as a word of
+  its own, and that one is the verb. The object is what says so: a pronoun, a
+  noun or a name after it, or an aspect particle, since only a verb takes 了,
+  过 or 得. Forcing the character's own reading was not enough on its own,
+  because a two-character reading carries its 教 into the position from
+  outside — 王老师教我们汉语 read `jiào` off 师教 and 来教我 off 来教 — so an
+  untagged pair ending in 教 goes too, while every tagged word keeps its
+  reading: 任教, 宗教, 主教, 佛教, 传教, 执教, 请教, 家教. Over 88,866 lines
+  181 教 decode as a word of their own and every one read `jiào`; 158 are now
+  `jiāo`, three of them wrongly — 统一教创始人, 方法教深思 and 做到了教政分离,
+  where a nominal compound takes an object's shape. CPP's polyphone score is
+  89.05%, up from 89.04%.
 - **A 量词 was swallowed by the word behind it.** 三个人 was `sān gèrén`, three
   _personals_, because 个人 is a common noun and nothing weighed it against the
   个 belonging to the 三 in front of it. It is now `sān gè rén`, and so are
@@ -209,14 +225,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 114-case gold corpus, which is committed to the repository rather than
+Over the 118-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.4%** |           89.5% |
-| reading accuracy |     99.7% |           98.8% |
-| spacing (F1)     | **99.7%** |           96.0% |
+| exact match      | **97.5%** |           88.1% |
+| reading accuracy |     99.7% |           98.3% |
+| spacing (F1)     | **99.8%** |           96.3% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is

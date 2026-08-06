@@ -13,6 +13,7 @@ import {
   COUNTED_MEASURE,
   MODAL_DE,
   READING_RULES,
+  TEACHING_JIAO,
 } from "./reading-rules.js";
 
 /**
@@ -52,6 +53,22 @@ const dictionary = dictionaryOf([
   entry("钟", "zhōng", { frequency: 3000 }),
   entry("分钟", "fēn zhōng", { partOfSpeech: "q", frequency: 2000 }),
   entry("五", "wǔ", { partOfSpeech: "m", frequency: 20_000 }),
+  // 教, stored `jiào` with the verbal `jiāo` as an alternate, as the real
+  // dictionary stores it — with a word for each reading and the untagged pair
+  // that carries `jiào` across two characters.
+  entry("教", "jiào", {
+    partOfSpeech: "v",
+    frequency: 20_000,
+    alternates: [reading("jiāo")],
+  }),
+  entry("书", "shū", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("育", "yù", { frequency: 5000 }),
+  entry("教育", "jiào yù", { partOfSpeech: "vn", frequency: 9000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("来教", "lái jiào", { frequency: 30_000 }),
+  entry("宗", "zōng", { frequency: 2000 }),
+  entry("宗教", "zōng jiào", { partOfSpeech: "n", frequency: 4000 }),
+  entry("来", "lái", { partOfSpeech: "v", frequency: 40_000 }),
 ]);
 
 /**
@@ -122,6 +139,34 @@ describe("儿 where the 儿化 is attested", () => {
 
   it("applies on its own as well as beside the other rule", () => {
     assertArrayEquals(read("那边儿", [ATTESTED_ERHUA]), ["nà", "biānr"]);
+  });
+});
+
+describe("教 where it is teaching", () => {
+  it("reads it jiāo in front of the thing taught", () => {
+    assertArrayEquals(read("我教你"), ["wǒ", "jiāo", "nǐ"]);
+  });
+
+  it("reads it jiāo across an aspect particle", () => {
+    // 他教了三年书: the object is on the far side of the 了, and 教书 being a
+    // word carries nothing over it.
+    assertArrayEquals(read("他教了"), ["tā", "jiāo", "le"]);
+  });
+
+  it("leaves the reading the words carry alone", () => {
+    assertArrayEquals(read("教育"), ["jiàoyù"]);
+    assertArrayEquals(read("宗教"), ["zōngjiào"]);
+  });
+
+  it("does nothing at all when the rule is not applied", () => {
+    assertArrayEquals(read("我教你", []), ["wǒ", "jiào", "nǐ"]);
+  });
+
+  it("takes the jiào a two-character reading would carry in", () => {
+    // 来教 is a pair the dictionary holds with no part of speech, and its
+    // `jiào` reached the position from outside the character's own edges.
+    assertArrayEquals(read("来教我", [TEACHING_JIAO]), ["lái", "jiāo", "wǒ"]);
+    assertArrayEquals(read("来教我", []), ["láijiào", "wǒ"]);
   });
 });
 

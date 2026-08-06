@@ -244,6 +244,16 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "他得到了"), "tā dédàole");
     });
 
+    it("reads 教 as jiāo where it teaches and jiào where it does not", () => {
+      assertIdentical(
+        convert(dictionary, "他在北京大学教了三年书。"),
+        "Tā zài Běijīng Dàxué jiāole sān nián shū.",
+      );
+      assertIdentical(convert(dictionary, "我教英语"), "wǒ jiāo Yīngyǔ");
+      assertIdentical(convert(dictionary, "教育"), "jiàoyù");
+      assertIdentical(convert(dictionary, "宗教"), "zōngjiào");
+    });
+
     it("keeps a counted 量词 out of the word behind it", () => {
       assertIdentical(convert(dictionary, "三个人"), "sān gè rén");
       assertIdentical(convert(dictionary, "个人"), "gèrén");

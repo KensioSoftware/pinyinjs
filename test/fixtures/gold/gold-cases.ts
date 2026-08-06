@@ -73,6 +73,12 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "他跑得很快", pinyin: "tā pǎo de hěn kuài", script: "Hans", tags: ["polyphone", "rule-override"] },
   { hanzi: "得到", pinyin: "dédào", script: "Hans", tags: ["polyphone"] },
 
+  // ── 教: jiāo teaches, jiào is the noun and the compounds ──
+  { hanzi: "他在北京大学教了三年书。", pinyin: "Tā zài Běijīng Dàxué jiāole sān nián shū.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "我教英语", pinyin: "wǒ jiāo Yīngyǔ", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
+
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },
   { hanzi: "一天", pinyin: "yì tiān", script: "Hans", tags: ["sandhi-yi"] },

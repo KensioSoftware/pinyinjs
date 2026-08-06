@@ -81,7 +81,23 @@ until this. What separates them is entirely contextual: the particle attaches to
 the verb or adjective in front of it, so a 得 with a pronoun, adverb or time
 word before it and a verb phrase after it is not that particle.
 
-The second rule keeps 儿 from standing on its own where the dictionary says it
+The second is 教, which is `jiào` in the dictionary and `jiāo` when it teaches:
+
+```ts
+convert(dictionary, "他在北京大学教了三年书。"); // "Tā zài Běijīng Dàxué jiāole sān nián shū."
+convert(dictionary, "我教英语"); // "wǒ jiāo Yīngyǔ"
+convert(dictionary, "教育"); // "jiàoyù", and 宗教 is `zōngjiào`
+```
+
+The compounds carry their own reading and are right already; what is left is
+the 教 standing as a word of its own, and that one is the verb. The object is
+what says so — a pronoun, a noun or a name after it, or an aspect particle,
+since only a verb takes 了, 过 or 得. Over 88,866 lines 181 教 decode as a word
+of their own and every one read `jiào`; this moves 158 and is wrong on three,
+where a nominal compound takes an object's shape: 统一教创始人, 方法教深思 and
+做到了教政分离.
+
+The third rule keeps 儿 from standing on its own where the dictionary says it
 should not:
 
 ```ts
@@ -97,7 +113,7 @@ leaves 儿 stranded as `ér` is taken off the lattice. That asserts nothing new:
 GB/T 16159 wants, since 那边儿 is one word and this writes two, because the word
 it would need is precisely the one missing.
 
-The third keeps a 量词 out of the word behind it where a number is counting
+The fourth keeps a 量词 out of the word behind it where a number is counting
 with it:
 
 ```ts
@@ -121,9 +137,10 @@ wrong: 一批评, 这一名词 and 六七股灾, where the 一 and the 六七 ar
 anything and no tag says so. One reading changes in the whole corpus, and it is
 a fix — 下了两天雨 read 天雨 as `tiān yù`.
 
-Rules are exported (`READING_RULES`, `MODAL_DE`, `ATTESTED_ERHUA`,
-`COUNTED_MEASURE`, `applyEdgeRules`) and `decodeRun` takes its own list, so an
-application with its own domain can add to them or decode with none.
+Rules are exported (`READING_RULES`, `MODAL_DE`, `TEACHING_JIAO`,
+`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `applyEdgeRules`) and `decodeRun` takes its
+own list, so an application with its own domain can add to them or decode with
+none.
 
 ## Non-Han text
 

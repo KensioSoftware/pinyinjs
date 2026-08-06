@@ -136,6 +136,7 @@ export {
   COUNTED_MEASURE,
   MODAL_DE,
   READING_RULES,
+  TEACHING_JIAO,
 } from "./decode/reading-rules.js";
 
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
