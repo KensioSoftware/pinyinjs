@@ -280,33 +280,42 @@ interface RunContext {
     readonly character: string;
     readonly syllable: Syllable | undefined;
   };
+  /** The last character of the Han before the run, or the empty string. */
+  readonly before: string;
   /** Whether pinyin was written immediately before this run. */
   readonly isAfterHan: boolean;
 }
 
 /**
- * What comes after a run: the first character of the next Han, and its first
- * syllable.
+ * The Han either side of a run: the character before it, and the character
+ * after it with its first syllable.
  *
- * A number's only context. The character decides how it is read — 年 makes
- * 1998 a year, 个 makes 3 a count — and the syllable is what a 一 ending the
- * number assimilates to.
+ * A number's only context. The characters decide how it is read — 年 makes
+ * 1998 a year, 个 makes 3 a count and 第 makes 2 an ordinal — and the syllable
+ * is what a 一 ending the number assimilates to.
  */
-function following(
+function surrounding(
   runs: readonly TextRun[],
   decoded: readonly (readonly ScoredWord[])[],
   at: number,
 ): RunContext {
+  const previous = runs[at - 1];
+  const isAfterHan = previous?.isHan === true;
+  const before = isAfterHan ? (toCharacters(previous.text).at(-1) ?? "") : "";
   const next = runs[at + 1];
-  const isAfterHan = runs[at - 1]?.isHan === true;
   if (next?.isHan !== true) {
-    return { after: { character: "", syllable: undefined }, isAfterHan };
+    return {
+      after: { character: "", syllable: undefined },
+      before,
+      isAfterHan,
+    };
   }
   return {
     after: {
       character: toCharacters(next.text)[0] ?? "",
       syllable: decoded[at + 1]?.[0]?.word.reading[0],
     },
+    before,
     isAfterHan,
   };
 }
@@ -425,7 +434,10 @@ function writeNumbers(
   const segments =
     options.numbers === "keep"
       ? []
-      : readNumbersIn(text, context.after.character);
+      : readNumbersIn(text, {
+          following: context.after.character,
+          preceding: context.before,
+        });
   if (segments.every((segment) => segment.reading === undefined)) {
     return [plainPiece(text)];
   }
@@ -495,7 +507,7 @@ function convertWith(
       continue;
     }
     converted.push(
-      ...writeNumbers(run.text, following(runs, decoded, at), written, {
+      ...writeNumbers(run.text, surrounding(runs, decoded, at), written, {
         numbers,
         sandhi,
       }),

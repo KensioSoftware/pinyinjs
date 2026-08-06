@@ -11,6 +11,12 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`counts` on the numeral options.** Whether the number stands immediately in
+  front of something it counts, which is what makes a lone 2 两:
+  `numeralHanzi(2, { counts: true })` is `两` and `numeralHanzi(2)` is `二`.
+  Unlike `liang` it is not a variable choice — 二个 is simply wrong — but
+  nothing about the number says whether it is counting, so the caller says.
+  `convert` sets it from the character after the digits.
 - **`SYLLABLE_TONES` and `isAttestedTone`.** Which tones each of the 424
   syllables is actually written in, extracted from the merged dictionary and
   held to it by a build assertion. 424 syllables in five tones would be 2,120
@@ -29,6 +35,16 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **A lone 2 in front of a 量词 was read 二.** 我们买了2个西瓜 came out as
+  `wǒmen mǎile èr gè xīguā`, and a 2 standing immediately in front of what it
+  counts is 两: it is now `liǎng gè`, and 2岁 is `liǎng suì`, 2点 `liǎng diǎn`
+  and 2万人 `liǎng wàn rén`, the same 两 that 2,000 and 2:00 already got. The
+  measure words a 2 can count with are an open list, so 两 is the default and
+  the exceptions are named — 月, 日, 号, 楼, 路, 班 and 期, where the digit
+  labels a position rather than counting (2月 is `èr yuè`), an ordinal, which
+  the 第 in front of it marks (第2次 is `dì èr cì`), and 十 and 百, which follow
+  二 as 20 and 200 already do. A 2 inside a larger number is untouched: 12个 is
+  still `shí'èr gè`.
 - **A decimal lost the grouping of its counted part.** 一共75.5元 was
   `yígòng qī shí wǔ diǎn wǔ yuán`, with the 75 in loose syllables, and is now
   `yígòng qīshíwǔ diǎn wǔ yuán`, the same word 一共75元 already got. Only what

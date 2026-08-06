@@ -97,6 +97,49 @@ const SPOKEN_ZERO_BELOW = 10;
 const LIANG_HOUR = 2;
 
 /**
+ * The characters a lone 2 in front of them labels rather than counts.
+ *
+ * A 2 standing immediately in front of what it counts is 两 — 两个, 两人, 两岁,
+ * 两次, 两天 — and the measure words it can count with are an open list, so 两
+ * is the default and this is the exception. What is left is the positions a
+ * digit *names*: 2月 is February, 2日 and 2号 are the second of the month, 2楼
+ * is the second floor, 2路 is the number 2 bus, 2班 is the second class and 2期
+ * is the second phase. A named position is 二.
+ *
+ * The traditional forms are listed beside the simplified ones, since the text
+ * being converted may be in either script.
+ */
+const LABELLED = new Set([
+  "月",
+  "日",
+  "号",
+  "號",
+  "楼",
+  "樓",
+  "路",
+  "班",
+  "期",
+]);
+
+/**
+ * The units a lone 2 in front of them keeps 二 for, as the number itself does.
+ *
+ * 20 是二十 and 200 是二百, so 2十 and 2百 are written the same way: whether the
+ * unit is a digit or a character does not change how the number is said. 千, 万
+ * and 亿 are left to `CardinalOptions.liang` for exactly the same reason, which
+ * is why 2万 is 两万 as 20,000 already is.
+ */
+const SMALL_UNITS = new Set(["十", "百"]);
+
+/**
+ * The mark that makes the number after it an ordinal: 第2次 is 第二次.
+ *
+ * An ordinal names a position however ordinary the measure word after it is,
+ * so it takes 二 where the same 2次 on its own would be 两次.
+ */
+const ORDINAL = "第";
+
+/**
  * How many digits a year is written with, when it is a year and not a count.
  *
  * 1998年 is a year and is spelled out; 30年 is thirty years and is counted.
@@ -119,6 +162,43 @@ function styleFor(digits: string, following: string): NumeralStyle {
   return following === "年" && digits.length === YEAR_DIGITS
     ? "digits"
     : "cardinal";
+}
+
+/**
+ * The Han either side of a stretch that was never Han.
+ *
+ * All the context a number in running text has. 年 makes 1998 a year, 个 makes
+ * 2 a count and 第 makes it an ordinal; nothing else about the text bears on
+ * how the digits are said.
+ */
+export interface NumeralContext {
+  /** The first character of the Han that follows, or the empty string. */
+  readonly following: string;
+  /** The last character of the Han before it, or the empty string. */
+  readonly preceding: string;
+}
+
+/**
+ * Whether a number is standing in front of something it counts.
+ *
+ * Only ever true of a number the following Han actually touches: in 2、3个 the
+ * 个 counts the 3 and there is a 、 between it and the 2, and in 2%的 the sign
+ * is what the digits belong to. `before` and `after` are the characters the
+ * digit run sits between, and a digit run with anything but Han after it is not
+ * in front of a 量词 at all.
+ */
+function isInFrontOfCount(
+  before: string,
+  after: string,
+  following: string,
+): boolean {
+  return (
+    after === "" &&
+    following !== "" &&
+    !LABELLED.has(following) &&
+    !SMALL_UNITS.has(following) &&
+    before !== ORDINAL
+  );
 }
 
 /**
@@ -145,12 +225,13 @@ function readNumber(
   digits: string,
   isPercent: boolean,
   style: NumeralStyle,
+  isCounting: boolean,
   options: NumeralOptions,
 ): NumeralSegment | undefined {
   // A writer's thousands separators are not part of the number; nothing is
   // said for them.
   const value = digits.replaceAll(",", "");
-  const settings: NumeralOptions = { ...options, style };
+  const settings: NumeralOptions = { ...options, style, counts: isCounting };
   const hanzi = isPercent
     ? percentHanzi(value, settings)
     : numeralHanzi(value, settings);
@@ -264,19 +345,20 @@ function readTime(
 /**
  * Split a stretch of non-Han text into what is read and what is not.
  *
- * `following` is the first character of the Han that comes after this stretch,
- * which is the only context a number has: 年 makes 1998 a year and 个 makes 3 a
- * count. Where there is nothing after it, or nothing that decides, the number
- * is counted.
+ * `context` is the Han either side of this stretch, which is all a number has
+ * to go on: 年 makes 1998 a year, 个 makes 3 a count and 个 also makes 2 两.
+ * Where there is nothing around it, or nothing that decides, the number is
+ * counted.
  *
  * Text that is not a number is returned unread rather than dropped, so the
  * segments always concatenate back to the input.
  */
 export function readNumbersIn(
   text: string,
-  following: string,
+  context: NumeralContext,
   options: NumeralOptions = {},
 ): readonly NumeralSegment[] {
+  const { following, preceding } = context;
   const segments: NumeralSegment[] = [];
   let at = 0;
 
@@ -304,7 +386,9 @@ export function readNumbersIn(
     // What decides the style is whatever comes next: the sign if there is one,
     // otherwise the first character of the following Han.
     const style = styleFor(digits, isPercent ? "" : following);
-    const read = readNumber(digits, isPercent, style, options);
+    const before = from === 0 ? preceding : (text[from - 1] ?? "");
+    const isCounting = isInFrontOfCount(before, after, following);
+    const read = readNumber(digits, isPercent, style, isCounting, options);
     if (read === undefined) {
       continue;
     }

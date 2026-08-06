@@ -799,6 +799,14 @@ describe("the examples in docs/", () => {
       assertIdentical(numeralHanzi(200), "二百");
     });
 
+    it("writes the 两 that counts, as the page shows", () => {
+      assertIdentical(numeralHanzi(2), "二");
+      assertIdentical(numeralHanzi(2, { counts: true }), "两");
+      assertIdentical(numeralHanzi(12, { counts: true }), "十二");
+      assertIdentical(numeralHanzi(200, { counts: true }), "二百");
+      assertIdentical(numeralHanzi(2, { counts: true, liang: "never" }), "二");
+    });
+
     it("keeps the digits of a string and not of a number", () => {
       assertIdentical(numeralHanzi("007", { style: "digits" }), "〇〇七");
       assertIdentical(numeralHanzi("007"), "七");
@@ -851,6 +859,20 @@ describe("the examples in docs/", () => {
         convert(dictionary, "我有3个", { numbers: "keep" }),
         "wǒ yǒu3gè",
       );
+    });
+
+    it("counts with 两 in text, and labels with 二, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "我们买了2个西瓜"),
+        "wǒmen mǎile liǎng gè xīguā",
+      );
+      assertIdentical(convert(dictionary, "他2岁"), "tā liǎng suì");
+      assertIdentical(convert(dictionary, "2点"), "liǎng diǎn");
+      assertIdentical(convert(dictionary, "2万人"), "liǎng wàn rén");
+      assertIdentical(convert(dictionary, "2月"), "èr yuè");
+      assertIdentical(convert(dictionary, "2号"), "èr hào");
+      assertIdentical(convert(dictionary, "第2次"), "dì èr cì");
+      assertIdentical(convert(dictionary, "12个"), "shí'èr gè");
     });
 
     it("reads a time and leaves an identifier as written, as the page says", () => {
