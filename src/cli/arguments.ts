@@ -4,6 +4,12 @@ import type { ConvertOptions } from "../decode/convert.js";
 import type { ColourDepth } from "./colour.js";
 import type { Tier } from "../dictionary/tiers.js";
 import type { HtmlOptions } from "../format/html.js";
+import type {
+  SlugOptions,
+  SlugSyllables,
+  SlugTones,
+  SlugUmlaut,
+} from "../format/slug.js";
 import type { ApostropheStyle } from "../orthography/apostrophe.js";
 import type { CapitalStyle } from "../orthography/capitals.js";
 import type { PunctuationStyle } from "../orthography/punctuation.js";
@@ -28,8 +34,17 @@ const FLAGS = {
   punctuation: { type: "string" },
   "no-grouping": { type: "boolean" },
   "keep-numbers": { type: "boolean" },
+  "read-numbers": { type: "boolean" },
   "third-tone": { type: "boolean" },
   "no-sandhi": { type: "boolean" },
+  tones: { type: "string" },
+  separator: { type: "string" },
+  syllables: { type: "string" },
+  umlaut: { type: "string" },
+  hash: { type: "boolean" },
+  "hash-length": { type: "string" },
+  "max-length": { type: "string" },
+  fallback: { type: "string" },
   greedy: { type: "boolean" },
   digits: { type: "boolean" },
   yao: { type: "boolean" },
@@ -80,6 +95,30 @@ export const CONVERT_FLAGS: readonly FlagName[] = [
   "punctuation",
   "no-grouping",
   "keep-numbers",
+  "third-tone",
+  "no-sandhi",
+];
+
+/**
+ * The flags `slug` takes, beyond the global ones.
+ *
+ * It shares the reading flags with the conversion commands and none of the
+ * writing ones: a slug settles its own notation, capitals, apostrophes and
+ * spacing, and a `--capitals` that changed nothing would be worse than an
+ * error. `--read-numbers` rather than `--keep-numbers` because a slug keeps
+ * digits by default, which is the one place it departs from `convert`.
+ */
+export const SLUG_FLAGS: readonly FlagName[] = [
+  "tones",
+  "separator",
+  "syllables",
+  "umlaut",
+  "hash",
+  "hash-length",
+  "max-length",
+  "fallback",
+  "read-numbers",
+  "locale",
   "third-tone",
   "no-sandhi",
 ];
@@ -177,6 +216,23 @@ const NOTATIONS: readonly ToneNotation[] = [
   "none",
 ];
 
+/**
+ * Read a flag that takes a whole number, which every one of them is a count of.
+ */
+function counted(flags: Flags, name: FlagName): number | undefined {
+  const given = flags[name];
+  if (given === undefined) {
+    return undefined;
+  }
+  const value = Number(String(given));
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new UsageError(
+      `--${name} must be a whole number, not ${String(given)}`,
+    );
+  }
+  return value;
+}
+
 const LOCALES: readonly Locale[] = ["zh-CN", "zh-TW"];
 
 const APOSTROPHES: readonly ApostropheStyle[] = ["always", "standard", "never"];
@@ -184,6 +240,12 @@ const APOSTROPHES: readonly ApostropheStyle[] = ["always", "standard", "never"];
 const CAPITALS: readonly CapitalStyle[] = ["auto", "proper", "none"];
 
 const PUNCTUATION: readonly PunctuationStyle[] = ["latin", "keep"];
+
+const SLUG_TONES: readonly SlugTones[] = ["numbers", "none"];
+
+const SLUG_SYLLABLES: readonly SlugSyllables[] = ["join", "separate"];
+
+const SLUG_UMLAUTS: readonly SlugUmlaut[] = ["v", "u"];
 
 const TIERS: readonly Tier[] = ["core", "standard", "full"];
 
@@ -312,6 +374,42 @@ export function convertOptions(flags: Flags): ConvertOptions {
     ...(capitals !== undefined && { capitals }),
     ...(punctuation !== undefined && { punctuation }),
     ...(flags["no-grouping"] === true && { grouping: false }),
+    ...(Object.keys(sandhi).length > 0 && { sandhi }),
+  };
+}
+
+/**
+ * Turn the slug flags into the options the library takes.
+ *
+ * `--hash-length` implies `--hash`, because asking how long the hash should be
+ * and not getting one is not a reading anybody intends.
+ */
+export function slugOptions(flags: Flags): SlugOptions {
+  const sandhi = {
+    ...(flags["no-sandhi"] === true && { yiBu: false }),
+    ...(flags["third-tone"] === true && { thirdTone: true }),
+  };
+  const tones = chosen(flags, "tones", SLUG_TONES);
+  const syllables = chosen(flags, "syllables", SLUG_SYLLABLES);
+  const umlaut = chosen(flags, "umlaut", SLUG_UMLAUTS);
+  const locale = chosen(flags, "locale", LOCALES);
+  const separator = flags.separator;
+  const fallback = flags.fallback;
+  const hashLength = counted(flags, "hash-length");
+  const maxLength = counted(flags, "max-length");
+
+  return {
+    ...(flags["read-numbers"] === true && { numbers: "read" as const }),
+    ...(tones !== undefined && { tones }),
+    ...(syllables !== undefined && { syllables }),
+    ...(umlaut !== undefined && { umlaut }),
+    ...(locale !== undefined && { locale }),
+    ...(separator !== undefined && { separator: String(separator) }),
+    ...(fallback !== undefined && { fallback: String(fallback) }),
+    ...(hashLength === undefined
+      ? flags.hash === true && { hash: true }
+      : { hash: hashLength }),
+    ...(maxLength !== undefined && { maxLength }),
     ...(Object.keys(sandhi).length > 0 && { sandhi }),
   };
 }

@@ -19,6 +19,7 @@ Two entry points:
 | `convert(dictionary, text, options?)`                | hanzi → pinyin                                    |
 | `convertPieces(dictionary, text, options?)`          | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, options?)`          | the same, as HTML                                 |
+| `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
 | `dictionary.lookup / hasPrefix / readingsOf / size`  | query the dictionary                              |
@@ -116,6 +117,18 @@ See [HTML output](../html/).
 | `convertToHtml` | hanzi → marked-up pinyin       |
 | `toHtml`        | render pieces you already have |
 | `HtmlOptions`   | type                           |
+
+## Slugs
+
+See [slugs](../slug/).
+
+| Export          | Is                         |
+| --------------- | -------------------------- |
+| `slug`          | hanzi → a URL-safe slug    |
+| `SlugOptions`   | type                       |
+| `SlugTones`     | type: `numbers` or `none`  |
+| `SlugSyllables` | type: `join` or `separate` |
+| `SlugUmlaut`    | type: `v` or `u`           |
 
 ## Dictionaries
 
