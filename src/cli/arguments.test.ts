@@ -146,10 +146,14 @@ describe("turning flags into conversion options", () => {
     );
   });
 
-  it("adds the two flags that only mean anything in HTML", () => {
+  it("adds the three flags that only mean anything in HTML", () => {
     assertObjectEquals(
-      htmlOptions({ "no-tone-classes": true, "no-uncertain": true }),
-      { toneClasses: false, markUncertain: false },
+      htmlOptions({
+        "no-tone-classes": true,
+        "no-uncertain": true,
+        "no-lang": true,
+      }),
+      { toneClasses: false, markUncertain: false, lang: false },
     );
   });
 });

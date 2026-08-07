@@ -21,8 +21,43 @@ describe("converting to HTML", () => {
   it("wraps each syllable in its own element", () => {
     assertIdentical(
       html("银行"),
+      '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
+    );
+  });
+
+  it("declares each syllable to be pinyin rather than the page's language", () => {
+    assertStringIncludes(html("北京"), 'lang="zh-Latn-CN-pinyin"');
+  });
+
+  it("declares the reading standard the conversion was asked for", () => {
+    assertStringIncludes(
+      html("垃圾", { locale: "zh-TW" }),
+      'lang="zh-Latn-TW-pinyin"',
+    );
+    assertStringNotIncludes(html("垃圾", { locale: "zh-TW" }), "zh-Latn-CN");
+  });
+
+  it("declares pinyin however its tones are written", () => {
+    assertStringIncludes(
+      html("银行", { notation: "numbers" }),
+      'lang="zh-Latn-CN-pinyin"',
+    );
+  });
+
+  it("leaves the language to a wrapper when asked", () => {
+    assertIdentical(
+      html("银行", { lang: false }),
       '<span class="py-syllable py-tone-2">yín</span>' +
         '<span class="py-syllable py-tone-2">háng</span>',
+    );
+  });
+
+  it("declares nothing on the text that was never Han", () => {
+    // Not pinyin, and not marked up at all, so it has nothing to declare on.
+    assertIdentical(
+      toHtml([{ text: " and ", syllable: undefined, confidence: undefined }]),
+      " and ",
     );
   });
 
@@ -40,7 +75,7 @@ describe("converting to HTML", () => {
           confidence: undefined,
         },
       ]),
-      '<span class="py-syllable">bei</span>',
+      '<span class="py-syllable" lang="zh-Latn-CN-pinyin">bei</span>',
     );
   });
 
@@ -84,8 +119,8 @@ describe("converting to HTML", () => {
   it("can be asked for no tone classes", () => {
     assertIdentical(
       html("银行", { toneClasses: false }),
-      '<span class="py-syllable">yín</span>' +
-        '<span class="py-syllable">háng</span>',
+      '<span class="py-syllable" lang="zh-Latn-CN-pinyin">yín</span>' +
+        '<span class="py-syllable" lang="zh-Latn-CN-pinyin">háng</span>',
     );
   });
 

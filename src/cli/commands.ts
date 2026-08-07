@@ -276,7 +276,7 @@ const HTML: Command = {
   name: "html",
   summary: "hanzi to pinyin as HTML, one element per syllable",
   argument: "[text...]",
-  flags: [...CONVERT_FLAGS, "no-tone-classes", "no-uncertain"],
+  flags: [...CONVERT_FLAGS, "no-tone-classes", "no-uncertain", "no-lang"],
   needsDictionary: true,
   run: (input) => {
     const options = htmlOptions(input.flags);

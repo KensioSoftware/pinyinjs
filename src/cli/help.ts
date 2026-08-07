@@ -28,6 +28,7 @@ const FLAG_HELP = new Map<string, string>([
   ["system", "write it in bopomofo, wade-giles, yale, gwoyeu or ipa"],
   ["no-tone-classes", "leave the tone classes off"],
   ["no-uncertain", "do not mark uncertain readings"],
+  ["no-lang", "leave the lang attribute off"],
   ["from", "pinyin, wade-giles or bopomofo (auto by default)"],
   ["to", "zh-Hans (default), zh-Hant, zh-Hant-TW or zh-Hant-HK"],
   ["from-script", "Hans or Hant, where detection cannot tell"],

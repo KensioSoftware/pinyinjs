@@ -19,7 +19,7 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
-`convertToHtml` takes all of these plus two of its own; see
+`convertToHtml` takes all of these plus three of its own; see
 [HTML output](../html/#options).
 
 ## locale

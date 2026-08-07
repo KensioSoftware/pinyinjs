@@ -158,7 +158,7 @@ a romanisation already.
 
 ```console
 $ pinyinjs html 行
-<span class="py-syllable py-tone-2 py-uncertain" data-alternatives="háng héng hàng">xíng</span>
+<span class="py-syllable py-tone-2 py-uncertain" lang="zh-Latn-CN-pinyin" data-alternatives="háng héng hàng">xíng</span>
 ```
 
 See [HTML output](../html/).
@@ -228,7 +228,8 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 `convert` also takes `--system`, which writes the conversion in another
 transcription system, and `--greedy`, which decodes with the old longest-match
 baseline instead of the lattice; see [converting](../converting/#the-greedy-baseline).
-`html` also takes `--no-tone-classes` and `--no-uncertain`. `sandhi` takes
+`html` also takes `--no-tone-classes`, `--no-uncertain` and `--no-lang`.
+`sandhi` takes
 `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
 `--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
 `transcribe` takes `--from` and `--notation`.

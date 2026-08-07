@@ -6,6 +6,7 @@ import {
   convertPieces,
 } from "../decode/convert.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { DEFAULT_LOCALE, type Locale } from "../script/script.js";
 import { writeSyllable } from "../syllable/syllable.js";
 
 /**
@@ -27,6 +28,14 @@ export interface HtmlOptions extends ConvertOptions {
    * wrong.
    */
   readonly markUncertain?: boolean;
+  /**
+   * Whether each syllable declares what language it is in. Defaults to true.
+   *
+   * `lang="zh-Latn-CN-pinyin"`, or `zh-Latn-TW-pinyin` where the conversion
+   * reads `zh-TW`. See {@link languageTag} for why that matters, and what to
+   * do instead of turning it off.
+   */
+  readonly lang?: boolean;
 }
 
 /**
@@ -35,6 +44,43 @@ export interface HtmlOptions extends ConvertOptions {
 const SYLLABLE_CLASS = "py-syllable";
 
 const UNCERTAIN_CLASS = "py-uncertain";
+
+/**
+ * What a syllable declares itself to be, in the reading standard it was read in.
+ *
+ * A syllable element holds Mandarin written in the Latin alphabet, which is
+ * neither the `zh` of the surrounding page nor the `en` of a page that quotes
+ * it — and nothing about `yín` on its own says so. The tag is what a screen
+ * reader consults before deciding how to pronounce it, and what a browser
+ * consults for hyphenation and font selection; without one, `xíng` is read as
+ * whatever the page around it claims to be, which is how pinyin ends up
+ * spoken as English.
+ *
+ * The subtags are all registered and mean exactly this: `Latn` for the script,
+ * the region for the reading standard, and the `pinyin` variant, whose prefix
+ * in the IANA registry is `zh-Latn`. The region is the one distinction the
+ * conversion itself makes — 垃圾 is `lājī` under `zh-CN` and `lèsè` under
+ * `zh-TW` — so it is read off {@link ConvertOptions.locale} rather than
+ * guessed at.
+ *
+ * Tone notation does not enter into it. `hang2` is pinyin spelt with a tone
+ * number, not another romanisation, so it takes the same tag as `háng`.
+ *
+ * The cost is the tag repeated on every syllable, which is the price of
+ * wrapping nothing around the whole conversion. A caller who would rather
+ * declare it once can set `lang: false` and put the same tag on a wrapper of
+ * their own, which is inherited by everything inside it.
+ */
+function languageTag(locale: Locale = DEFAULT_LOCALE): string {
+  switch (locale) {
+    case "zh-CN": {
+      return "zh-Latn-CN-pinyin";
+    }
+    case "zh-TW": {
+      return "zh-Latn-TW-pinyin";
+    }
+  }
+}
 
 /**
  * How each character that means something in markup is written as text.
@@ -88,7 +134,7 @@ function alternativesOf(
  * Mark up one piece of a conversion.
  */
 function writePiece(piece: ConvertedPiece, options: HtmlOptions): string {
-  const { toneClasses = true, markUncertain = true } = options;
+  const { toneClasses = true, markUncertain = true, lang = true } = options;
   if (piece.syllable === undefined) {
     return escape(piece.text);
   }
@@ -107,11 +153,14 @@ function writePiece(piece: ConvertedPiece, options: HtmlOptions): string {
     classes.push(UNCERTAIN_CLASS);
   }
 
-  const attributes =
-    alternatives.length > 0
-      ? ` data-alternatives="${escape(alternatives.join(" "))}"`
-      : "";
-  return `<span class="${classes.join(" ")}"${attributes}>${escape(piece.text)}</span>`;
+  const attributes = [`class="${classes.join(" ")}"`];
+  if (lang) {
+    attributes.push(`lang="${languageTag(options.locale)}"`);
+  }
+  if (alternatives.length > 0) {
+    attributes.push(`data-alternatives="${escape(alternatives.join(" "))}"`);
+  }
+  return `<span ${attributes.join(" ")}>${escape(piece.text)}</span>`;
 }
 
 /**

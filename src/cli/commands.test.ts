@@ -201,14 +201,26 @@ describe("writing JSON", () => {
 describe("the html command", () => {
   it("writes one element per syllable", async () => {
     assertArrayEquals(await cli("html", "银行"), [
-      '<span class="py-syllable py-tone-2">yín</span>' +
-        '<span class="py-syllable py-tone-2">háng</span>',
+      '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
     ]);
   });
 
   it("leaves the classes off when asked", async () => {
     assertArrayEquals(await cli("html", "--no-tone-classes", "银"), [
-      '<span class="py-syllable">yín</span>',
+      '<span class="py-syllable" lang="zh-Latn-CN-pinyin">yín</span>',
+    ]);
+  });
+
+  it("leaves the language off when asked", async () => {
+    assertArrayEquals(await cli("html", "--no-lang", "银"), [
+      '<span class="py-syllable py-tone-2">yín</span>',
+    ]);
+  });
+
+  it("declares the reading standard it was asked for", async () => {
+    assertArrayEquals(await cli("html", "--locale", "zh-TW", "银"), [
+      '<span class="py-syllable py-tone-2" lang="zh-Latn-TW-pinyin">yín</span>',
     ]);
   });
 });

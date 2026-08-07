@@ -36,6 +36,20 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`convertToHtml` declares what language it is emitting.** Every syllable
+  element now carries `lang="zh-Latn-CN-pinyin"`, or `zh-Latn-TW-pinyin` where
+  the conversion read `zh-TW`. Nothing about `yín` on its own says it is
+  Mandarin in the Latin alphabet, so without the tag a screen reader pronounces
+  it as whatever the surrounding page claims to be — English, usually — and the
+  browser hyphenates it that way too. The subtags are all registered, and the
+  `pinyin` variant's prefix in the IANA registry is `zh-Latn`.
+
+  **This changes the markup existing callers get**, which is why it is worth
+  saying plainly: the classes are unchanged, and `lang` is a new attribute
+  between `class` and `data-alternatives`. `lang: false` — `--no-lang` at the
+  command line — leaves it off, for a caller who would rather declare the
+  language once on a wrapper of their own than repeat it on every syllable.
+
 - **`pinyinjs script`,** script conversion at the command line, with `--to` for
   the target and `--from-script` where the text is too short for detection to
   tell. The lines carry the converted text and nothing else so it pipes;
