@@ -105,6 +105,14 @@ export {
 } from "./format/transcription.js";
 export type { HtmlOptions } from "./format/html.js";
 
+export { slug } from "./format/slug.js";
+export type {
+  SlugOptions,
+  SlugSyllables,
+  SlugTones,
+  SlugUmlaut,
+} from "./format/slug.js";
+
 export { decodeGreedily } from "./decode/greedy.js";
 
 export {

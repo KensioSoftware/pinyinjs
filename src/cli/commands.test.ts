@@ -12,6 +12,7 @@ import {
   assertNonNullable,
   assertObjectEquals,
   assertStringIncludes,
+  assertStringLength,
   assertStringNotIncludes,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
@@ -207,6 +208,82 @@ describe("the html command", () => {
     assertArrayEquals(await cli("html", "--no-tone-classes", "银"), [
       '<span class="py-syllable">yín</span>',
     ]);
+  });
+});
+
+describe("the slug command", () => {
+  it("writes one slug per argument", async () => {
+    assertArrayEquals(await cli("slug", "银行", "北京市"), [
+      "yin2hang2",
+      "bei3jing1-shi4",
+    ]);
+  });
+
+  it("passes the slug options through", async () => {
+    assertArrayEquals(await cli("slug", "--tones", "none", "银行"), [
+      "yinhang",
+    ]);
+    assertArrayEquals(await cli("slug", "--separator", "_", "北京市"), [
+      "bei3jing1_shi4",
+    ]);
+    assertArrayEquals(await cli("slug", "--syllables", "separate", "北京"), [
+      "bei3-jing1",
+    ]);
+    assertArrayEquals(await cli("slug", "--max-length", "9", "北京市银行"), [
+      "bei3jing1",
+    ]);
+    assertArrayEquals(await cli("slug", "--fallback", "untitled", "！"), [
+      "untitled",
+    ]);
+    assertArrayEquals(await cli("slug", "--locale", "zh-TW", "垃圾"), [
+      "le4se4",
+    ]);
+  });
+
+  it("keeps the digits unless asked to say them", async () => {
+    assertArrayEquals(await cli("slug", "3个"), ["3-ge4"]);
+    assertArrayEquals(await cli("slug", "--read-numbers", "3个"), ["san1-ge4"]);
+  });
+
+  it("writes a hash of the length asked for", async () => {
+    const [plain] = await cli("slug", "银行");
+    const [hashed] = await cli("slug", "--hash", "银行");
+    const [longer] = await cli("slug", "--hash-length", "6", "银行");
+    assertNonNullable(plain);
+    assertNonNullable(hashed);
+    assertNonNullable(longer);
+    assertStringLength(hashed, plain.length + 5);
+    assertStringLength(longer, plain.length + 7);
+  });
+
+  it("is never coloured, whatever the terminal offers", async () => {
+    const result = await runCli(["slug", "银行", "--colour"], environment);
+    assertArrayEquals(result.output, ["yin2hang2"]);
+  });
+
+  it("reports a length that is not a number", async () => {
+    const result = await runCli(
+      ["slug", "--max-length", "lots", "银行"],
+      environment,
+    );
+    assertIdentical(result.status, 1);
+    assertStringIncludes(result.errors.join("\n"), "--max-length");
+  });
+
+  it("refuses a flag that would change nothing", async () => {
+    const result = await runCli(
+      ["slug", "--capitals", "none", "银行"],
+      environment,
+    );
+    assertIdentical(result.status, 1);
+    assertStringIncludes(result.errors.join("\n"), "slug does not take");
+  });
+
+  it("writes the slug as JSON", async () => {
+    assertObjectEquals(await json("slug", "银行"), {
+      text: "银行",
+      slug: "yin2hang2",
+    });
   });
 });
 

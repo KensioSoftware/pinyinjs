@@ -11,6 +11,17 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`slug`,** hanzi to a URL-safe slug: 我想学中文。 is
+  `wo3-xiang3-xue2-zhong1wen2`. Built on the decode rather than on a finished
+  string, which is the whole point of it — 银行 is `yin2hang2` and not
+  `yin2xing2`, the separators fall on the word boundaries 分词连写 found, and
+  西安 keeps its 隔音符号 as a break so a toneless slug is `xi-an` rather than
+  `xian`, which is a different word. Tones are written by default because
+  dropping them collides, and `hash` puts a short hash of the _hanzi_ on the end
+  for the homophones tones cannot separate: 权利 and 权力 are both `quan2li4`.
+  The options generalise it past URLs to search keys and identifiers, which the
+  [slug page](docs/slug/) tabulates. `pinyinjs slug` at the command line.
+
 - **`TEACHING_JIAO` and `COUNTED_MEASURE`,** two more lattice rules, and
   `QUANTITY_CHARACTERS`, the 汉字 a quantity is written with that the second of
   them asks about. See the fixes below for what they do and what they measure.
