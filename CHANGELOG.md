@@ -9,6 +9,31 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+### Fixed
+
+- **240 dictionary entries could not be looked up at all.** Recognising Hong
+  Kong glyph forms on the lookup path means a key written in a form the path
+  normalises _away from_ can never be found, and the merge derived 繁體 forms
+  per word from Unihan's variant lists with no single standard behind them — so
+  it wrote 裏 where the corpus overwhelmingly writes 裡, and 上樑, 中峯 and 义藴
+  became keys nothing could reach. The merge now derives canonical glyph forms,
+  and keys a headword's canonical spelling alongside it where the phrase corpus
+  wrote one with a 繁體 variant. **No key is now unreachable**, and Hong Kong
+  spellings resolve slightly better than before: 5,499 of the 9,978 keys with a
+  distinct Hong Kong form, against 5,439.
+
+  Two things had to be got right alongside it. The evidence for "简体 writes
+  this character" comes from CC-CEDICT entries whose two columns differ, not
+  from the phrase corpus, which is nominally 简体 but carries 峯, 藴 and 枱 of
+  its own — counting it cut the table from 50 mappings to 32 and stopped Hong
+  Kong text converting at all. And a 繁體 form differing from its 简体 one only
+  by glyph normalisation is not evidence about script, or the alias key would
+  put that entry's 简体 characters into the 繁體-only set, which is how 发
+  briefly stopped being 简体-only.
+
+  `toScript` drops the pass that was papering over this. Key counts move:
+  723,149 for `full`, 97,997 for `standard`, 16,975 for `core`.
+
 ### Added
 
 - **`pinyinjs script`,** script conversion at the command line, with `--to` for

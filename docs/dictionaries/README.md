@@ -86,7 +86,7 @@ It is for the case where 70 KB is the budget and any pinyin beats none.
 
 The entry counts above are dictionary entries. `dictionary.size` counts keys,
 which is a larger number, because 繁體 spellings are keys in their own right:
-16,987 for `core`, 98,018 for `standard`, 723,139 for `full`.
+16,975 for `core`, 97,997 for `standard`, 723,149 for `full`.
 
 ## Querying directly
 
@@ -102,7 +102,7 @@ dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
-dictionary.size; // 723139, keys in the full tier, not entries
+dictionary.size; // 723149, keys in the full tier, not entries
 ```
 
 Both scripts are keys in the same dictionary, so nothing is converted before a
@@ -150,7 +150,7 @@ heap and builds in around 14 ms, against 22.6 MB for a `Map` with a prefix
 `Set` beside it.
 
 Entries are decoded the first time a word is asked about, not on load, because
-decoding all 723,139 would cost far more than the lookups a page actually
+decoding all 723,149 would cost far more than the lookups a page actually
 performs.
 
 ## Checking what got loaded
@@ -159,7 +159,7 @@ performs.
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,139
+keys       723,149
 syllables  415 attested, 424 spellings in the inventory
 ```
 

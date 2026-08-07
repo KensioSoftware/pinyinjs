@@ -1,4 +1,5 @@
 import { toCharacters } from "../script/characters.js";
+import { toCanonicalGlyphs } from "../script/glyphs.js";
 import {
   type CharacterConversion,
   conversionKey,
@@ -302,6 +303,12 @@ export function buildScriptTables(
  * It also settles the genuinely two-sided characters correctly. 干 is a 简体
  * form of 幹 and 乾 *and* a 繁體 character in its own right, so it appears on
  * both sides of 干扰/干擾 and lands in neither set, which is the honest answer.
+ *
+ * Both sides are folded to their canonical glyph forms first. The phrase corpus
+ * is nominally 简体 and writes a few hundred headwords with 繁體 variants — 衞生,
+ * 鹫峯寺 — and taking those at face value put 衞 and 峯 in the 简体-only set. A
+ * text written 衞生 was then detected as 简体 and left alone when it was asked
+ * for 简体, which is the opposite of what it needed.
  */
 function scriptOnlyCharacters(entries: readonly DictionaryEntry[]): {
   hansOnly: ReadonlySet<string>;
@@ -310,16 +317,25 @@ function scriptOnlyCharacters(entries: readonly DictionaryEntry[]): {
   const inHans = new Set<string>();
   const inHant = new Set<string>();
   for (const entry of entries) {
+    // A 繁體 form that differs from the 简体 one only by glyph normalisation is
+    // not evidence about script — 衞生 and 衛生 are two 繁體 spellings of one
+    // word, and the merge keys the second so the first can be found. Counting
+    // it would put that entry's 简体 characters on the 繁體 side, which is how
+    // 发 stopped being 简体-only.
+    const canonicalHans = toCanonicalGlyphs(entry.hans);
     const forms = [entry.hant, ...(entry.hantVariants ?? [])].filter(
-      (form) => form !== entry.hans,
+      (form) => form !== entry.hans && form !== canonicalHans,
     );
     if (forms.length === 0) {
       continue;
     }
-    for (const character of toCharacters(entry.hans)) {
+    const hansCharacters = toCharacters(canonicalHans);
+    for (const character of hansCharacters) {
       inHans.add(character);
     }
-    const hantCharacters = forms.flatMap((form) => toCharacters(form));
+    const hantCharacters = forms.flatMap((form) =>
+      toCharacters(toCanonicalGlyphs(form)),
+    );
     for (const character of hantCharacters) {
       inHant.add(character);
     }

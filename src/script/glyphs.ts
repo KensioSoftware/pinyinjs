@@ -87,11 +87,10 @@ function readPairs(pairs: string): ReadonlyMap<string, string> {
  * evidence says the variant is current, the safe answer is to leave it alone.
  */
 const CANONICAL_PAIRS =
-  "僞偽叁叄衹只啓啟喫吃囱囪粧妝媪媼嫺嫻嬀媯峯峰愠慍" +
-  "捝挩揾搵敚敓敍敘枴柺棁梲榅榲樑梁枱檯氲氳涚涗潙溈" +
-  "潨潀煴熅爲為牀床癡痴皁皂竈灶糉粽糭粽綫線緼縕繮韁" +
-  "纔才羣群脣唇腽膃蒀蒕蔘參蔿蒍藴蘊蜕蛻衆眾衞衛裏裡" +
-  "覈核説說踊踴輼轀醖醞鉢缽鈎鉤鋭銳鍼針閲閱鮎鯰鰛鰮" +
+  "僞偽衹只啓啟喫吃粧妝嫺嫻嬀媯峯峰捝挩敍敘枴柺棁梲" +
+  "樑梁枱檯涚涗潙溈潨潀爲為牀床癡痴皁皂竈灶糉粽糭粽" +
+  "綫線緼縕繮韁纔才羣群脣唇蒀蒕蔘參蔿蒍藴蘊衆眾衞衛" +
+  "裏裡覈核説說輼轀醖醞鉢缽鈎鉤鋭銳鍼針閲閱鮎鯰鰛鰮" +
   "麪麵齶顎";
 
 /**
