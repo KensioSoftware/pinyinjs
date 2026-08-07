@@ -1,6 +1,7 @@
 import { type ParseArgsConfig, parseArgs } from "node:util";
 
 import type { ConvertOptions } from "../decode/convert.js";
+import { type ScriptTarget, SCRIPT_TARGETS } from "../decode/script.js";
 import type { ColourDepth } from "./colour.js";
 import type { Tier } from "../dictionary/tiers.js";
 import type { HtmlOptions } from "../format/html.js";
@@ -13,6 +14,7 @@ import type {
 import type { ApostropheStyle } from "../orthography/apostrophe.js";
 import type { CapitalStyle } from "../orthography/capitals.js";
 import type { PunctuationStyle } from "../orthography/punctuation.js";
+import { type Script, SCRIPTS } from "../script/script.js";
 import type { Locale } from "../script/script.js";
 import type { ToneNotation } from "../syllable/syllable.js";
 
@@ -51,6 +53,8 @@ const FLAGS = {
   "no-liang": { type: "boolean" },
   percent: { type: "boolean" },
   from: { type: "string" },
+  to: { type: "string" },
+  "from-script": { type: "string" },
   system: { type: "string" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
@@ -122,6 +126,15 @@ export const SLUG_FLAGS: readonly FlagName[] = [
   "third-tone",
   "no-sandhi",
 ];
+
+/**
+ * The flags `script` takes, beyond the global ones.
+ *
+ * `--from-script` rather than `--from` because `--from` already means the
+ * transcription a text is written in, and one flag name cannot carry two
+ * meanings in one help table.
+ */
+export const SCRIPT_FLAGS: readonly FlagName[] = ["to", "from-script"];
 
 /**
  * The flags a parse produced, before any command has looked at them.
@@ -423,4 +436,21 @@ export function htmlOptions(flags: Flags): HtmlOptions {
     ...(flags["no-tone-classes"] === true && { toneClasses: false }),
     ...(flags["no-uncertain"] === true && { markUncertain: false }),
   };
+}
+
+/**
+ * Which orthography `script` was asked to write. `zh-Hans` by default.
+ */
+export function scriptTarget(flags: Flags): ScriptTarget {
+  return chosen(flags, "to", SCRIPT_TARGETS) ?? "zh-Hans";
+}
+
+/**
+ * The script the text was declared to be in, where the caller named one.
+ *
+ * Detection settles it otherwise, and gets it right for anything longer than a
+ * word or two. Naming it matters for text short enough to be script-neutral.
+ */
+export function scriptFrom(flags: Flags): Script | undefined {
+  return chosen(flags, "from-script", SCRIPTS);
 }

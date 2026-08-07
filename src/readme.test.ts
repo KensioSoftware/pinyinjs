@@ -19,6 +19,7 @@ import { isUncertain } from "./decode/confidence.js";
 import { convert, convertPieces, joinPieces } from "./decode/convert.js";
 import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToHtml } from "./format/html.js";
+import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
 import {
   numeralHanzi,
@@ -28,7 +29,7 @@ import {
 import { Dictionary } from "./dictionary/dictionary.js";
 import { COMMANDS } from "./cli/commands.js";
 import { fileSource } from "./dictionary/node-source.js";
-import { loadDictionary } from "./dictionary/source.js";
+import { loadDictionary, loadScriptTables } from "./dictionary/source.js";
 import { writeBopomofo } from "./transcription/bopomofo.js";
 import { writeGwoyeu } from "./transcription/gwoyeu.js";
 import { writeIpa } from "./transcription/ipa.js";
@@ -71,6 +72,7 @@ import { NEUTRAL_TONE } from "./tone/tone.js";
  */
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
+const scriptTables = await loadScriptTables(fileSource(dataDirectory));
 
 /**
  * The CLI, against the same committed dictionary and a fixed version.
@@ -80,6 +82,7 @@ const environment: CliEnvironment = {
   colours: 0,
   readInput: () => Promise.resolve(""),
   loadDictionary: () => Promise.resolve(dictionary),
+  loadScriptTables: () => Promise.resolve(scriptTables),
 };
 
 /**
@@ -606,6 +609,62 @@ describe("the examples in README.md", () => {
     it("can be switched off", () => {
       const untouched = applySandhi(readWord("bùshì") ?? [], { yiBu: false });
       assertIdentical(written(untouched), "bù shì");
+    });
+  });
+
+  describe("simplified and traditional", () => {
+    it("converts the sentence the section opens on", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "我们后来发现了头发问题", {
+          to: "zh-Hant",
+        }),
+        "我們後來發現了頭髮問題",
+      );
+    });
+
+    it("splits 发 on the reading, as the section claims", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "头发", { to: "zh-Hant" }),
+        "頭髮",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "出发", { to: "zh-Hant" }),
+        "出發",
+      );
+    });
+
+    it("runs both ways over 乾", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "乾燥", { to: "zh-Hans" }),
+        "干燥",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "乾隆", { to: "zh-Hans" }),
+        "乾隆",
+      );
+    });
+
+    it("targets a region", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "面包", { to: "zh-Hant-TW" }),
+        "麵包",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "面包", { to: "zh-Hant-HK" }),
+        "麪包",
+      );
+    });
+
+    it("reads Hong Kong 繁體 exactly as its Taiwan spelling", () => {
+      assertIdentical(convert(dictionary, "羣眾"), convert(dictionary, "群眾"));
+      assertIdentical(convert(dictionary, "麪包"), convert(dictionary, "麵包"));
+    });
+
+    it("converts orthography and not vocabulary", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "软件", { to: "zh-Hant" }),
+        "軟件",
+      );
     });
   });
 

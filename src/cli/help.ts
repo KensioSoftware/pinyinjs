@@ -29,6 +29,8 @@ const FLAG_HELP = new Map<string, string>([
   ["no-tone-classes", "leave the tone classes off"],
   ["no-uncertain", "do not mark uncertain readings"],
   ["from", "pinyin, wade-giles or bopomofo (auto by default)"],
+  ["to", "zh-Hans (default), zh-Hant, zh-Hant-TW or zh-Hant-HK"],
+  ["from-script", "Hans or Hant, where detection cannot tell"],
   ["data", "read the dictionary from this directory"],
   ["tier", "core, standard or full (default)"],
 ]);
@@ -49,6 +51,8 @@ const COMMAND_WIDTH =
  */
 const VALUE_FLAGS = new Set([
   "from",
+  "to",
+  "from-script",
   "system",
   "notation",
   "locale",

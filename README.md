@@ -32,6 +32,9 @@ yin2hang2
 $ pinyinjs slug 我想学中文。
 wo3-xiang3-xue2-zhong1wen2
 
+$ pinyinjs script 我们后来发现了头发问题 --to zh-Hant
+我們後來發現了頭髮問題
+
 $ pinyinjs explain 银行
 银行  yínháng
   yín     locked
@@ -57,6 +60,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
 | `slug`       | hanzi to a URL-safe slug                            |
+| `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
 | `lookup`     | what the dictionary holds for a word                |
 | `syllable`   | take written pinyin apart                           |
@@ -180,7 +184,6 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `capitals`    | `"auto"`                           | `"auto"`, `"proper"`, `"none"`                    |
 | `punctuation` | `"latin"`                          | `"latin"`, `"keep"`                               |
 | `grouping`    | `true`                             | `false` turns off GB/T 16159 word spacing         |
-| `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
@@ -531,16 +534,57 @@ Third-tone sandhi is off by default: standard orthography writes 你好 as
 
 ## Scripts and locales
 
-Script and locale are separate options: Taiwan writes 繁體 with `zh-TW`
-readings, but mainland editions of classical texts use 繁體 with `zh-CN`
-readings, and Singapore uses 简体.
+Three axes, not one. Taiwan writes 繁體 with `zh-TW` readings, but mainland
+editions of classical texts use 繁體 with `zh-CN` readings, and Singapore uses
+简体.
 
-| Axis   | Values            | What differs                 |
-| ------ | ----------------- | ---------------------------- |
-| Script | `Hans` / `Hant`   | which characters are written |
-| Locale | `zh-CN` / `zh-TW` | how they are read            |
+| Axis        | Values            | What differs                    |
+| ----------- | ----------------- | ------------------------------- |
+| Script      | `Hans` / `Hant`   | which characters are written    |
+| Glyph forms | `TW` / `HK`       | which 繁體 standard writes them |
+| Locale      | `zh-CN` / `zh-TW` | how they are read               |
 
-Both scripts are dictionary keys, so only the locale is an option to pass.
+Both scripts are dictionary keys, so only the locale is an option to pass. Hong
+Kong's 繁體 forms are recognised on the way in, so 羣眾 and 麪包 read exactly as
+群眾 and 麵包 do.
+
+## Simplified and traditional
+
+`toScript` converts between the scripts, and the reading is what makes it
+accurate. Simplification merged distinct characters; the reading un-merges them.
+
+```ts
+import { loadScriptTables, toScript } from "@kensio/pinyinjs";
+
+const tables = await loadScriptTables(source);
+
+toScript(dictionary, tables, "我们后来发现了头发问题", { to: "zh-Hant" });
+// "我們後來發現了頭髮問題"
+
+toScript(dictionary, tables, "头发", { to: "zh-Hant" }); // "頭髮", tóufà
+toScript(dictionary, tables, "出发", { to: "zh-Hant" }); // "出發", chūfā
+```
+
+发 is 發 or 髮 and nothing about the character says which. Every other converter
+works from phrase tables alone, so it is right about the words on the list and
+guessing past it.
+
+It runs both ways — 乾燥 is `gānzào` and simplifies to 干燥, while 乾隆 is
+`Qiánlóng` and stays 乾隆 — and it targets a region, because there is no
+region-free 繁體:
+
+```ts
+toScript(dictionary, tables, "面包", { to: "zh-Hant-TW" }); // "麵包"
+toScript(dictionary, tables, "面包", { to: "zh-Hant-HK" }); // "麪包"
+```
+
+`toScriptPieces` reports what settled each character, and which were guesses:
+下面 is a surface or a bowl of noodles, both `xiàmiàn`, and it says so rather
+than picking silently. The tables load separately from the dictionary, so
+converting hanzi to pinyin costs nothing for them.
+
+This is orthography and not translation — 软件 becomes 軟件, never 軟體. See
+[script conversion](docs/script-conversion/).
 
 ## API
 

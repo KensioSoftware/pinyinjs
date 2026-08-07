@@ -11,6 +11,14 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`pinyinjs script`,** script conversion at the command line, with `--to` for
+  the target and `--from-script` where the text is too short for detection to
+  tell. The lines carry the converted text and nothing else so it pipes;
+  `--json` carries the per-character evidence and what was uncertain. Also a
+  [script conversion](docs/script-conversion/) page, which the README and the
+  docs index now point at — `toScript` shipped with one row in the API table
+  and nothing a reader would find.
+
 - **`toScript`,** 简体 ↔ 繁體 conversion. 我们后来发现了头发问题 is
   我們後來發現了頭髮問題. The reading is the evidence, in both directions, and it
   is what nothing else in this space has: 发 is 發 or 髮 and only `fà` tells them

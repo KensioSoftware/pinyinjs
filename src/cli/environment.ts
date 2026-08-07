@@ -3,7 +3,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { fileSource } from "../dictionary/node-source.js";
-import { loadDictionary } from "../dictionary/source.js";
+import { loadDictionary, loadScriptTables } from "../dictionary/source.js";
 import { type ColourDepth, depthFrom } from "./colour.js";
 import type { CliEnvironment } from "./run.js";
 
@@ -108,5 +108,7 @@ export async function nodeEnvironment(): Promise<CliEnvironment> {
         fileSource(choice.directory ?? shippedData()),
         choice.tier,
       ),
+    loadScriptTables: async (choice) =>
+      loadScriptTables(fileSource(choice.directory ?? shippedData())),
   };
 }

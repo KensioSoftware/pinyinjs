@@ -36,8 +36,13 @@ import {
   readNumeral,
 } from "./numerals/numerals.js";
 import { fileSource } from "./dictionary/node-source.js";
-import { loadDictionary } from "./dictionary/source.js";
+import { loadDictionary, loadScriptTables } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
+import {
+  isUncertainChoice,
+  toScript,
+  toScriptPieces,
+} from "./decode/script.js";
 import { slug } from "./format/slug.js";
 import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
@@ -100,6 +105,7 @@ import { NEUTRAL_TONE, TONES } from "./tone/tone.js";
  */
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
+const scriptTables = await loadScriptTables(fileSource(dataDirectory));
 
 /**
  * A reading written out, for readable expectations.
@@ -595,6 +601,135 @@ describe("the examples in docs/", () => {
       assertIdentical(
         convertToHtml(dictionary, "行", { markUncertain: false }),
         '<span class="py-syllable py-tone-2">xíng</span>',
+      );
+    });
+  });
+
+  describe("script conversion", () => {
+    it("converts the sentence the page opens on", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "我们后来发现了头发问题", {
+          to: "zh-Hant",
+        }),
+        "我們後來發現了頭髮問題",
+      );
+    });
+
+    it("splits a merged character on the reading", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "头发", { to: "zh-Hant" }),
+        "頭髮",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "出发", { to: "zh-Hant" }),
+        "出發",
+      );
+    });
+
+    it("splits 干 three ways and 只 two, as the table lists", () => {
+      const rows = [
+        ["干燥", "乾燥"],
+        ["干部", "幹部"],
+        ["干扰", "干擾"],
+        ["一只猫", "一隻貓"],
+        ["只有", "只有"],
+      ] as const;
+      for (const [hans, hant] of rows) {
+        assertIdentical(
+          toScript(dictionary, scriptTables, hans, { to: "zh-Hant" }),
+          hant,
+        );
+      }
+    });
+
+    it("keeps 乾 where the reading says it is not 干", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "乾燥", { to: "zh-Hans" }),
+        "干燥",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "乾隆", { to: "zh-Hans" }),
+        "乾隆",
+      );
+    });
+
+    it("writes the Taiwan and Hong Kong forms the page tabulates", () => {
+      const rows = [
+        ["面包", "麵包", "麪包"],
+        ["群众", "群眾", "羣眾"],
+        ["里面", "裡面", "裏面"],
+        ["卫生", "衛生", "衞生"],
+      ] as const;
+      for (const [hans, taiwan, hongKong] of rows) {
+        assertIdentical(
+          toScript(dictionary, scriptTables, hans, { to: "zh-Hant-TW" }),
+          taiwan,
+        );
+        assertIdentical(
+          toScript(dictionary, scriptTables, hans, { to: "zh-Hant-HK" }),
+          hongKong,
+        );
+      }
+    });
+
+    it("splits 著 and 着 for Hong Kong on the reading", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "看着", { to: "zh-Hant-HK" }),
+        "看着",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "著作", { to: "zh-Hant-HK" }),
+        "著作",
+      );
+    });
+
+    it("reports 面 as the guess in 下面, with 麵 as its rival", () => {
+      const { text, choices } = toScriptPieces(
+        dictionary,
+        scriptTables,
+        "下面",
+        {
+          to: "zh-Hant",
+        },
+      );
+      assertIdentical(text, "下面");
+      assertArrayEquals(
+        choices
+          .filter((choice) => isUncertainChoice(choice))
+          .map((c) => c.from),
+        ["面"],
+      );
+      assertArrayEquals([...(choices[1]?.alternatives ?? [])], ["麵"]);
+    });
+
+    it("credits the reading rather than calling it a guess", () => {
+      const { choices } = toScriptPieces(dictionary, scriptTables, "头发", {
+        to: "zh-Hant",
+      });
+      assertArrayEquals(
+        choices.map((choice) => choice.evidence),
+        ["locked", "reading"],
+      );
+    });
+
+    it("leaves text already in the target script alone", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "准將", { to: "zh-Hant" }),
+        "准將",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "群众", {
+          to: "zh-Hant",
+          from: "Hans",
+        }),
+        "群眾",
+      );
+    });
+
+    it("converts orthography and not vocabulary", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "软件", { to: "zh-Hant" }),
+        "軟件",
       );
     });
   });
@@ -1472,6 +1607,7 @@ describe("the examples in docs/", () => {
       colours: 0,
       readInput: () => Promise.resolve(""),
       loadDictionary: () => Promise.resolve(dictionary),
+      loadScriptTables: () => Promise.resolve(scriptTables),
     };
 
     async function cli(...argv: readonly string[]): Promise<readonly string[]> {

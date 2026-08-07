@@ -42,6 +42,8 @@ put them at the end of the line.
   how ambiguous Wade-Giles really is.
 - [Scripts and locales](scripts-and-locales/): 简体 and 繁體, 普通话 and 國語,
   and why they are two axes.
+- [Script conversion](script-conversion/): 简体 ↔ 繁體, why the reading is what
+  makes it accurate, and which characters were guesses.
 
 ## Reference
 

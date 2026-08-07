@@ -1,4 +1,6 @@
 import { buildArtifact } from "../../src/dictionary/artifact.js";
+import { buildScriptTables } from "../../src/dictionary/script-tables.js";
+import type { ScriptTables } from "../../src/script/conversion.js";
 import { Dictionary } from "../../src/dictionary/dictionary.js";
 import type { DictionaryEntry } from "../../src/dictionary/entry.js";
 import { readSyllable, type Syllable } from "../../src/syllable/syllable.js";
@@ -105,4 +107,14 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
  */
 export function sampleDictionary(): Dictionary {
   return dictionaryOf(SAMPLE_ENTRIES);
+}
+
+/**
+ * The script conversion tables the sample dictionary implies.
+ *
+ * Derived rather than written out, so the fixture cannot claim a pairing the
+ * sample entries do not attest.
+ */
+export function sampleScriptTables(): ScriptTables {
+  return buildScriptTables(SAMPLE_ENTRIES);
 }

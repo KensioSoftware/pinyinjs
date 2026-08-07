@@ -57,6 +57,9 @@ import {
   type Flags,
   type FlagName,
   htmlOptions,
+  SCRIPT_FLAGS,
+  scriptFrom,
+  scriptTarget,
   SLUG_FLAGS,
   slugOptions,
   type TranscriptionSource,
@@ -65,6 +68,8 @@ import {
   UsageError,
 } from "./arguments.js";
 import { type Painter, PLAIN, visibleLength } from "./colour.js";
+import { isUncertainChoice, toScriptPieces } from "../decode/script.js";
+import type { ScriptTables } from "../script/conversion.js";
 
 /**
  * What a command is given to work with.
@@ -75,6 +80,8 @@ export interface CommandInput {
   readonly flags: Flags;
   /** Loaded for the commands that declare they need one. */
   readonly dictionary: Dictionary | undefined;
+  /** Loaded for the one command that converts between the scripts. */
+  readonly scriptTables: ScriptTables | undefined;
   readonly choice: DictionaryChoice;
   /**
    * How to write a syllable, which is where tone colour is applied.
@@ -119,6 +126,14 @@ export interface Command {
    * should not wait for 2.4 MB to load.
    */
   readonly needsDictionary: boolean;
+  /**
+   * Whether it reads the script conversion tables, which are their own file.
+   *
+   * Off for everything but `script`: the tables are 96 KB nothing else looks
+   * at, and the point of keeping them out of the dictionary is not paying for
+   * them by default.
+   */
+  readonly needsScriptTables?: boolean;
   readonly run: (input: CommandInput) => readonly Reported[];
 }
 
@@ -290,6 +305,64 @@ const SLUG: Command = {
     return input.texts.map((text) => {
       const written = slug(dictionaryOf(input), text, options);
       return { lines: [written], data: { text, slug: written } };
+    });
+  },
+};
+
+/**
+ * The tables a command declared it needs.
+ */
+function scriptTablesOf(input: CommandInput): ScriptTables {
+  /* c8 ignore next 3 -- loaded for every command that declares it needs them */
+  if (input.scriptTables === undefined) {
+    throw new UsageError("the script conversion tables were not loaded");
+  }
+  return input.scriptTables;
+}
+
+/**
+ * Convert between 简体 and 繁體, one line in and one line out.
+ *
+ * The per-character evidence rides in the JSON rather than the lines, because
+ * the answer a person wants here is the converted text and a second column of
+ * `locked` on every character would bury it. `--json` carries what was a guess.
+ */
+const SCRIPT: Command = {
+  name: "script",
+  summary: "简体 ↔ 繁體 conversion",
+  argument: "[text...]",
+  flags: [...SCRIPT_FLAGS],
+  needsDictionary: true,
+  needsScriptTables: true,
+  run: (input) => {
+    const to = scriptTarget(input.flags);
+    const from = scriptFrom(input.flags);
+    return input.texts.map((text) => {
+      const { text: written, choices } = toScriptPieces(
+        dictionaryOf(input),
+        scriptTablesOf(input),
+        text,
+        { to, ...(from !== undefined && { from }) },
+      );
+      return {
+        lines: [written],
+        data: {
+          text,
+          script: written,
+          to,
+          characters: choices.map((choice) => ({
+            from: choice.from,
+            to: choice.to,
+            evidence: choice.evidence,
+            ...(choice.alternatives.length > 0 && {
+              alternatives: [...choice.alternatives],
+            }),
+          })),
+          uncertain: choices
+            .filter((choice) => isUncertainChoice(choice))
+            .map((choice) => choice.from),
+        },
+      };
     });
   },
 };
@@ -1015,6 +1088,7 @@ export const COMMANDS: readonly Command[] = [
   CONVERT,
   HTML,
   SLUG,
+  SCRIPT,
   EXPLAIN,
   LOOKUP,
   SYLLABLE,

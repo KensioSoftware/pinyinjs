@@ -1,4 +1,7 @@
-import { sampleDictionary } from "#test/fixtures/decoder-dictionary.js";
+import {
+  sampleDictionary,
+  sampleScriptTables,
+} from "#test/fixtures/decoder-dictionary.js";
 import {
   assertArrayEquals,
   assertArrayLength,
@@ -25,6 +28,7 @@ function environmentOf(input = ""): CliEnvironment {
     colours: 0,
     readInput: () => Promise.resolve(input),
     loadDictionary: () => Promise.resolve(dictionary),
+    loadScriptTables: () => Promise.resolve(sampleScriptTables()),
   };
 }
 
