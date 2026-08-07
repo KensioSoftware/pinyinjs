@@ -70,6 +70,8 @@ export {
   fetchSource,
   loadArtifact,
   loadDictionary,
+  loadScriptTables,
+  SCRIPT_FILE,
   tierFiles,
 } from "./dictionary/source.js";
 export type { DictionarySource } from "./dictionary/source.js";
@@ -114,6 +116,35 @@ export type {
 } from "./format/slug.js";
 
 export { decodeGreedily } from "./decode/greedy.js";
+
+export {
+  isUncertainChoice,
+  SCRIPT_EVIDENCE,
+  SCRIPT_TARGETS,
+  toScript,
+  toScriptPieces,
+} from "./decode/script.js";
+export type {
+  ScriptChoice,
+  ScriptConversion,
+  ScriptEvidence,
+  ScriptOptions,
+  ScriptTarget,
+} from "./decode/script.js";
+
+export {
+  conversionKey,
+  convertCharacter,
+  convertCharacters,
+  formsOf,
+  isAmbiguousCharacter,
+  readConversionKey,
+  readScriptTables,
+  writeScriptTables,
+} from "./script/conversion.js";
+export type { CharacterConversion, ScriptTables } from "./script/conversion.js";
+
+export { buildScriptTables } from "./dictionary/script-tables.js";
 
 export {
   allEdges,

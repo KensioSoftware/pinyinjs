@@ -226,6 +226,27 @@ See [scripts and locales](../scripts-and-locales/).
 | `REGIONS`, `DEFAULT_REGION`                                    | the regional 繁體 orthographies                 |
 | `Script`, `Locale`, `Region`, `ScriptPairing`                  | types                                           |
 
+## Script conversion
+
+简体 ↔ 繁體, which is orthography and not translation. See
+[scripts and locales](../scripts-and-locales/).
+
+| Export                                               | Is                                         |
+| ---------------------------------------------------- | ------------------------------------------ |
+| `toScript`                                           | 简体 ↔ 繁體, end to end                    |
+| `toScriptPieces`                                     | the same, per character, with evidence     |
+| `isUncertainChoice`                                  | was this character a guess?                |
+| `loadScriptTables`, `SCRIPT_FILE`                    | fetch the conversion tables                |
+| `SCRIPT_TARGETS`, `SCRIPT_EVIDENCE`                  | the values                                 |
+| `buildScriptTables`                                  | derive the tables from a merged dictionary |
+| `readScriptTables`, `writeScriptTables`              | the artifact, both directions              |
+| `convertCharacter`, `convertCharacters`              | conversion without the dictionary          |
+| `isAmbiguousCharacter`, `formsOf`                    | what forms a character can take            |
+| `conversionKey`, `readConversionKey`                 | how a reading is keyed                     |
+| `ScriptTarget`, `ScriptOptions`, `ScriptChoice`      | types                                      |
+| `ScriptConversion`, `ScriptEvidence`, `ScriptTables` | types                                      |
+| `CharacterConversion`                                | types                                      |
+
 ## Stability
 
 **Everything on this page is covered by semantic versioning from 1.0.0.** That

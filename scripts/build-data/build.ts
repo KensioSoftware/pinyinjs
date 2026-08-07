@@ -8,7 +8,10 @@ import {
 } from "../../src/dictionary/artifact.js";
 import { checkBuild } from "../../src/dictionary/assertions.js";
 import { mergeSources } from "../../src/dictionary/merge.js";
+import { buildScriptTables } from "../../src/dictionary/script-tables.js";
+import { SCRIPT_FILE } from "../../src/dictionary/source.js";
 import { selectTier, TIERS } from "../../src/dictionary/tiers.js";
+import { writeScriptTables } from "../../src/script/conversion.js";
 import { parseCedict } from "../../src/sources/cedict.js";
 import { parseJiebaDictionary } from "../../src/sources/jieba.js";
 import { parseOpenCcTable } from "../../src/sources/opencc.js";
@@ -132,6 +135,24 @@ report(`  all build assertions pass`);
 
 await mkdir(DATA_DIR, { recursive: true });
 
+// ── Script conversion, which is its own artifact ────────────
+report("building script conversion tables");
+const scriptTables = buildScriptTables(merged.entries);
+const scriptMap = writeScriptTables(scriptTables);
+const scriptBytes = Buffer.byteLength(scriptMap);
+const scriptCompressed = compressedSize(scriptMap);
+report(
+  `  ${String(scriptTables.toTraditional.size)} 简→繁 characters, ` +
+    `${String(scriptTables.toSimplified.size)} 繁→简, ` +
+    `${String(scriptTables.traditionalWords.size)} + ` +
+    `${String(scriptTables.simplifiedWords.size)} word exceptions`,
+);
+report(
+  `  ${String(scriptTables.hansOnly.size)} 简体-only and ` +
+    `${String(scriptTables.hantOnly.size)} 繁體-only characters for detection`,
+);
+report(`  ${kilobytes(scriptBytes)}  ${kilobytes(scriptCompressed)} brotli`);
+
 interface TierManifest {
   readonly entries: number;
   readonly keys: string;
@@ -192,6 +213,17 @@ const manifest: Record<string, TierManifest> = Object.fromEntries(
 const manifestJson = JSON.stringify(
   {
     tiers: manifest,
+    script: {
+      file: SCRIPT_FILE,
+      toTraditional: scriptTables.toTraditional.size,
+      toSimplified: scriptTables.toSimplified.size,
+      traditionalWords: scriptTables.traditionalWords.size,
+      simplifiedWords: scriptTables.simplifiedWords.size,
+      hansOnly: scriptTables.hansOnly.size,
+      hantOnly: scriptTables.hantOnly.size,
+      bytes: scriptBytes,
+      compressedBytes: scriptCompressed,
+    },
     sources: SOURCES.flatMap((source) =>
       source.downloads.map((file) => file.url),
     ),
@@ -275,6 +307,7 @@ const written = compiled.flatMap(({ artifact, manifest: files }) => [
   writeFile(path.join(DATA_DIR, files.frequencies), artifact.frequencies),
 ]);
 written.push(
+  writeFile(path.join(DATA_DIR, SCRIPT_FILE), scriptMap),
   writeFile(path.join(DATA_DIR, "manifest.json"), `${manifestJson}\n`),
   writeFile(path.join(ROOT, "NOTICE"), notice),
 );
