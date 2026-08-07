@@ -220,7 +220,11 @@ See [scripts and locales](../scripts-and-locales/).
 | -------------------------------------------------------------- | ----------------------------------------------- |
 | `detectScript`                                                 | the script a text is in, given the variant sets |
 | `SCRIPTS`, `LOCALES`, `isScript`, `isLocale`, `DEFAULT_LOCALE` | the values                                      |
-| `Script`, `Locale`, `ScriptPairing`                            | types                                           |
+| `toCanonicalGlyph`, `toCanonicalGlyphs`                        | 繁體 glyph forms to the Taiwan standard         |
+| `toRegionalGlyph`, `toRegionalGlyphs`                          | the Taiwan standard to a region's forms         |
+| `isReadingSensitive`                                           | whether a glyph choice needs the reading        |
+| `REGIONS`, `DEFAULT_REGION`                                    | the regional 繁體 orthographies                 |
+| `Script`, `Locale`, `Region`, `ScriptPairing`                  | types                                           |
 
 ## Stability
 

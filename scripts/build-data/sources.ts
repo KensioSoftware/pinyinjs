@@ -28,16 +28,10 @@ export const DATA_DIR = path.join(ROOT, "data");
 /**
  * One upstream file, and how to get the text out of it.
  */
-interface Source {
+interface SourceDownload {
   /** Cache filename holding the downloaded bytes, before any decompression. */
   readonly download: string;
   readonly url: string;
-  /** The project the file comes from, as it should be attributed. */
-  readonly name: string;
-  /** The licence it is published under. */
-  readonly licence: string;
-  /** What this package takes from it. */
-  readonly provides: string;
   /**
    * Files this download yields, mapped to the name each is cached under.
    *
@@ -45,6 +39,23 @@ interface Source {
    * reads and leaves the other twenty in the archive.
    */
   readonly extract: (downloaded: Buffer) => Map<string, Buffer>;
+}
+
+/**
+ * One upstream project, and every file this pipeline takes from it.
+ *
+ * A project rather than a file, because attribution is owed per project: OpenCC
+ * publishes its four tables as four separate downloads, and a NOTICE listing
+ * OpenCC four times would be noise rather than diligence.
+ */
+interface Source {
+  /** The project the files come from, as it should be attributed. */
+  readonly name: string;
+  /** The licence it is published under. */
+  readonly licence: string;
+  /** What this package takes from it. */
+  readonly provides: string;
+  readonly downloads: readonly SourceDownload[];
 }
 
 /**
@@ -56,12 +67,22 @@ export const SOURCE_FILES = {
   cedict: "cedict_ts.u8",
   phrasePinyin: "large_pinyin.txt",
   jieba: "jieba-dict.txt",
+  simplifiedToTraditional: "STCharacters.txt",
+  traditionalToSimplified: "TSCharacters.txt",
+  taiwanVariants: "TWVariants.txt",
+  hongKongVariants: "HKVariants.txt",
 } as const;
+
+/**
+ * Where OpenCC's dictionary tables are published.
+ */
+const OPENCC_DICTIONARIES =
+  "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary";
 
 /**
  * A file that needs no decompression, cached under its own name.
  */
-function verbatim(name: string): Source["extract"] {
+function verbatim(name: string): SourceDownload["extract"] {
   return (downloaded: Buffer): Map<string, Buffer> =>
     new Map([[name, downloaded]]);
 }
@@ -76,56 +97,88 @@ function verbatim(name: string): Source["extract"] {
  */
 export const SOURCES: readonly Source[] = [
   {
-    download: "Unihan.zip",
-    url: "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
     name: "Unicode Han Database (Unihan)",
     licence: "Unicode License v3",
     provides:
       "single-character readings and the polyphone priors of kHanyuPinlu, plus the kSimplifiedVariant and kTraditionalVariant script variants",
-    extract: (downloaded: Buffer): Map<string, Buffer> => {
-      const members = readZipEntries(downloaded);
-      const wanted = new Map<string, Buffer>();
-      for (const name of [
-        SOURCE_FILES.unihanReadings,
-        SOURCE_FILES.unihanVariants,
-      ]) {
-        const member = members.get(name);
-        if (member === undefined) {
-          throw new Error(`Unihan.zip is missing ${name}`);
-        }
-        wanted.set(name, member);
-      }
-      return wanted;
-    },
+    downloads: [
+      {
+        download: "Unihan.zip",
+        url: "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
+        extract: (downloaded: Buffer): Map<string, Buffer> => {
+          const members = readZipEntries(downloaded);
+          const wanted = new Map<string, Buffer>();
+          for (const name of [
+            SOURCE_FILES.unihanReadings,
+            SOURCE_FILES.unihanVariants,
+          ]) {
+            const member = members.get(name);
+            if (member === undefined) {
+              throw new Error(`Unihan.zip is missing ${name}`);
+            }
+            wanted.set(name, member);
+          }
+          return wanted;
+        },
+      },
+    ],
   },
   {
-    download: "cedict.txt.gz",
-    url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
     name: "CC-CEDICT",
     licence: "CC BY-SA 4.0",
     provides:
       "paired 简体/繁體 headwords, the explicit r5 marker for 儿化, neutral-tone readings and the Taiwan pronunciation notes",
-    extract: (downloaded: Buffer): Map<string, Buffer> =>
-      new Map([[SOURCE_FILES.cedict, gunzipSync(downloaded)]]),
+    downloads: [
+      {
+        download: "cedict.txt.gz",
+        url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
+        extract: (downloaded: Buffer): Map<string, Buffer> =>
+          new Map([[SOURCE_FILES.cedict, gunzipSync(downloaded)]]),
+      },
+    ],
   },
   {
-    download: SOURCE_FILES.phrasePinyin,
-    url: "https://raw.githubusercontent.com/mozillazg/phrase-pinyin-data/master/large_pinyin.txt",
     name: "phrase-pinyin-data",
     licence:
       "MIT, though large_pinyin.txt merges cc_cedict.txt and is therefore CC BY-SA derived in part",
     provides: "the bulk of the multi-character word readings",
-    extract: verbatim(SOURCE_FILES.phrasePinyin),
+    downloads: [
+      {
+        download: SOURCE_FILES.phrasePinyin,
+        url: "https://raw.githubusercontent.com/mozillazg/phrase-pinyin-data/master/large_pinyin.txt",
+        extract: verbatim(SOURCE_FILES.phrasePinyin),
+      },
+    ],
   },
   {
-    download: SOURCE_FILES.jieba,
-    url: "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt",
     name: "jieba",
     licence:
       "MIT, though the dictionary's own provenance is not documented upstream; recorded here as an accepted unknown",
     provides:
       "word frequencies and the part-of-speech tags that mark proper nouns",
-    extract: verbatim(SOURCE_FILES.jieba),
+    downloads: [
+      {
+        download: SOURCE_FILES.jieba,
+        url: "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt",
+        extract: verbatim(SOURCE_FILES.jieba),
+      },
+    ],
+  },
+  {
+    name: "OpenCC",
+    licence: "Apache-2.0",
+    provides:
+      "the 简体 ↔ 繁體 character tables, and the Taiwan and Hong Kong glyph form tables that separate 裡 from 裏 and 群 from 羣",
+    downloads: [
+      SOURCE_FILES.simplifiedToTraditional,
+      SOURCE_FILES.traditionalToSimplified,
+      SOURCE_FILES.taiwanVariants,
+      SOURCE_FILES.hongKongVariants,
+    ].map((name) => ({
+      download: name,
+      url: `${OPENCC_DICTIONARIES}/${name}`,
+      extract: verbatim(name),
+    })),
   },
 ];
 
@@ -152,30 +205,32 @@ export async function fetchSources(shouldRefresh = false): Promise<void> {
   await mkdir(CACHE_DIR, { recursive: true });
 
   await Promise.all(
-    SOURCES.map(async (source) => {
-      const downloadPath = path.join(CACHE_DIR, source.download);
+    SOURCES.flatMap((source) =>
+      source.downloads.map(async (file) => {
+        const downloadPath = path.join(CACHE_DIR, file.download);
 
-      let downloaded: Buffer;
-      if (!shouldRefresh && (await exists(downloadPath))) {
-        downloaded = await readFile(downloadPath);
-      } else {
-        process.stderr.write(`fetching ${source.url}\n`);
-        const response = await fetch(source.url);
-        if (!response.ok) {
-          throw new Error(
-            `fetching ${source.url} failed: ${String(response.status)} ${response.statusText}`,
-          );
+        let downloaded: Buffer;
+        if (!shouldRefresh && (await exists(downloadPath))) {
+          downloaded = await readFile(downloadPath);
+        } else {
+          process.stderr.write(`fetching ${file.url}\n`);
+          const response = await fetch(file.url);
+          if (!response.ok) {
+            throw new Error(
+              `fetching ${file.url} failed: ${String(response.status)} ${response.statusText}`,
+            );
+          }
+          downloaded = Buffer.from(await response.arrayBuffer());
+          await writeFile(downloadPath, downloaded);
         }
-        downloaded = Buffer.from(await response.arrayBuffer());
-        await writeFile(downloadPath, downloaded);
-      }
 
-      await Promise.all(
-        [...source.extract(downloaded)].map(([name, contents]) =>
-          writeFile(path.join(CACHE_DIR, name), contents),
-        ),
-      );
-    }),
+        await Promise.all(
+          [...file.extract(downloaded)].map(([name, contents]) =>
+            writeFile(path.join(CACHE_DIR, name), contents),
+          ),
+        );
+      }),
+    ),
   );
 }
 

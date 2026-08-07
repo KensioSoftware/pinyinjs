@@ -11,6 +11,34 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **Hong Kong 繁體 glyph forms are recognised on the lookup path.** Taiwan and
+  Hong Kong write the same characters with the same readings and disagree about
+  the standard form of 58 of them — 裡 against 裏, 群 against 羣, 麵 against 麪.
+  Hong Kong spellings were missing dictionary keys and falling back to
+  converting character by character, so 羣眾 and 麪包 read worse than 群眾 and
+  麵包 did. The lookup path now normalises 繁體 glyph forms to the Taiwan
+  standard the keys are already built from: measured over the 9,833 keys with a
+  distinct Hong Kong spelling, 2,358 were already keys and normalisation reaches
+  a further 5,439. Only the reading is taken from the normalised form — the
+  characters a caller gets back are the ones they wrote. `toCanonicalGlyphs`,
+  `toRegionalGlyphs` and the `Region` type are exported for it, and
+  SCRIPTS-AND-LOCALES.md carries the reasoning.
+
+  Nineteen of OpenCC's mappings are deliberately not applied, because the
+  variant is a live spelling rather than a regional one. Six are current 繁體 —
+  台 appears 164 times in CC-CEDICT against 臺's 208 — and thirteen are current
+  **简体**, because the PRC simplification adopted the same 新字形 conventions
+  Hong Kong did: 着, 温, 脱, 户, 税, 卧, 悦, 兑, 葱, 幺, 棱, 檐, 痹. Normalising
+  those would have rewritten 简体 text, and 走着 `zǒuzhe` is the case that
+  caught it.
+
+- **OpenCC as a data source.** Its 简体 ↔ 繁體 character tables and the Taiwan
+  and Hong Kong variant tables, Apache-2.0, attributed in `NOTICE`. The glyph
+  tables are held in `src/script/glyphs.ts` as code rather than shipped as an
+  artifact, since 120 mappings do not justify a download and they have to work
+  before any dictionary has loaded; `pnpm build:data` re-derives them from
+  OpenCC and fails the build if the two have drifted.
+
 - **`slug`,** hanzi to a URL-safe slug: 我想学中文。 is
   `wo3-xiang3-xue2-zhong1wen2`. Built on the decode rather than on a finished
   string, which is the whole point of it — 银行 is `yin2hang2` and not
@@ -236,14 +264,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 118-case gold corpus, which is committed to the repository rather than
+Over the 124-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.5%** |           88.1% |
+| exact match      | **97.6%** |           88.7% |
 | reading accuracy |     99.7% |           98.3% |
-| spacing (F1)     | **99.8%** |           96.3% |
+| spacing (F1)     | **99.8%** |           96.4% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is
