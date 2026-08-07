@@ -42,7 +42,6 @@ export interface NumeralSegment {
  * neither a digit nor a comma, so there is nothing to backtrack over — timed
  * linear to 128k characters.
  */
-// eslint-disable-next-line security/detect-unsafe-regex
 const NUMBER = /\d[\d,]*(?:\.\d+)?/gu;
 
 /**

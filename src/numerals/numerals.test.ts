@@ -182,7 +182,7 @@ describe("writing a number", () => {
     assertUndefined(numeralHanzi("3D"));
     assertUndefined(numeralHanzi(""));
     assertUndefined(numeralHanzi("1,000"));
-    assertUndefined(numeralHanzi(NaN));
+    assertUndefined(numeralHanzi(Number.NaN));
     // Too large to count, though its digits could still be read out.
     assertUndefined(numeralHanzi("1".repeat(20)));
     assertIdentical(

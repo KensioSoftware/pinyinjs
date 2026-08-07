@@ -10,6 +10,13 @@ defaults:
   run:
     shell: bash
 
+# Only the head of a branch is worth checking. Pushing a fixup while the
+# previous commit is still running abandons that run instead of queueing
+# behind it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CI: true
 
@@ -30,7 +37,10 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      # `lint:ci` is `lint` with oxlint's GitHub formatter, which annotates the
+      # diff itself so a failure is readable where the change is rather than
+      # only in the log.
+      - run: pnpm lint:ci
       - run: pnpm fta
 
   test:
@@ -42,7 +52,15 @@ jobs:
         # The floor `engines` states, and the version .nvmrc develops against.
         # A package this data-heavy is worth proving on both rather than
         # assuming the older one from a passing build on the newer.
-        node: ["22", "24"]
+        #
+        # What each runtime can tell us differs, though: whether the tests pass
+        # is a question about the runtime, and whether they cover enough of the
+        # source is not. Only the .nvmrc version measures coverage.
+        include:
+          - node: "22"
+            script: test
+          - node: "24"
+            script: test:coverage
     steps:
       - uses: actions/checkout@v7
         with:
@@ -53,7 +71,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:coverage
+      - run: pnpm ${{ matrix.script }}
 
   build:
     name: Build
@@ -70,20 +88,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:check
       - run: pnpm build
-
-  package:
-    name: Package
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@v6.0.9
-      - uses: actions/setup-node@v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
       # What gets published is the tarball, not the working tree, and the two
-      # differ in ways nothing else here would catch.
+      # differ in ways nothing else here would catch. It rides along with the
+      # build rather than taking a runner of its own: `pnpm pack` runs the
+      # build again anyway, and a job spends far longer installing than either
+      # of these takes.
       - run: pnpm pack:check

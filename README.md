@@ -624,7 +624,7 @@ pnpm polyphones # score them against 20,139 hand-labelled polyphones
 pnpm build:data # rebuild data/ from the upstream sources
 ```
 
-`pnpm check` must pass: eslint on `strictTypeChecked`, `tsc` with
+`pnpm check` must pass: oxlint including the type-aware rules, `tsc` with
 `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, and vitest at 95%
 coverage thresholds.
 

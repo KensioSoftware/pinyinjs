@@ -24,7 +24,6 @@ const PROPER_NOUN_FLAG = "p";
  * dots that cannot match, it is linear — 8k to 128k characters doubles the time
  * for each doubling of the input, 39µs to 607µs.
  */
-// eslint-disable-next-line security/detect-unsafe-regex
 const NAME_BOUNDARIES = /^p(?<at>\d+(?:\.\d+)*)$/u;
 
 /**

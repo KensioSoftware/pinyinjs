@@ -23,7 +23,6 @@ describe("reading a dictionary off disk", () => {
     const bytes = await fileSource(dataDirectory).bytes("core.freq");
     // assertArrayNotEmpty rejects a Uint8Array outright, so this stays a
     // length check.
-    // eslint-disable-next-line no-restricted-syntax
     assertTrue(bytes.length > 0);
   });
 
