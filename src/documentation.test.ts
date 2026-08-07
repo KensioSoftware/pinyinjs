@@ -578,29 +578,42 @@ describe("the examples in docs/", () => {
     it("emits the elements and classes the page documents", () => {
       assertIdentical(
         convertToHtml(dictionary, "银行"),
-        '<span class="py-syllable py-tone-2">yín</span>' +
-          '<span class="py-syllable py-tone-2">háng</span>',
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span>' +
+          '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
       );
     });
 
     it("marks up a read number and escapes the rest", () => {
       assertIdentical(
         convertToHtml(dictionary, "3D银行"),
-        '<span class="py-syllable py-tone-1">sān</span> D ' +
-          '<span class="py-syllable py-tone-2">yín</span>' +
-          '<span class="py-syllable py-tone-2">háng</span>',
+        '<span class="py-syllable py-tone-1" lang="zh-Latn-CN-pinyin">sān</span> D ' +
+          '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span>' +
+          '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
       );
     });
 
-    it("drops the tone classes and the uncertainty marking when asked", () => {
+    it("declares the 國語 reading standard where the conversion reads it", () => {
+      assertIdentical(
+        convertToHtml(dictionary, "垃圾", { locale: "zh-TW" }),
+        '<span class="py-syllable py-tone-4" lang="zh-Latn-TW-pinyin">lè</span>' +
+          '<span class="py-syllable py-tone-4" lang="zh-Latn-TW-pinyin">sè</span>',
+      );
+    });
+
+    it("drops the tone classes, the uncertainty and the language when asked", () => {
       assertIdentical(
         convertToHtml(dictionary, "银行", { toneClasses: false }),
-        '<span class="py-syllable">yín</span>' +
-          '<span class="py-syllable">háng</span>',
+        '<span class="py-syllable" lang="zh-Latn-CN-pinyin">yín</span>' +
+          '<span class="py-syllable" lang="zh-Latn-CN-pinyin">háng</span>',
       );
       assertIdentical(
         convertToHtml(dictionary, "行", { markUncertain: false }),
-        '<span class="py-syllable py-tone-2">xíng</span>',
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">xíng</span>',
+      );
+      assertIdentical(
+        convertToHtml(dictionary, "银行", { lang: false }),
+        '<span class="py-syllable py-tone-2">yín</span>' +
+          '<span class="py-syllable py-tone-2">háng</span>',
       );
     });
   });

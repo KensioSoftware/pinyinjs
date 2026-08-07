@@ -326,13 +326,15 @@ evidence there was, not as a probability.
 import { convertToHtml } from "@kensio/pinyinjs";
 
 convertToHtml(dictionary, "行");
-// <span class="py-syllable py-tone-2 py-uncertain"
+// <span class="py-syllable py-tone-2 py-uncertain" lang="zh-Latn-CN-pinyin"
 //       data-alternatives="háng héng hàng">xíng</span>
 ```
 
 One element per syllable, with `py-tone-1` to `py-tone-5` (5 is the neutral
 tone), and `py-uncertain` plus the rejected readings where the decoder was
-guessing. Text that is not Han is escaped, not marked up. No styles are
+guessing. Each one declares itself pinyin — `zh-Latn-TW-pinyin` for a `zh-TW`
+conversion — so that a screen reader does not read it as the language of the
+page around it. Text that is not Han is escaped, not marked up. No styles are
 included, so write your own:
 
 ```css
@@ -344,9 +346,8 @@ included, so write your own:
 }
 ```
 
-Takes any `convert` option, plus `toneClasses: false` and
-`markUncertain: false`. `toHtml(pieces, options)` renders pieces you already
-have.
+Takes any `convert` option, plus `toneClasses: false`, `markUncertain: false`
+and `lang: false`. `toHtml(pieces, options)` renders pieces you already have.
 
 ## Look words up
 

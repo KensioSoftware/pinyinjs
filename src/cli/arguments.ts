@@ -58,6 +58,7 @@ const FLAGS = {
   system: { type: "string" },
   "no-tone-classes": { type: "boolean" },
   "no-uncertain": { type: "boolean" },
+  "no-lang": { type: "boolean" },
   colour: { type: "boolean" },
   color: { type: "boolean" },
   "no-colour": { type: "boolean" },
@@ -428,13 +429,14 @@ export function slugOptions(flags: Flags): SlugOptions {
 }
 
 /**
- * The same, plus the two flags that only mean anything in HTML.
+ * The same, plus the three flags that only mean anything in HTML.
  */
 export function htmlOptions(flags: Flags): HtmlOptions {
   return {
     ...convertOptions(flags),
     ...(flags["no-tone-classes"] === true && { toneClasses: false }),
     ...(flags["no-uncertain"] === true && { markUncertain: false }),
+    ...(flags["no-lang"] === true && { lang: false }),
   };
 }
 

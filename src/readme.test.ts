@@ -485,6 +485,7 @@ describe("the examples in README.md", () => {
       assertIdentical(
         convertToHtml(dictionary, "行"),
         '<span class="py-syllable py-tone-2 py-uncertain" ' +
+          'lang="zh-Latn-CN-pinyin" ' +
           'data-alternatives="háng héng hàng">xíng</span>',
       );
     });
