@@ -532,6 +532,9 @@ applySandhi(niHao, { thirdTone: true }); // ní hǎo
 
 Third-tone sandhi is off by default: standard orthography writes 你好 as
 `nǐ hǎo` even though it is said `ní hǎo`. Turn it on for transcribing speech.
+Its domain is the prosodic foot rather than the syllable string, so 展览馆 is
+`zhánlánguǎn` and 纸老虎 `zhǐláohǔ`, and 老板很好 keeps the 板 that a
+left-to-right scan would lower.
 
 ## Scripts and locales
 

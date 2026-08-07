@@ -26,6 +26,7 @@ import {
   writeSyllable,
 } from "../syllable/syllable.js";
 import type { ReadingConfidence } from "./confidence.js";
+import { divisionOf } from "./constituents.js";
 import { decodeRun, decodeRunScored } from "./decode.js";
 import { decodeGreedily } from "./greedy.js";
 import { READING_RULES } from "./reading-rules.js";
@@ -226,11 +227,22 @@ function writeRun(
   sandhi: SandhiOptions | undefined,
 ): readonly ConvertedPiece[] {
   // Sandhi runs across the whole run rather than within a word, since 不 in one
-  // word assimilates to the tone starting the next.
+  // word assimilates to the tone starting the next. Third-tone sandhi needs to
+  // know where the words are all the same, so the grouping goes with it — and
+  // only when it is asked for, since dividing a word costs lookups.
   const readings = words.map((scored) =>
     readingFor(dictionary, scored.word, locale),
   );
-  const flattened = applySandhi(readings.flat(), sandhi);
+  const grouping =
+    sandhi?.thirdTone === true
+      ? words.map((scored, index) => {
+          const reading = readings[index] ?? [];
+          return (
+            divisionOf(dictionary, scored.word.text, reading) ?? reading.length
+          );
+        })
+      : undefined;
+  const flattened = applySandhi(readings.flat(), sandhi, grouping);
 
   let at = 0;
   const pieces: ConvertedPiece[] = [];

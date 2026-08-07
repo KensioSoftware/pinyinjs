@@ -7,7 +7,11 @@ import {
   writeSyllable,
 } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
-import { applySandhi, type SandhiOptions } from "./sandhi.js";
+import {
+  applySandhi,
+  type SandhiGrouping,
+  type SandhiOptions,
+} from "./sandhi.js";
 
 /**
  * Read a reading the way the dictionary stores one: fully toned.
@@ -25,10 +29,21 @@ function reading(text: string): readonly Syllable[] {
 /**
  * Apply sandhi and write the result back out.
  */
-function sandhied(text: string, options?: SandhiOptions): readonly string[] {
-  return applySandhi(reading(text), options).map((syllable) =>
+function sandhied(
+  text: string,
+  options?: SandhiOptions,
+  grouping?: SandhiGrouping,
+): readonly string[] {
+  return applySandhi(reading(text), options, grouping).map((syllable) =>
     writeSyllable(syllable),
   );
+}
+
+/**
+ * The third-tone sandhi of a grouped reading, which is what it is stated over.
+ */
+function said(text: string, grouping?: SandhiGrouping): readonly string[] {
+  return sandhied(text, { thirdTone: true }, grouping);
 }
 
 describe("tone sandhi", () => {
@@ -150,6 +165,70 @@ describe("tone sandhi", () => {
         "hén",
         "hǎo",
       ]);
+    });
+
+    it("takes the whole reading for one word where no grouping is given", () => {
+      // What a caller holding nothing but a reading has, and the only thing
+      // that can be assumed from one.
+      assertArrayEquals(said("zhǎn lǎn guǎn"), ["zhán", "lán", "guǎn"]);
+    });
+
+    describe("inside a word", () => {
+      it("lowers every third tone but the last", () => {
+        assertArrayEquals(said("zhǎn lǎn guǎn", [3]), ["zhán", "lán", "guǎn"]);
+      });
+
+      it("settles a division before the junction around it", () => {
+        // 展覽館 divides as 展覽 + 館, so 覽 lowers against 館; 紙老虎 divides as
+        // 紙 + 老虎, so 老 lowers against 虎 first and 紙 is left facing a second
+        // tone. Same rule, opposite results, decided by where the word divides.
+        assertArrayEquals(said("zhǎn lǎn guǎn", [[2, 1]]), [
+          "zhán",
+          "lán",
+          "guǎn",
+        ]);
+        assertArrayEquals(said("zhǐ lǎo hǔ", [[1, 2]]), ["zhǐ", "láo", "hǔ"]);
+      });
+    });
+
+    describe("across a word boundary", () => {
+      it("lowers a monosyllabic word, which leans on the word after it", () => {
+        assertArrayEquals(said("wǒ yě hěn hǎo", [1, 1, 1, 1]), [
+          "wó",
+          "yé",
+          "hén",
+          "hǎo",
+        ]);
+        assertArrayEquals(said("hěn xǐ huan", [1, 2]), ["hén", "xǐ", "huan"]);
+      });
+
+      it("leaves a word that ends in a third tone alone", () => {
+        // 行長 and 很喜歡 are two feet, not one: `hángzhǎng hén xǐhuan`, where a
+        // scan blind to the boundary lowers the 長 as well.
+        assertArrayEquals(said("háng zhǎng hěn xǐ huan", [2, 1, 2]), [
+          "háng",
+          "zhǎng",
+          "hén",
+          "xǐ",
+          "huan",
+        ]);
+        assertArrayEquals(said("lǎo bǎn hěn hǎo", [2, 1, 1]), [
+          "láo",
+          "bǎn",
+          "hén",
+          "hǎo",
+        ]);
+      });
+
+      it("leaves a monosyllable facing a word that lowered its own first", () => {
+        // 老保管 is `lǎo báoguǎn`: 保 lowered against 管 inside 保管, so there is
+        // no third tone left for 老 to lower against.
+        assertArrayEquals(said("lǎo bǎo guǎn", [1, 2]), ["lǎo", "báo", "guǎn"]);
+      });
+    });
+
+    it("ignores a grouping that does not account for the syllables", () => {
+      assertArrayEquals(said("nǐ hǎo hǎo", [1, 1]), ["ní", "háo", "hǎo"]);
     });
   });
 

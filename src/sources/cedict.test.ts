@@ -27,6 +27,9 @@ const SAMPLE = [
   "A圈兒 A圈儿 [A quan1 r5] /at symbol, @/",
   "行 行 [hang2] /(bound form) row; line/",
   "行 行 [xing2] /capable; competent/behavior; conduct (Taiwan pr. [xing4])/",
+  "和 和 [he2] /(joining two nouns) and; together with; with (Taiwan pr. [han4])/(math.) sum/",
+  "帆 帆 [fan1] /sail/Taiwan pr. [fan2], except 帆布[fan1 bu4] canvas/",
+  "胺 胺 [an4] /(chemistry) amine/colloquial pr. [an1]; Taiwan pr. [an1]/",
   "銀行 银行 [yin2 hang2] /bank/CL:家[jia1],個|个[ge4]/",
   // "Taiwan pr." here is prose about another word, not an annotation.
   "樂色 乐色 [le4 se4] /(slang) trash; garbage (pun on the Taiwan pr. of 垃圾[la1 ji1])/",
@@ -178,6 +181,43 @@ describe("CC-CEDICT source", () => {
       const entry = entryFor(parseCedict(SAMPLE), "銀行");
       assertNonNullable(entry);
       assertUndefined(entry.taiwanReadings);
+      assertUndefined(entry.taiwanScope);
+    });
+
+    describe("scope", () => {
+      it("covers the entry where the note is a definition of its own", () => {
+        const entry = entryFor(parseCedict(SAMPLE), "髮");
+        assertNonNullable(entry);
+        assertIdentical(entry.taiwanScope, "entry");
+      });
+
+      it("covers the entry where the note carries an exception", () => {
+        // 帆's note is written bare rather than parenthesised, so it qualifies
+        // the headword's reading however much prose it carries.
+        const entry = entryFor(parseCedict(SAMPLE), "帆");
+        assertNonNullable(entry);
+        assertIdentical(entry.taiwanScope, "entry");
+      });
+
+      it("covers the entry where another kind of note shares the definition", () => {
+        const entry = entryFor(parseCedict(SAMPLE), "胺");
+        assertNonNullable(entry);
+        assertIdentical(entry.taiwanScope, "entry");
+      });
+
+      it("is the leading sense where the first definition carries the note", () => {
+        const entry = entryFor(parseCedict(SAMPLE), "和");
+        assertNonNullable(entry);
+        assertIdentical(entry.taiwanScope, "leading");
+      });
+
+      it("is one sense where a later definition carries the note", () => {
+        // 行's `xìng` is the behaviour sense alone, and 行 does not mean
+        // behaviour on its own.
+        const entry = entryFor(parseCedict(SAMPLE), "行", "xing2");
+        assertNonNullable(entry);
+        assertIdentical(entry.taiwanScope, "sense");
+      });
     });
   });
 
@@ -205,8 +245,8 @@ describe("CC-CEDICT source", () => {
     });
 
     it("drops comments and unparseable lines", () => {
-      // Fourteen content lines, minus 々 and ㄅㄧㄤˋ for unknown readings.
-      assertArrayLength(parseCedict(SAMPLE), 10);
+      // Seventeen content lines, minus 々 and ㄅㄧㄤˋ for unknown readings.
+      assertArrayLength(parseCedict(SAMPLE), 13);
     });
 
     it("returns nothing for an empty file", () => {

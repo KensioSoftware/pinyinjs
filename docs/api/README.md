@@ -183,15 +183,15 @@ See [syllables](../syllables/).
 
 See [sandhi](../sandhi/).
 
-| Export                            | Is                                    |
-| --------------------------------- | ------------------------------------- |
-| `applySandhi`                     | 一, 不 and optional third-tone sandhi |
-| `applyToneMark`                   | write a tone onto a toneless syllable |
-| `stripToneMarks`                  | take them off                         |
-| `toneFromMarks`                   | read the tone off a marked syllable   |
-| `toneFromNotation`                | read it off a numbered one            |
-| `TONES`, `NEUTRAL_TONE`, `isTone` | the tone values                       |
-| `Tone`, `SandhiOptions`           | types                                 |
+| Export                                    | Is                                    |
+| ----------------------------------------- | ------------------------------------- |
+| `applySandhi`                             | 一, 不 and optional third-tone sandhi |
+| `applyToneMark`                           | write a tone onto a toneless syllable |
+| `stripToneMarks`                          | take them off                         |
+| `toneFromMarks`                           | read the tone off a marked syllable   |
+| `toneFromNotation`                        | read it off a numbered one            |
+| `TONES`, `NEUTRAL_TONE`, `isTone`         | the tone values                       |
+| `Tone`, `SandhiOptions`, `SandhiGrouping` | types                                 |
 
 ## Orthography
 

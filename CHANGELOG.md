@@ -11,6 +11,47 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **Third-tone sandhi ran over the syllables rather than over the feet.** The
+  rule is usually stated as "a third tone before another third tone is said as
+  a second", and a left-to-right scan of a reading applying exactly that is
+  wrong about as often as it is right: sandhi's domain is the prosodic foot,
+  which is built out of structure ([Shih 1986][1]). 這家銀行的行長很喜歡旅行
+  came out `hángzháng hén xǐhuan`, running the subject into the predicate, and
+  紙老虎 came out `zhíláohǔ`.
+
+  Three passes now, innermost first, each reading what the one before it left.
+  Inside a constituent, every third tone but the last lowers. Between the
+  constituents of a word, so that 展覽館 is 展覽 + 館 and stays `zhánlánguǎn`
+  while 紙老虎 is 紙 + 老虎 and becomes `zhǐláohǔ` — the dictionary is asked
+  where a word divides, and only proposes one where both halves are words. And
+  between a monosyllabic word and the word after it, which it leans on: 我也很好
+  is `wó yé hén hǎo`, but 行長 and 老闆 keep their second syllable.
+
+  `applySandhi` takes a `SandhiGrouping` for this, and without one still treats
+  the whole reading as a single word. `convert` passes what the decoder found;
+  the `sandhi` command splits its argument on whitespace.
+
+  What is given up is the monosyllable leaning backwards — 保管好 is
+  `báoguán hǎo` and comes out `báoguǎn hǎo` — which needs to know which way it
+  attaches, a question about syntax rather than about the words.
+
+  [1]: https://www.researchgate.net/publication/36071823_The_Prosodic_Domain_of_Tone_Sandhi_in_Chinese
+
+- **14 characters read wrongly under `zh-TW`.** CC-CEDICT states a `Taiwan pr.`
+  note either as a definition of its own, where it qualifies the headword's
+  reading, or parenthesised inside one sense, where it qualifies that sense —
+  and the merge took both as facts about the headword. 從's `zòng` is the 侍從
+  and 從兄弟 senses, all of them bound forms, so `我從北京來` read
+  `wǒ zòng Běijīng lái`; 會 took `huǐ` from 一會兒 and `很會說話` followed it.
+  A note now has to cover the sense the entry leads with, which is what a
+  character means with nothing to narrow it — 和's `hàn` is the conjunction, and
+  it stays. Also fixed for 勞, 燥, 行, 勝, 匹, 多, 抵, 枕, 比, 玩, 署 and 聽.
+  Compounds keep their own notes, so 肉燥麵 is still `ròusào miàn`.
+
+  Only a character is tested this way; a word is reached only where it is
+  written, so 相親 keeps the `xiàngqīn` its dominant sense carries. CC-CEDICT
+  now supplies 335 deltas rather than 349.
+
 - **240 dictionary entries could not be looked up at all.** Recognising Hong
   Kong glyph forms on the lookup path means a key written in a form the path
   normalises _away from_ can never be found, and the merge derived 繁體 forms
@@ -352,14 +393,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 124-case gold corpus, which is committed to the repository rather than
+Over the 126-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.6%** |           88.7% |
-| reading accuracy |     99.7% |           98.3% |
-| spacing (F1)     | **99.8%** |           96.4% |
+| exact match      | **97.6%** |           88.9% |
+| reading accuracy |     99.7% |           98.4% |
+| spacing (F1)     | **99.8%** |           96.5% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is
