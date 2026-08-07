@@ -246,7 +246,7 @@ export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 
 export { applySandhi } from "./decode/sandhi.js";
-export type { SandhiOptions } from "./decode/sandhi.js";
+export type { SandhiGrouping, SandhiOptions } from "./decode/sandhi.js";
 
 export {
   DEFAULT_TIER,

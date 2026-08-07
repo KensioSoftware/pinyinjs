@@ -607,14 +607,25 @@ const SANDHI: Command = {
   run: (input) => {
     const options = convertOptions(input.flags).sandhi;
     return input.texts.map((text) => {
-      const word = readWord(text);
-      if (word === undefined) {
+      // Whitespace is the only word boundary written pinyin has, and third-tone
+      // sandhi needs it: 行長很喜歡 is `hángzhǎng hén xǐhuan`, where a scan that
+      // could not see the boundary would lower the 長 as well.
+      const words = text
+        .split(/\s+/u)
+        .filter((part) => part !== "")
+        .map((part) => readWord(part));
+      if (words.length === 0 || words.some((word) => word === undefined)) {
         return {
           lines: [`${text}  not readable as pinyin`],
           data: { text, read: false },
         };
       }
-      const said = applySandhi(word, options);
+      const read = words.filter((word) => word !== undefined);
+      const said = applySandhi(
+        read.flat(),
+        options,
+        read.map((word) => word.length),
+      );
       return {
         lines: [`${text}  ${written(said, input.paint)}`],
         data: { text, read: true, pinyin: written(said, PLAIN) },

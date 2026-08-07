@@ -11,6 +11,32 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **Third-tone sandhi ran over the syllables rather than over the feet.** The
+  rule is usually stated as "a third tone before another third tone is said as
+  a second", and a left-to-right scan of a reading applying exactly that is
+  wrong about as often as it is right: sandhi's domain is the prosodic foot,
+  which is built out of structure ([Shih 1986][1]). 這家銀行的行長很喜歡旅行
+  came out `hángzháng hén xǐhuan`, running the subject into the predicate, and
+  紙老虎 came out `zhíláohǔ`.
+
+  Three passes now, innermost first, each reading what the one before it left.
+  Inside a constituent, every third tone but the last lowers. Between the
+  constituents of a word, so that 展覽館 is 展覽 + 館 and stays `zhánlánguǎn`
+  while 紙老虎 is 紙 + 老虎 and becomes `zhǐláohǔ` — the dictionary is asked
+  where a word divides, and only proposes one where both halves are words. And
+  between a monosyllabic word and the word after it, which it leans on: 我也很好
+  is `wó yé hén hǎo`, but 行長 and 老闆 keep their second syllable.
+
+  `applySandhi` takes a `SandhiGrouping` for this, and without one still treats
+  the whole reading as a single word. `convert` passes what the decoder found;
+  the `sandhi` command splits its argument on whitespace.
+
+  What is given up is the monosyllable leaning backwards — 保管好 is
+  `báoguán hǎo` and comes out `báoguǎn hǎo` — which needs to know which way it
+  attaches, a question about syntax rather than about the words.
+
+  [1]: https://www.researchgate.net/publication/36071823_The_Prosodic_Domain_of_Tone_Sandhi_in_Chinese
+
 - **14 characters read wrongly under `zh-TW`.** CC-CEDICT states a `Taiwan pr.`
   note either as a definition of its own, where it qualifies the headword's
   reading, or parenthesised inside one sense, where it qualifies that sense —

@@ -1016,6 +1016,32 @@ describe("the examples in docs/", () => {
         "hén hǎo",
       );
     });
+
+    it("applies the third tone over feet rather than syllables", () => {
+      const said = { sandhi: { thirdTone: true } };
+      assertIdentical(convert(dictionary, "展览馆", said), "zhánlánguǎn");
+      assertIdentical(convert(dictionary, "纸老虎", said), "zhǐláohǔ");
+      assertIdentical(convert(dictionary, "老板很好", said), "láobǎn hén hǎo");
+      assertIdentical(convert(dictionary, "我也很好", said), "wó yé hén hǎo");
+      assertIdentical(
+        convert(dictionary, "这家银行的行长很喜欢旅行。", said),
+        "Zhè jiā yínháng de hángzhǎng hén xǐhuan lǚxíng.",
+      );
+      // And the one the page names as given up: 好 leans backwards onto 保管.
+      assertIdentical(convert(dictionary, "保管好", said), "báoguǎn hǎo");
+    });
+
+    it("takes a grouping where the reading alone does not say", () => {
+      const reading = readWord("hángzhǎnghěnxǐhuan") ?? [];
+      assertIdentical(
+        written(applySandhi(reading, { thirdTone: true })),
+        "háng zháng hén xǐ huan",
+      );
+      assertIdentical(
+        written(applySandhi(reading, { thirdTone: true }, [2, 1, 2])),
+        "háng zhǎng hén xǐ huan",
+      );
+    });
   });
 
   describe("scripts-and-locales", () => {

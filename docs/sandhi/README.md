@@ -105,16 +105,68 @@ applySandhi(henHao); // hěn hǎo
 applySandhi(henHao, { thirdTone: true }); // hén hǎo
 ```
 
+### Its domain is the foot, not the syllable string
+
+Stated as "a third tone before another third tone", the rule is wrong about as
+often as it is right. What it actually applies inside is the prosodic foot, and
+feet are built out of structure — the standard reference is
+[Shih 1986](https://www.researchgate.net/publication/36071823_The_Prosodic_Domain_of_Tone_Sandhi_in_Chinese),
+and the work since finds sandhi obligatory within a foot and progressively more
+optional across larger prosodic boundaries.
+
+Three things follow, and a left-to-right scan of the syllables gets all three
+wrong:
+
+```ts
+const said = { sandhi: { thirdTone: true } };
+convert(dictionary, "展览馆", said); // "zhánlánguǎn", 展览 + 馆
+convert(dictionary, "纸老虎", said); // "zhǐláohǔ", 纸 + 老虎
+convert(dictionary, "老板很好", said); // "láobǎn hén hǎo"
+```
+
+1. **Inside a word, the division decides.** 展覽館 is 展覽 + 館, so 覽 lowers
+   against 館. 紙老虎 is 紙 + 老虎, so 老 lowers against 虎 first and 紙 is left
+   facing a second tone with nothing to assimilate to. The dictionary is asked
+   where a word divides: a division is proposed only where **both halves are
+   words in their own right**, and the most even one wins.
+2. **A monosyllabic word leans on the word after it** and joins its foot, which
+   is what lowers the 很 of 很喜歡 and the 我 and 也 of 我也很好 — `wó yé hén hǎo`.
+3. **Two full words are two feet.** 行長 and 很喜歡 do not form one, so
+   這家銀行的行長很喜歡旅行 is `hángzhǎng hén xǐhuan` and not `hángzháng hén`.
+
+What that gives up is the monosyllable leaning **backwards**: 保管好 is
+`báoguán hǎo`, its 好 a complement of the verb in front of it, and this writes
+`báoguǎn hǎo`. Telling that apart from 老闆很好 means knowing which way the
+monosyllable attaches, which is a question about syntax rather than about the
+words themselves.
+
 ## Across word boundaries
 
 Because the pass runs over the syllable array rather than per word, a sandhi
 trigger works across a boundary the decoder put in. 不 followed by a fourth
 tone in the next word still flattens.
 
+一 and 不 assimilate to whatever follows and need nothing but the syllables.
+Third-tone sandhi needs to know where the words are, so `convert` passes the
+grouping the decoder found. Calling `applySandhi` directly with only a reading
+takes the whole of it for one word, which is all a bare reading says; pass a
+`SandhiGrouping` where you know better:
+
+```ts
+const reading = readWord("hángzhǎnghěnxǐhuan") ?? [];
+applySandhi(reading, { thirdTone: true }); // háng zháng hén xǐ huan
+applySandhi(reading, { thirdTone: true }, [2, 1, 2]); // háng zhǎng hén xǐ huan
+```
+
+One entry per word: its syllable count, or the counts of the parts it divides
+into, as `[[1, 2]]` for 紙老虎. A grouping that does not account for exactly the
+syllables given is ignored. The `sandhi` command splits its argument on
+whitespace to get one, since that is the only boundary written pinyin has.
+
 ## Options
 
-`applySandhi(syllables, options?)` takes the same object as the `sandhi` field
-of [`ConvertOptions`](../options/#sandhi):
+`applySandhi(syllables, options?, grouping?)` takes the same object as the
+`sandhi` field of [`ConvertOptions`](../options/#sandhi):
 
 | Field       | Default | Does                         |
 | ----------- | ------- | ---------------------------- |
