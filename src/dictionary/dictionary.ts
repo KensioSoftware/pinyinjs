@@ -1,4 +1,5 @@
 import { toCharacters } from "../script/characters.js";
+import { toCanonicalGlyphs } from "../script/glyphs.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { decodeReading, type DictionaryArtifact } from "./artifact.js";
 import { FrequencyTable } from "./frequency-table.js";
@@ -64,7 +65,14 @@ export interface WordEntry {
  * far more than the lookups a page ever performs.
  *
  * A word is found under either script: 繁體 forms are keys in their own right,
- * so nothing is converted on the lookup path. See SCRIPTS-AND-LOCALES.md.
+ * so no 简体 ↔ 繁體 conversion happens on the lookup path. See
+ * SCRIPTS-AND-LOCALES.md for why that shortcut would destroy accuracy.
+ *
+ * Regional 繁體 glyph forms *are* normalised here, and that is a different
+ * thing: 裏 and 裡 are the same character in two standards with one reading, so
+ * folding them together loses nothing and is what lets Hong Kong text find keys
+ * at all. Only the reading is taken from the normalised form — callers keep the
+ * characters the text was written with.
  */
 export class Dictionary {
   /**
@@ -172,14 +180,20 @@ export class Dictionary {
    * is what lets a scan stop as soon as no word can extend.
    */
   hasPrefix(text: string): boolean {
-    return this.#index.hasPrefix(text);
+    return this.#index.hasPrefix(toCanonicalGlyphs(text));
   }
 
   /**
    * The entry for a word under either script, or undefined.
+   *
+   * A 繁體 word written in Hong Kong's glyph forms is normalised to the
+   * Taiwan-standard forms the keys are built from, so 裏面 and 看着 find the
+   * entries for 裡面 and 看著 rather than falling back to their characters. The
+   * entry names the canonical spelling; the caller keeps the original text.
    */
   lookup(word: string): WordEntry | undefined {
-    const found = this.#index.lookup(word);
+    const canonical = toCanonicalGlyphs(word);
+    const found = this.#index.lookup(canonical);
     if (!found.isKey) {
       return undefined;
     }
@@ -187,7 +201,7 @@ export class Dictionary {
     if (held !== undefined) {
       return held;
     }
-    const entry = this.#decode(word, found.index);
+    const entry = this.#decode(canonical, found.index);
     this.#decoded.set(found.index, entry);
     return entry;
   }

@@ -11,11 +11,17 @@ import { mergeSources } from "../../src/dictionary/merge.js";
 import { selectTier, TIERS } from "../../src/dictionary/tiers.js";
 import { parseCedict } from "../../src/sources/cedict.js";
 import { parseJiebaDictionary } from "../../src/sources/jieba.js";
+import { parseOpenCcTable } from "../../src/sources/opencc.js";
 import { parsePhrasePinyin } from "../../src/sources/phrase-pinyin.js";
 import {
   parseUnihanReadings,
   parseUnihanVariants,
 } from "../../src/sources/unihan.js";
+import {
+  checkGlyphTables,
+  countCharacters,
+  deriveGlyphTables,
+} from "./glyph-tables.js";
 import {
   DATA_DIR,
   fetchSources,
@@ -73,6 +79,36 @@ report(
     `phrase corpus ${String(sources.phrase.size)}, ` +
     `CC-CEDICT ${String(sources.cedict.length)}, ` +
     `jieba ${String(sources.jieba.size)}`,
+);
+
+// The glyph tables live in src/ as code, so nothing but this would notice an
+// OpenCC release moving a character between the two standards.
+report("checking glyph form tables");
+const glyphTables = deriveGlyphTables(
+  parseOpenCcTable(await readSource(SOURCE_FILES.taiwanVariants)),
+  parseOpenCcTable(await readSource(SOURCE_FILES.hongKongVariants)),
+  // Both columns, not only the 繁體 one. Many Hong Kong standard forms are
+  // also the mainland 简体 form — 温, 脱, 着, 户 — because the PRC simplification
+  // adopted the same 新字形 conventions Hong Kong did. Normalising those would
+  // corrupt 简体 text, which is how 走着 caught this.
+  countCharacters(
+    sources.cedict.flatMap((entry) => [entry.traditional, entry.simplified]),
+  ),
+);
+const glyphFailures = checkGlyphTables(glyphTables);
+if (glyphFailures.length > 0) {
+  for (const failure of glyphFailures) {
+    report(`FAILED: ${failure}`);
+  }
+  throw new Error(
+    `${String(glyphFailures.length)} glyph form table(s) have drifted from OpenCC; ` +
+      `update src/script/glyphs.ts`,
+  );
+}
+report(
+  `  ${String(glyphTables.canonical.size)} normalisations, ` +
+    `${String(glyphTables.hongKong.size)} Hong Kong forms, ` +
+    `${String(glyphTables.excluded.length)} excluded as current`,
 );
 
 report("merging");
@@ -156,7 +192,9 @@ const manifest: Record<string, TierManifest> = Object.fromEntries(
 const manifestJson = JSON.stringify(
   {
     tiers: manifest,
-    sources: SOURCES.map((source) => source.url),
+    sources: SOURCES.flatMap((source) =>
+      source.downloads.map((file) => file.url),
+    ),
     rejected: merged.rejected.size,
   },
   undefined,
@@ -213,7 +251,9 @@ const notice = [
   ...SOURCES.flatMap((source) => [
     `## ${source.name}`,
     "",
-    `Source:   ${source.url}`,
+    ...source.downloads.map((file, at) =>
+      at === 0 ? `Source:   ${file.url}` : `          ${file.url}`,
+    ),
     `Licence:  ${source.licence}`,
     `Provides: ${source.provides}`,
     "",

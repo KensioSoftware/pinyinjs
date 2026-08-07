@@ -128,7 +128,7 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // ── Orthography: particles, affixes, measure words ─────────
   { hanzi: "我的书", pinyin: "wǒ de shū", script: "Hans", tags: ["orthography", "particle"] },
   { hanzi: "他看了", pinyin: "tā kànle", script: "Hans", tags: ["orthography", "particle"] },
-  { hanzi: "走着", pinyin: "zǒuzhe", script: "Hans", tags: ["orthography", "particle"] },
+  { hanzi: "走着", pinyin: "zǒuzhe", script: "Hans", tags: ["orthography", "particle", "glyph-forms"] },
   { hanzi: "一个人", pinyin: "yí gè rén", script: "Hans", tags: ["orthography", "sandhi-yi"] },
   { hanzi: "桌子", pinyin: "zhuōzi", script: "Hans", tags: ["orthography", "neutral-tone"] },
   { hanzi: "现代化", pinyin: "xiàndàihuà", script: "Hans", tags: ["orthography"] },
@@ -188,6 +188,20 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "幹部", pinyin: "gànbù", script: "Hant", tags: ["traditional", "merge"] },
   { hanzi: "麵包", pinyin: "miànbāo", script: "Hant", tags: ["traditional", "merge"] },
   { hanzi: "後來", pinyin: "hòulái", script: "Hant", tags: ["traditional", "merge"] },
+
+  // ── Hong Kong glyph forms ─────────────────────────────────
+  // 常用字字形表 against Taiwan's 教育部標準字體. Same characters, same
+  // readings, different standard forms — so each of these must read exactly as
+  // its Taiwan spelling does. None of them is a dictionary key: they resolve
+  // because the lookup path normalises 繁體 glyph forms. See glyphs.ts.
+  { hanzi: "羣眾", pinyin: "qúnzhòng", script: "Hant", tags: ["traditional", "glyph-forms"] },
+  { hanzi: "麪包", pinyin: "miànbāo", script: "Hant", tags: ["traditional", "glyph-forms"] },
+  { hanzi: "裏面", pinyin: "lǐmiàn", script: "Hant", tags: ["traditional", "glyph-forms"] },
+  { hanzi: "衞生", pinyin: "wèishēng", script: "Hant", tags: ["traditional", "glyph-forms"] },
+  { hanzi: "鑰匙", pinyin: "yàoshi", script: "Hant", tags: ["traditional", "glyph-forms"] },
+  // 温 is excluded from normalisation because it is also a 简体 character. So is
+  // 着, which 走着 above already covers — that case is why the rule exists.
+  { hanzi: "温度", pinyin: "wēndù", script: "Hans", tags: ["glyph-forms"] },
 
   // ── Locale readings ───────────────────────────────────────
   { hanzi: "垃圾", pinyin: "lājī", script: "Hans", locale: "zh-CN", tags: ["locale"] },

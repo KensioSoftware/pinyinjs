@@ -32,6 +32,15 @@ Source:   https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt
 Licence:  MIT, though the dictionary's own provenance is not documented upstream; recorded here as an accepted unknown
 Provides: word frequencies and the part-of-speech tags that mark proper nouns
 
+## OpenCC
+
+Source:   https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/STCharacters.txt
+          https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TSCharacters.txt
+          https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TWVariants.txt
+          https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/HKVariants.txt
+Licence:  Apache-2.0
+Provides: the 简体 ↔ 繁體 character tables, and the Taiwan and Hong Kong glyph form tables that separate 裡 from 裏 and 群 from 羣
+
 ## Comparison of Standard Chinese transcription systems (Wikipedia)
 
 Source:   https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcription_systems

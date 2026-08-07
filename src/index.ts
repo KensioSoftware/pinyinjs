@@ -289,6 +289,17 @@ export {
 export type { Locale, Script } from "./script/script.js";
 
 export {
+  DEFAULT_REGION,
+  isReadingSensitive,
+  REGIONS,
+  toCanonicalGlyph,
+  toCanonicalGlyphs,
+  toRegionalGlyph,
+  toRegionalGlyphs,
+} from "./script/glyphs.js";
+export type { Region } from "./script/glyphs.js";
+
+export {
   ATTESTED_SYLLABLES,
   DICTIONARY_SYLLABLES,
   isAttestedTone,

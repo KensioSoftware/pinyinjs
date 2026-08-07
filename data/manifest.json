@@ -29,7 +29,11 @@
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
     "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
     "https://raw.githubusercontent.com/mozillazg/phrase-pinyin-data/master/large_pinyin.txt",
-    "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt"
+    "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt",
+    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/STCharacters.txt",
+    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TSCharacters.txt",
+    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TWVariants.txt",
+    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/HKVariants.txt"
   ],
   "rejected": 137
 }
