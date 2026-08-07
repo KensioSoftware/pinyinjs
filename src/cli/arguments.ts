@@ -272,7 +272,13 @@ const TIERS: readonly Tier[] = ["core", "standard", "full"];
  * different syllables in each.
  */
 export type TranscriptionSource =
-  "auto" | "pinyin" | "wade-giles" | "bopomofo" | "yale" | "gwoyeu" | "ipa";
+  | "auto"
+  | "pinyin"
+  | "wade-giles"
+  | "bopomofo"
+  | "yale"
+  | "gwoyeu"
+  | "ipa";
 
 const SOURCES: readonly TranscriptionSource[] = [
   "auto",

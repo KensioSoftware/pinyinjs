@@ -19,10 +19,8 @@ export function fileSource(directory: string): DictionarySource {
     // than a defect: a loader that could only read a literal path would have
     // nothing to offer. `name` is not user input — it comes from `tierFiles`,
     // which returns a fixed set of artifact names.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
     text: async (name) => readFile(path.join(directory, name), "utf8"),
     bytes: async (name) =>
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       new Uint8Array(await readFile(path.join(directory, name))),
   };
 }

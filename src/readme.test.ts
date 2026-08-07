@@ -685,7 +685,6 @@ describe("the examples in README.md", () => {
       });
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      // eslint-disable-next-line no-restricted-syntax
       assertIdentical(empty.size, 0);
     });
   });

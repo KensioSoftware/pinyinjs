@@ -10,6 +10,18 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Worker threads rather than child processes, and one module graph per
+    // worker rather than one per file. Nothing here needs a process of its
+    // own, and the 2.4 MB dictionary is the bulk of the run: loading it once
+    // per worker instead of once per test file takes the suite's import cost
+    // from about 9 s of worker time to about 5 s.
+    //
+    // The trade is that test files sharing a worker also share module state,
+    // so a module-level cache one file warms is warm for the next. Everything
+    // here either builds its own fixtures or reads the dictionary read-only;
+    // `restoreMocks` below undoes the rest.
+    pool: "threads",
+    isolate: false,
     typecheck: {
       tsconfig: "./tsconfig.json",
     },

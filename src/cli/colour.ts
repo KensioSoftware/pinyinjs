@@ -133,7 +133,7 @@ export function painterFor(depth: ColourDepth): Painter {
  * reads and a reader never sees — so `no-control-regex` has nothing to say
  * here.
  */
-// eslint-disable-next-line no-control-regex
+// oxlint-disable-next-line no-control-regex
 const ESCAPES = /\u{1B}\[[\d;]*m/gu;
 
 /**

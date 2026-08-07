@@ -28,7 +28,7 @@ describe("tone", () => {
       assertFalse(isTone(6));
       assertFalse(isTone(-1));
       assertFalse(isTone(2.5));
-      assertFalse(isTone(NaN));
+      assertFalse(isTone(Number.NaN));
     });
   });
 

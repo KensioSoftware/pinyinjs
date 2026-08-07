@@ -1,0 +1,222 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+
+  // Oxlint replaces the ESLint stack this package used to run. It covers the
+  // same ground roughly ten times faster, including the type-aware
+  // typescript-eslint rules, which it delegates to `oxlint-tsgolint`.
+  //
+  // Four things ESLint checked have no oxlint equivalent and are gone:
+  // `@typescript-eslint/naming-convention`, `jsdoc/require-jsdoc` and
+  // `jsdoc/require-description`, `eslint-plugin-security` plus
+  // `eslint-plugin-no-secrets`, and the `no-restricted-syntax` selectors
+  // `@kensio/smartass` ships to steer towards specific assertions.
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "vitest", "jsdoc"],
+
+  // Every category on, then pared back below. The alternative — naming all
+  // ~440 rules the old config resolved to — is the same set written at fifteen
+  // times the length, and it goes stale silently as oxlint adds rules.
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error",
+    "style": "error"
+  },
+
+  "options": { "typeAware": true },
+
+  "ignorePatterns": [
+    "dist/",
+    "coverage/",
+    "test/.coverage/",
+    "node_modules/",
+    "scripts/sh/",
+    "data/",
+    ".cache/",
+    "**/*.config.ts"
+  ],
+
+  "rules": {
+    // ── Enforced before, and not in a category above ────────
+    // Oxlint files these under `restriction`, which is off here because most
+    // of what is in there — magic numbers, readonly parameter types, banning
+    // ternaries — this repo does not want. These are the ones it does: the
+    // rest of typescript-eslint's `strictTypeChecked`, of unicorn's
+    // recommended set, and of the old config's own additions.
+    "typescript/explicit-function-return-type": "error",
+    "typescript/explicit-module-boundary-types": "error",
+    "typescript/no-dynamic-delete": "error",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-import-type-side-effects": "error",
+    "typescript/no-invalid-void-type": "error",
+    "typescript/no-namespace": "error",
+    "typescript/no-non-null-asserted-nullish-coalescing": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/non-nullable-type-assertion-style": "error",
+    "typescript/prefer-literal-enum-member": "error",
+    "typescript/prefer-optional-chain": "error",
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+    "eslint/no-empty": "error",
+    "eslint/no-empty-function": "error",
+    "eslint/no-param-reassign": "error",
+    "eslint/no-regex-spaces": "error",
+    "eslint/no-unreachable-loop": "error",
+    "eslint/no-useless-assignment": "error",
+    "eslint/no-var": "error",
+    "jsdoc/check-access": "error",
+    "jsdoc/empty-tags": "error",
+    "unicorn/import-style": "error",
+    "unicorn/no-abusive-eslint-disable": "error",
+    "unicorn/no-anonymous-default-export": "error",
+    "unicorn/no-array-reduce": "error",
+    "unicorn/no-document-cookie": "error",
+    "unicorn/no-magic-array-flat-depth": "error",
+    "unicorn/no-process-exit": "error",
+    "unicorn/no-useless-error-capture-stack-trace": "error",
+    "unicorn/no-useless-iterator-to-array": "error",
+    "unicorn/prefer-modern-math-apis": "error",
+    "unicorn/prefer-module": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/prefer-number-properties": "error",
+    // `unicorn/no-named-default` has no oxlint port outside the import
+    // plugin, which is not worth enabling for it alone.
+
+    // ── Kept from the old config ────────────────────────────
+    "eslint/no-console": "warn",
+    "typescript/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+    ],
+    "typescript/consistent-type-exports": [
+      "error",
+      { "fixMixedExportsWithInlineTypeSpecifier": true }
+    ],
+
+    // The base rule cannot see that an `async` method is satisfying a
+    // Promise-returning contract; the typescript one can, and is what the old
+    // config ran.
+    "eslint/require-await": "off",
+    "typescript/require-await": "error",
+
+    // ── Rules the ESLint config never enforced ──────────────
+    // Everything below was off — through eslint-config-prettier, through not
+    // being in a preset the old config extended, or by an explicit `"off"`.
+    // Turning them on is a separate decision from switching linters.
+
+    // House style. Enabling any of these is a repo-wide rewrite.
+    "eslint/capitalized-comments": "off",
+    "eslint/func-style": "off",
+    "eslint/id-length": "off",
+    "eslint/init-declarations": "off",
+    "eslint/no-continue": "off",
+    "eslint/no-inline-comments": "off",
+    "eslint/no-magic-numbers": "off",
+    "eslint/no-ternary": "off",
+    "eslint/prefer-destructuring": "off",
+    "eslint/sort-imports": "off",
+    "eslint/sort-keys": "off",
+    "eslint/arrow-body-style": "off",
+    "eslint/new-cap": "off",
+    "eslint/no-duplicate-imports": "off",
+    "eslint/no-shadow": "off",
+    "eslint/prefer-named-capture-group": "off",
+
+    // A bare `return;` reads as "no value here" and is used deliberately, in
+    // callbacks that map to `undefined` as much as anywhere else.
+    "eslint/array-callback-return": "off",
+    "eslint/no-useless-return": "off",
+
+    // Nested ternaries are laid out by the formatter, which is why
+    // eslint-config-prettier used to switch both of these off.
+    "eslint/no-nested-ternary": "off",
+    "unicorn/no-nested-ternary": "off",
+    "unicorn/number-literal-case": "off",
+
+    "unicorn/custom-error-definition": "off",
+    "unicorn/prefer-import-meta-properties": "off",
+
+    // Oxlint's copy of this rule still asks for `[...text]` over
+    // `text.split("")`, which the type-aware `no-misused-spread` then rejects —
+    // rightly, for a package whose strings are hanzi and whose rare characters
+    // are surrogate pairs. Current eslint-plugin-unicorn dropped that check.
+    "unicorn/prefer-spread": "off",
+
+    // Size and complexity are gated by fta.json, against a score that accounts
+    // for what the code is doing rather than how many lines it takes.
+    "eslint/max-lines": "off",
+    "eslint/max-lines-per-function": "off",
+    "eslint/max-params": "off",
+    "eslint/max-statements": "off",
+
+    // Not in typescript-eslint's strict or stylistic presets.
+    "typescript/consistent-return": "off",
+    "typescript/no-unsafe-type-assertion": "off",
+    "typescript/prefer-readonly-parameter-types": "off",
+
+    // Immutable `.map((x) => ({ ...x, y }))` is the shape this package's
+    // pipelines are built from; the rule's advice is to mutate instead.
+    "oxc/no-map-spread": "off",
+
+    // The vitest plugin has no file scoping of its own, so these have to be
+    // switched off for the whole tree; the rules kept for tests are turned
+    // back on in the `**/*.test.ts` override below.
+    //
+    // Assertions come from @kensio/smartass, which vitest's own rules cannot
+    // see, so anything counting `expect` calls is noise.
+    "vitest/expect-expect": "off",
+    "vitest/prefer-expect-assertions": "off",
+    "vitest/no-conditional-in-test": "off",
+    "vitest/no-importing-vitest-globals": "off",
+    "vitest/prefer-describe-function-title": "off",
+    "vitest/prefer-each": "off",
+    "vitest/prefer-lowercase-title": "off",
+    "vitest/require-hook": "off",
+
+    // Prose in a doc comment is the point. The tags are optional.
+    "jsdoc/require-param": "off",
+    "jsdoc/require-param-description": "off",
+    "jsdoc/require-returns": "off",
+    "jsdoc/require-returns-description": "off",
+    "jsdoc/require-throws-description": "off",
+    "jsdoc/require-yields": "off",
+    "jsdoc/require-yields-description": "off"
+  },
+
+  "overrides": [
+    {
+      // ── Tests ───────────────────────────────────────────
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "vitest/consistent-test-it": ["error", { "fn": "it" }],
+        "vitest/no-focused-tests": "error",
+        "vitest/no-disabled-tests": "warn",
+        "vitest/no-duplicate-hooks": "error",
+        "vitest/prefer-to-be": "error",
+        "vitest/prefer-to-have-length": "error",
+        "vitest/prefer-strict-equal": "error",
+        "vitest/require-top-level-describe": "error",
+
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/explicit-function-return-type": "off",
+        "unicorn/no-null": "off",
+        // An explicit `undefined` argument is often the case under test.
+        "unicorn/no-useless-undefined": "off"
+      }
+    },
+    {
+      // ── CLI entry point (stdout is the interface) ───────
+      "files": ["src/cli/**/*.ts"],
+      "rules": { "eslint/no-console": "off" }
+    },
+    {
+      // ── Build scripts ───────────────────────────────────
+      "files": ["scripts/**/*.ts"],
+      "rules": { "eslint/no-console": "off" }
+    }
+  ]
+}
