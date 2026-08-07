@@ -109,7 +109,7 @@ entry?.taiwanReading; // lè sè
 `taiwanReading` is absent where the readings do not differ, which is the
 overwhelming majority of entries.
 
-Sources for the two: CC-CEDICT's inline `Taiwan pr.` annotations give 349
+Sources for the two: CC-CEDICT's inline `Taiwan pr.` annotations give 335
 readings and Unihan's dual `kMandarin` values give 35, with a further 101
 composed from a compound's constituents.
 
@@ -138,6 +138,37 @@ A note is also only read off a sense that matches the reading the entry settled
 on. `Taiwan pr. [zhuo2]` sits on 著's chess-move sense, which reads `zhāo`;
 reaching across for it gave the aspect particle 着 a 國語 reading of `zhuó`, and
 15 more characters and a word one just as unrelated.
+
+### A note on a sense is not a note on the character
+
+The sense test above catches a note offering a reading the word has some other
+way. It cannot catch one that offers a reading the word only has in a sense it
+never carries alone. CC-CEDICT states the difference by where the note sits:
+
+```
+髮 发 [fa4] /hair/Taiwan pr. [fa3]/                    ← its own definition: the entry
+和 和 [he2] /(joining two nouns) and; … (Taiwan pr.    ← inside the leading sense
+           [han4])/(math.) sum/…
+從 从 [cong2] /from; through; via/…/(bound form)       ← inside a later sense
+           (Taiwan pr. [zong4]) retainer; attendant/…
+```
+
+教育部's dictionary agrees with CC-CEDICT about which senses of 從 are `zòng`:
+侍從, 從兄弟 and 從犯, all of them bound forms. 跟隨, 依順, 參與 and the
+preposition are `cóng` in Taipei exactly as in Beijing — but the delta was read
+off the whole headword, so `我從北京來` came out as `wǒ zòng Běijīng lái`.
+
+A character's entry is what every occurrence no longer word covers falls back
+to, so it has to carry the reading that survives out of context, which is the
+one the entry leads with. A note on a later sense is dropped, and that is 14
+characters: 從, 會 (`huǐ`, only 一會兒), 勞 (`lào`, only 慰勞), 燥 (`sào`, only
+肉燥), 行 (`xìng`, only 品行), and 勝, 匹, 多, 抵, 枕, 比, 玩, 署, 聽. The
+compounds themselves keep theirs, so 肉燥麵 is still `ròusào miàn`.
+
+Only a character is tested this way. A multi-character headword is reached only
+where that exact word is written, and the four that carry a note inside a sense
+are 相親, 載具, 高挑 and 樂色 — of which only 相親 has senses that differ, its
+dominant one being the matchmaking meeting that really is `xiàngqīn`.
 
 ### A compound inherits its constituents' delta
 

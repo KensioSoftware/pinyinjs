@@ -601,6 +601,64 @@ describe("merging the sources", () => {
       );
     });
 
+    it("refuses a character's note that sits on a later sense", () => {
+      // 從's `zòng` is the 侍從 and 從兄弟 senses, all of them bound forms. The
+      // character on its own is `cóng` in Taipei as in Beijing, and taking the
+      // note made 我从北京来 read `wǒ zòng Běijīng lái`.
+      const { byWord } = merge({
+        phrase: new Map([["从", ["cóng"]]]),
+        cedict: [
+          cedictEntry("從", "从", "cong2", {
+            taiwanReadings: ["zong4"],
+            taiwanScope: "sense",
+          }),
+        ],
+      });
+      assertUndefined(byWord.get("从")?.readings.tw);
+    });
+
+    it("keeps a character's note where the entry leads with it", () => {
+      // 和's `hàn` is the conjunction, which is what a bare 和 nearly always is.
+      const { byWord } = merge({
+        phrase: new Map([["和", ["hé"]]]),
+        cedict: [
+          cedictEntry("和", "和", "he2", {
+            taiwanReadings: ["han4"],
+            taiwanScope: "leading",
+          }),
+        ],
+      });
+      assertIdentical(
+        byWord
+          .get("和")
+          ?.readings.tw?.map((s) => writeSyllable(s))
+          .join(""),
+        "hàn",
+      );
+    });
+
+    it("keeps a sense-scoped note on a word", () => {
+      // A word is only reached where it is written, so its dominant sense is
+      // the one that matters: 相親 is the matchmaking meeting far more often
+      // than it is 彼此親近.
+      const { byWord } = merge({
+        phrase: new Map([["相亲", ["xiāng", "qīn"]]]),
+        cedict: [
+          cedictEntry("相親", "相亲", "xiang1 qin1", {
+            taiwanReadings: ["xiang4", "qin1"],
+            taiwanScope: "sense",
+          }),
+        ],
+      });
+      assertIdentical(
+        byWord
+          .get("相亲")
+          ?.readings.tw?.map((s) => writeSyllable(s))
+          .join(" "),
+        "xiàng qīn",
+      );
+    });
+
     it("ignores a note hung on a sense that reads otherwise", () => {
       // CC-CEDICT marks `Taiwan pr. [zhuo2]` on 著's chess-move sense, which
       // reads `zhāo`. The aspect particle knows nothing about it.

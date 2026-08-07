@@ -11,6 +11,21 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Fixed
 
+- **14 characters read wrongly under `zh-TW`.** CC-CEDICT states a `Taiwan pr.`
+  note either as a definition of its own, where it qualifies the headword's
+  reading, or parenthesised inside one sense, where it qualifies that sense —
+  and the merge took both as facts about the headword. 從's `zòng` is the 侍從
+  and 從兄弟 senses, all of them bound forms, so `我從北京來` read
+  `wǒ zòng Běijīng lái`; 會 took `huǐ` from 一會兒 and `很會說話` followed it.
+  A note now has to cover the sense the entry leads with, which is what a
+  character means with nothing to narrow it — 和's `hàn` is the conjunction, and
+  it stays. Also fixed for 勞, 燥, 行, 勝, 匹, 多, 抵, 枕, 比, 玩, 署 and 聽.
+  Compounds keep their own notes, so 肉燥麵 is still `ròusào miàn`.
+
+  Only a character is tested this way; a word is reached only where it is
+  written, so 相親 keeps the `xiàngqīn` its dominant sense carries. CC-CEDICT
+  now supplies 335 deltas rather than 349.
+
 - **240 dictionary entries could not be looked up at all.** Recognising Hong
   Kong glyph forms on the lookup path means a key written in a form the path
   normalises _away from_ can never be found, and the merge derived 繁體 forms
@@ -352,14 +367,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 124-case gold corpus, which is committed to the repository rather than
+Over the 126-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.6%** |           88.7% |
-| reading accuracy |     99.7% |           98.3% |
-| spacing (F1)     | **99.8%** |           96.4% |
+| exact match      | **97.6%** |           88.9% |
+| reading accuracy |     99.7% |           98.4% |
+| spacing (F1)     | **99.8%** |           96.5% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is

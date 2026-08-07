@@ -297,6 +297,37 @@ function isOwnSense(
 }
 
 /**
+ * Whether a character's `Taiwan pr.` note describes one sense rather than the
+ * character.
+ *
+ * The other half of the sense test, and the one {@link isOwnSense} cannot do.
+ * That test asks whether the offered reading is a 普通话 sense of the word; this
+ * asks whether the note was ever about the whole word to begin with. 從's
+ * `Taiwan pr. [zong4]` sits on three of its eight senses — 侍從, 從兄弟, 從犯 —
+ * and 教育部's dictionary agrees with CC-CEDICT about which: 跟隨, 依順, 參與 and
+ * the preposition are `cóng` in Taipei exactly as they are in Beijing. Applying
+ * it to the headword made 我从北京来 read `wǒ zòng Běijīng lái`. 會 (`huǐ`, only
+ * 一會兒), 勞 (`lào`, only 慰勞) and 燥 (`sào`, only 肉燥) are the same shape.
+ *
+ * A note the entry leads with is kept, because the leading sense is what the
+ * character means with nothing to narrow it: 和's `hàn` is on the conjunction,
+ * which is what a bare 和 almost always is.
+ *
+ * **Only a character is tested this way.** Its entry is what every occurrence
+ * no longer word covers falls back to, so it has to carry the reading that
+ * survives out of context; a multi-character headword is reached only where
+ * that exact word is written. Four of them carry an inline note — 相親, 載具,
+ * 高挑 and 樂色 — and only 相親 has senses that differ, its dominant one being
+ * the matchmaking sense that really is `xiàngqīn`.
+ */
+function isSenseScopedNote(
+  word: string,
+  sense: CedictEntry | undefined,
+): boolean {
+  return sense?.taiwanScope === "sense" && isSingleCharacter(word);
+}
+
+/**
  * Strip the tone marks from a reading, for comparing two spellings.
  */
 function tonelessReading(reading: string): string {
@@ -595,9 +626,15 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // it: 著 is marked `zhuó` on the chess-move sense that reads `zhāo`, and
     // reaching across for it gave the aspect particle 着 a 國語 reading of
     // `zhuó`.
-    const taiwanTokens = senses.find(
+    //
+    // A note can also sit on a sense of the *right* reading and still not be
+    // about the character — see `isSenseScopedNote`.
+    const taiwanSense = senses.find(
       (entry) => entry.taiwanReadings !== undefined,
-    )?.taiwanReadings;
+    );
+    const taiwanTokens = isSenseScopedNote(word, taiwanSense)
+      ? undefined
+      : taiwanSense?.taiwanReadings;
     const unihanTaiwan = unihanReadings.get(word)?.taiwanReading;
     let taiwan: readonly Syllable[] | undefined;
     if (taiwanTokens !== undefined) {

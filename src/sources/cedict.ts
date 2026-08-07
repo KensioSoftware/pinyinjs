@@ -28,15 +28,39 @@ export interface CedictEntry {
   /**
    * The zh-TW reading, where the entry notes one.
    *
-   * CC-CEDICT writes these two ways: as a definition of its own
-   * (`/Taiwan pr. [fa3]/`) and buried inside one
-   * (`/behavior; conduct (Taiwan pr. [xing4])/`). The second form belongs to
-   * that sense alone, which this cannot express, so it is reported against the
-   * whole entry.
+   * Reported against the whole entry even where the note is written inside one
+   * sense, because an entry has one reading and cannot hold a sense's. What the
+   * note actually covers is in {@link taiwanScope}, and the merge decides from
+   * there whether it reaches the headword.
    */
   readonly taiwanReadings?: readonly string[];
+  /**
+   * How much of the entry the `Taiwan pr.` note covers.
+   *
+   * Present exactly when {@link taiwanReadings} is.
+   */
+  readonly taiwanScope?: TaiwanReadingScope;
   readonly definitions: readonly string[];
 }
+
+/**
+ * How far a `Taiwan pr.` note reaches, which is written as where it sits.
+ *
+ * CC-CEDICT states a note three ways, and the difference is not decoration:
+ *
+ * - `entry` — the note is a definition of its own, as in `髮 发 [fa4] /hair/
+ *   Taiwan pr. [fa3]/`. It qualifies the headword's reading, so it covers every
+ *   sense.
+ * - `leading` — the note is parenthesised inside the first definition, as in
+ *   `和 和 [he2] /(joining two nouns) and; together with; with
+ *   (Taiwan pr. [han4])/(math.) sum/…`. It covers one sense, but the sense the
+ *   entry leads with.
+ * - `sense` — the note is parenthesised inside a later definition, as in
+ *   `從 从 [cong2] /from; through; via/…/(bound form) (Taiwan pr. [zong4])
+ *   retainer; attendant/…`. It covers one sense out of several, and not the
+ *   one the headword means on its own.
+ */
+export type TaiwanReadingScope = "entry" | "leading" | "sense";
 
 /**
  * `traditional simplified [readings] /definitions/`.
@@ -47,6 +71,41 @@ const ENTRY_LINE = /^(\S+)\s+(\S+)\s+\[([^\]]*)\]\s+\/(.*)\/\s*$/u;
  * A note giving the Taiwan reading, whether standalone or inside a definition.
  */
 const TAIWAN_READING = /Taiwan pr\. \[([^\]]+)\]/u;
+
+/**
+ * A definition that opens with a pronunciation note, rather than containing one.
+ *
+ * The distinction CC-CEDICT draws by parenthesising: a note **inside** a sense
+ * is written `(Taiwan pr. [sheng1]) able to bear`, and one that qualifies the
+ * headword's reading is written bare, as its own definition. The kind of note
+ * is not always `Taiwan pr.` — 胺 opens with `colloquial pr. [an1]; Taiwan pr.
+ * [an1]` — and the note is not always the whole definition either: 帆's is
+ * `Taiwan pr. [fan2], except 帆布[fan1 bu4] canvas` and 傍's offers three
+ * readings. All of those are still notes about the headword.
+ */
+const NOTE_DEFINITION = /^[\w.-]+ pr\. \[/u;
+
+/**
+ * How far an entry's `Taiwan pr.` note reaches — see {@link TaiwanReadingScope}.
+ */
+function taiwanScopeOf(
+  definitions: readonly string[],
+): TaiwanReadingScope | undefined {
+  const marked = definitions.filter((definition) =>
+    TAIWAN_READING.test(definition),
+  );
+  if (marked.length === 0) {
+    return undefined;
+  }
+  if (marked.some((definition) => NOTE_DEFINITION.test(definition))) {
+    return "entry";
+  }
+  return definitions.findIndex((definition) =>
+    TAIWAN_READING.test(definition),
+  ) === 0
+    ? "leading"
+    : "sense";
+}
 
 /**
  * The marker CC-CEDICT uses for a syllable whose pronunciation is unknown.
@@ -89,6 +148,7 @@ export function parseCedict(text: string): CedictEntry[] {
     const taiwanReadings = taiwan?.[1]
       ?.split(/\s+/u)
       .filter((reading) => reading !== "");
+    const taiwanScope = taiwanScopeOf(definitions);
 
     entries.push({
       traditional: traditional.normalize("NFC"),
@@ -96,7 +156,8 @@ export function parseCedict(text: string): CedictEntry[] {
       readings,
       isProperNoun: isCapitalised(readings[0] ?? ""),
       ...(taiwanReadings !== undefined &&
-        taiwanReadings.length > 0 && { taiwanReadings }),
+        taiwanReadings.length > 0 &&
+        taiwanScope !== undefined && { taiwanReadings, taiwanScope }),
       definitions,
     });
   }

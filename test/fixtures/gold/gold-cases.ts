@@ -217,6 +217,11 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // much as in Beijing; 都 is `dū` only as the capital city.
   { hanzi: "從容地", pinyin: "cōngróng de", script: "Hant", locale: "zh-TW", tags: ["locale", "particle"] },
   { hanzi: "他都知道", pinyin: "tā dōu zhīdào", script: "Hant", locale: "zh-TW", tags: ["locale", "polyphone"] },
+  // A character's delta that was a note on a sense the character never carries
+  // on its own. 從 is `zòng` in 侍從 and 從兄弟, all bound forms; the preposition
+  // is `cóng` in Taipei as in Beijing.
+  { hanzi: "我從北京來", pinyin: "wǒ cóng Běijīng lái", script: "Hant", locale: "zh-TW", tags: ["locale"] },
+  { hanzi: "他很會說話", pinyin: "tā hěn huì shuōhuà", script: "Hant", locale: "zh-TW", tags: ["locale"] },
   // What a real delta looks like beside them.
   { hanzi: "他和我", pinyin: "tā hàn wǒ", script: "Hant", locale: "zh-TW", tags: ["locale"] },
 ];
