@@ -1,4 +1,5 @@
 import { characterCount, isSingleCharacter } from "../script/characters.js";
+import { toCanonicalGlyphs } from "../script/glyphs.js";
 import { type CedictEntry, nameBoundariesOf } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import {
@@ -542,12 +543,17 @@ export function mergeSources(sources: MergeSources): MergeResult {
     const sense = senses[0];
     let hant: string;
     if (sense === undefined) {
-      hant = traditional.convert(aligned ?? []);
+      // Canonicalised because the derivation settles each word against Unihan's
+      // variant lists with no single standard behind it, so 里 derives as 裏
+      // where the corpus overwhelmingly writes 裡. Both are the same character
+      // with the same reading, and a key written in the form the lookup path
+      // normalises *away from* can never be found — see the note below.
+      hant = toCanonicalGlyphs(traditional.convert(aligned ?? []));
       if (hant !== word) {
         derivedTraditional++;
       }
     } else {
-      hant = sense.traditional;
+      hant = toCanonicalGlyphs(sense.traditional);
     }
     if (hant !== word) {
       scriptPairs++;
@@ -559,8 +565,22 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // them forms nobody writes — 方麵 for 方面, 公裡 for 公里 — because the
     // reading that picks the right variant for one word does not generalise to
     // every word the character appears in.
+    //
+    // Canonicalised for the same reason `hant` is, and deduplicated after:
+    // 裏面 and 裡面 are one spelling once the glyph forms are folded, and
+    // keying both would claim a variant that does not exist.
+    //
+    // The 简体 headword's own canonical spelling joins them where it differs,
+    // and that is not a nicety: the lookup path normalises 繁體 glyph forms
+    // before it searches, so a key written in a form it normalises *away from*
+    // can never be found. The phrase corpus carries a few hundred headwords
+    // spelled with 峯, 藴 or 枱 — 鹫峯寺, 义藴, 写字枱 — and without this they
+    // are entries nothing can reach.
     const hantVariants = [
-      ...new Set(senses.map((other) => other.traditional)),
+      ...new Set([
+        ...senses.map((other) => toCanonicalGlyphs(other.traditional)),
+        toCanonicalGlyphs(word),
+      ]),
     ].filter((form) => form !== hant && form !== word);
     if (hantVariants.length > 0) {
       variantSpellings++;

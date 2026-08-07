@@ -15,7 +15,7 @@ import { CANONICAL_FORMS, HONG_KONG_FORMS } from "../../src/script/glyphs.js";
 import type { OpenCcTable } from "../../src/sources/opencc.js";
 
 /**
- * How often a variant must appear in the corpus to count as current.
+ * How often a variant must appear in 繁體 to count as a live spelling.
  *
  * Both conditions have to hold, and they answer different objections: the
  * absolute floor keeps a single stray spelling from vetoing a mapping, and the
@@ -37,7 +37,18 @@ export interface GlyphTables {
 }
 
 /**
- * Count how often each character appears in a corpus of 繁體 headwords.
+ * How often each character is written, in each script's headwords.
+ *
+ * Kept apart rather than pooled, because normalising is safe or unsafe for
+ * different reasons in each — see {@link isCurrent}.
+ */
+export interface CorpusCounts {
+  readonly simplified: ReadonlyMap<string, number>;
+  readonly traditional: ReadonlyMap<string, number>;
+}
+
+/**
+ * Count how often each character appears in a corpus of headwords.
  */
 export function countCharacters(
   words: Iterable<string>,
@@ -62,7 +73,7 @@ export function countCharacters(
 export function deriveGlyphTables(
   taiwan: OpenCcTable,
   hongKong: OpenCcTable,
-  counts: ReadonlyMap<string, number>,
+  counts: CorpusCounts,
 ): GlyphTables {
   const keys = [...new Set([...taiwan.keys(), ...hongKong.keys()])].toSorted(
     byCodePoint,
@@ -118,19 +129,30 @@ function byCodePoint(left: string, right: string): number {
 }
 
 /**
- * Whether a variant is written often enough to be a live spelling.
+ * Whether a variant must be left alone rather than normalised.
  *
- * A variant the dictionary's own 繁體 column uses is not a regional form to be
- * normalised away but a word someone wrote — 台 against 臺 is the case that
- * matters, and rewriting it would corrupt legitimate text.
+ * Two tests, asking genuinely different questions, which is why they have
+ * different thresholds:
+ *
+ * - **Does 简体 write it?** Any occurrence at all vetoes the mapping. A
+ *   normalisation turns the character into a 繁體 form, and doing that to 简体
+ *   text is wrong however rare the word — 写字枱 and 义藴 are 简体 headwords
+ *   whose keys became unreachable when a frequency floor let 枱 and 藴 through.
+ * - **Is it a live 繁體 spelling?** Here a floor is right, because the question
+ *   is whether people write it rather than whether it exists. 台 appears 164
+ *   times against 臺's 208 and is plainly current; a single stray spelling is
+ *   not, and should not veto a mapping the rest of the corpus supports.
  */
 function isCurrent(
   spelling: string,
   target: string,
-  counts: ReadonlyMap<string, number>,
+  counts: CorpusCounts,
 ): boolean {
-  const variant = counts.get(spelling) ?? 0;
-  const settled = counts.get(target) ?? 0;
+  if ((counts.simplified.get(spelling) ?? 0) > 0) {
+    return true;
+  }
+  const variant = counts.traditional.get(spelling) ?? 0;
+  const settled = counts.traditional.get(target) ?? 0;
   return variant >= CURRENT_OCCURRENCES && variant > settled * CURRENT_SHARE;
 }
 
@@ -140,11 +162,12 @@ function isCurrent(
 function describeExclusion(
   spelling: string,
   target: string,
-  counts: ReadonlyMap<string, number>,
+  counts: CorpusCounts,
 ): string {
-  const variant = String(counts.get(spelling) ?? 0);
-  const settled = String(counts.get(target) ?? 0);
-  return `${spelling}(${variant}) -> ${target}(${settled})`;
+  const hans = counts.simplified.get(spelling) ?? 0;
+  const hant = counts.traditional.get(spelling) ?? 0;
+  const why = hans > 0 ? `简体 ${String(hans)}` : `繁體 ${String(hant)}`;
+  return `${spelling} -> ${target} (${why})`;
 }
 
 /**

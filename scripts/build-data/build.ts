@@ -90,13 +90,32 @@ report("checking glyph form tables");
 const glyphTables = deriveGlyphTables(
   parseOpenCcTable(await readSource(SOURCE_FILES.taiwanVariants)),
   parseOpenCcTable(await readSource(SOURCE_FILES.hongKongVariants)),
-  // Both columns, not only the 繁體 one. Many Hong Kong standard forms are
-  // also the mainland 简体 form — 温, 脱, 着, 户 — because the PRC simplification
-  // adopted the same 新字形 conventions Hong Kong did. Normalising those would
-  // corrupt 简体 text, which is how 走着 caught this.
-  countCharacters(
-    sources.cedict.flatMap((entry) => [entry.traditional, entry.simplified]),
-  ),
+  // Kept apart, because a variant 简体 writes must never be normalised however
+  // rare it is, while a variant 繁體 writes only counts when it is common. Many
+  // Hong Kong standard forms are also the mainland 简体 form — 温, 脱, 着, 户 —
+  // because the PRC simplification adopted the same 新字形 conventions Hong
+  // Kong did.
+  {
+    // Only entries whose two forms differ. A headword CC-CEDICT writes
+    // identically in both columns is a 繁體 or script-neutral word sitting in
+    // the 简体 column, not evidence that 简体 writes that character: 衞 appears
+    // there once, in an entry that is 衞 on both sides.
+    //
+    // The phrase corpus is deliberately *not* counted here, though it is
+    // nominally 简体. It carries 繁體 variant characters of its own — 峯, 藴, 枱
+    // — and letting those veto a mapping cost more than it bought: the table
+    // fell from 50 mappings to 32, and Hong Kong text stopped converting. What
+    // those entries need is the canonical spelling keyed alongside them, which
+    // is what the merge does, not a normalisation withheld from everybody.
+    simplified: countCharacters(
+      sources.cedict
+        .filter((entry) => entry.simplified !== entry.traditional)
+        .map((entry) => entry.simplified),
+    ),
+    traditional: countCharacters(
+      sources.cedict.map((entry) => entry.traditional),
+    ),
+  },
 );
 const glyphFailures = checkGlyphTables(glyphTables);
 if (glyphFailures.length > 0) {

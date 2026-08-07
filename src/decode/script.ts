@@ -188,37 +188,6 @@ function evidenceFor(
 }
 
 /**
- * Fold 繁體 output onto the canonical glyph forms before a region is applied.
- *
- * The dictionary's derived 繁體 forms are not uniform about this, because they
- * were settled per word from Unihan's variant lists rather than against a
- * single standard: 里 derives as 裏 where the corpus overwhelmingly writes 裡.
- * Both are the same character with the same reading, so folding costs nothing
- * and is what makes `zh-Hant-TW` mean Taiwan's orthography rather than whatever
- * each entry happened to inherit.
- */
-function canonicalise(
-  choices: readonly ScriptChoice[],
-  script: Script,
-): readonly ScriptChoice[] {
-  if (script === "Hans") {
-    return choices;
-  }
-  return choices.map((choice) => {
-    const to = toCanonicalGlyphs(choice.to);
-    return {
-      ...choice,
-      to,
-      // The alternatives fold too, or a word settled as 裏 would offer 裡 as a
-      // rival to the 裡 it just produced.
-      alternatives: [
-        ...new Set(choice.alternatives.map((form) => toCanonicalGlyphs(form))),
-      ].filter((form) => form !== to),
-    };
-  });
-}
-
-/**
  * Apply the regional 繁體 forms, which never change a reading.
  */
 function applyRegion(
@@ -295,12 +264,9 @@ export function toScriptPieces(
       const canonical = toCanonicalGlyphs(word.text);
       const isAligned = word.reading.length === toCharacters(canonical).length;
       const chosen = applyRegion(
-        canonicalise(
-          isSameScript
-            ? keepWord(canonical)
-            : convertWord(table, words, canonical, word.reading),
-          script,
-        ),
+        isSameScript
+          ? keepWord(canonical)
+          : convertWord(table, words, canonical, word.reading),
         word.reading,
         region,
         isAligned,
