@@ -14,6 +14,8 @@ Wǒ yào qù Běijīng.
 | ------------ | --------------------------------------------------- |
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
+| `slug`       | hanzi to a URL-safe slug                            |
+| `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
 | `lookup`     | what the dictionary holds for a word                |
 | `syllable`   | take written pinyin apart                           |
@@ -160,6 +162,38 @@ $ pinyinjs html 行
 ```
 
 See [HTML output](../html/).
+
+### script
+
+```console
+$ pinyinjs script 我们后来发现了头发问题 --to zh-Hant
+我們後來發現了頭髮問題
+
+$ pinyinjs script 干燥 干部 --to zh-Hant
+乾燥
+幹部
+
+$ pinyinjs script 面包 --to zh-Hant-HK
+麪包
+
+$ pinyinjs script 頭髮
+头发
+```
+
+`--to` takes `zh-Hans` (the default), `zh-Hant`, `zh-Hant-TW` or `zh-Hant-HK`;
+a bare `zh-Hant` writes Taiwan. The script of the input is detected, and
+`--from-script Hans` or `Hant` settles it for text too short to tell.
+
+The lines carry the converted text and nothing else, so it pipes. `--json`
+carries what the conversion was unsure about:
+
+```console
+$ pinyinjs script 下面 --to zh-Hant --json | jq -c .uncertain
+["面"]
+```
+
+下面 is a surface or a bowl of noodles, both `xiàmiàn`, and nothing can settle
+it. See [script conversion](../script-conversion/).
 
 ### info
 

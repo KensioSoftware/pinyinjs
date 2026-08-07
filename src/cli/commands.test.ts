@@ -3,6 +3,7 @@ import {
   entry,
   reading,
   sampleDictionary,
+  sampleScriptTables,
 } from "#test/fixtures/decoder-dictionary.js";
 import {
   assertArrayEquals,
@@ -27,6 +28,7 @@ const environment: CliEnvironment = {
   colours: 0,
   readInput: () => Promise.resolve(""),
   loadDictionary: () => Promise.resolve(dictionary),
+  loadScriptTables: () => Promise.resolve(sampleScriptTables()),
 };
 
 /**
@@ -283,6 +285,65 @@ describe("the slug command", () => {
     assertObjectEquals(await json("slug", "银行"), {
       text: "银行",
       slug: "yin2hang2",
+    });
+  });
+});
+
+describe("the script command", () => {
+  it("converts to 繁體 when asked", async () => {
+    assertArrayEquals(await cli("script", "银行", "--to", "zh-Hant"), ["銀行"]);
+  });
+
+  it("converts to 简体 by default", async () => {
+    assertArrayEquals(await cli("script", "銀行"), ["银行"]);
+  });
+
+  it("takes a region", async () => {
+    assertArrayEquals(await cli("script", "银行", "--to", "zh-Hant-TW"), [
+      "銀行",
+    ]);
+    assertArrayEquals(await cli("script", "银行", "--to", "zh-Hant-HK"), [
+      "銀行",
+    ]);
+  });
+
+  it("converts one text per argument", async () => {
+    assertArrayEquals(await cli("script", "银行", "北京", "--to", "zh-Hant"), [
+      "銀行",
+      "北京",
+    ]);
+  });
+
+  it("takes the input script where detection cannot tell", async () => {
+    assertArrayEquals(
+      await cli("script", "银行", "--to", "zh-Hant", "--from-script", "Hans"),
+      ["銀行"],
+    );
+  });
+
+  it("rejects a target it does not write", async () => {
+    const result = await runCli(
+      ["script", "银行", "--to", "zh-Hunt"],
+      environment,
+    );
+    assertIdentical(result.status, 1);
+    assertStringIncludes(result.errors.join("\n"), "--to must be one of");
+  });
+
+  it("reports the evidence per character in JSON", async () => {
+    // 银 comes out uncertain against this miniature fixture, where two entries
+    // are the whole of the evidence. Against the shipped tables it is locked;
+    // what is asserted here is the shape, not the verdict.
+    const written = await json("script", "银行", "--to", "zh-Hant");
+    assertObjectEquals(written, {
+      text: "银行",
+      script: "銀行",
+      to: "zh-Hant",
+      characters: [
+        { from: "银", to: "銀", evidence: "default" },
+        { from: "行", to: "行", evidence: "locked" },
+      ],
+      uncertain: ["银"],
     });
   });
 });

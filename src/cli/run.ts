@@ -1,4 +1,5 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import type { ScriptTables } from "../script/conversion.js";
 import {
   checkFlags,
   colourDepth,
@@ -23,6 +24,15 @@ export interface CliEnvironment {
   /** Standard input, or the empty string where there is none to read. */
   readonly readInput: () => Promise<string>;
   readonly loadDictionary: (choice: DictionaryChoice) => Promise<Dictionary>;
+  /**
+   * The script conversion tables, for the one command that converts scripts.
+   *
+   * Separate from the dictionary because the file is: nothing that converts
+   * hanzi to pinyin should wait on 96 KB it will not read.
+   */
+  readonly loadScriptTables: (
+    choice: DictionaryChoice,
+  ) => Promise<ScriptTables>;
   /**
    * How much colour the output can carry, before any flag has its say.
    *
@@ -99,9 +109,20 @@ async function runCommand(
   const dictionary = command.needsDictionary
     ? await environment.loadDictionary(choice)
     : undefined;
+  const scriptTables =
+    command.needsScriptTables === true
+      ? await environment.loadScriptTables(choice)
+      : undefined;
   const paint = painterFor(colourDepth(flags, environment.colours));
 
-  const reported = command.run({ texts, flags, dictionary, choice, paint });
+  const reported = command.run({
+    texts,
+    flags,
+    dictionary,
+    scriptTables,
+    choice,
+    paint,
+  });
 
   return {
     // One JSON document per answer rather than one array for the run, so that
