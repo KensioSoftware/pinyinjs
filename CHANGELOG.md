@@ -11,6 +11,47 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **`toScript`,** 简体 ↔ 繁體 conversion. 我们后来发现了头发问题 is
+  我們後來發現了頭髮問題. The reading is the evidence, in both directions, and it
+  is what nothing else in this space has: 发 is 發 or 髮 and only `fà` tells them
+  apart; 干 is 幹, 乾 or 干; 乾 stays 乾 in 乾隆 and simplifies to 干 in 乾燥.
+  Every other converter resolves these from a phrase table alone. This one
+  segments with the lattice and reads the result, so it generalises to words no
+  phrase table lists.
+
+  Evidence is taken strongest first — a word some source wrote in both scripts,
+  then the character at the reading it was decoded with, then the character's
+  commonest form — and `toScriptPieces` reports which of those settled every
+  character. `isUncertainChoice` marks the last one, the only case that is a
+  guess: 下面 is a surface or a bowl of noodles and nothing here can tell, so it
+  says so rather than picking silently. Over the gold corpus 97.7% of characters
+  are locked and 1.5% are guesses.
+
+  Targets are BCP-47: `zh-Hans`, `zh-Hant`, `zh-Hant-TW`, `zh-Hant-HK`, with a
+  bare `zh-Hant` taking Taiwan. The input script is detected unless `from` names
+  it, which matters more than it sounds — plenty of characters are current in
+  both scripts, so running 繁體 through the 简→繁 tables would turn 准將 into
+  準將.
+
+  **This is orthography, not translation.** 軟體 and 软件 are different words
+  rather than two spellings of one. OpenCC folds that into script conversion
+  with `s2twp`; pinyinjs does not.
+
+- **`data/script.map`,** the conversion tables, as their own fetchable file:
+  282 KB, 96 KB brotli, loaded by `loadScriptTables` only when something asks
+  to convert. A caller converting hanzi to pinyin pays nothing for it. The
+  character tables alone are right for 99.13% of the 267,639 entries whose two
+  scripts differ, and the word exception lists cover the rest.
+
+- **`hansOnly` and `hantOnly`,** the character sets `detectScript` has always
+  taken and nothing shipped. They ride in the same file.
+
+- **Round-trip scoring in `pnpm accuracy`.** 繁→简 is near-deterministic, so
+  简→繁→简 has to be the identity for essentially every key — half a million
+  cases with no hand-labelling, and every failure a real defect. It reports
+  99.6% over the words in use and 99.3% over every key. The reverse trip is
+  lossy by design and is reported rather than targeted.
+
 - **Hong Kong 繁體 glyph forms are recognised on the lookup path.** Taiwan and
   Hong Kong write the same characters with the same readings and disagree about
   the standard form of 58 of them — 裡 against 裏, 群 against 羣, 麵 against 麪.

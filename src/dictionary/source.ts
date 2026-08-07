@@ -1,3 +1,4 @@
+import { readScriptTables, type ScriptTables } from "../script/conversion.js";
 import type { DictionaryArtifact } from "./artifact.js";
 import { Dictionary } from "./dictionary.js";
 import type { Tier } from "./tiers.js";
@@ -89,4 +90,27 @@ export async function loadDictionary(
   tier: Tier,
 ): Promise<Dictionary> {
   return Dictionary.from(await loadArtifact(source, tier));
+}
+
+/**
+ * The file the script conversion tables live in.
+ *
+ * One file rather than one per table, and outside the tiers rather than
+ * repeated in each: script conversion does not get more accurate with a bigger
+ * dictionary the way reading does, so there is nothing to tier.
+ */
+export const SCRIPT_FILE = "script.map";
+
+/**
+ * Load the script conversion tables.
+ *
+ * Separate from the dictionary on purpose. A caller converting hanzi to pinyin
+ * — which is most of them — never fetches this, and a caller converting between
+ * the scripts fetches about 100 KB compressed rather than carrying it inside
+ * every tier. See SCRIPTS-AND-LOCALES.md.
+ */
+export async function loadScriptTables(
+  source: DictionarySource,
+): Promise<ScriptTables> {
+  return readScriptTables(await source.text(SCRIPT_FILE));
 }

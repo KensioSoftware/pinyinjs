@@ -1,4 +1,14 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { emptyTally, report, scoreCase } from "../../src/accuracy/score.js";
+import {
+  SCRIPT_EVIDENCE,
+  toScript,
+  toScriptPieces,
+} from "../../src/decode/script.js";
+import { loadScriptTables } from "../../src/dictionary/source.js";
+import { detectScript } from "../../src/script/script.js";
 import { convert, convertGreedily } from "../../src/decode/convert.js";
 import { buildLattice } from "../../src/decode/lattice.js";
 import { projectReadings } from "../../src/decode/locking.js";
@@ -10,7 +20,38 @@ import { GOLD_CASES } from "../../test/fixtures/gold/gold-cases.js";
 import { DATA_DIR } from "./sources.js";
 
 const dictionary = await loadDictionary(fileSource(DATA_DIR), "full");
+const scriptTables = await loadScriptTables(fileSource(DATA_DIR));
 process.stderr.write(`loaded ${String(dictionary.size)} keys\n`);
+
+/**
+ * Every key in the shipped dictionary, which is what the round trips run over.
+ */
+async function keysIn(tier: string): Promise<readonly string[]> {
+  const blob = await readFile(path.join(DATA_DIR, `${tier}.keys`), "utf8");
+  return blob.split("\n").filter((key) => key !== "");
+}
+
+const KEYS = await keysIn("full");
+
+const STANDARD_KEYS = await keysIn("standard");
+
+/**
+ * The keys a script writes, decided by the characters that only it uses.
+ *
+ * Script-neutral keys are left out. They convert to themselves in either
+ * direction, so counting them would inflate every figure below with cases that
+ * were never at risk.
+ */
+function keysOf(
+  script: "Hans" | "Hant",
+  keys: readonly string[],
+): readonly string[] {
+  return keys.filter(
+    (key) =>
+      detectScript(key, scriptTables.hansOnly, scriptTables.hantOnly) ===
+      script,
+  );
+}
 
 /**
  * How a decoder is named and invoked.
@@ -129,8 +170,103 @@ function lockingRate(): string[] {
   ];
 }
 
+/**
+ * Score script conversion by round trip, over every key in the dictionary.
+ *
+ * No hand-labelling is needed for this and that is the point. 繁→简 is very
+ * nearly deterministic, so **简→繁→简 has to be the identity** for essentially
+ * every word the dictionary holds, and each failure is a real defect rather
+ * than a judgement call. Hundreds of thousands of cases at no annotation cost.
+ *
+ * The reverse trip, 繁→简→繁, is lossy **by design** — the merges destroyed the
+ * distinction — so it is reported for information and must never be read as a
+ * target. The Hong Kong trip is a glyph mapping in both directions and should
+ * be all but perfect; anything else means the tables disagree with each other.
+ */
+function roundTrips(): string[] {
+  const trips = [
+    { name: "简→繁→简", out: "zh-Hant", back: "zh-Hans", script: "Hans" },
+    { name: "繁→简→繁", out: "zh-Hans", back: "zh-Hant", script: "Hant" },
+    {
+      name: "繁TW→繁HK→繁TW",
+      out: "zh-Hant-HK",
+      back: "zh-Hant-TW",
+      script: "Hant",
+    },
+  ] as const;
+
+  const lines = [
+    "",
+    "script conversion round trips",
+    "────────────────────────────",
+    "`in use` is the standard tier: every character in use plus the 50,000",
+    "commonest words. `all` adds the phrase tail and the extension blocks.",
+    "",
+  ];
+  for (const trip of trips) {
+    const scopes = [
+      ["in use", keysOf(trip.script, STANDARD_KEYS)],
+      ["all", keysOf(trip.script, KEYS)],
+    ] as const;
+    for (const [scope, keys] of scopes) {
+      let same = 0;
+      const misses: string[] = [];
+      for (const word of keys) {
+        const there = toScript(dictionary, scriptTables, word, {
+          to: trip.out,
+        });
+        const back = toScript(dictionary, scriptTables, there, {
+          to: trip.back,
+        });
+        if (back === word) {
+          same++;
+        } else if (misses.length < 4) {
+          misses.push(`${word}→${there}→${back}`);
+        }
+      }
+      lines.push(
+        `${trip.name.padEnd(15)} ${scope.padEnd(7)} ${percent(same, keys.length)}% ` +
+          `(${String(same)} of ${String(keys.length)})`,
+        misses.length > 0 ? `    e.g. ${misses.join("  ")}` : "",
+      );
+    }
+  }
+  return [...lines.filter((line, at) => line !== "" || at < 5), ""];
+}
+
+/**
+ * How settled the conversion of a real corpus is, per the evidence it reports.
+ */
+function conversionConfidence(): string[] {
+  const tally = new Map<string, number>();
+  for (const text of hanRuns()) {
+    const { choices } = toScriptPieces(dictionary, scriptTables, text, {
+      to: "zh-Hant",
+    });
+    for (const choice of choices) {
+      tally.set(choice.evidence, (tally.get(choice.evidence) ?? 0) + 1);
+    }
+  }
+  let total = 0;
+  for (const count of tally.values()) {
+    total += count;
+  }
+  return [
+    "conversion evidence, over the gold corpus",
+    "─────────────────────────────────────────",
+    ...SCRIPT_EVIDENCE.map(
+      (evidence) =>
+        `${evidence.padEnd(9)} ${percent(tally.get(evidence) ?? 0, total)}% (${String(tally.get(evidence) ?? 0)})`,
+    ),
+    "",
+  ];
+}
+
 process.stdout.write(
-  [...DECODERS.flatMap((decoder) => measure(decoder)), ...lockingRate()].join(
-    "\n",
-  ),
+  [
+    ...DECODERS.flatMap((decoder) => measure(decoder)),
+    ...lockingRate(),
+    ...roundTrips(),
+    ...conversionConfidence(),
+  ].join("\n"),
 );

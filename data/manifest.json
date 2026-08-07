@@ -25,6 +25,17 @@
       "compressedBytes": 2448112
     }
   },
+  "script": {
+    "file": "script.map",
+    "toTraditional": 5894,
+    "toSimplified": 6125,
+    "traditionalWords": 2349,
+    "simplifiedWords": 675,
+    "hansOnly": 5786,
+    "hantOnly": 5529,
+    "bytes": 288657,
+    "compressedBytes": 98749
+  },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
     "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
