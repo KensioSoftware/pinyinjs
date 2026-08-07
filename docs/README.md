@@ -30,6 +30,8 @@ put them at the end of the line.
   by how much.
 - [HTML output](html/): one element per syllable, with tone and uncertainty
   classes.
+- [Slugs](slug/): hanzi to a URL-safe slug, and to search keys and identifiers
+  besides.
 - [Dictionaries](dictionaries/): loading, tiers, serving in a browser, and
   querying directly.
 - [Syllables](syllables/): the layer that needs no dictionary, covering parsing,

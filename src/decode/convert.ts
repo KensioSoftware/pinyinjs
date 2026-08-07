@@ -632,6 +632,23 @@ export function convertPieces(
 }
 
 /**
+ * The same pieces, without asking the lattice what it rejected.
+ *
+ * Internal, and not in `src/index.ts`: it exists for `slug`, which needs the
+ * syllables and the word boundaries but has nothing to say about confidence,
+ * and would otherwise pay {@link convertPieces}'s second sweep on every title
+ * it is handed. An output format that shows a reader anything about the decode
+ * wants {@link convertPieces} instead.
+ */
+export function convertPiecesUnscored(
+  dictionary: Dictionary,
+  text: string,
+  options: ConvertOptions = {},
+): readonly ConvertedPiece[] {
+  return convertWith(LATTICE, dictionary, text, options);
+}
+
+/**
  * Join a conversion's pieces back into the text they spell.
  */
 export function joinPieces(pieces: readonly ConvertedPiece[]): string {

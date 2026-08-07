@@ -16,6 +16,7 @@ import {
 } from "../numerals/numerals.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { convertToHtml } from "../format/html.js";
+import { slug } from "../format/slug.js";
 import { toTranscription } from "../format/transcription.js";
 import {
   isBopomofo,
@@ -56,6 +57,8 @@ import {
   type Flags,
   type FlagName,
   htmlOptions,
+  SLUG_FLAGS,
+  slugOptions,
   type TranscriptionSource,
   transcriptionSource,
   transcriptionSystem,
@@ -265,6 +268,28 @@ const HTML: Command = {
     return input.texts.map((text) => {
       const html = convertToHtml(dictionaryOf(input), text, options);
       return { lines: [html], data: { text, html } };
+    });
+  },
+};
+
+/**
+ * Write a text as a slug.
+ *
+ * Uncoloured, for the reason `html` is: a slug is a string for a machine, and
+ * colouring the tones in something meant to be pasted into a URL would be
+ * putting escape codes where they cannot go.
+ */
+const SLUG: Command = {
+  name: "slug",
+  summary: "hanzi to a URL-safe slug",
+  argument: "[text...]",
+  flags: [...SLUG_FLAGS],
+  needsDictionary: true,
+  run: (input) => {
+    const options = slugOptions(input.flags);
+    return input.texts.map((text) => {
+      const written = slug(dictionaryOf(input), text, options);
+      return { lines: [written], data: { text, slug: written } };
     });
   },
 };
@@ -989,6 +1014,7 @@ const NUMBER: Command = {
 export const COMMANDS: readonly Command[] = [
   CONVERT,
   HTML,
+  SLUG,
   EXPLAIN,
   LOOKUP,
   SYLLABLE,

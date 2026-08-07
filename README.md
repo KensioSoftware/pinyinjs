@@ -29,6 +29,9 @@ Wǒ yào qù Běijīng.
 $ pinyinjs convert --notation numbers 银行
 yin2hang2
 
+$ pinyinjs slug 我想学中文。
+wo3-xiang3-xue2-zhong1wen2
+
 $ pinyinjs explain 银行
 银行  yínháng
   yín     locked
@@ -53,6 +56,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | ------------ | --------------------------------------------------- |
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
+| `slug`       | hanzi to a URL-safe slug                            |
 | `explain`    | each syllable, how settled it was, and what it beat |
 | `lookup`     | what the dictionary holds for a word                |
 | `syllable`   | take written pinyin apart                           |
@@ -546,6 +550,7 @@ Both scripts are dictionary keys, so only the locale is an option to pass.
 | `convert(dictionary, text, options?)`                | hanzi → pinyin                                    |
 | `convertPieces(dictionary, text, ...)`               | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, ...)`               | the same, as HTML                                 |
+| `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
 | `dictionary.lookup / hasPrefix / readingsOf`         | query the dictionary                              |

@@ -38,6 +38,7 @@ import {
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary } from "./dictionary/source.js";
 import { convertToHtml, toHtml } from "./format/html.js";
+import { slug } from "./format/slug.js";
 import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
 import {
@@ -594,6 +595,97 @@ describe("the examples in docs/", () => {
       assertIdentical(
         convertToHtml(dictionary, "行", { markUncertain: false }),
         '<span class="py-syllable py-tone-2">xíng</span>',
+      );
+    });
+  });
+
+  describe("slug", () => {
+    it("slugs the text the page opens on", () => {
+      assertIdentical(
+        slug(dictionary, "我想学中文。"),
+        "wo3-xiang3-xue2-zhong1wen2",
+      );
+    });
+
+    it("beats a slugifier working on the characters", () => {
+      assertIdentical(slug(dictionary, "银行"), "yin2hang2");
+      assertIdentical(slug(dictionary, "西安"), "xi1an1");
+      assertIdentical(slug(dictionary, "中文"), "zhong1wen2");
+      assertIdentical(
+        slug(dictionary, "北京市银行"),
+        "bei3jing1-shi4-yin2hang2",
+      );
+    });
+
+    it("keeps the 隔音符号 as a break once the tones have gone", () => {
+      assertIdentical(
+        slug(dictionary, "西安交通大学", { tones: "none" }),
+        "xi-an-jiaotong-daxue",
+      );
+    });
+
+    it("writes the tones the page's two 重庆火锅 show", () => {
+      assertIdentical(slug(dictionary, "重庆火锅"), "chong2qing4-huo3guo1");
+      assertIdentical(
+        slug(dictionary, "重庆火锅", { tones: "none" }),
+        "chongqing-huoguo",
+      );
+    });
+
+    it("runs the homophones together that the page says it does", () => {
+      assertIdentical(slug(dictionary, "权利"), "quan2li4");
+      assertIdentical(slug(dictionary, "权力"), "quan2li4");
+      for (const text of ["树", "书", "输"]) {
+        assertIdentical(slug(dictionary, text, { tones: "none" }), "shu");
+      }
+    });
+
+    it("tells those homophones apart with the hash the page shows", () => {
+      assertIdentical(
+        slug(dictionary, "权利", { hash: true }),
+        "quan2li4-1lpt",
+      );
+      assertIdentical(
+        slug(dictionary, "权力", { hash: true }),
+        "quan2li4-uta0",
+      );
+    });
+
+    it("handles everything in a text that is not hanzi", () => {
+      assertIdentical(slug(dictionary, "iPhone 15 发布"), "iphone-15-fa1bu4");
+      assertIdentical(
+        slug(dictionary, "《中文》：真好！"),
+        "zhong1wen2-zhen1-hao3",
+      );
+      assertIdentical(slug(dictionary, "2024年报告"), "2024-nian2-bao4gao4");
+      assertIdentical(
+        slug(dictionary, "2024年报告", { numbers: "read" }),
+        "er4-ling2-er4-si4-nian2-bao4gao4",
+      );
+    });
+
+    it("falls back where a text slugs to nothing", () => {
+      assertIdentical(
+        slug(dictionary, "！？。", { fallback: "untitled" }),
+        "untitled",
+      );
+    });
+
+    it("cuts a long slug at a word", () => {
+      assertIdentical(
+        slug(dictionary, "北京市银行", { maxLength: 20 }),
+        "bei3jing1-shi4",
+      );
+    });
+
+    it("writes the search key the page recommends", () => {
+      assertIdentical(
+        slug(dictionary, "中文", { tones: "none", separator: "" }),
+        "zhongwen",
+      );
+      assertIdentical(
+        slug(dictionary, "西安", { tones: "none", separator: "" }),
+        "xian",
       );
     });
   });
