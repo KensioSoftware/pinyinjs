@@ -9,6 +9,8 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+## 1.6.0
+
 ### Added
 
 - **Hanzi and pinyin together, rather than one instead of the other.**
