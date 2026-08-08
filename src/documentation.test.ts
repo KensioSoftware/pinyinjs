@@ -37,7 +37,11 @@ import {
 } from "./numerals/numerals.js";
 import { fileSource } from "./dictionary/node-source.js";
 import { loadDictionary, loadScriptTables } from "./dictionary/source.js";
-import { convertToHtml, toHtml } from "./format/html.js";
+import {
+  convertToAnnotatedHtml,
+  convertToHtml,
+  toHtml,
+} from "./format/html.js";
 import {
   isUncertainChoice,
   toScript,
@@ -575,6 +579,29 @@ describe("the examples in docs/", () => {
   });
 
   describe("html", () => {
+    it("annotates the four shapes the page tabulates", () => {
+      // The table under "A base is not always one character".
+      const one = convertToAnnotatedHtml(dictionary, "银行");
+      assertStringIncludes(one, '<ruby lang="zh">银<rp>(</rp>');
+      assertStringIncludes(one, '<ruby lang="zh">行<rp>(</rp>');
+
+      assertStringIncludes(
+        convertToAnnotatedHtml(dictionary, "玩儿"),
+        '<ruby lang="zh">玩儿<rp>(</rp>',
+      );
+
+      const number = convertToAnnotatedHtml(dictionary, "95%");
+      assertStringIncludes(number, '<ruby lang="zh">95%<rp>(</rp>');
+      assertArrayLength(number.match(/<ruby/gu) ?? [], 1);
+
+      // 干干净净 is gāngān-jìngjìng: four bases, and the hyphen is a boundary
+      // inside the word, so it sits in the reading and not in the hanzi.
+      const doubled = convertToAnnotatedHtml(dictionary, "干干净净");
+      assertArrayLength(doubled.match(/<ruby/gu) ?? [], 4);
+      assertStringIncludes(doubled, ">gān</span>-</rt>");
+      assertStringNotIncludes(doubled, "</ruby>-<ruby");
+    });
+
     it("emits the elements and classes the page documents", () => {
       assertIdentical(
         convertToHtml(dictionary, "银行"),

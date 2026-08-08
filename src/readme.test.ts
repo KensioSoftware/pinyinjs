@@ -18,7 +18,7 @@ import { describe, it } from "vitest";
 import { isUncertain } from "./decode/confidence.js";
 import { convert, convertPieces, joinPieces } from "./decode/convert.js";
 import { type CliEnvironment, runCli } from "./cli/run.js";
-import { convertToHtml } from "./format/html.js";
+import { convertToAnnotatedHtml, convertToHtml } from "./format/html.js";
 import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
 import {
@@ -488,6 +488,24 @@ describe("the examples in README.md", () => {
           'lang="zh-Latn-CN-pinyin" ' +
           'data-alternatives="háng héng hàng">xíng</span>',
       );
+    });
+
+    it("annotates 银行 exactly as the annotated section shows", () => {
+      assertStringIncludes(
+        convertToAnnotatedHtml(dictionary, "银行"),
+        '<ruby lang="zh">银<rp>(</rp><rt>' +
+          '<span class="py-syllable py-tone-2" ' +
+          'lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>',
+      );
+    });
+
+    it("annotates 玩儿 and 95% whole, as the section says it does", () => {
+      const erhua = convertToAnnotatedHtml(dictionary, "玩儿");
+      assertStringIncludes(erhua, '<ruby lang="zh">玩儿<rp>(</rp>');
+      assertStringIncludes(erhua, ">wánr</span>");
+      const number = convertToAnnotatedHtml(dictionary, "95%");
+      assertStringIncludes(number, '<ruby lang="zh">95%<rp>(</rp>');
+      assertArrayLength(number.match(/<ruby/gu) ?? [], 1);
     });
   });
 

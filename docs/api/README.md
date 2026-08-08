@@ -19,8 +19,10 @@ Two entry points:
 | `convert(dictionary, text, options?)`                | hanzi → pinyin                                    |
 | `convertPieces(dictionary, text, options?)`          | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, options?)`          | the same, as HTML                                 |
+| `convertToAnnotatedHtml(dictionary, text, options?)` | hanzi and pinyin together, as ruby HTML           |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
+| `toAnnotatedHtml(pieces, options?)`                  | render pieces, annotated                          |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
 | `dictionary.lookup / hasPrefix / readingsOf / size`  | query the dictionary                              |
 | `readSyllable` / `writeSyllable` / `isSyllable`      | one syllable, no dictionary                       |
@@ -112,11 +114,13 @@ name because it is published.
 
 See [HTML output](../html/).
 
-| Export          | Is                             |
-| --------------- | ------------------------------ |
-| `convertToHtml` | hanzi → marked-up pinyin       |
-| `toHtml`        | render pieces you already have |
-| `HtmlOptions`   | type                           |
+| Export                   | Is                             |
+| ------------------------ | ------------------------------ |
+| `convertToHtml`          | hanzi → marked-up pinyin       |
+| `convertToAnnotatedHtml` | hanzi → hanzi with its reading |
+| `toAnnotatedHtml`        | render pieces, annotated       |
+| `toHtml`                 | render pieces you already have |
+| `HtmlOptions`            | type                           |
 
 ## Slugs
 
