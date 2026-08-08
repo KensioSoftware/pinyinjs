@@ -233,7 +233,8 @@ convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }); // "yínx
 
 **A positional hint is an assertion about one character of one text**, and
 nothing outranks it — the enclosing word included. Positions are counted in code
-points from the start of the text, across any non-Han runs in it:
+points from the start of the text, across any non-Han runs in it, and the
+reading is one syllable, since a position names one character:
 
 ```ts
 convert(dictionary, "头发越长越漂亮", {

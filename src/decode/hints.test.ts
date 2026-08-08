@@ -4,14 +4,18 @@ import {
   reading,
 } from "#test/fixtures/decoder-dictionary.js";
 import {
+  assertFalse,
   assertIdentical,
+  assertNonNullable,
   assertStringIncludes,
   assertThrowsError,
+  assertTrue,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import { convert } from "./convert.js";
-import type { ReadingHints } from "./hints.js";
+import { type ReadingHints, resolveHints } from "./hints.js";
+import { allEdges, buildLattice } from "./lattice.js";
 
 /**
  * A dictionary with the cases a hint has to reach past or into: a polyphone
@@ -83,6 +87,25 @@ describe("readings a caller asserts", () => {
     assertIdentical(read("玩儿", { 玩儿: "wánr" }), "wánr");
   });
 
+  it("does not claim a dictionary entry backs an edge it brought", () => {
+    // The 玩儿 edge above is the caller's word, not the dictionary's, and says
+    // so — `isKnown` is what tells a reader which of the two it is looking at.
+    const lattice = buildLattice(
+      dictionary,
+      "玩儿",
+      resolveHints({ 玩儿: "wánr" }),
+    );
+    const brought = allEdges(lattice).find((edge) => edge.to - edge.from === 2);
+    assertNonNullable(brought, "the hint brings a two-character edge");
+    assertFalse(brought.isKnown);
+    // A hint written over an entry the dictionary does have keeps that answer.
+    const over = allEdges(
+      buildLattice(dictionary, "银行", resolveHints({ 银行: "yín xíng" })),
+    ).find((edge) => edge.to - edge.from === 2);
+    assertNonNullable(over, "银行 is an entry");
+    assertTrue(over.isKnown);
+  });
+
   it("takes an unmarked syllable as the neutral tone", () => {
     assertIdentical(read("的", { 的: "de" }), "de");
   });
@@ -139,6 +162,16 @@ describe("a hint that cannot be read", () => {
 
   it("rejects an empty word", () => {
     assertStringIncludes(refusal("长", { "": "cháng" }), "has no word");
+  });
+
+  it("rejects a reading of more than one syllable at a position", () => {
+    // A position names one character, so there is nowhere to put a second
+    // syllable. Before this it parsed and was then quietly dropped, which is
+    // the one outcome a correction must never have.
+    assertStringIncludes(
+      refusal("校长", [{ at: 1, reading: "cháng zhǎng" }]),
+      "is not one syllable: cháng zhǎng",
+    );
   });
 
   it("rejects a position that is not an index", () => {

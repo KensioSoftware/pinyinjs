@@ -39,7 +39,7 @@ export interface PositionalReading {
    * that a character outside the BMP counts as the one character it is.
    */
   readonly at: number;
-  /** The reading that character takes. */
+  /** The reading that character takes, which is one syllable. */
   readonly reading: string;
 }
 
@@ -70,8 +70,14 @@ export type ReadingHints =
 export interface ResolvedHints {
   /** Word hints, longest first, so a longer assertion wins a shared start. */
   readonly words: readonly WordHint[];
-  /** Positional hints, by code-point index into the text. */
-  readonly at: ReadonlyMap<number, readonly Syllable[]>;
+  /**
+   * Positional hints, by code-point index into the text.
+   *
+   * One syllable rather than a reading, because a position names one character
+   * and there is nowhere to put a second. {@link resolveHints} is what makes
+   * that true, so nothing downstream has to check it.
+   */
+  readonly at: ReadonlyMap<number, Syllable>;
 }
 
 /**
@@ -132,17 +138,24 @@ export function resolveHints(hints: ReadingHints): ResolvedHints {
       );
 
   const words: WordHint[] = [];
-  const at = new Map<number, readonly Syllable[]>();
+  const at = new Map<number, Syllable>();
 
   for (const hint of list) {
     if (isPositional(hint)) {
       if (!Number.isInteger(hint.at) || hint.at < 0) {
         throw new Error(`reading hint position is not an index: ${hint.at}`);
       }
-      at.set(
-        hint.at,
-        readHintReading(hint.reading, `position ${String(hint.at)}`),
-      );
+      const subject = `position ${String(hint.at)}`;
+      const syllables = readHintReading(hint.reading, subject);
+      // A position names one character. A reading of several syllables is a
+      // caller meaning something else — most likely a word hint — and saying so
+      // beats applying the first syllable or quietly applying none.
+      if (syllables.length !== 1 || syllables[0] === undefined) {
+        throw new Error(
+          `reading hint for ${subject} is not one syllable: ${hint.reading}`,
+        );
+      }
+      at.set(hint.at, syllables[0]);
       continue;
     }
     const characters = toCharacters(hint.word);
@@ -170,7 +183,7 @@ export function resolveHints(hints: ReadingHints): ResolvedHints {
 export function shiftHints(hints: ResolvedHints, by: number): ResolvedHints {
   return {
     words: hints.words,
-    at: new Map([...hints.at].map(([at, reading]) => [at + by, reading])),
+    at: new Map([...hints.at].map(([at, syllable]) => [at + by, syllable])),
   };
 }
 
@@ -187,10 +200,10 @@ export function hintsWithin(
   from: number,
   length: number,
 ): ResolvedHints {
-  const at = new Map<number, readonly Syllable[]>();
-  for (const [position, reading] of hints.at) {
+  const at = new Map<number, Syllable>();
+  for (const [position, syllable] of hints.at) {
     if (position >= from && position < from + length) {
-      at.set(position - from, reading);
+      at.set(position - from, syllable);
     }
   }
   return { words: hints.words, at };
@@ -269,8 +282,8 @@ export function applyHints(lattice: Lattice, hints: ResolvedHints): Lattice {
       reading = reading.map((syllable, index) => {
         const at = edge.from + index;
         const positional = hints.at.get(at);
-        if (positional?.length === 1 && positional[0] !== undefined) {
-          return positional[0];
+        if (positional !== undefined) {
+          return positional;
         }
         if (span > 1) {
           return syllable;
@@ -312,7 +325,11 @@ export function applyHints(lattice: Lattice, hints: ResolvedHints): Lattice {
           readingCost: UNKNOWN_COST + READING_CHARGE,
           isProperNoun: false,
           partOfSpeech: "",
-          isKnown: true,
+          // No dictionary entry backs this one — that is the whole reason it
+          // had to be brought along — so it reports itself as the fallback it
+          // is. A hint written over an edge that *was* backed keeps that edge's
+          // own answer, since the entry still covers those characters.
+          isKnown: false,
         },
       ];
     }),
