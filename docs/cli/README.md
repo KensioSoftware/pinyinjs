@@ -201,7 +201,7 @@ it. See [script conversion](../script-conversion/).
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,149
+keys       723,147
 syllables  415 attested, 424 spellings in the inventory
 ```
 

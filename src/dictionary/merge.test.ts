@@ -408,6 +408,34 @@ describe("merging the sources", () => {
       assertIdentical(byWord.get("银行")?.hant, "銀行");
     });
 
+    it("takes no entry from a 繁體 headword in the 简体 corpus", () => {
+      // large_pinyin.txt is 简体, and reads the 繁體 headwords it carries
+      // anyway as though the characters were 简体: 特徵 is tè zhǐ there,
+      // because 徵 alone is zhǐ rather than standing for 征. Left as an entry
+      // of its own it outranks the 繁體 key derived from 特征, so the word
+      // reads one way in a tier holding the phrase tail and another without.
+      const { byWord } = merge({
+        phrase: new Map([
+          ["特征", ["tè", "zhēng"]],
+          ["特徵", ["tè", "zhǐ"]],
+        ]),
+        cedict: [cedictEntry("特徵", "特征", "te4 zheng1")],
+      });
+      assertUndefined(byWord.get("特徵"));
+      assertIdentical(byWord.get("特征")?.hant, "特徵");
+      assertIdentical(reading(byWord, "特征"), "tè zhēng");
+    });
+
+    it("keeps a 繁體 headword CC-CEDICT does not pair", () => {
+      // The rule is narrow: only CC-CEDICT can say a headword is another
+      // word's 繁體 spelling. A rare word it has never heard of is read by its
+      // characters, which is the best available answer and worth keeping.
+      const { byWord } = merge({
+        phrase: new Map([["一箭双鵰", ["yī", "jiàn", "shuāng", "diāo"]]]),
+      });
+      assertIdentical(reading(byWord, "一箭双鵰"), "yī jiàn shuāng diāo");
+    });
+
     it("derives one using the reading where CC-CEDICT is silent", () => {
       const { byWord, result } = merge({
         unihanReadings: new Map([

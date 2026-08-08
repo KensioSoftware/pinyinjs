@@ -102,7 +102,7 @@ dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
-dictionary.size; // 723149, keys in the full tier, not entries
+dictionary.size; // 723147, keys in the full tier, not entries
 ```
 
 Both scripts are keys in the same dictionary, so nothing is converted before a
