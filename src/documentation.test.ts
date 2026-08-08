@@ -282,6 +282,77 @@ describe("the examples in docs/", () => {
       assertStringIncludes(convert(dictionary, "唯一道路"), "dàolù");
     });
 
+    it("reads 长 as cháng where an adverb of degree measures it", () => {
+      assertIdentical(
+        convert(dictionary, "这篇文章不太长。"),
+        "Zhè piān wénzhāng bú tài cháng.",
+      );
+      assertIdentical(
+        convert(dictionary, "要多长时间"),
+        "yào duō cháng shíjiān",
+      );
+      // The other side of the page's claim: the growing 长 and the title both
+      // keep the stored default.
+      assertIdentical(
+        convert(dictionary, "她长得很漂亮"),
+        "tā zhǎng de hěn piàoliang",
+      );
+      assertIdentical(convert(dictionary, "校长"), "xiàozhǎng");
+      // 了 and 的 after an adverb are the particle and the attributive, which
+      // is why neither guards the rule.
+      assertIdentical(convert(dictionary, "时间太长了"), "shíjiān tài chángle");
+      assertIdentical(convert(dictionary, "很长的道路"), "hěn cháng de dàolù");
+    });
+
+    it("takes the readings a caller asserts, with the reach the page gives", () => {
+      assertIdentical(
+        convert(dictionary, "这篇文章不太长。", {
+          readings: { 太长: "tài cháng" },
+        }),
+        "Zhè piān wénzhāng bú tài cháng.",
+      );
+      // A word hint does not reach into a longer word...
+      assertIdentical(
+        convert(dictionary, "校长", { readings: { 长: "cháng" } }),
+        "xiàozhǎng",
+      );
+      // ...but naming the whole word does, and keeps it one word.
+      assertIdentical(
+        convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }),
+        "yínxíng",
+      );
+      // A position outranks the word around it, which is the escape hatch.
+      assertIdentical(
+        convert(dictionary, "校长", {
+          readings: [{ at: 1, reading: "cháng" }],
+        }),
+        "xiàocháng",
+      );
+      // An unmarked syllable is 轻声.
+      assertIdentical(
+        convert(dictionary, "的", { readings: { 的: "de" } }),
+        "de",
+      );
+    });
+
+    it("reads 越长越X as growing only where growing is what it names", () => {
+      assertIdentical(
+        convert(dictionary, "他越长越高"),
+        "tā yuè zhǎng yuè gāo",
+      );
+      assertIdentical(
+        convert(dictionary, "时间越长越好"),
+        "shíjiān yuè cháng yuè hǎo",
+      );
+      // The page's claim that it guesses rather than settles: 越长越X is
+      // ambiguous, so the syllable must still come back uncertain.
+      const pieces = convertPieces(dictionary, "他越长越高");
+      const grown = pieces.find((piece) => piece.text === "zhǎng");
+      assertNonNullable(grown, "the 长 comes back as a piece");
+      assertNonNullable(grown.confidence, "with a confidence");
+      assertTrue(isUncertain(grown.confidence));
+    });
+
     it("decodes the Han after a number with that number in front of it", () => {
       assertIdentical(convert(dictionary, "2个人"), "liǎng gè rén");
       assertIdentical(convert(dictionary, "两个人"), "liǎng gè rén");

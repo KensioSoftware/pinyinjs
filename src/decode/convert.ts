@@ -29,6 +29,12 @@ import {
 import type { ReadingConfidence } from "./confidence.js";
 import { divisionOf } from "./constituents.js";
 import { decodeRun, decodeRunScored } from "./decode.js";
+import {
+  hintsWithin,
+  type ReadingHints,
+  resolveHints,
+  type ResolvedHints,
+} from "./hints.js";
 import { decodeGreedily } from "./greedy.js";
 import { READING_RULES } from "./reading-rules.js";
 import { splitRuns, type TextRun } from "./runs.js";
@@ -61,6 +67,23 @@ export interface ConvertOptions {
    * which is what this did before there was anything to read them with.
    */
   readonly numbers?: NumberStyle;
+  /**
+   * Readings the caller asserts, over whatever the sources say.
+   *
+   * No rule can settle every polyphone, and some texts are genuinely ambiguous
+   * — 孩子越长越漂亮 grows where 头发越长越漂亮 lengthens — so an application
+   * that knows its own content can say what this one could only guess at.
+   *
+   * ```ts
+   * convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
+   * ```
+   *
+   * A hint displaces whatever covered exactly the characters it names, and
+   * competes normally with everything else, so a bare `长` hint leaves 校长 as
+   * `xiàozhǎng` — the longer word is still the better reading of that stretch.
+   * See {@link ReadingHints}.
+   */
+  readonly readings?: ReadingHints;
 }
 
 /**
@@ -291,6 +314,7 @@ type Decode = (
   dictionary: Dictionary,
   run: string,
   before: string,
+  hints: ResolvedHints | undefined,
 ) => readonly ScoredWord[];
 
 /**
@@ -301,24 +325,28 @@ function unscored(
     dictionary: Dictionary,
     run: string,
     before: string,
+    hints: ResolvedHints | undefined,
   ) => readonly DecodedWord[],
 ): Decode {
-  return (dictionary, run, before) =>
-    decode(dictionary, run, before).map((word) => ({ word, confidence: [] }));
+  return (dictionary, run, before, hints) =>
+    decode(dictionary, run, before, hints).map((word) => ({
+      word,
+      confidence: [],
+    }));
 }
 
 /**
  * The lattice decoder, reporting nothing about its own confidence.
  */
-const LATTICE: Decode = unscored((dictionary, run, before) =>
-  decodeRun(dictionary, run, READING_RULES, before),
+const LATTICE: Decode = unscored((dictionary, run, before, hints) =>
+  decodeRun(dictionary, run, READING_RULES, before, hints),
 );
 
 /**
  * The lattice decoder, with what each reading was chosen over.
  */
-const SCORED: Decode = (dictionary, run, before) =>
-  decodeRunScored(dictionary, run, READING_RULES, before);
+const SCORED: Decode = (dictionary, run, before, hints) =>
+  decodeRunScored(dictionary, run, READING_RULES, before, hints);
 
 /**
  * The greedy baseline, which has nothing to report either way.
@@ -678,11 +706,23 @@ function convertWith(
     grouping = true,
     numbers = "read",
     sandhi,
+    readings,
   } = options;
   const written: Written = { notation, apostrophe, capitals };
   const converted: ConvertedPiece[] = [];
 
   const runs = [...splitRuns(text)];
+  // Parsed once for the whole text rather than per run, so that a malformed
+  // hint is reported whether or not a run happens to reach it.
+  const hints = readings === undefined ? undefined : resolveHints(readings);
+  // Where each run starts, in code points, so a caller counting positions from
+  // the start of the text can be met where the run puts them.
+  const starts: number[] = [];
+  let start = 0;
+  for (const run of runs) {
+    starts.push(start);
+    start += toCharacters(run.text).length;
+  }
   // Read before anything is decoded, because a number needs to know what
   // follows it — 1998年 is a year and 3个 is a count — and the character that
   // decides it is there for the reading without a decode of its own.
@@ -694,15 +734,21 @@ function convertWith(
   // Decoded before anything is written, because a number's sandhi needs the
   // syllable after it, and because a Han run needs the number in front of it:
   // 2个人 is `liǎng gè rén` and 个人 on its own is the word `gèrén`.
-  const decoded = runs.map((run, at) =>
-    run.isHan
-      ? wordsOf(
-          decode(dictionary, run.text, numeralBefore(read[at - 1] ?? [])),
-          dictionary,
-          grouping,
-        )
-      : [],
-  );
+  const decoded = runs.map((run, at) => {
+    if (!run.isHan) {
+      return [];
+    }
+    const within =
+      hints === undefined
+        ? undefined
+        : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length);
+    const said = numeralBefore(read[at - 1] ?? []);
+    return wordsOf(
+      decode(dictionary, run.text, said, within),
+      dictionary,
+      grouping,
+    );
+  });
 
   for (const [at, run] of runs.entries()) {
     const words = decoded[at] ?? [];

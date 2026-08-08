@@ -3,12 +3,19 @@ import {
   entry,
   reading,
 } from "#test/fixtures/decoder-dictionary.js";
-import { assertArrayEquals, assertArrayLength } from "@kensio/smartass";
+import {
+  assertArrayEquals,
+  assertArrayLength,
+  assertNonNullable,
+  assertTrue,
+} from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
-import { decodeRun } from "./decode.js";
+import { isUncertain } from "./confidence.js";
+import { decodeRun, decodeRunScored } from "./decode.js";
 import {
+  ADJECTIVAL_CHANG,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
@@ -69,6 +76,49 @@ const dictionary = dictionaryOf([
   entry("宗", "zōng", { frequency: 2000 }),
   entry("宗教", "zōng jiào", { partOfSpeech: "n", frequency: 4000 }),
   entry("来", "lái", { partOfSpeech: "v", frequency: 40_000 }),
+]);
+
+/**
+ * A dictionary of its own for 长, kept apart from the one above.
+ *
+ * The costs the decode works in are quantised from the frequencies of whatever
+ * entries a dictionary holds, so adding 的 and 不 to the shared fixture rescales
+ * the table and moves decisions in the 量词 cases that have nothing to do with
+ * 长. Separate dictionaries keep each rule's cases from paying for the others'.
+ */
+const changDictionary = dictionaryOf([
+  // 长 as the real dictionary stores it: `zhǎng` with the adjectival `cháng` as
+  // an alternate, tagged `a`.
+  entry("长", "zhǎng", {
+    partOfSpeech: "a",
+    frequency: 20_000,
+    alternates: [reading("cháng")],
+  }),
+  entry("很", "hěn", { partOfSpeech: "zg", frequency: 40_000 }),
+  entry("太", "tài", { partOfSpeech: "d", frequency: 30_000 }),
+  entry("不", "bù", { partOfSpeech: "d", frequency: 90_000 }),
+  entry("真", "zhēn", { partOfSpeech: "d", frequency: 20_000 }),
+  entry("越", "yuè", { partOfSpeech: "d", frequency: 10_000 }),
+  entry("非常", "fēi cháng", { partOfSpeech: "d", frequency: 9000 }),
+  entry("大", "dà", { partOfSpeech: "a", frequency: 60_000 }),
+  entry("快", "kuài", { partOfSpeech: "a", frequency: 30_000 }),
+  entry("得", "de", {
+    partOfSpeech: "ud",
+    frequency: 60_000,
+    alternates: [reading("dé"), reading("děi")],
+  }),
+  entry("了", "le", { partOfSpeech: "ul", frequency: 90_000 }),
+  entry("的", "de", { partOfSpeech: "uj", frequency: 95_000 }),
+  entry("路", "lù", { partOfSpeech: "n", frequency: 8000 }),
+  // A title the rule must not reach, since the stored default is what carries
+  // 署长, 团长 and 局长.
+  entry("署", "shǔ", { partOfSpeech: "ng", frequency: 900 }),
+  entry("高", "gāo", { partOfSpeech: "a", frequency: 50_000 }),
+  entry("好", "hǎo", { partOfSpeech: "a", frequency: 70_000 }),
+  // 越长 exactly as the artifact holds it: a `yuè cháng` reading carrying no
+  // part of speech, and the only member of its paradigm — 越高 and 越好 are
+  // absent here as they are there.
+  entry("越长", "yuè cháng", { frequency: 400 }),
 ]);
 
 /**
@@ -196,5 +246,91 @@ describe("a 量词 the number in front of it counts", () => {
 
   it("applies on its own as well as beside the other rules", () => {
     assertArrayEquals(words("三个人", [COUNTED_MEASURE]), ["三", "个", "人"]);
+  });
+});
+
+describe("长 as an adjective", () => {
+  /** How a run of the 长 cases reads, word by word. */
+  function readChang(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(changDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads 长 as cháng after a degree adverb", () => {
+    assertArrayEquals(readChang("很长"), ["hěn", "cháng"]);
+  });
+
+  it("reads it as cháng after 太, which is the reported case", () => {
+    assertArrayEquals(readChang("不太长"), ["bù", "tài", "cháng"]);
+  });
+
+  it("takes a multi-character adverb as readily as a single one", () => {
+    assertArrayEquals(readChang("非常长"), ["fēicháng", "cháng"]);
+  });
+
+  it("keeps the default zhǎng where nothing measures it", () => {
+    // The bare 长 at the end of a title is what the stored ranking is for, and
+    // this rule must not reach it: 校长 through the word, 署长 through neither.
+    assertArrayEquals(readChang("署长"), ["shǔ", "zhǎng"]);
+  });
+
+  it("leaves the growing 长 alone before the complement marker", () => {
+    // 真 is a degree adverb and 长得 is the verb regardless, so this is the
+    // case both halves of the context are needed for.
+    assertArrayEquals(readChang("真长得快"), ["zhēn", "zhǎng", "de", "kuài"]);
+  });
+
+  it("leaves it alone in the 越…越 correlative", () => {
+    assertArrayEquals(readChang("越长越大"), ["yuè", "zhǎng", "yuè", "dà"]);
+  });
+
+  it("reads the sentence particle after it as a particle, not aspect", () => {
+    // 了 after a bare 长 suggests the verb, but after an adverb and a 长 it
+    // closes the sentence: 太长了 is `cháng`.
+    assertArrayEquals(readChang("太长了"), ["tài", "cháng", "le"]);
+  });
+
+  it("reads the attributive 的 after it the same way", () => {
+    assertArrayEquals(readChang("很长的路"), ["hěn", "cháng", "de", "lù"]);
+  });
+
+  it("does nothing at all when the rule is not applied", () => {
+    assertArrayEquals(readChang("很长", []), ["hěn", "zhǎng"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readChang("很长", [ADJECTIVAL_CHANG]), ["hěn", "cháng"]);
+  });
+
+  it("settles the reading and not the spacing", () => {
+    assertArrayLength(
+      decodeRun(changDictionary, "很长", [ADJECTIVAL_CHANG]),
+      2,
+    );
+  });
+
+  it("reads 越长越高 as growing, against the 越长 the sources assert", () => {
+    assertArrayEquals(readChang("越长越高"), ["yuè", "zhǎng", "yuè", "gāo"]);
+  });
+
+  it("leaves the correlative alone where nothing grew", () => {
+    // 好 is not something growing produces, so 时间越长越好 keeps `cháng`.
+    assertArrayEquals(readChang("越长越好"), ["yuècháng", "yuè", "hǎo"]);
+  });
+
+  it("takes the 越长 reading without the rule, which is the bug", () => {
+    assertArrayEquals(readChang("越长越高", []), ["yuècháng", "yuè", "gāo"]);
+  });
+
+  it("leaves the rival standing rather than forcing the reading", () => {
+    // The point of forbidding the edge rather than forcing one: 越长越X is
+    // genuinely ambiguous, so the decode should still report itself guessing.
+    const scored = decodeRunScored(changDictionary, "越长越高", READING_RULES);
+    const grown = scored.find(({ word }) => word.text === "长");
+    assertNonNullable(grown, "长 decodes as a word of its own");
+    const settled = grown.confidence[0];
+    assertNonNullable(settled, "with a confidence for its one syllable");
+    assertTrue(isUncertain(settled));
   });
 });

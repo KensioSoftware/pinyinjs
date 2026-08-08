@@ -175,7 +175,15 @@ export {
 } from "./decode/rules.js";
 export type { EdgeContext, EdgeRule, EdgeVerdict } from "./decode/rules.js";
 
+export type {
+  PositionalReading,
+  ReadingHint,
+  ReadingHints,
+  WordReading,
+} from "./decode/hints.js";
+
 export {
+  ADJECTIVAL_CHANG,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,

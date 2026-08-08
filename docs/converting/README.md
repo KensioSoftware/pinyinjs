@@ -137,10 +137,117 @@ wrong: 一批评, 这一名词 and 六七股灾, where the 一 and the 六七 ar
 anything and no tag says so. One reading changes in the whole corpus, and it is
 a fix — 下了两天雨 read 天雨 as `tiān yù`.
 
+The fifth reads 长 as `cháng` where an adverb of degree measures it:
+
+```ts
+convert(dictionary, "这篇文章不太长。"); // "Zhè piān wénzhāng bú tài cháng."
+convert(dictionary, "要多长时间"); // "yào duō cháng shíjiān"
+convert(dictionary, "她长得很漂亮"); // "tā zhǎng de hěn piàoliang", growing
+convert(dictionary, "校长"); // "xiàozhǎng", through the word
+```
+
+长 is stored `zhǎng` with `cháng` as an alternate, which is what the sources
+say about the character alone — Unihan counts `zhǎng(1879)` against
+`cháng(1179)` — and that default earns its place: 署长, 团长, 公安局长 and 总会长
+all reach a bare 长 at the end of a title and read it correctly. The gap was the
+adjective, which no word covers and nothing in the cost model could prefer.
+
+Only the left side of the context carries information, as with 得. A growing 长
+is a verb and no 很, 太, 最 or 多 modifies one, whereas what follows an
+adjectival 长 is a noun, a particle or the end of the sentence — which is what
+follows half the verbs too. 得, 着 and the 越…越 correlative are guarded, since
+真长得很快 and 越长越高 are reachable from both sides; 了 and 的 are not, because
+after an adverb they are the sentence particle and the attributive, which makes
+时间太长了 and 很长的道路 both `cháng`.
+
+Over 88,866 lines, 260 长 decode as a word of their own and this moves 75 to
+`cháng`, all 75 correctly. On CPP's 40 hand-labelled 长 the character goes
+85.00% to 87.50%; the shapes left are the ones no adverb marks — 长约8分,
+干流长175公里 and 存续期长而明显.
+
+The same rule pushes the other way on 越长越X, where growing is what the
+correlative is about:
+
+```ts
+convert(dictionary, "他越长越高"); // "tā yuè zhǎng yuè gāo"
+convert(dictionary, "时间越长越好"); // "shíjiān yuè cháng yuè hǎo"
+```
+
+越长 is a key read `yuè cháng`, and the only one of its shape — 越大, 越高, 越好
+and 越快 are all absent, so 越高越好 decodes as two words while 越长越高 reaches
+for a word nothing else in the paradigm has. It carries no part of speech, which
+is how a reading somebody asserted is held rather than a word anybody counted,
+and it comes from one source. Where the far half of the correlative names
+something growing produces — 高, 大, 胖, 壮, 结实 — that edge is dropped and the
+character's own `zhǎng` stands.
+
+This one is a heuristic and is labelled as such: 越长 occurs three times in the
+88,866 lines and all three are 越来越长 or 说的越长, so unlike the rest of the
+page there is no corpus behind the shape. It is deliberately a `forbid` rather
+than a `force`, which leaves `cháng` standing as a rival a single bucket dearer
+— 越长越X is genuinely ambiguous, since 孩子越长越漂亮 grows where 头发越长越漂亮
+lengthens, so the decode answers with the likelier reading and still reports
+itself as [guessing](../confidence/). 漂亮 is out of the list for that reason.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `TEACHING_JIAO`,
-`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `applyEdgeRules`) and `decodeRun` takes its
-own list, so an application with its own domain can add to them or decode with
-none.
+`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `applyEdgeRules`) and
+`decodeRun` takes its own list, so an application with its own domain can add to
+them or decode with none.
+
+## Readings you assert yourself
+
+No rule settles every polyphone, and some texts are genuinely ambiguous — 孩子越
+长越漂亮 grows where 头发越长越漂亮 lengthens, and nothing in the characters says
+which. An application that knows its own content can say what this one could
+only guess at, with the `readings` option:
+
+```ts
+convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
+```
+
+The terse form is a plain object of text to reading, which is what a corrections
+table looks like after an application has accumulated a few. Keep it as a
+constant and pass it everywhere:
+
+```ts
+const CORRECTIONS = { 太长: "tài cháng", 长头发: "cháng tóufa" };
+convert(dictionary, text, { locale: "zh-CN", readings: CORRECTIONS });
+```
+
+**A word hint is an assertion about the text it names**, so it rewrites the
+reading of exactly those characters and no more. It says nothing about a longer
+word that happens to contain them:
+
+```ts
+convert(dictionary, "校长", { readings: { 长: "cháng" } }); // "xiàozhǎng"
+```
+
+That is deliberate, and it is what makes a corrections table safe to accumulate:
+the dictionary knowing 校长 is better evidence about that stretch than a remark
+about one of its characters, so entries do not reach into words nobody was
+thinking about. Naming the whole word does reach it, and the word stays whole:
+
+```ts
+convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }); // "yínxíng"
+```
+
+**A positional hint is an assertion about one character of one text**, and
+nothing outranks it — the enclosing word included. Positions are counted in code
+points from the start of the text, across any non-Han runs in it, and the
+reading is one syllable, since a position names one character:
+
+```ts
+convert(dictionary, "头发越长越漂亮", {
+  readings: [{ at: 3, reading: "cháng" }],
+});
+convert(dictionary, "校长", { readings: [{ at: 1, reading: "cháng" }] }); // "xiàocháng"
+```
+
+The list form takes both kinds, so mix them where a table needs one exception.
+An unmarked syllable is 轻声, as everywhere else here: `{ 的: "de" }` is the
+particle. Spacing is untouched — a hint changes what a stretch reads as, not
+where the words fall — and a hint that cannot be parsed throws rather than being
+skipped, since a correction silently doing nothing is worse than one that fails.
 
 ## Non-Han text
 
