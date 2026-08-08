@@ -1,0 +1,293 @@
+---
+# Publishes @kensio/pinyinjs, when someone runs it from the Actions tab.
+# What it does is decided by .releaserc.yaml; this file is the plumbing.
+#
+# Three things live outside the repository and have to exist for it to work:
+#
+#   1. A trusted publisher on npmjs.com for @kensio/pinyinjs, pointing at this
+#      repository, this workflow file, and the "release" environment below,
+#      with npm publish as the only allowed action. This is what replaces a
+#      stored NPM_TOKEN — there is no npm credential in this repository.
+#
+#   2. A repository environment named "release". Adding a required reviewer
+#      makes a publish wait for a second pair of eyes, which is worth having
+#      if anyone else ever gains write access. Starting the run is already a
+#      deliberate act, so approving your own run adds little on its own. The
+#      choice is only made there, not here.
+#
+#   3. Settings → Actions → General → "Allow GitHub Actions to create and
+#      approve pull requests", for the changelog job at the bottom. Without it
+#      `gh pr create` fails with a permissions error that does not mention the
+#      setting.
+#
+# None of them is recorded in the repository, so if publishes start failing
+# with an authentication error, check that the trusted publisher still names
+# this workflow file — renaming this file silently invalidates it.
+
+name: Release
+
+on:
+  # Started by hand, not by merging. Pull requests land here in bursts, and
+  # publishing each one would put a version on the registry that nobody
+  # installs any sooner: pnpm v11 holds new versions back for a day by
+  # default. One run ships everything accumulated since the last tag, as a
+  # single version with one set of release notes.
+  #
+  # Running this from a branch other than main is harmless — .releaserc.yaml
+  # releases from main only, so semantic-release finds nothing to do.
+  workflow_dispatch:
+    inputs:
+      minor:
+        description: >-
+          Release a minor version. Leave unticked for a patch, which is
+          what everything releasable defaults to.
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: true
+
+# One release at a time, and never cancelled part-way: a run killed between
+# pushing the tag and publishing the tarball leaves a version that exists in
+# git and not on the registry, which is awkward to unpick.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# Nothing is granted by default; each job below asks for the scopes it needs
+# and no more.
+permissions: {}
+
+# The checks pr.yml already ran, run again against main, and then publish.
+#
+# Re-running them is not belt and braces. The main ruleset does require a pull
+# request to be up to date with main before it merges, but "up to date" is
+# measured when the merge happens and this run may be days later, and a
+# dictionary rebuild on either side can change what the tests assert without
+# changing a line either branch touched.
+#
+# They are separate jobs from the publish because four jobs cost the slowest of
+# them rather than the sum. The check names are deliberately not the bare
+# "Lint"/"Build"/"Test on Node 22" that pr.yml uses: those four are the
+# required status checks in the main ruleset, and a ruleset matches a check by
+# name whatever workflow posted it, so a release dispatched from a branch with
+# an open pull request would otherwise report into that pull request's gate.
+#
+# Spelled out rather than calling `pnpm check`, which starts with `pnpm fmt`
+# and rewrites files instead of reporting on them. Keep these jobs and the ones
+# in pr.yml in step with each other.
+jobs:
+  lint:
+    name: Release lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Actions are pinned to commit SHAs rather than the tags pr.yml uses. A
+      # tag can be moved to point at new code, which is how the
+      # tj-actions/changed-files compromise reached the repositories using it;
+      # a SHA cannot. It matters here and not there because this is the
+      # workflow that mints a credential to publish under this package's name.
+      # The trailing comment is the tag each SHA was resolved from, so a bump
+      # is still readable in review.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint:ci
+      - run: pnpm fta
+
+  test:
+    name: Release test on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      # The same two runtimes pr.yml proves, for the same reasons: the floor
+      # `engines` states, and the version .nvmrc develops against, with only
+      # the latter measuring coverage.
+      matrix:
+        include:
+          - node: "22"
+            script: test
+          - node: "24"
+            script: test:coverage
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm ${{ matrix.script }}
+
+  build:
+    name: Release build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:check
+      - run: pnpm build
+      # The last gate before a stale dist/ reaches the registry: builds the
+      # real tarball and checks what is in it. The release job below builds its
+      # own through prepack rather than taking this one — that check proves the
+      # build packs correctly, it does not hand anything on.
+      - run: pnpm pack:check
+
+  release:
+    name: Release
+    # Nothing runs here until every check above is green. They check out the
+    # same commit this one publishes, so a green check is a statement about the
+    # tarball semantic-release is about to build.
+    needs: [lint, test, build]
+
+    runs-on: ubuntu-latest
+
+    # What the npm trusted publisher is scoped to, and where any approval
+    # requirement lives. See the note at the top of this file.
+    environment: release
+
+    permissions:
+      # Push the tag and create the GitHub Release.
+      contents: write
+      # Mint the OIDC token npm exchanges for a short-lived publish
+      # credential. Without this, @semantic-release/npm falls back to looking
+      # for an NPM_TOKEN and fails.
+      id-token: write
+
+    # Empty when the commits since the last tag were only chore/test/docs, and
+    # nothing was published. The changelog job below reads it to decide whether
+    # there is anything to write down.
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # semantic-release works out the next version by reading the
+          # existing tags, so a shallow clone would have it start from zero.
+          fetch-depth: 0
+          # semantic-release authenticates its own push with GITHUB_TOKEN, so
+          # leaving checkout's credential in .git/config only widens what a
+          # later step could use.
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Decides the version, retitles the changelog's Unreleased section,
+      # publishes to npm, tags and writes the GitHub Release with that section
+      # as its body. Does nothing at all if the commits since the last tag are
+      # only chore/test/docs, and fails rather than publishing if there is
+      # nothing written under that heading. See .releaserc.yaml.
+      - id: release
+        run: pnpm exec semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Read by analyzeCommitsCmd in .releaserc.yaml, which raises the
+          # release to a minor when this is "true".
+          RELEASE_MINOR: ${{ inputs.minor }}
+
+  # The rewrite the release above made to its own working tree, made again
+  # here and sent to main as a pull request. Two files: CHANGELOG.md, whose
+  # `## Unreleased` heading becomes the version just published, and
+  # package.json, whose version follows it.
+  #
+  # A pull request rather than a push, because the main ruleset requires four
+  # passing status checks and a commit created inside this run has none. pr.yml
+  # runs those four on pushes to `release/**` for exactly this reason.
+  #
+  # Neither file is what the released version *is* — the tag and the registry
+  # are that, and both already exist by the time this runs. So a failure here,
+  # or a pull request left unmerged, costs a stale package.json and a heading
+  # in the wrong place. It does not cost a broken release, and nothing about
+  # the next one depends on it having been merged.
+  changelog:
+    name: Write the changelog back
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      # Pushing the branch.
+      contents: write
+      # Opening the pull request.
+      pull-requests: write
+    steps:
+      # The one job here that keeps checkout's credential, because it is the
+      # one that pushes. It holds no npm credential and publishes nothing.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: true
+
+      # For `npm pkg set` below, and so that the version of npm rewriting
+      # package.json is the one everyone else's edits go through.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Commit and open a pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          ./scripts/sh/changelog.sh release "$VERSION"
+          npm pkg set version="$VERSION"
+
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "Nothing changed. Already written back?"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          branch="release/v$VERSION"
+          git switch --create "$branch"
+          git add CHANGELOG.md package.json
+          git commit --message "chore: changelog and version for $VERSION"
+          git push origin "$branch"
+
+          # --body-file rather than --body, so the markdown below is not at the
+          # mercy of how this block is indented.
+          cat > "$RUNNER_TEMP/pr-body.md" <<EOF
+          [$VERSION](https://github.com/KensioSoftware/pinyinjs/releases/tag/v$VERSION) is published. This is the part of it that belongs on main: the \`## Unreleased\` heading retitled to $VERSION, a fresh empty one above it, and \`version\` in package.json caught up.
+
+          Nothing depends on this being merged — the tag and the registry are the version of record — but the next release reads the empty heading, so leaving it open means writing the next set of notes underneath the last one.
+          EOF
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore: changelog and version for $VERSION" \
+            --body-file "$RUNNER_TEMP/pr-body.md"
