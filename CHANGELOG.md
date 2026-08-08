@@ -9,6 +9,16 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+### Fixed
+
+- **The changelog inside the package described five releases as unreleased.**
+  Every tarball from 1.1.0 to 1.5.2 shipped a `## Unreleased` section holding
+  everything since 1.0.0, so a reader who opened the copy they installed —
+  which [the API page](docs/api/#stability) points them at — had no way to tell
+  which version any of it arrived in. The entries are filed under the versions
+  that shipped them now. No code changes; this release exists to put the
+  corrected file on the registry.
+
 ## 1.5.2
 
 ### Fixed
