@@ -66,6 +66,7 @@ zong1
 feng1		n
 xu4		zg
 mai4		ng		mo4
+zu2		ng		cu4
 ci2		n
 xin1
 huan1		g
@@ -359,7 +360,7 @@ qu1		zg
 ci4		zg		si4
 beng1		zg
 shi4		d		si4
-ga1		zg		jia1,qie2
+jia1		zg		ga1,qie2
 pi1		zg
 si4		zg
 yi3
@@ -844,7 +845,7 @@ bing1		n
 qi2		r		ji1
 ju4		v		ju5
 dian3		zg
-ci2		rg		zi1
+zi1		rg		ci2
 yang3		v
 jian1		v
 shou4		n
@@ -1234,7 +1235,7 @@ hua2		ns	p	hua4
 xie2		n
 wan4		zg
 bei1		ag
-cu4		ng		zu2
+zu2		ng		cu4
 zhuo2		nr	p	zhuo1
 xie2
 dan1		n		chan2,shan4
@@ -1541,7 +1542,7 @@ guang1		o
 zha4		x
 xi4		zg
 yi2		e
-lie5		v		lie1,lie3
+lie3		v		lie1,lie5
 zi1		zg
 mie1		zg
 mi1		n		mi3
@@ -1559,7 +1560,7 @@ huai4		zg
 tao2		zg
 xian2		ns	p
 e4		zg
-xuan1				xuan3
+xuan3				xuan1
 xiu1		g
 guo1		zg
 yan4		v		ye4,yan1
@@ -1602,12 +1603,12 @@ ge1		n		ge5
 o2		zg		o4,e2
 chi1		o
 shao4		ng
-li5		y		li1,li3,ying1
+li1		y		li5,li3,ying1
 na3		r		na5,ne2,nai3,nei3
 zu2
 he2
 ku1		v
-xiao1		n		xiao4
+xiao4	xiao1	n		xiao1
 lao2
 bo1		zg
 zhe2		n
@@ -1709,7 +1710,7 @@ fei1		x
 liang3		zg		ying1
 xian2		zg
 pi2		n
-sha4		r		sha2
+sha2		r		sha4
 la5		y		la1
 ze2		o
 ying1
@@ -1776,13 +1777,13 @@ dan1				chan2,shan4
 pen4
 li2	li3	x
 yo1				yo5
-cha1		zg		zha1
+zha1		zg		cha1
 miao1		o
 pen1		v		pen4
 kui2		n
 yu4		nr	p
 jie1
-lou5		zg		lou2
+lou2		zg		lou5
 ku4		g
 ti2
 yao2		zg
@@ -1846,7 +1847,7 @@ cao2		a
 jia1		nr	p
 ai2
 piao4	piao1	g
-lou5				lou2
+lou2				lou5
 ga1		o		ga2,ga3
 gu3		g		jia3
 xiao1
@@ -1987,7 +1988,7 @@ xiao1
 chan3
 yi4
 luo1				luo2
-nang1		zg		nang2
+nang2		zg		nang1
 za2
 su1
 jian1		zg
@@ -2083,7 +2084,7 @@ mei2		zg
 jun1		d
 rong3		zg
 fang1		ng		fang2
-fen4		zg		ben4
+ben4	fen4	zg		fen4
 ben4		g
 tan1		zg
 kan3		nrt
@@ -2122,7 +2123,7 @@ fo2
 ao4	ao1	g
 qiu1		zg
 mu3		x
-ke1		n		ke3,jiong1
+ke3		n		ke1,jiong1
 xue4		zg
 di3		g		chi2
 che4		zg
@@ -2219,7 +2220,7 @@ yu4		n
 bu4		ng
 ya1		zg
 quan2		zg
-pi4		zg		pi2
+pi2		zg		pi4
 qing1		zg
 ju4		zg
 kong1		zg
@@ -2357,7 +2358,7 @@ di4		zg
 shang1		zg
 mu4		n
 cui1
-yan1		zg		yan4
+yan4		zg		yan1
 ta3		zg
 zeng1		zg
 qiang2		n
@@ -2744,7 +2745,7 @@ mei2		n
 an1
 ying1		zg
 mei4		zg
-yuan2		zg		yuan4
+yuan4		zg		yuan2
 zheng1		zg
 shi4
 xie4
@@ -2844,7 +2845,7 @@ bi4		g
 shan4		v
 qiang2
 lian3		zg
-xuan1		zg		huan2
+huan2		zg		xuan1
 niao3		zg
 yi4
 can1		zg
@@ -2889,7 +2890,7 @@ jie2		zg
 jue2
 kong3		nr	p
 yun4		n
-zi1		zg		ma1
+ma1		zg		zi1
 zi4		n		zi5
 cun2		v
 sun1		zg
@@ -2941,7 +2942,7 @@ rou4
 hong2		n
 yi2		zg
 jing3		zg
-fu2		nr	p	mi4
+mi4		nr	p	fu2
 zhu3		zg
 dang4		g
 zong1		nr	p	zong5
@@ -3192,7 +3193,7 @@ gou3		g
 xue2		zg
 po1
 tiao2		zg
-ju1				qu1
+qu1				ju1
 yan2		nr
 fu2		zg
 xiu4		ns
@@ -3231,7 +3232,7 @@ yi2
 an1		zg
 wei2		zg
 huan2		zg
-shi4		zg		zhi4
+zhi4		zg		shi4
 mi4		zg
 lie4	li3	zg
 ji4		zg
@@ -3372,7 +3373,7 @@ qian3
 yong3
 nie4
 cuo2
-ji2		zg		ji3
+ji3		zg		ji2
 shi2		zg
 ruo4		zg
 song3		zg
@@ -3899,7 +3900,7 @@ ren2		zg
 chan4		v
 tan3		zg
 te4		x
-tui1		d		te4,tei1
+te4		d		tui1,tei1
 gan1		zg
 qi4		zg
 shi4		zg
@@ -4399,7 +4400,7 @@ ge1		nr	p
 yue4		zg
 wu4		l
 jian1		x
-qu5		t		xu1
+xu1		t		qu5
 shu4		vg
 rong2		nr	p
 xi4		n		hu1
@@ -4413,7 +4414,7 @@ qiang1		v		qiang4
 zhan4		n
 dong4		zg
 qi1		nr	p
-ga1		zg		jia2
+jia2		zg		ga1
 die2		zg
 zei2		zg
 jia2		zg
@@ -5168,7 +5169,7 @@ zhu3
 fang1		n		fang5
 chan3		zg
 hang2		zg
-yu1		nr	p	yu2,wu1
+yu2		nr	p	yu1,wu1
 shi1		nr	p
 pei4		zg
 you2		zg
@@ -5396,7 +5397,7 @@ shu3	shu4	n
 meng2		zg
 xun1		g
 yao4		zg
-bao4		zg		pu4
+pu4		zg		bao4
 li4		zg
 chen2		zg
 kuang4		zg
@@ -5591,7 +5592,7 @@ guai3		zg
 xiao1		g
 jia4		q
 jia1		n
-gou1		n		gou3,ju3
+gou3		n		gou1,ju3
 bao1		zg		fu2
 mo4		zg
 yi4		zg
@@ -5622,7 +5623,7 @@ mao4		zg
 song1		zg
 zhe4		ns
 xia2		zg
-you2		n		you4
+you4		n		you2
 gui4		n		ju3
 tuo4		zg
 zha4		n		zuo4
@@ -5658,7 +5659,7 @@ shi4		n
 zhi1		n
 liu3		n
 rong2		zg
-shan1		n		zha4
+zha4		n		shan1
 biao1		n
 zhan4		n
 zhi4	jie2	g
@@ -5728,7 +5729,7 @@ tong2		ns
 sang1		nr	p
 sang1
 huan2		nr	p
-ju2		nr		jie2
+jie2		nr		ju2
 jiu4		g
 zan3		zg
 ying1		zg
@@ -5750,7 +5751,7 @@ bei1
 ting1		zg
 kuo4		zg
 jing4		zg
-bo2		zg		po5
+po5		zg		bo2
 fu2		g
 rui2		zg
 tong3		zg
@@ -5865,7 +5866,7 @@ yi4		zg
 sen1		n
 ren3		zg
 chui2		v
-leng1		ng		leng2,ling2
+leng2		ng		leng1,ling2
 qi1		zg
 zhuo1		zg
 fu2		zg
@@ -5877,7 +5878,7 @@ zhao4		g
 guan1		n
 fen1		zg
 fen2		zg
-chen1		zg		shen1
+shen1		zg		chen1
 ni2		zg
 wan3		zg
 guo3		g
@@ -5973,13 +5974,13 @@ ji2		ng
 jie2		zg
 ye4
 chu3		zg
-shun3		zg		dun4
+dun4		zg		shun3
 yu2		zg
 zou4		zg
 mei2		nr	p
 ji2
 jie2
-jie1		n		kai3
+kai3		n		jie1
 qiu1		g
 ying2		q
 rou3
@@ -6403,7 +6404,7 @@ shu1		nr	p
 ou1		v
 duan4		q
 zhu4
-yan1		nr		yin1,yin3
+yin1		nr	p	yan1,yin3
 yi4
 sha1
 qiao4		zg
@@ -6780,7 +6781,7 @@ lang4		n
 li3		zg		hai3
 fu2		v
 wu2		g
-li4		zg		lian4
+lian4		zg		li4
 yu4		n
 tong2
 lao2
@@ -6835,7 +6836,7 @@ shuan4		v
 ya2		ng
 ye4		ng
 kong1		zg
-yuan1				wo4
+wo4				yuan1
 han2		v
 tuo1
 dong1
@@ -6958,7 +6959,7 @@ can1
 tuan1		ag
 mian3		x
 mo4		zg
-xu4		zg		xu1,xu3
+xu1		zg		xu4,xu3
 pen2		g
 jian1		g
 jian3		zg
@@ -7202,7 +7203,7 @@ cun1		zg
 hong4
 si1		g
 shu4		g
-peng1		ns		peng2
+peng2	peng1	ns		peng1
 han2		zg
 hong4		zg
 fu2
@@ -7361,7 +7362,7 @@ zai1		n
 can4		a
 yang2		nrt
 qi4		zg
-gui4		g		jiong3
+jiong3		g		gui4
 wen2		zg
 yi4		zg
 lu2		zg
@@ -7443,7 +7444,7 @@ ting3		zg
 wan2		n
 peng1		v
 lang3		zg
-shan1		zg		yan4
+yan4		zg		shan1
 xu4		zg
 feng1		n
 rong2
@@ -7572,7 +7573,7 @@ peng2
 sui1
 teng1	tong1	zg
 zong1		zg
-yu4		v		yun4
+yun4		v		yu4
 yi2
 ao2		v		ao1
 wei4
@@ -8266,7 +8267,7 @@ lu4		zg
 fu3		d
 yong3		n
 beng2		c
-ning4		zg		ning2
+ning2		zg		ning4
 tian2		n
 you2		p
 jia3		n		jia5
@@ -8274,9 +8275,9 @@ shen1		v
 zha2
 dian4		n
 nan2		n
-dian1		n		dian4
+dian4		n		dian1
 ping1
-ding1		nr		ting3
+ting3		nr		ding1
 hua4		n
 zhen4
 zai1		g
@@ -8316,7 +8317,7 @@ pan1		zg
 yi1		zg
 fan1		q		pan1
 hua4		zg
-yu2		zg		she1
+she1		zg		yu2
 yu2		zg
 mu3
 jun4		zg
@@ -8861,7 +8862,7 @@ zhi1		v
 hou2
 shen3		zg
 ju3		ng
-jiao2		nr		jiao3
+jiao3		nr	p	jiao2
 cuo2		n
 duan3		a
 ai3		a
@@ -8946,7 +8947,7 @@ yin2	xian4
 xing2		g
 dong4		g		liu2
 xi1		n
-gong3		zg		hong2
+hong2		zg		gong3
 shuo4		zg
 xia2		g
 qiao1		x
@@ -8979,7 +8980,7 @@ nüe4		zg
 keng1		zg
 peng2		n
 zhui4		zg
-kong4		zg		kong1
+kong1		zg		kong4
 qi2		zg
 zong4		zg
 lin2
@@ -9022,7 +9023,7 @@ peng4		v
 jian3		n
 di4		g
 tan4		n
-cha1		n		cha2
+cha2		n		cha1
 qi4
 feng1		g
 xuan4		g
@@ -9043,7 +9044,7 @@ lei3		nr
 cuo1		vn
 xia2
 xi1
-qian1				lian2
+lian2				qian1
 pan2		ng
 wei2
 yun3
@@ -9559,7 +9560,7 @@ dang1		zg
 zheng1		n
 ce4
 fu1		zg
-jun1		ns		yun2
+yun2		ns		jun1
 pa2
 li2
 lang2
@@ -9860,7 +9861,7 @@ tang2		zg
 qiu3		zg
 cao1		zg
 zhuang1
-mei2		zg		mi2
+mi2		zg		mei2
 san3				shen1
 fen4
 zao1		v
@@ -10143,7 +10144,7 @@ beng3		zg		beng1,beng4
 yi1		zg
 sao1
 mou2		zg
-you2		p		yao2,zhou4
+yao2		p		you2,zhou4
 qiang3		zg
 hun2		zg
 xian1		zg
@@ -10283,14 +10284,14 @@ xi4		zg
 sui2	sui1	ns
 tao1		n
 ji4		v
-ti4		g		ti2
-ji1		zg		ji4
+ti2		g		ti4
+ji4	ji1	zg		ji1
 xu4		ng
 ling2		zg
 xu4		v
 qi3		a
 fei1		n
-chao1		n		chuo4
+chuo4		n		chao1
 shang4		v
 gun3		v
 sheng2		n		sheng5
@@ -10348,7 +10349,7 @@ man4		zg
 lei2		x
 ying1		ng
 suo1		v		su4
-miao4		nr	p	miu4,mou2
+mou2		nr		miao4,miu4
 sao1		v
 xie2		g
 liao2		v
@@ -10534,7 +10535,7 @@ die2		g
 er2		c
 shua3		v
 ruan3
-er2			p	nai4
+nai4			p	er2
 nai4		nz
 duan1		zg		zhuan1
 lei3		ns
@@ -10567,7 +10568,7 @@ huai2
 er3		n
 yi4
 ding1	ding3	n
-ye1		nr		ye2
+ye2		nr		ye1
 da1		v
 song3		vg
 chi3		n
@@ -10730,7 +10731,7 @@ cui4		a
 xie2		ng
 mai4				mo4
 mai4		ng		mo4
-ji2		n		ji3
+ji3		n		ji2
 xie2		zg
 nin5		zg
 kuai4		zg
@@ -10781,7 +10782,7 @@ jing1		n
 nai2		zg
 la4		t		xi1
 ye4		ng
-a1	ang1	v		yan1
+yan1		v		a1
 shen4
 fu3		a		fu5
 fu3		g
@@ -10867,7 +10868,7 @@ hu1		zg
 cui4		zg
 fen4
 ying1		vg
-dan4		a		shan1
+shan1		a		dan4
 dan3
 kuai4
 nong2
@@ -11011,7 +11012,7 @@ jian1		a
 jian1
 se4		ng		shai3
 yan4		a
-bo2				fu2
+fu2				bo2
 yan4
 yan4
 cao3
@@ -11051,7 +11052,7 @@ wen2		zg
 qian4		n
 fu2	fou2	zg
 kou1		n
-gai4		n		jie4
+jie4		n		gai4
 lu2		n		lu5,lu3
 xu4				zhu4
 ji1		n
@@ -11090,7 +11091,7 @@ su1		j
 yuan4		nr	p
 ran3		x
 ling2		x
-tai1		ng		tai2
+tai2		ng		tai1
 shao2		n		tiao2
 di2		zg
 miao2		n
@@ -11168,7 +11169,7 @@ hui2		n
 yin1		n
 cha2		n
 fa2
-rong1		n		rong2
+rong2		n		rong1
 ru2		nr	p
 chong1		x
 mang3
@@ -11210,7 +11211,7 @@ hun1		ng		xun1
 xing2		ns		ying2
 luo4		g
 ying2		n
-qian2		n		xun2
+xun2		n		qian2
 jin4		g
 sun1		zg
 yin1		a		yin4
@@ -11460,7 +11461,7 @@ mi2		zg
 hao1		nr
 sun1
 zhen1		x
-mi4		zg		ming2
+ming2		zg		mi4
 xu4		n
 xi2
 gu1	gu3
@@ -11506,7 +11507,7 @@ ling2		n
 piao4	biao1
 su4			p
 mie4		v
-man2		v		man4,wan4
+man4		v		man2,wan4
 bo2		zg		bo5
 di4		zg
 zhe4		n
@@ -12367,7 +12368,7 @@ yi4
 xi5		f		xi1
 yao4		v		yao1
 feng3
-qin2		nr	p	tan2
+tan2		nr	p	qin2
 fu4		v
 ba4
 he2
@@ -12864,7 +12865,7 @@ fei3		v
 ke4		n
 wei3		vg
 yu2		g
-shui2		r		shei2
+shei2		r		shui2
 shen3		g
 diao4		v		tiao2
 chan3		v
@@ -12971,7 +12972,7 @@ di2		zg
 zong1
 fen2
 yi4
-zhai4		g		zhi4
+zhi4		g		zhai4
 bao4		n
 chai2		zg
 an4
@@ -13135,7 +13136,7 @@ he4		nr	p
 yi2		v
 zei2		n
 zhi4		g
-gu3		nr		jia3
+jia3		nr	p	gu3
 hui4		v
 zi1		g
 lin4		v
@@ -13731,7 +13732,7 @@ hui2		zg
 dong4
 mi2		v
 beng4		zg
-ji1		n		ji4
+ji4	ji1	n		ji1
 nai3		zg
 yi2		zg
 zhui1		v
@@ -13795,7 +13796,7 @@ bi1		v
 yu2		vg
 dang4		zg
 dun4		vg
-sui2		d		sui4
+sui4		d		sui2
 chuan2		g
 chi2
 yu4		v
@@ -13822,7 +13823,7 @@ di4
 chi2
 yuan3		zg
 su4
-ta1	ta4	x		ta5
+ta5	ta4	x		ta1
 qian3		vg
 yao2		ag
 ao2		v
@@ -15669,7 +15670,7 @@ er3		n
 rao2		v
 xiang3		n
 he2		zg
-ge1		zg		le5
+le5		zg		ge1
 jiao3		n
 bing3		n		bing5
 bo1		n

@@ -44,14 +44,23 @@ const READING_WITH_COUNT = /^(.+)\((\d+)\)$/u;
 /**
  * Fields carrying readings, in the order their readings are trusted.
  *
- * `kHanyuPinlu` leads because it ranks readings by frequency. `kTGHZ2013` comes
- * next as the current mainland standard, then `kMandarin` for the characters
- * neither covers, and `kXHC1983` last to catch anything still missing.
+ * `kHanyuPinlu` leads because it ranks readings by frequency — but only where
+ * it ranks more than one, which is what {@link rankReadings} qualifies. Then
+ * `kMandarin`, which names one preferred reading per character, then
+ * `kTGHZ2013` and `kXHC1983` for the readings neither of those covers.
+ *
+ * The dictionary-indexed fields come last on purpose. `kTGHZ2013` writes each
+ * reading prefixed with its entry number in 《現代漢語規範詞典》 — 勒 is
+ * `212.050:lè 212.100:lēi` — so its order is where the reading sits in a book,
+ * not how often it is used. Ranked above `kMandarin` it made the default for a
+ * polyphone whichever reading happened to sort earlier by pinyin: 勒 was `lēi`,
+ * 佛 `fú`, 似 `shì`, 茄 `jiā`. The field is a fine *source* of readings and a
+ * meaningless *ranking* of them.
  */
 export const READING_FIELDS = [
   "kHanyuPinlu",
-  "kTGHZ2013",
   "kMandarin",
+  "kTGHZ2013",
   "kXHC1983",
 ] as const;
 
@@ -96,6 +105,61 @@ function readFieldValue(field: ReadingField, value: string): string[] {
     )
     .flatMap((reading) => reading.split(","))
     .filter((reading) => reading !== "");
+}
+
+/**
+ * Which fields to trust, in order, for one character.
+ *
+ * `kHanyuPinlu` is a ranking, and a ranking of one thing is not a ranking. Where
+ * the field lists a single reading it never compared it against anything, so it
+ * is saying "this reading occurred in the corpus" rather than "this reading
+ * leads" — and it is demoted to last, keeping its reading as a candidate
+ * without letting it set the default.
+ *
+ * That matters because the corpus behind the field, 《現代漢語頻率詞典》,
+ * predates the 1985 普通话异读词审音表. Where it is the only voice it can be
+ * reporting a reading that was standard then and is not now: of the ten
+ * characters where a lone `kHanyuPinlu` reading disagrees with `kMandarin`,
+ * eight are the superseded reading — 绩 `jī` for `jì`, 迹 `jī` for `jì`, 脊
+ * `jí` for `jǐ`, 哮 `xiāo` for `xiào`, 茸 `rōng` for `róng`, 澎 `pēng` for
+ * `péng`, 啥 `shà` for `shá`, 甸 `diān` for `diàn`. A high count does not make
+ * one current; 绩 `jī` carries 132 of them.
+ *
+ * The other two are genuine variants where both readings are current — 谁 is
+ * `shéi` or `shuí`, 桔 is `jié` or `jú` — so `kMandarin` deciding them costs
+ * nothing that a word entry does not already settle.
+ */
+function fieldOrder(
+  fields: ReadonlyMap<ReadingField, readonly string[]>,
+): readonly ReadingField[] {
+  if ((fields.get(FREQUENCY_FIELD) ?? []).length > 1) {
+    return READING_FIELDS;
+  }
+  return [
+    ...READING_FIELDS.filter((field) => field !== FREQUENCY_FIELD),
+    FREQUENCY_FIELD,
+  ];
+}
+
+/**
+ * Gather one character's readings from its fields, likeliest first.
+ *
+ * A reading appearing in several fields keeps the position its highest-trusted
+ * one gives it, and every field's readings survive: the order decides the
+ * default, not the membership.
+ */
+function rankReadings(
+  fields: ReadonlyMap<ReadingField, readonly string[]>,
+): string[] {
+  const ordered: string[] = [];
+  for (const field of fieldOrder(fields)) {
+    for (const reading of fields.get(field) ?? []) {
+      if (!ordered.includes(reading)) {
+        ordered.push(reading);
+      }
+    }
+  }
+  return ordered;
 }
 
 /**
@@ -146,16 +210,7 @@ export function parseUnihanReadings(text: string): Map<string, UnihanReadings> {
 
   const parsed = new Map<string, UnihanReadings>();
   for (const [character, fields] of byField) {
-    const ordered: string[] = [];
-    for (const field of READING_FIELDS) {
-      const fieldReadings = fields.get(field) ?? [];
-      for (const reading of fieldReadings) {
-        if (!ordered.includes(reading)) {
-          ordered.push(reading);
-        }
-      }
-    }
-
+    const ordered = rankReadings(fields);
     const taiwanReading = taiwanReadings.get(character);
     parsed.set(character, {
       readings: ordered,

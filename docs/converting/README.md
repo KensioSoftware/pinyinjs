@@ -208,8 +208,8 @@ to be right here, this being the ambiguity that does not cross a polyphone, so
 what it costs is the spacing.
 
 Measured on 20,139 hand-labelled polyphonic characters, the lattice reads
-89.04% correctly against greedy's 88.82%: 75 characters it gets right that
-greedy does not, against 30 the other way. Small, but real. Use `convert`;
+90.34% correctly against greedy's 90.11%: 76 characters it gets right that
+greedy does not, against 31 the other way. Small, but real. Use `convert`;
 `convertGreedily` is there to be compared against, and `pnpm accuracy` and
 `pnpm polyphones` in the repository are what compare them.
 
