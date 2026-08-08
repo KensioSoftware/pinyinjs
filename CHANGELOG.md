@@ -9,6 +9,59 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+### Fixed
+
+- **Polyphones defaulted to whichever reading a dictionary happened to print
+  first.** Unihan's `kTGHZ2013` ranked above `kMandarin`, and that field
+  prefixes every reading with its entry number in 《現代漢語規範詞典》 — 勒 is
+  `212.050:lè 212.100:lēi` — so its order is a page order, and taking the first
+  reading meant taking whichever one sorted earlier by pinyin. 殷 read `yān` and
+  楷 `jiē`. The dictionary-indexed fields now rank last: they are a good
+  _source_ of readings and a meaningless _ranking_ of them.
+
+  `kHanyuPinlu` still leads where it lists more than one reading, because there
+  it has counted them against each other, but where it lists one it counted
+  nothing — it is saying "this occurred", not "this leads" — and a lone reading
+  now ranks last too. Only ten characters have one that disagrees with
+  `kMandarin`, and eight of those are simply pre-1985: the corpus behind the
+  field, 《現代漢語頻率詞典》, predates the 普通话异读词审音表, and the 132
+  occurrences carrying 绩 as `jī` are the old standard rather than a case for
+  it.
+
+  354 readings fixed against 94 broken over 25 characters, the largest being 贾
+  `gǔ`→`jiǎ`, 苔 `tāi`→`tái`, 町 `dīng`→`tǐng`, 殷 `yān`→`yīn` and 芥
+  `gài`→`jiè`. CPP's polyphone score is 90.34%, up from 89.05%, and the gold
+  corpus does not move. What broke is mostly `kMandarin` being wrong with
+  nothing behind it — 媛 `yuán`→`yuàn`, 桔 `jú`→`jié`, 耶 `yē`→`yé`, 缪
+  `miào`→`móu` — which needs a third opinion with corpus evidence behind it
+  rather than an override, since here the sources disagree. 䘚 is now paired
+  with 卒, so `core` and `standard` each gained a key.
+
+- **`full` read 特徵 as `tèzhǐ` where `standard` read it right.**
+  `large_pinyin.txt` is a 简体 corpus, and where it carries a 繁體 headword
+  anyway it has read it as though the characters were 简体, taking each at face
+  value instead of as the 简体 character it stands for: 徵 as itself rather than
+  as 征, 沈 as the surname rather than as 沉, so 沈溺 came out `shěnnì`. Of the
+  2,854 corpus headwords carrying a 繁體-only character, 72 are ones CC-CEDICT
+  pairs with a 简体 form and 13 of those read wrongly.
+
+  The reading was only half of it. A corpus headword becomes an entry of its
+  own, and an entry outranks the 繁體 key that the traditional derivation hangs
+  on the 简体 entry — so the word was in the dictionary twice, and which copy
+  answered depended on the tier. `standard` excludes the phrase tail and was
+  right; `full`, the default, was wrong. Loading more dictionary made the answer
+  worse, which is also the upgrade path the docs describe, of converting with
+  `standard` and reloading as `full`.
+
+  A headword CC-CEDICT knows _only_ as another word's 繁體 spelling now
+  contributes no entry, and the word keeps the reading CC-CEDICT pairs it with.
+  68 entries drop out and their keys are re-claimed from the 简体 entry, so
+  `full` loses 2 keys; 简→繁→简 round trips gain 38 against 5 lost on 繁→简→繁,
+  both unchanged as percentages. The 2,782 headwords CC-CEDICT does not pair are
+  rare or mixed-script words whose characters do read them, and are left alone.
+  Three of the words are build assertions now, this being the kind of defect
+  that comes back when a rolling source is refreshed and nothing is watching.
+
 ## 1.5.3
 
 ### Fixed
