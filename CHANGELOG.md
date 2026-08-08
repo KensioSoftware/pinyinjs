@@ -9,6 +9,8 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+## 1.5.3
+
 ### Fixed
 
 - **The changelog inside the package described five releases as unreleased.**
