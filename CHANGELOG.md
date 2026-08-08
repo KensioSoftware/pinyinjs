@@ -91,6 +91,42 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   Three of the words are build assertions now, this being the kind of defect
   that comes back when a rolling source is refreshed and nothing is watching.
 
+- **长 read `zhǎng` wherever no word covered it**, so 这篇文章不太长 came out
+  `bú tài zhǎng` and 要多长时间 `duō zhǎng shíjiān`. The stored default is not
+  the defect — Unihan ranks the readings `zhǎng(1879) cháng(1179)` and names
+  `zhǎng` in `kMandarin`, and that ranking is what reads 署长, 团长, 公安局长 and
+  总会长 correctly off a bare 长 at the end of a title. What was missing is that
+  nothing could prefer the alternate at a position no word covers.
+
+  A degree adverb settles it, and only from the left: a growing 长 is a verb and
+  no 很, 太, 最 or 多 can modify one, while what follows an adjectival 长 is a
+  noun, a particle or the end of the sentence — which is what follows half the
+  verbs too. 得, 着 and the 越…越 correlative are the exceptions, and are guarded;
+  了 and 的 are deliberately not, since after an adverb they are the sentence
+  particle and the attributive, making 时间太长了 and 很长的道路 both `cháng`.
+
+  Measured over the same 88,866 lines of Tatoeba and zh.wikipedia the other
+  edge rules were sized against, 260 长 decode as a word of their own and this
+  moves 75 to `cháng`, all 75 correctly. On CPP's 40 hand-labelled 长 the
+  character goes 85.00% to 87.50%; overall CPP is unmoved at 90.34%, as expected
+  of one character in 20,139.
+
+- **越长越高 read `yuè cháng yuè gāo`.** 越长 is a key read `yuè cháng` and the
+  only one of its shape — 越大, 越高, 越好 and 越快 are all absent, so 越高越好
+  decodes as two words while 越长越高 reached for a word nothing else in the
+  paradigm has. It carries no part of speech, which is how a reading somebody
+  asserted is held rather than a word anybody counted, and only
+  `large_pinyin.txt` has it. Where the far half of the correlative names
+  something growing produces — 高, 大, 胖, 壮, 结实 — the edge is dropped and the
+  character's own `zhǎng` stands.
+
+  Unlike everything else here this is a heuristic with no corpus behind it: 越长
+  occurs three times in the 88,866 lines and all three are 越来越长 or 说的越长.
+  It forbids rather than forces, so `cháng` stays on as a rival one bucket
+  dearer and the syllable still reports itself uncertain — 越长越X is genuinely
+  ambiguous, 孩子越长越漂亮 growing where 头发越长越漂亮 lengthens, which is why
+  漂亮 is not in the list. 时间越长越好 and 头发越长 are untouched.
+
 ## 1.5.3
 
 ### Fixed
@@ -542,14 +578,14 @@ decoder internals and the build pipeline.
 
 ### Accuracy at 1.0.0
 
-Over the 126-case gold corpus, which is committed to the repository rather than
+Over the 130-case gold corpus, which is committed to the repository rather than
 to the published package, and scored by `pnpm accuracy`:
 
 |                  |   lattice | greedy baseline |
 | ---------------- | --------: | --------------: |
-| exact match      | **97.6%** |           88.9% |
-| reading accuracy |     99.7% |           98.4% |
-| spacing (F1)     | **99.8%** |           96.5% |
+| exact match      | **97.7%** |           86.9% |
+| reading accuracy |     99.7% |           97.9% |
+| spacing (F1)     | **99.8%** |           95.7% |
 
 Every figure in that table is asserted against the scorer by
 `src/changelog.test.ts`, because a number nothing executes goes stale, which is

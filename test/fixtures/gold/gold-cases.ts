@@ -79,6 +79,12 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
   { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
 
+  // ── 长: cháng is measured, zhǎng grows and leads ───────────
+  { hanzi: "这篇文章不太长。", pinyin: "Zhè piān wénzhāng bú tài cháng.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "要多长时间", pinyin: "yào duō cháng shíjiān", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "她长得很漂亮", pinyin: "tā zhǎng de hěn piàoliang", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "校长", pinyin: "xiàozhǎng", script: "Hans", tags: ["polyphone"] },
+
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },
   { hanzi: "一天", pinyin: "yì tiān", script: "Hans", tags: ["sandhi-yi"] },

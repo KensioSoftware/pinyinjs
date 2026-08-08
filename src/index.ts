@@ -176,6 +176,7 @@ export {
 export type { EdgeContext, EdgeRule, EdgeVerdict } from "./decode/rules.js";
 
 export {
+  ADJECTIVAL_CHANG,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
