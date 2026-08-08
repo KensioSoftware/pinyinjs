@@ -1,0 +1,122 @@
+---
+# How a run of the release workflow becomes a published version. Run by
+# .github/workflows/release.yml, which holds the account-side setup this
+# depends on.
+#
+# YAML rather than JSON so the reasoning below can live next to the settings.
+
+branches:
+  - main
+
+plugins:
+  # Reads the commit subjects on main and works out the bump.
+  #
+  # Anything that ships is a patch. A minor is not something a commit subject
+  # can ask for: it is the checkbox on the workflow, below. The reasoning is
+  # that "is this significant enough to be a minor" is a judgement about the
+  # release as a whole, made once, by a person looking at the whole batch —
+  # not a judgement each commit subject should be trusted to make. Reserving
+  # it that way is also what keeps the minor number meaning something.
+  #
+  # So the ladder is: patch automatically, minor by checkbox, major by hand
+  # with scripts/sh/publish.sh and never from this workflow at all.
+  #
+  # The breaking rule has to come first and has to be here. Without it the
+  # feat rule below matches "feat!: …" too, and a breaking change would go out
+  # as a patch — worse than any of this, because it would be silent. With it,
+  # both "feat!: …" and a BREAKING CHANGE: footer reach the guard further
+  # down and fail the run.
+  #
+  # docs, test, chore, ci and style are absent on purpose: they change nothing
+  # a consumer installs, so they release nothing. A dictionary rebuild is the
+  # one to watch, since it changes the readings without changing the code —
+  # commit those as `build:`, which does release.
+  - - "@semantic-release/commit-analyzer"
+    - preset: conventionalcommits
+      releaseRules:
+        - breaking: true
+          release: major
+        - type: feat
+          release: patch
+        - type: fix
+          release: patch
+        - type: perf
+          release: patch
+        - type: refactor
+          release: patch
+        - type: build
+          release: patch
+
+  # Four commands, and between them the whole of what this repository does
+  # differently from a stock semantic-release setup.
+  #
+  # analyzeCommitsCmd raises the release to a minor when the workflow was
+  # started with its checkbox ticked. semantic-release takes the highest
+  # result across every analyzer, so this can only ever raise a patch to a
+  # minor — it cannot lower anything, and it leaves a major alone. Printing
+  # nothing, which is what happens when the box is unticked, is read as "no
+  # opinion" rather than "no release".
+  #
+  # verifyReleaseCmd refuses two things, after the version is worked out and
+  # before anything is published. Majors, because a breaking change is a
+  # decision about what consumers have to rewrite, made by a person publishing
+  # by hand rather than by a marker in a subject line — mapping them down to a
+  # minor was rejected, since it would put a false version number against a
+  # genuinely breaking change. And a release nobody has written anything
+  # about, which is what an empty `## Unreleased` section means.
+  #
+  # generateNotesCmd is why there is no @semantic-release/release-notes-
+  # generator here. The notes are the changelog: prose written by hand while
+  # the change was fresh, rather than a list of commit subjects. Keeping the
+  # two in one place is also what stops them disagreeing.
+  #
+  # prepareCmd retitles that section to the version being published. It runs
+  # before the tarball is packed, so what a reader installs does not describe
+  # itself as unreleased. Committing the same rewrite back to main is a
+  # separate pull request the workflow opens, because nothing here can push to
+  # main: the ruleset's required checks cannot pass on a commit that does not
+  # exist yet.
+  - - "@semantic-release/exec"
+    - analyzeCommitsCmd: >-
+        if [ "$RELEASE_MINOR" = "true" ]; then echo minor; fi
+      verifyReleaseCmd: >-
+        if [ "${nextRelease.type}" = "major" ]; then
+        echo "Refusing to publish ${nextRelease.version} automatically:
+        major releases are published by hand." >&2;
+        exit 1;
+        fi;
+        ./scripts/sh/changelog.sh notes > /dev/null
+      generateNotesCmd: ./scripts/sh/changelog.sh notes
+      prepareCmd: ./scripts/sh/changelog.sh release ${nextRelease.version}
+      # Read by the workflow, which needs the version to open that pull
+      # request. Guarded because this file is also runnable outside Actions,
+      # where the variable is unset and the redirect would be an error.
+      successCmd: >-
+        if [ -n "$GITHUB_OUTPUT" ]; then
+        echo "version=${nextRelease.version}" >> "$GITHUB_OUTPUT";
+        fi
+
+  # Publishes to npm. No NPM_TOKEN anywhere: the npm CLI detects the OIDC
+  # token the workflow requests and exchanges it for a credential that lasts
+  # the length of this one publish, which is also what makes npm attach a
+  # provenance attestation. Needs npm >= 11.5.1, which the Node in .nvmrc
+  # carries.
+  #
+  # The tarball is built by prepack, and pack:check has already proved that
+  # build packs correctly on this same commit.
+  - "@semantic-release/npm"
+
+  # Creates the git tag and the GitHub Release, with the changelog section as
+  # its body.
+  #
+  # Note there is no @semantic-release/git plugin: nothing here commits the
+  # bumped version back to main directly. It could not work anyway — the main
+  # ruleset requires four passing status checks on whatever lands there, and a
+  # commit made inside this run has none. The pull request the workflow opens
+  # is that commit taking the ordinary route instead. Tags are unaffected,
+  # because the ruleset only covers the default branch.
+  - - "@semantic-release/github"
+    # The released-in comments this would otherwise leave on every merged pull
+    # request and closed issue. The GitHub Release is the announcement.
+    - successComment: false
+      failComment: false
