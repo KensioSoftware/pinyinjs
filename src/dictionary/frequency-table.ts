@@ -51,7 +51,7 @@ export class FrequencyTable {
   static build(frequencies: readonly number[]): FrequencyTable {
     // Looped rather than `Math.max(0, ...frequencies)`, which passes one
     // argument per entry and overflows the call stack somewhere above a hundred
-    // thousand of them — well short of the 461,623 the full dictionary holds.
+    // thousand of them — well short of the 461,555 the full dictionary holds.
     let highest = 0;
     for (const frequency of frequencies) {
       if (frequency > highest) {

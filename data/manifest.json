@@ -17,12 +17,12 @@
       "compressedBytes": 386701
     },
     "full": {
-      "entries": 461623,
+      "entries": 461555,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9305522,
-      "compressedBytes": 2437037
+      "bytes": 9305534,
+      "compressedBytes": 2437932
     }
   },
   "script": {
@@ -30,11 +30,11 @@
     "toTraditional": 5943,
     "toSimplified": 6120,
     "traditionalWords": 2327,
-    "simplifiedWords": 875,
+    "simplifiedWords": 849,
     "hansOnly": 5785,
     "hantOnly": 5498,
-    "bytes": 292078,
-    "compressedBytes": 99724
+    "bytes": 291590,
+    "compressedBytes": 99594
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",

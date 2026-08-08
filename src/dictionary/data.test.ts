@@ -239,7 +239,7 @@ describe("the committed dictionary", () => {
     });
 
     it("holds the whole merge", () => {
-      // Both scripts of 461,623 entries, minus the ones whose scripts agree.
+      // Both scripts of 461,555 entries, minus the ones whose scripts agree.
       assertNumberBetween(full.index.size, 700_000, 750_000);
     });
   });

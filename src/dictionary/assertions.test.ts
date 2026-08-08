@@ -64,6 +64,9 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("还是", "hái shi", { hant: "還是" }),
   entry("重复", "chóng fù", { hant: "重複", hantVariants: ["重覆"] }),
   entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
+  entry("特征", "tè zhēng", { hant: "特徵" }),
+  entry("沉溺", "chén nì", { hant: "沈溺" }),
+  entry("虱子", "shī zi", { hant: "蝨子" }),
   entry("北京", "běi jīng", { isProperNoun: true, partOfSpeech: "ns" }),
   entry("齐白石", "qí bái shí", {
     hant: "齊白石",

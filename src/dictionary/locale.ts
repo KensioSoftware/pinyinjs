@@ -274,7 +274,7 @@ function isComposable(entry: DictionaryEntry): boolean {
  * Whether any delta-carrying word appears inside this one.
  *
  * A cheap filter ahead of the segmentation: only a few hundred words carry a
- * delta, against 461,623 entries, and enumerating one word's substrings costs
+ * delta, against 461,555 entries, and enumerating one word's substrings costs
  * far less than segmenting it.
  */
 function hasMarkedConstituent(
@@ -339,7 +339,7 @@ export function composeLocaleDeltas(
   const index = new ConstituentIndex(entries);
 
   // Only a compound containing a delta-carrying word can gain one, and there
-  // are a few hundred such words against 461,623 entries. Enumerating each
+  // are a few hundred such words against 461,555 entries. Enumerating each
   // entry's substrings against that set costs far less than segmenting every
   // entry would.
   const marked = new Set<string>();

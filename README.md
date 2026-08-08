@@ -143,9 +143,9 @@ Load the dictionary once and keep it; it is immutable and safe to share.
 
 | Tier       | Entries | Download (brotli) | Contains               |
 | ---------- | ------: | ----------------: | ---------------------- |
-| `core`     |  16,730 |             70 KB | single characters only |
-| `standard` |  66,730 |            376 KB | the most common words  |
-| `full`     | 461,623 |          2,381 KB | every word             |
+| `core`     |  16,727 |             70 KB | single characters only |
+| `standard` |  66,727 |            376 KB | the most common words  |
+| `full`     | 461,555 |          2,381 KB | every word             |
 
 `full` is the default. The tiers are nested, so a page can load `standard`
 first, convert with it, and reload as `full` arrives.

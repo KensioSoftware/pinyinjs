@@ -88,6 +88,42 @@ function byCodeUnit(left: string, right: string): number {
 }
 
 /**
+ * Whether a phrase-corpus headword is really the 繁體 spelling of another word.
+ *
+ * `large_pinyin.txt` is a 简体 corpus, and where it carries a 繁體 headword
+ * anyway it has read it as though the characters were 简体: 特徵 is `tè zhǐ`
+ * there because 徵 alone is `zhǐ`, 沈溺 is `shěn nì` because 沈 alone is the
+ * surname, 蝨子 is `shī zǐ`, 纔然 is `shān rán`. Every one of those is a word
+ * whose 简体 form the corpus also carries, correctly.
+ *
+ * Left in, each becomes an entry of its own that outranks the 繁體 key the
+ * derivation would have hung on the 简体 entry, so the word reads one way in a
+ * tier holding the phrase tail and another way in a tier without it.
+ *
+ * So the corpus is held to its own contract: a headword CC-CEDICT knows only as
+ * the 繁體 spelling of a different 简体 word contributes no entry, and the word
+ * keeps the reading CC-CEDICT pairs it with. It is 72 headwords, 13 of which
+ * the corpus reads wrongly; the other 59 arrive at the same reading either way.
+ *
+ * Narrow on purpose. 2,854 corpus headwords contain a 繁體-only character and
+ * only these 72 are ones CC-CEDICT pairs — the rest are rare or mixed-script
+ * words whose characters do read them, and dropping those would lose coverage
+ * to fix nothing.
+ */
+function isSpeltTraditionally(
+  word: string,
+  byWord: ReadonlyMap<string, readonly CedictEntry[]>,
+  byHant: ReadonlyMap<string, readonly CedictEntry[]>,
+): boolean {
+  if (byWord.has(word)) {
+    return false;
+  }
+  return (byHant.get(word) ?? []).some(
+    (entry) => entry.simplified !== entry.traditional,
+  );
+}
+
+/**
  * CC-CEDICT's entries for a word, keyed by one of its two written forms.
  */
 function indexCedict(
@@ -445,7 +481,9 @@ export function mergeSources(sources: MergeSources): MergeResult {
 
   const words = new Set<string>([
     ...defaults.keys(),
-    ...phrase.keys(),
+    ...[...phrase.keys()].filter(
+      (word) => !isSpeltTraditionally(word, cedictByWord, cedictByHant),
+    ),
     ...cedictByWord.keys(),
   ]);
 

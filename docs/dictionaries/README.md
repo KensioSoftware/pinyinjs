@@ -49,9 +49,9 @@ real alternative.
 
 | Tier       | Entries | Download (brotli) | Contains               |
 | ---------- | ------: | ----------------: | ---------------------- |
-| `core`     |  16,730 |             70 KB | single characters only |
-| `standard` |  66,730 |            376 KB | the most common words  |
-| `full`     | 461,623 |          2,381 KB | every word             |
+| `core`     |  16,727 |             70 KB | single characters only |
+| `standard` |  66,727 |            376 KB | the most common words  |
+| `full`     | 461,555 |          2,381 KB | every word             |
 
 `full` is the default, and is what a server should use: 2.4 MB is nothing
 there, and the extra words are exactly what stops a rare name being read
@@ -86,7 +86,7 @@ It is for the case where 70 KB is the budget and any pinyin beats none.
 
 The entry counts above are dictionary entries. `dictionary.size` counts keys,
 which is a larger number, because 繁體 spellings are keys in their own right:
-16,976 for `core`, 97,998 for `standard`, 723,149 for `full`.
+16,976 for `core`, 97,998 for `standard`, 723,147 for `full`.
 
 ## Querying directly
 
@@ -102,7 +102,7 @@ dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
-dictionary.size; // 723149, keys in the full tier, not entries
+dictionary.size; // 723147, keys in the full tier, not entries
 ```
 
 Both scripts are keys in the same dictionary, so nothing is converted before a
@@ -150,7 +150,7 @@ heap and builds in around 14 ms, against 22.6 MB for a `Map` with a prefix
 `Set` beside it.
 
 Entries are decoded the first time a word is asked about, not on load, because
-decoding all 723,149 would cost far more than the lookups a page actually
+decoding all 723,147 would cost far more than the lookups a page actually
 performs.
 
 ## Checking what got loaded
@@ -159,7 +159,7 @@ performs.
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,149
+keys       723,147
 syllables  415 attested, 424 spellings in the inventory
 ```
 
