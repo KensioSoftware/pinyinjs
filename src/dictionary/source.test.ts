@@ -24,7 +24,8 @@ const artifact = buildArtifact(SAMPLE_ENTRIES);
  * Stand in for the network, recording the URLs asked for.
  *
  * Stubbed through vitest rather than assigned onto the global, so that the
- * suite's `restoreMocks` puts the real `fetch` back afterwards.
+ * suite's `unstubGlobals` puts the real `fetch` back after each test. Note
+ * that `restoreMocks` does not: it covers `vi.spyOn`, not `vi.stubGlobal`.
  */
 function withFetch(urls: string[], response: () => Response): DictionarySource {
   vi.stubGlobal("fetch", (input: string): Promise<Response> => {

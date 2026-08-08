@@ -19,7 +19,7 @@ export default defineConfig({
     // The trade is that test files sharing a worker also share module state,
     // so a module-level cache one file warms is warm for the next. Everything
     // here either builds its own fixtures or reads the dictionary read-only;
-    // `restoreMocks` below undoes the rest.
+    // `restoreMocks` and `unstubGlobals` below undo the rest.
     pool: "threads",
     isolate: false,
     typecheck: {
@@ -42,6 +42,14 @@ export default defineConfig({
       },
     },
     restoreMocks: true,
+    // The two halves of undoing a test's mocks, and they cover different
+    // things: `restoreMocks` puts back what `vi.spyOn` replaced, while a
+    // global replaced by `vi.stubGlobal` is only put back by
+    // `vi.unstubAllGlobals`, which this option is what schedules. Without it
+    // a stubbed `fetch` outlives the file that stubbed it, and with
+    // `isolate: false` above that means the rest of the worker's files get
+    // the stub — whichever ones those happen to be that run.
+    unstubGlobals: true,
     // Long enough that a heavy import is not mistaken for a hanging test, and
     // short enough to still catch one. At 100 ms it flaked on roughly one test
     // per run at random: vitest charges a file's import cost to the first test
