@@ -38,6 +38,35 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   reading, being a boundary inside one word rather than a gap between two; and
   the base keeps 。 where the conversion writes a full stop.
 
+- **`readings`: a conversion takes readings the caller asserts.** No rule
+  settles every polyphone, and some texts are genuinely ambiguous —
+  孩子越长越漂亮 grows where 头发越长越漂亮 lengthens, and nothing in the
+  characters says which. An application that knows its own content can now say
+  so, rather than the library guessing on its behalf.
+
+  ```ts
+  convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
+  ```
+
+  A **word** hint asserts something about the text it names and rewrites exactly
+  those characters, so a bare `长` leaves 校长 as `xiàozhǎng` — the dictionary
+  knowing that word is better evidence about the stretch than a remark about one
+  of its characters, and that is what makes a corrections table safe to
+  accumulate. Naming the whole word does reach it, and keeps it whole:
+  `{ 银行: "yín xíng" }` gives `yínxíng`.
+
+  A **positional** hint asserts something about one character of one text, and
+  nothing outranks it, the enclosing word included. Positions count code points
+  from the start of the text, across any non-Han runs in it. The list form takes
+  both kinds together.
+
+  Hints enter as lattice edges rather than as rules, because the rules layer
+  cannot invent a reading no source attests — which is exactly what a hint is,
+  the difference being that a caller attests it. Spacing is untouched, an
+  unmarked syllable is 轻声, and a hint that cannot be parsed throws rather than
+  being skipped: a correction that silently does nothing is worse than one that
+  fails.
+
 ### Fixed
 
 - **Polyphones defaulted to whichever reading a dictionary happened to print

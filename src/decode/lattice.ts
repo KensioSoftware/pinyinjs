@@ -1,6 +1,7 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { applyHints, type ResolvedHints } from "./hints.js";
 
 /**
  * One candidate reading of one stretch of characters.
@@ -80,7 +81,7 @@ export const READING_CHARGE = 16;
  * Above the worst cost a real entry can carry, so that any known reading is
  * preferred to none.
  */
-const UNKNOWN_COST = 32;
+export const UNKNOWN_COST = 32;
 
 /**
  * The edges leaving a position that come from multi-character dictionary words.
@@ -183,7 +184,11 @@ function characterEdgesAt(
  * candidate so that later stages can compare them — which is the whole point,
  * since a greedy choice that is locally right can be globally wrong.
  */
-export function buildLattice(dictionary: Dictionary, run: string): Lattice {
+export function buildLattice(
+  dictionary: Dictionary,
+  run: string,
+  hints?: ResolvedHints,
+): Lattice {
   const characters = toCharacters(run);
   const edges: (readonly LatticeEdge[])[] = [];
 
@@ -194,7 +199,8 @@ export function buildLattice(dictionary: Dictionary, run: string): Lattice {
     ]);
   }
 
-  return { characters, edges };
+  const lattice = { characters, edges };
+  return hints === undefined ? lattice : applyHints(lattice, hints);
 }
 
 /**

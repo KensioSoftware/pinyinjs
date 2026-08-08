@@ -194,6 +194,60 @@ Rules are exported (`READING_RULES`, `MODAL_DE`, `TEACHING_JIAO`,
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 
+## Readings you assert yourself
+
+No rule settles every polyphone, and some texts are genuinely ambiguous — 孩子越
+长越漂亮 grows where 头发越长越漂亮 lengthens, and nothing in the characters says
+which. An application that knows its own content can say what this one could
+only guess at, with the `readings` option:
+
+```ts
+convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
+```
+
+The terse form is a plain object of text to reading, which is what a corrections
+table looks like after an application has accumulated a few. Keep it as a
+constant and pass it everywhere:
+
+```ts
+const CORRECTIONS = { 太长: "tài cháng", 长头发: "cháng tóufa" };
+convert(dictionary, text, { locale: "zh-CN", readings: CORRECTIONS });
+```
+
+**A word hint is an assertion about the text it names**, so it rewrites the
+reading of exactly those characters and no more. It says nothing about a longer
+word that happens to contain them:
+
+```ts
+convert(dictionary, "校长", { readings: { 长: "cháng" } }); // "xiàozhǎng"
+```
+
+That is deliberate, and it is what makes a corrections table safe to accumulate:
+the dictionary knowing 校长 is better evidence about that stretch than a remark
+about one of its characters, so entries do not reach into words nobody was
+thinking about. Naming the whole word does reach it, and the word stays whole:
+
+```ts
+convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }); // "yínxíng"
+```
+
+**A positional hint is an assertion about one character of one text**, and
+nothing outranks it — the enclosing word included. Positions are counted in code
+points from the start of the text, across any non-Han runs in it:
+
+```ts
+convert(dictionary, "头发越长越漂亮", {
+  readings: [{ at: 3, reading: "cháng" }],
+});
+convert(dictionary, "校长", { readings: [{ at: 1, reading: "cháng" }] }); // "xiàocháng"
+```
+
+The list form takes both kinds, so mix them where a table needs one exception.
+An unmarked syllable is 轻声, as everywhere else here: `{ 的: "de" }` is the
+particle. Spacing is untouched — a hint changes what a stretch reads as, not
+where the words fall — and a hint that cannot be parsed throws rather than being
+skipped, since a correction silently doing nothing is worse than one that fails.
+
 ## Non-Han text
 
 Latin letters, punctuation and anything else that was never Han pass through

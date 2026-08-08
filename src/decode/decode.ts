@@ -1,6 +1,7 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
 import { scoreReadings, type ScoredUnit } from "./confidence.js";
+import { type ResolvedHints, shiftHints } from "./hints.js";
 import { allEdges, buildLattice, cutPoints, type Lattice } from "./lattice.js";
 import {
   isSettled,
@@ -130,8 +131,13 @@ function ruledLattice(
   dictionary: Dictionary,
   run: string,
   rules: readonly EdgeRule[],
+  hints: ResolvedHints | undefined,
 ): Lattice {
-  return applyEdgeRules(buildLattice(dictionary, run), dictionary, rules);
+  return applyEdgeRules(
+    buildLattice(dictionary, run, hints),
+    dictionary,
+    rules,
+  );
 }
 
 /**
@@ -173,16 +179,26 @@ function runLattice(
   run: string,
   rules: readonly EdgeRule[],
   before: string,
+  hints: ResolvedHints | undefined,
 ): RunLattice {
   const alone = (): RunLattice => ({
-    lattice: ruledLattice(dictionary, run, rules),
+    lattice: ruledLattice(dictionary, run, rules, hints),
     at: 0,
   });
   if (before === "") {
     return alone();
   }
-  const lattice = ruledLattice(dictionary, before + run, rules);
-  const at = toCharacters(before).length;
+  const held = toCharacters(before).length;
+  // The context is decoded with the run, so every hint position moves along
+  // with it. Shifting a copy keeps the caller's positions relative to the run
+  // they were given for.
+  const lattice = ruledLattice(
+    dictionary,
+    before + run,
+    rules,
+    hints === undefined ? undefined : shiftHints(hints, held),
+  );
+  const at = held;
   return isJoinedAt(lattice, at) ? alone() : { lattice, at };
 }
 
@@ -221,8 +237,9 @@ export function decodeRun(
   run: string,
   rules: readonly EdgeRule[] = READING_RULES,
   before = "",
+  hints?: ResolvedHints,
 ): readonly DecodedWord[] {
-  const held = runLattice(dictionary, run, rules, before);
+  const held = runLattice(dictionary, run, rules, before, hints);
   const { lattice } = held;
   const units = decodeReadings(lattice, projectReadings(lattice));
   return runGroups(held, units).map((group) =>
@@ -247,8 +264,9 @@ export function decodeRunScored(
   run: string,
   rules: readonly EdgeRule[] = READING_RULES,
   before = "",
+  hints?: ResolvedHints,
 ): readonly ScoredWord[] {
-  const held = runLattice(dictionary, run, rules, before);
+  const held = runLattice(dictionary, run, rules, before, hints);
   const { lattice } = held;
   const units = scoreReadings(lattice, projectReadings(lattice));
 

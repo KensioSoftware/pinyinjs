@@ -304,6 +304,37 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "很长的道路"), "hěn cháng de dàolù");
     });
 
+    it("takes the readings a caller asserts, with the reach the page gives", () => {
+      assertIdentical(
+        convert(dictionary, "这篇文章不太长。", {
+          readings: { 太长: "tài cháng" },
+        }),
+        "Zhè piān wénzhāng bú tài cháng.",
+      );
+      // A word hint does not reach into a longer word...
+      assertIdentical(
+        convert(dictionary, "校长", { readings: { 长: "cháng" } }),
+        "xiàozhǎng",
+      );
+      // ...but naming the whole word does, and keeps it one word.
+      assertIdentical(
+        convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }),
+        "yínxíng",
+      );
+      // A position outranks the word around it, which is the escape hatch.
+      assertIdentical(
+        convert(dictionary, "校长", {
+          readings: [{ at: 1, reading: "cháng" }],
+        }),
+        "xiàocháng",
+      );
+      // An unmarked syllable is 轻声.
+      assertIdentical(
+        convert(dictionary, "的", { readings: { 的: "de" } }),
+        "de",
+      );
+    });
+
     it("reads 越长越X as growing only where growing is what it names", () => {
       assertIdentical(
         convert(dictionary, "他越长越高"),
