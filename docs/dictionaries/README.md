@@ -86,7 +86,7 @@ It is for the case where 70 KB is the budget and any pinyin beats none.
 
 The entry counts above are dictionary entries. `dictionary.size` counts keys,
 which is a larger number, because 繁體 spellings are keys in their own right:
-16,975 for `core`, 97,997 for `standard`, 723,149 for `full`.
+16,976 for `core`, 97,998 for `standard`, 723,149 for `full`.
 
 ## Querying directly
 

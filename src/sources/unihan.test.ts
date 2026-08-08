@@ -29,6 +29,13 @@ const READINGS_SAMPLE = [
   "U+884C\tkTGHZ2013\t131.140:háng 136.100:héng 408.120:xíng",
   "U+4E07\tkMandarin\twàn mò",
   "U+4E00\tkHanyuPinlu\tyī(32747)",
+  "U+6BB7\tkMandarin\tyīn",
+  "U+6BB7\tkTGHZ2013\t421.040:yān 436.170:yīn",
+  "U+6BB7\tkXHC1983\t1324.020:yān 1376.030:yīn 1382.050:yǐn",
+  "U+7EE9\tkHanyuPinlu\tjī(132)",
+  "U+7EE9\tkMandarin\tjì",
+  "U+7EE9\tkTGHZ2013\t159.090:jì",
+  "U+7EE9\tkXHC1983\t0518.060:jī",
 ].join("\n");
 
 describe("Unihan sources", () => {
@@ -56,6 +63,24 @@ describe("Unihan sources", () => {
       const character = parsed.get("行");
       assertNonNullable(character);
       assertArrayEquals(character.readings, ["xíng", "háng", "héng"]);
+    });
+
+    it("prefers kMandarin to the dictionary ordering of kTGHZ2013", () => {
+      // kTGHZ2013 lists 殷 as yān then yīn, which is its order in 《現代漢語
+      // 規範詞典》 and not a frequency. kMandarin names yīn, which is right.
+      const parsed = parseUnihanReadings(READINGS_SAMPLE);
+      const character = parsed.get("殷");
+      assertNonNullable(character);
+      assertArrayEquals(character.readings, ["yīn", "yān", "yǐn"]);
+    });
+
+    it("does not let a lone kHanyuPinlu reading set the default", () => {
+      // 绩 is jì. kHanyuPinlu says jī, but it says so on its own, having ranked
+      // nothing against it — and its corpus predates the 1985 审音表.
+      const parsed = parseUnihanReadings(READINGS_SAMPLE);
+      const character = parsed.get("绩");
+      assertNonNullable(character);
+      assertArrayEquals(character.readings, ["jì", "jī"]);
     });
 
     it("does not repeat a reading that several fields agree on", () => {
@@ -90,9 +115,9 @@ describe("Unihan sources", () => {
 
     it("ignores comments, blank lines and fields it does not want", () => {
       const parsed = parseUnihanReadings(READINGS_SAMPLE);
-      // 4 characters appear, and none of the Cantonese or definition lines
-      // introduced a fifth.
-      assertMapSize(parsed, 4);
+      // 6 characters appear, and none of the Cantonese or definition lines
+      // introduced a seventh.
+      assertMapSize(parsed, 6);
     });
 
     it("skips a field whose value carries no readable reading", () => {
