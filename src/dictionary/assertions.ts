@@ -157,6 +157,14 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("重複", "chóng fù", "one of two 繁體 spellings, both keyed"),
   reads("重覆", "chóng fù", "the other, on the same entry"),
   reads("下麵", "xià miàn", "both spellings of a word CC-CEDICT writes twice"),
+  // The 简体 phrase corpus carries a few 繁體 headwords and reads them as
+  // though the characters were 简体 — 徵 as `zhǐ` rather than as 征, 沈 as the
+  // surname rather than as 沉. Left as entries of their own they outrank the
+  // 繁體 key derived from the 简体 entry, and the word reads one way in a tier
+  // holding the phrase tail and another way in a tier without it.
+  reads("特徵", "tè zhēng", "not tè zhǐ, which is 徵 read as itself"),
+  reads("沈溺", "chén nì", "not shěn nì, which is 沈 read as the surname"),
+  reads("蝨子", "shī zi", "not shī zǐ, which is 子 read with its full tone"),
   // kHanyuPinlu writes 李 as `li(36)`, with no tone mark. Read as 轻声 — which
   // is what an unmarked reading means everywhere else in source data — 李华
   // comes out `Li Huá`. The other Unihan fields all write `lǐ`, and that is

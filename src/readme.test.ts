@@ -671,7 +671,7 @@ describe("the examples in README.md", () => {
 
   describe("the figures quoted", () => {
     it("has the entry count the README claims", () => {
-      // 461,623 entries; the key count is higher because both scripts are keys.
+      // 461,555 entries; the key count is higher because both scripts are keys.
       assertTrue(dictionary.size > 700_000);
     });
 
