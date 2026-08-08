@@ -162,15 +162,109 @@ toHtml(pieces);
 `toHtml(convertPieces(dictionary, text, options), options)`, so use whichever
 end you need. See [confidence](../confidence/) for what is on a piece.
 
+## Annotation: keeping the hanzi
+
+Everything above writes the pinyin _instead of_ the hanzi. `convertToAnnotatedHtml`
+writes both, with the reading above the characters:
+
+```ts
+import { convertToAnnotatedHtml } from "@kensio/pinyinjs";
+
+convertToAnnotatedHtml(dictionary, "银行");
+```
+
+```html
+<ruby lang="zh"
+  >银<rp>(</rp
+  ><rt
+    ><span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span></rt
+  ><rp>)</rp></ruby
+>…
+```
+
+The element is `<ruby>`, which browsers lay out natively — no script, no
+measuring, and it reflows with the text. `<rp>` holds the parentheses a browser
+without ruby support falls back to, so the reading degrades to `银(yín)` rather
+than vanishing.
+
+Inside the `<rt>` is exactly what `toHtml` would have written, so tone classes,
+`py-uncertain` and `data-alternatives` all work within an annotation.
+
+### A base is not always one character
+
+This is the part that makes annotation harder than it looks, and the reason
+`ConvertedPiece` carries a `source` at all. A reading is not one syllable per
+character:
+
+| Text     | Annotated as                          | Because                                                       |
+| -------- | ------------------------------------- | ------------------------------------------------------------- |
+| 银行     | 银 over `yín`, 行 over `háng`         | the ordinary case                                             |
+| 玩儿     | 玩儿 over `wánr`                      | 儿化 folds two characters into one syllable                   |
+| 95%      | 95% over `bǎifēnzhījiǔshíwǔ`          | a read number reverses, so no syllable is any one character's |
+| 干干净净 | four bases, the hyphen in the reading | `gāngān-jìngjìng` is one word with a boundary inside it       |
+
+Splitting per character regardless is what produces `玩` over `wán` and `儿` over
+nothing. `source` names the characters a piece reads, or is undefined where the
+piece reads on into the ones before it, and the renderer groups on that.
+
+### The base is what the author wrote
+
+An annotation puts the source and the reading in two different places, so
+anything belonging to only one of them has to go in the right one. Pinyin
+orthography does not reach the hanzi:
+
+|                                 | In the hanzi                            | In the reading                       |
+| ------------------------------- | --------------------------------------- | ------------------------------------ |
+| the space between two words     | no — Chinese is not written with spaces | yes, as separate groups              |
+| the hyphen of `gāngān-jìngjìng` | no — 干干净净 has no hyphen             | yes, beside the syllables it divides |
+| 。 rewritten as a full stop     | no — the mark the author typed          | yes, as the conversion writes it     |
+
+So `convertToAnnotatedHtml(dictionary, "银行。")` annotates 银 and 行 and then
+writes 。, while `convertToHtml` on the same text writes a full stop. Both are
+right about the text they are writing.
+
+Measured over the committed dictionary, 5,283 of 723,147 keys have fewer
+syllables than characters — 4,024 of them 儿化, and the rest words written with
+punctuation, which never reaches the decoder because punctuation ends a Han run.
+
+### Styling it
+
+Ruby needs no CSS to work, but the default `<rt>` is small:
+
+```css
+ruby rt {
+  font-size: 0.5em;
+  /* Some browsers need telling that the reading goes above. */
+  ruby-position: over;
+}
+```
+
+Tone colours go on the syllables inside the `<rt>`, exactly as elsewhere:
+
+```css
+ruby rt .py-tone-1 {
+  color: #c1272d;
+}
+```
+
+### Rendering annotated pieces
+
+`toAnnotatedHtml(pieces, options)` is the piece-level entry point, and
+`convertToAnnotatedHtml(dictionary, text, options)` is
+`toAnnotatedHtml(convertPieces(dictionary, text, options), options)`.
+
 ## At the command line
 
 ```console
 $ pinyinjs html 行
 <span class="py-syllable py-tone-2 py-uncertain" lang="zh-Latn-CN-pinyin" data-alternatives="háng héng hàng">xíng</span>
+
+$ pinyinjs annotate 银行
+<ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>…
 ```
 
 `--no-tone-classes`, `--no-uncertain` and `--no-lang` are the three options
-above.
+above, and both commands take them.
 
 <!-- card
 ```ts

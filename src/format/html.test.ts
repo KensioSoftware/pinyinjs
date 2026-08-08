@@ -1,12 +1,19 @@
 import { sampleDictionary } from "#test/fixtures/decoder-dictionary.js";
 import {
+  assertArrayLength,
   assertIdentical,
   assertStringIncludes,
   assertStringNotIncludes,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { convertToHtml, type HtmlOptions, toHtml } from "./html.js";
+import {
+  convertToAnnotatedHtml,
+  convertToHtml,
+  type HtmlOptions,
+  toAnnotatedHtml,
+  toHtml,
+} from "./html.js";
 
 const dictionary = sampleDictionary();
 
@@ -56,7 +63,14 @@ describe("converting to HTML", () => {
   it("declares nothing on the text that was never Han", () => {
     // Not pinyin, and not marked up at all, so it has nothing to declare on.
     assertIdentical(
-      toHtml([{ text: " and ", syllable: undefined, confidence: undefined }]),
+      toHtml([
+        {
+          text: " and ",
+          syllable: undefined,
+          confidence: undefined,
+          source: undefined,
+        },
+      ]),
       " and ",
     );
   });
@@ -73,6 +87,7 @@ describe("converting to HTML", () => {
           text: "bei",
           syllable: { initial: "b", final: "ei", tone: undefined },
           confidence: undefined,
+          source: "北",
         },
       ]),
       '<span class="py-syllable" lang="zh-Latn-CN-pinyin">bei</span>',
@@ -141,5 +156,131 @@ describe("converting to HTML", () => {
 
   it("marks up nothing at all as nothing at all", () => {
     assertIdentical(html(""), "");
+  });
+});
+
+/**
+ * Annotate a conversion with the shared test dictionary.
+ */
+function annotated(text: string, options?: HtmlOptions): string {
+  return convertToAnnotatedHtml(dictionary, text, options);
+}
+
+describe("annotating hanzi with its reading", () => {
+  it("puts each syllable over the character it reads", () => {
+    assertIdentical(
+      annotated("银行"),
+      '<ruby lang="zh">银<rp>(</rp><rt>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span>' +
+        "</rt><rp>)</rp></ruby>" +
+        '<ruby lang="zh">行<rp>(</rp><rt>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>' +
+        "</rt><rp>)</rp></ruby>",
+    );
+  });
+
+  it("keeps 儿化 whole, since one syllable reads two characters", () => {
+    // The case every naive per-character annotation gets wrong: 玩儿 is `wánr`,
+    // and there is no syllable to put over 儿 on its own.
+    assertStringIncludes(annotated("玩儿"), '<ruby lang="zh">玩儿<rp>(</rp>');
+    assertStringIncludes(annotated("玩儿"), ">wánr</span>");
+  });
+
+  it("annotates a read number once, over all of it", () => {
+    // 95% is bǎifēnzhījiǔshíwǔ: six syllables over three written characters,
+    // in the other order, so none of them belongs to any one character.
+    const html = annotated("95%");
+    assertStringIncludes(html, '<ruby lang="zh">95%<rp>(</rp>');
+    assertStringIncludes(html, ">bǎi</span>");
+    assertStringIncludes(html, ">wǔ</span>");
+    assertIdentical(html.match(/<ruby/gu)?.length, 1);
+  });
+
+  it("declares the base Chinese and the reading pinyin", () => {
+    // Two different languages inside one element: without both, a screen
+    // reader on an English page says the pinyin as English.
+    assertStringIncludes(annotated("银行"), '<ruby lang="zh">');
+    assertStringIncludes(annotated("银行"), 'lang="zh-Latn-CN-pinyin"');
+  });
+
+  it("falls back to parentheses where ruby is not supported", () => {
+    assertStringIncludes(annotated("银行"), "<rp>(</rp>");
+    assertStringIncludes(annotated("银行"), "<rp>)</rp>");
+  });
+
+  it("leaves the language to a wrapper when asked", () => {
+    assertStringIncludes(annotated("银行", { lang: false }), "<ruby>银<rp>");
+    assertStringNotIncludes(annotated("银行", { lang: false }), "lang=");
+  });
+
+  it("keeps the source punctuation the conversion rewrote", () => {
+    // The base is what the author wrote. A conversion writes 。 as a full stop
+    // because that is the pinyin orthography, and putting that in the hanzi
+    // would annotate a text nobody typed.
+    const html = annotated("银行。");
+    assertStringIncludes(html, "。");
+    assertStringNotIncludes(html, ".");
+  });
+
+  it("leaves the space between two words out of the hanzi", () => {
+    // 分词连写 spaces the pinyin; Chinese is not written with spaces, and each
+    // base is its own group on the page already.
+    assertStringNotIncludes(annotated("银行"), "</ruby> <ruby");
+  });
+
+  it("marks up text that was never Han as text", () => {
+    assertStringIncludes(annotated("hello 银行"), "hello ");
+    assertStringNotIncludes(annotated("hello 银行"), '<ruby lang="zh">hello');
+  });
+
+  it("escapes what it annotates", () => {
+    assertStringNotIncludes(annotated("<script>银行"), "<script>");
+    assertStringIncludes(annotated("<script>银行"), "&lt;script&gt;");
+  });
+
+  it("marks a reading it was guessing at, inside the annotation", () => {
+    assertStringIncludes(annotated("行"), "py-uncertain");
+    assertStringIncludes(annotated("行"), 'data-alternatives="háng');
+  });
+
+  it("takes the conversion's own options", () => {
+    assertStringIncludes(annotated("银行", { notation: "numbers" }), ">yin2<");
+  });
+
+  it("keeps a digit-by-digit reading inside one annotation", () => {
+    // 1988 is read yī jiǔ bā bā: four syllables over one base, spaced. The
+    // spaces are inside that reading, and a space between two words is not,
+    // so telling them apart wrongly leaves jiǔ bā bā loose beside the ruby.
+    const html = annotated("1988");
+    assertArrayLength(html.match(/<ruby/gu) ?? [], 1);
+    assertStringIncludes(html, ">bā</span></rt>");
+  });
+
+  it("keeps a segmented reading inside one annotation", () => {
+    // A time is read as words: liù diǎn sānshí fēn over one written 6:30.
+    const html = annotated("6:30");
+    assertArrayLength(html.match(/<ruby/gu) ?? [], 1);
+    assertStringIncludes(html, '<ruby lang="zh">6:30<rp>(</rp>');
+    assertStringIncludes(html, ">fēn</span></rt>");
+  });
+
+  it("writes pieces that never say what they read as plain markup", () => {
+    // Nothing a conversion builds looks like this, but the pieces are the
+    // caller's to hand in, and there is no base to hang an annotation on.
+    assertIdentical(
+      toAnnotatedHtml([
+        {
+          text: "háng",
+          syllable: { initial: "h", final: "ang", tone: 2 },
+          confidence: undefined,
+          source: undefined,
+        },
+      ]),
+      '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
+    );
+  });
+
+  it("annotates nothing at all as nothing at all", () => {
+    assertIdentical(annotated(""), "");
   });
 });

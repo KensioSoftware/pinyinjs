@@ -1,4 +1,5 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
+import { isErFinal } from "../dictionary/erhua.js";
 import { isSameReading } from "../dictionary/entry.js";
 import { type ApostropheStyle, markWord } from "../orthography/apostrophe.js";
 import {
@@ -80,6 +81,30 @@ export interface ConvertedPiece {
   /** The syllable this piece writes, or undefined where it writes none. */
   readonly syllable: Syllable | undefined;
   /**
+   * The characters this piece reads, where it names any of its own.
+   *
+   * What an annotation needs and a plain conversion throws away: to write 银行
+   * with `yín` over 银 and `háng` over 行, something has to say which characters
+   * each syllable is a reading *of*, and that is not the syllable's position.
+   * A reading is not one syllable per character — 玩儿 is two characters and
+   * the single syllable `wánr` — and a read number is not made of characters at
+   * all in the same way, 95% being `bǎifēnzhījiǔshíwǔ` over eight syllables and
+   * three written characters.
+   *
+   * So a piece either names the characters it reads or continues the ones the
+   * piece before it named, and the two are told apart by the syllable rather
+   * than by a second flag:
+   *
+   * | `syllable` | `source` | The piece |
+   * | --- | --- | --- |
+   * | undefined | undefined | writes no reading: a space, or a non-Han run |
+   * | set | set | reads exactly those characters |
+   * | set | undefined | reads on into the characters named before it |
+   *
+   * {@link import("../format/html.js").toAnnotatedHtml} is what consumes it.
+   */
+  readonly source: string | undefined;
+  /**
    * How settled that syllable was, where the decode reported it.
    *
    * Only {@link convertPieces} fills this in, and only for a syllable the
@@ -134,7 +159,93 @@ function readingFor(
  * Text that writes no syllable: a space, or a run that was never Han.
  */
 function plainPiece(text: string): ConvertedPiece {
-  return { text, syllable: undefined, confidence: undefined };
+  return {
+    text,
+    syllable: undefined,
+    confidence: undefined,
+    source: undefined,
+  };
+}
+
+/**
+ * Source text that is written out but read as nothing.
+ *
+ * The difference from {@link plainPiece} is what the text *is*. Both write no
+ * syllable, but a run that was never Han — punctuation, a Latin word, a digit
+ * left unread — stands for something the author wrote, whereas the space
+ * between two words and the hyphen inside 干干净净 are pinyin orthography that
+ * the source has no trace of.
+ *
+ * A conversion joins them into one string and the distinction does not arise.
+ * An annotation writes the source and the reading in different places, and
+ * putting a hyphen the pinyin needs into the hanzi it annotates would be
+ * inventing text: 干干净净 is `gāngān-jìngjìng` and is not written 干干-净净.
+ *
+ * The text and the source can differ, and the punctuation pass is why: it
+ * rewrites 。 to a full stop in the `text` a conversion writes, and leaves the
+ * `source` as the mark the author actually typed.
+ */
+function sourcePiece(text: string): ConvertedPiece {
+  return {
+    text,
+    syllable: undefined,
+    confidence: undefined,
+    source: text,
+  };
+}
+
+/**
+ * Whether a character is the 儿 that 儿化 folds into the syllable before it.
+ */
+function isErCharacter(character: string): boolean {
+  return character === "儿" || character === "兒";
+}
+
+/**
+ * Which characters of a word each of its syllables reads.
+ *
+ * One per syllable, in order, and undefined where a syllable reads on into the
+ * characters the one before it took. Only 儿化 does that: measured over the
+ * committed dictionary, 5,283 of 723,147 keys have fewer syllables than
+ * characters, 4,024 of them because a final 儿 folds into the syllable before
+ * it, and the remaining 1,259 because the word is written with punctuation —
+ * which cannot reach here, since punctuation ends a Han run before the decode
+ * ever sees it.
+ *
+ * The deficit is spent from the right, which is where 儿化 always is. 打哪儿指
+ * 哪儿 is the case that needs it: two syllables short over six characters, and
+ * both 儿 attach to the character in front of them rather than one taking two.
+ */
+function sourcesOf(
+  word: string,
+  reading: readonly Syllable[],
+): readonly (string | undefined)[] {
+  const characters = toCharacters(word);
+  if (characters.length === reading.length) {
+    return characters;
+  }
+  // Anything this does not understand is one base for the whole word, which is
+  // always true and merely less useful than naming each syllable's characters.
+  if (characters.length < reading.length || !isErFinal(word)) {
+    return reading.map((_, at) => (at === 0 ? word : undefined));
+  }
+
+  const sources: string[] = [];
+  let deficit = characters.length - reading.length;
+  for (const character of characters) {
+    const previous = sources.at(-1);
+    if (deficit > 0 && previous !== undefined && isErCharacter(character)) {
+      sources[sources.length - 1] = previous + character;
+      deficit--;
+      continue;
+    }
+    sources.push(character);
+  }
+  /* c8 ignore next 3 -- the deficit is 儿 by construction, but a source that
+     wrote one somewhere else would otherwise misalign every later syllable */
+  return sources.length === reading.length
+    ? sources
+    : reading.map((_, at) => (at === 0 ? word : undefined));
 }
 
 /**
@@ -151,7 +262,7 @@ function writeWord(
   written: Written,
 ): readonly ConvertedPiece[] {
   if (reading.length === 0) {
-    return [plainPiece(word.text)];
+    return [sourcePiece(word.text)];
   }
   // A tone number already ends its syllable, raised or not, so `xi1an1` cannot
   // be misread and the 隔音符号 would only be noise.
@@ -162,11 +273,13 @@ function writeWord(
     isNumbered ? "never" : written.apostrophe,
   );
   const isCapitalised = word.isProperNoun && written.capitals !== "none";
+  const sources = sourcesOf(word.text, reading);
 
   return spellings.map((spelling, at) => ({
     text: at === 0 && isCapitalised ? capitaliseWord(spelling) : spelling,
     syllable: reading[at],
     confidence: confidence[at],
+    source: sources[at],
   }));
 }
 
@@ -414,6 +527,7 @@ function groupedPieces(
         text,
         syllable: said[at + index],
         confidence: undefined,
+        source: undefined,
       });
     }
     at += length;
@@ -439,10 +553,13 @@ function numberPieces(
     writeSyllable(syllable, written.notation),
   );
   if (segment.style === "digits") {
-    return spelled.flatMap((text, at) => [
-      ...(at === 0 ? [] : [plainPiece(" ")]),
-      { text, syllable: said[at], confidence: undefined },
-    ]);
+    return read(
+      spelled.flatMap((text, at) => [
+        ...(at === 0 ? [] : [plainPiece(" ")]),
+        { text, syllable: said[at], confidence: undefined, source: undefined },
+      ]),
+      segment.text,
+    );
   }
   const isNumbered =
     written.notation === "numbers" || written.notation === "superscript";
@@ -451,13 +568,43 @@ function numberPieces(
   // sānshí fēn` and a decimal is `qīshíwǔ diǎn wǔ`, each counted part a word
   // of its own and everything after the 点 a digit at a time.
   if (segment.words !== undefined) {
-    return groupedPieces(spelled, said, segment.words, apostrophe);
+    return read(
+      groupedPieces(spelled, said, segment.words, apostrophe),
+      segment.text,
+    );
   }
-  return markWord(spelled, apostrophe).map((text, at) => ({
-    text,
-    syllable: said[at],
-    confidence: undefined,
-  }));
+  return read(
+    markWord(spelled, apostrophe).map((text, at) => ({
+      text,
+      syllable: said[at],
+      confidence: undefined,
+      source: undefined,
+    })),
+    segment.text,
+  );
+}
+
+/**
+ * Name what a read number is a reading of, once for the whole of it.
+ *
+ * A number is not read character by character the way a word is: 95% is
+ * `bǎifēnzhījiǔshíwǔ` over eight syllables and three written characters, and
+ * the order reverses on the way, so no syllable belongs to any one of them.
+ * The written form is therefore named once, by the first piece that says
+ * anything, and the rest read on into it.
+ */
+function read(
+  pieces: readonly ConvertedPiece[],
+  source: string,
+): readonly ConvertedPiece[] {
+  const first = pieces.findIndex((piece) => piece.syllable !== undefined);
+  /* c8 ignore next 3 -- a read number has at least one syllable in it */
+  if (first === -1) {
+    return pieces;
+  }
+  return pieces.map((piece, at) =>
+    at === first ? { ...piece, source } : piece,
+  );
 }
 
 /**
@@ -484,7 +631,7 @@ function writeNumbers(
   options: { readonly sandhi: SandhiOptions | undefined },
 ): readonly ConvertedPiece[] {
   if (segments.every((segment) => segment.reading === undefined)) {
-    return [plainPiece(text)];
+    return [sourcePiece(text)];
   }
 
   const pieces: ConvertedPiece[] = [];
@@ -496,7 +643,7 @@ function writeNumbers(
     }
     pieces.push(
       ...(segment.reading === undefined
-        ? [plainPiece(segment.text)]
+        ? [sourcePiece(segment.text)]
         : numberPieces(
             saidNumeral(segment, context.after.syllable, options.sandhi),
             segment,

@@ -98,7 +98,12 @@ export {
   decodeSpacing,
 } from "./decode/decode.js";
 
-export { convertToHtml, toHtml } from "./format/html.js";
+export {
+  convertToAnnotatedHtml,
+  convertToHtml,
+  toAnnotatedHtml,
+  toHtml,
+} from "./format/html.js";
 export {
   convertToWadeGiles,
   toTranscription,

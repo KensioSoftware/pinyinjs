@@ -59,6 +59,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | ------------ | --------------------------------------------------- |
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
+| `annotate`   | hanzi with its pinyin above, as ruby HTML           |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -349,6 +350,45 @@ included, so write your own:
 Takes any `convert` option, plus `toneClasses: false`, `markUncertain: false`
 and `lang: false`. `toHtml(pieces, options)` renders pieces you already have.
 
+## Annotated output: hanzi and pinyin together
+
+`convertToHtml` writes the pinyin _instead of_ the hanzi. To keep both — a
+learner's text, a subtitle, a dictionary entry — annotate it instead:
+
+```ts
+import { convertToAnnotatedHtml } from "@kensio/pinyinjs";
+
+convertToAnnotatedHtml(dictionary, "银行");
+// <ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2"
+//       lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>…
+```
+
+The markup is `<ruby>`, which browsers lay out natively — the reading sits
+above the characters, and `<rp>` puts it in parentheses where it does not. Each
+`<rt>` holds exactly what `convertToHtml` would have written, so tone colours
+and uncertainty marking work inside an annotation as they do outside one.
+
+**A base is not always one character**, and this is where per-character
+annotation goes wrong. 玩儿 is two characters and the one syllable `wánr`, and a
+read number reverses on the way, so both are annotated whole:
+
+```ts
+convertToAnnotatedHtml(dictionary, "玩儿"); // one <ruby>, 玩儿 over wánr
+convertToAnnotatedHtml(dictionary, "95%"); // one <ruby>, 95% over bǎifēnzhījiǔshíwǔ
+```
+
+Ruby needs no styling to work, but the reading is small by default:
+
+```css
+ruby rt {
+  font-size: 0.5em;
+}
+```
+
+`toAnnotatedHtml(pieces, options)` renders pieces you already have, and
+`ConvertedPiece.source` is what makes that possible: the characters each piece
+reads, or undefined where it reads on into the ones before it.
+
 ## Look words up
 
 ```ts
@@ -598,6 +638,7 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convert(dictionary, text, options?)`                | hanzi → pinyin                                    |
 | `convertPieces(dictionary, text, ...)`               | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, ...)`               | the same, as HTML                                 |
+| `convertToAnnotatedHtml(dictionary, text, ...)`      | hanzi and pinyin together, as ruby HTML           |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |

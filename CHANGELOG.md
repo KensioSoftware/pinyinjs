@@ -9,6 +9,35 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+### Added
+
+- **Hanzi and pinyin together, rather than one instead of the other.**
+  `convertToAnnotatedHtml` writes the characters with their reading above them,
+  as `<ruby>` markup — the output every other mode could not give, and what a
+  learner's text, a subtitle and a dictionary entry all want. `convert` and
+  `convertToHtml` write the reading _instead of_ the characters.
+  `toAnnotatedHtml(pieces)` renders pieces you already have, and the command
+  line has `pinyinjs annotate`.
+
+  Each `<rt>` holds exactly what `convertToHtml` would have written, so tone
+  classes and uncertainty marking work inside an annotation as they do outside
+  one. `<rp>` gives the parenthesised fallback, the `<ruby>` carries `lang="zh"`
+  and the syllables inside it keep `zh-Latn-CN-pinyin`, since on an English page
+  a screen reader needs to be told both.
+
+  **A base is not always one character**, which is what makes this harder than
+  it looks and what every naive per-character annotation gets wrong. 玩儿 is two
+  characters and the one syllable `wánr`; 95% is `bǎifēnzhījiǔshíwǔ` over three
+  written characters in the other order; 1988 is `yī jiǔ bā bā` over one. All
+  are annotated whole. `ConvertedPiece` gains a `source` — the characters a
+  piece reads, or undefined where it reads on into the ones named before it —
+  which is what makes that expressible.
+
+  Pinyin orthography stays out of the hanzi it annotates: no word spaces, since
+  Chinese is not written with them; the hyphen of `gāngān-jìngjìng` sits in the
+  reading, being a boundary inside one word rather than a gap between two; and
+  the base keeps 。 where the conversion writes a full stop.
+
 ### Fixed
 
 - **Polyphones defaulted to whichever reading a dictionary happened to print
