@@ -214,9 +214,9 @@ interface Annotation {
  */
 function annotationsOf(pieces: readonly ConvertedPiece[]): Annotation[] {
   const groups: Annotation[] = [];
-  for (const piece of pieces) {
+  for (const [at, piece] of pieces.entries()) {
     const open = groups.at(-1);
-    if (open?.source !== undefined && continues(piece)) {
+    if (open?.source !== undefined && continues(piece, pieces[at + 1])) {
       groups[groups.length - 1] = {
         source: open.source,
         pieces: [...open.pieces, piece],
@@ -231,21 +231,41 @@ function annotationsOf(pieces: readonly ConvertedPiece[]): Annotation[] {
 /**
  * Whether a piece belongs to the annotation the group before it opened.
  *
- * Two kinds do. A syllable naming no characters of its own is reading on into
- * the ones already named, which is 儿化 and a read number. And a separator that
- * is not a space is a mark *inside* one orthographic word rather than a gap
- * between two — the hyphen of `gāngān-jìngjìng`, which is the only one GB/T
- * 16159 writes — so it belongs in the reading beside the syllables it divides.
+ * Three kinds do:
  *
- * A space is the case that does not, and dropping it is the point: it separates
- * two words of pinyin, the hanzi it annotates has no space in it, and each base
- * is already its own group on the page.
+ * - A **syllable naming no characters** is reading on into the ones already
+ *   named, which is 儿化 and every syllable of a read number after the first.
+ * - A **separator that is not a space** is a mark *inside* one orthographic
+ *   word rather than a gap between two — the hyphen of `gāngān-jìngjìng`, the
+ *   only one GB/T 16159 writes — so it belongs beside the syllables it divides.
+ * - A **space with more of the same reading after it**. 1988 is read
+ *   `yī jiǔ bā bā`, four syllables over one base, and the spaces between them
+ *   are inside that reading rather than between two of them.
+ *
+ * That last one is why this needs the piece after it. A space is written the
+ * same way whether it separates two words or two syllables of one number, and
+ * what tells them apart is whether what follows is still reading the same
+ * characters. Told apart wrongly, the reading escapes its own annotation:
+ * 1988年 came out as `1988` over `yī` with `jiǔ bā bā` loose beside it.
+ *
+ * A space between two words is the case that does not continue, and dropping it
+ * is the point: the hanzi it annotates has no space in it, and each base is
+ * already its own group on the page.
  */
-function continues(piece: ConvertedPiece): boolean {
+function continues(
+  piece: ConvertedPiece,
+  next: ConvertedPiece | undefined,
+): boolean {
   if (piece.syllable !== undefined) {
     return piece.source === undefined;
   }
-  return piece.source === undefined && piece.text.trim() !== "";
+  if (piece.source !== undefined) {
+    return false;
+  }
+  return (
+    piece.text.trim() !== "" ||
+    (next?.syllable !== undefined && next.source === undefined)
+  );
 }
 
 /**
@@ -262,9 +282,12 @@ function writeAnnotation(annotation: Annotation, options: HtmlOptions): string {
     // those into the hanzi would annotate 干干净净 as 干干-净净.
     return source === undefined ? "" : escape(source);
   }
-  /* c8 ignore next 3 -- a group with a syllable in it was opened by a piece
-     naming what that syllable reads */
   if (source === undefined) {
+    // A reading whose piece never named what it reads. Nothing a conversion
+    // builds looks like this — every group is opened by a piece carrying its
+    // characters — but {@link toAnnotatedHtml} takes pieces from the caller,
+    // and there is no base to hang an annotation on, so it is written as the
+    // plain markup it would have got from {@link toHtml}.
     return pieces.map((piece) => writePiece(piece, options)).join("");
   }
 

@@ -1,5 +1,6 @@
 import { sampleDictionary } from "#test/fixtures/decoder-dictionary.js";
 import {
+  assertArrayLength,
   assertIdentical,
   assertStringIncludes,
   assertStringNotIncludes,
@@ -10,6 +11,7 @@ import {
   convertToAnnotatedHtml,
   convertToHtml,
   type HtmlOptions,
+  toAnnotatedHtml,
   toHtml,
 } from "./html.js";
 
@@ -243,6 +245,39 @@ describe("annotating hanzi with its reading", () => {
 
   it("takes the conversion's own options", () => {
     assertStringIncludes(annotated("银行", { notation: "numbers" }), ">yin2<");
+  });
+
+  it("keeps a digit-by-digit reading inside one annotation", () => {
+    // 1988 is read yī jiǔ bā bā: four syllables over one base, spaced. The
+    // spaces are inside that reading, and a space between two words is not,
+    // so telling them apart wrongly leaves jiǔ bā bā loose beside the ruby.
+    const html = annotated("1988");
+    assertArrayLength(html.match(/<ruby/gu) ?? [], 1);
+    assertStringIncludes(html, ">bā</span></rt>");
+  });
+
+  it("keeps a segmented reading inside one annotation", () => {
+    // A time is read as words: liù diǎn sānshí fēn over one written 6:30.
+    const html = annotated("6:30");
+    assertArrayLength(html.match(/<ruby/gu) ?? [], 1);
+    assertStringIncludes(html, '<ruby lang="zh">6:30<rp>(</rp>');
+    assertStringIncludes(html, ">fēn</span></rt>");
+  });
+
+  it("writes pieces that never say what they read as plain markup", () => {
+    // Nothing a conversion builds looks like this, but the pieces are the
+    // caller's to hand in, and there is no base to hang an annotation on.
+    assertIdentical(
+      toAnnotatedHtml([
+        {
+          text: "háng",
+          syllable: { initial: "h", final: "ang", tone: 2 },
+          confidence: undefined,
+          source: undefined,
+        },
+      ]),
+      '<span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>',
+    );
   });
 
   it("annotates nothing at all as nothing at all", () => {
