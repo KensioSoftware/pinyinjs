@@ -107,3 +107,76 @@ jobs:
       # build again anyway, and a job spends far longer installing than either
       # of these takes.
       - run: pnpm pack:check
+
+  # A pull request that publishes a version and says nothing about itself.
+  #
+  # release.yml already refuses to publish with an empty `## Unreleased`
+  # section, which is the right thing to refuse and the worst moment to find
+  # out: the run is however long after the merge, and the person who could have
+  # written the entry in one sentence has long since stopped thinking about it.
+  # This asks the same question while the change is still in front of its
+  # author, which is the only time the answer is cheap.
+  #
+  # The title decides whether it is asked, because these merge as squashes: the
+  # title becomes the commit subject, and the commit subject is what
+  # semantic-release reads. So a change that genuinely belongs in no release
+  # notes is retitled rather than excused — `chore:`, `docs:`, `test:`, `ci:`
+  # and `style:` publish nothing and are not asked for anything.
+  #
+  # Deliberately not added to the main ruleset's required checks by this pull
+  # request. Those four say the code works, which is a different kind of claim
+  # from this one, and whether an unwritten entry should block a merge or only
+  # embarrass it is a decision for the settings page rather than for this file.
+  changelog:
+    name: Changelog
+    # The `release/**` push above is release.yml's own changelog pull request,
+    # which has no `pull_request` payload to read and is a `chore:` anyway.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `gh api` on the pull request's files, below.
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check the entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Through the environment rather than interpolated into the script.
+          # A title is text anyone opening a pull request chooses, and `${{ }}`
+          # pastes it in as shell source before bash ever sees it.
+          TITLE: ${{ github.event.pull_request.title }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # The types that release, read out of .releaserc.yaml rather than
+          # repeated here, so this cannot quietly drift from what actually
+          # publishes. A `!` makes any type breaking, and breaking is a major.
+          types="$(awk '$1 == "-" && $2 == "type:" { print $3 }' .releaserc.yaml | paste -sd '|' -)"
+          releasable="^(${types})(\([^)]+\))?!?:"
+          breaking="^[a-z]+(\([^)]+\))?!:"
+
+          if [[ ! "$TITLE" =~ $releasable && ! "$TITLE" =~ $breaking ]]; then
+            echo "\"$TITLE\" publishes nothing, so there is nothing to write down."
+            exit 0
+          fi
+
+          files="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUMBER/files" --paginate --jq '.[].filename')"
+
+          if ! grep -qxF CHANGELOG.md <<<"$files"; then
+            echo "::error::\"$TITLE\" publishes a version and does not touch CHANGELOG.md. Write the entry under '## Unreleased', or retitle to a type that releases nothing."
+            exit 1
+          fi
+
+          # The same command release.yml runs, against the merged file, so what
+          # passes here is what the release will find. Touching CHANGELOG.md is
+          # not the same as having written anything under the heading the notes
+          # are taken from.
+          if ! ./scripts/sh/changelog.sh notes > /dev/null; then
+            echo "::error::CHANGELOG.md changed, but '## Unreleased' is empty. That heading is where the release notes come from; an entry anywhere else is not read."
+            exit 1
+          fi
