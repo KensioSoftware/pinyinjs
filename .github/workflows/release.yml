@@ -16,7 +16,7 @@
 #      choice is only made there, not here.
 #
 #   3. Settings → Actions → General → "Allow GitHub Actions to create and
-#      approve pull requests", for the changelog job at the bottom. Without it
+#      approve pull requests", for the version job at the bottom. Without it
 #      `gh pr create` fails with a permissions error that does not mention the
 #      setting.
 #
@@ -179,7 +179,7 @@ jobs:
       id-token: write
 
     # Empty when the commits since the last tag were only chore/test/docs, and
-    # nothing was published. The changelog job below reads it to decide whether
+    # nothing was published. The version job below reads it to decide whether
     # there is anything to write down.
     outputs:
       version: ${{ steps.release.outputs.version }}
@@ -204,11 +204,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Decides the version, retitles the changelog's Unreleased section,
-      # publishes to npm, tags and writes the GitHub Release with that section
-      # as its body. Does nothing at all if the commits since the last tag are
-      # only chore/test/docs, and fails rather than publishing if there is
-      # nothing written under that heading. See .releaserc.yaml.
+      # Decides the version, builds the release notes out of the commit
+      # subjects since the last tag, publishes to npm, tags, and writes the
+      # GitHub Release with those notes as its body. Does nothing at all if
+      # those commits are only chore/test/docs. See .releaserc.yaml.
       - id: release
         run: pnpm exec semantic-release
         env:
@@ -217,22 +216,20 @@ jobs:
           # release to a minor when this is "true".
           RELEASE_MINOR: ${{ inputs.minor }}
 
-  # The rewrite the release above made to its own working tree, made again
-  # here and sent to main as a pull request. Two files: CHANGELOG.md, whose
-  # `## Unreleased` heading becomes the version just published, and
-  # package.json, whose version follows it.
+  # `version` in package.json, caught up to what was just published, and sent
+  # to main as a pull request.
   #
   # A pull request rather than a push, because the main ruleset requires four
   # passing status checks and a commit created inside this run has none. pr.yml
   # runs those four on pushes to `release/**` for exactly this reason.
   #
-  # Neither file is what the released version *is* — the tag and the registry
-  # are that, and both already exist by the time this runs. So a failure here,
-  # or a pull request left unmerged, costs a stale package.json and a heading
-  # in the wrong place. It does not cost a broken release, and nothing about
-  # the next one depends on it having been merged.
-  changelog:
-    name: Write the changelog back
+  # That number is not what the released version *is* — the tag and the
+  # registry are that, and both already exist by the time this runs. So a
+  # failure here, or a pull request left unmerged, costs a stale package.json
+  # and nothing else. It does not cost a broken release, and nothing about the
+  # next one depends on it having been merged: semantic-release reads the tags.
+  version:
+    name: Write the version back
     needs: release
     if: needs.release.outputs.version != ''
     runs-on: ubuntu-latest
@@ -261,7 +258,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          ./scripts/sh/changelog.sh release "$VERSION"
           npm pkg set version="$VERSION"
 
           if [[ -z "$(git status --porcelain)" ]]; then
@@ -274,20 +270,20 @@ jobs:
 
           branch="release/v$VERSION"
           git switch --create "$branch"
-          git add CHANGELOG.md package.json
-          git commit --message "chore: changelog and version for $VERSION"
+          git add package.json
+          git commit --message "chore: version $VERSION"
           git push origin "$branch"
 
           # --body-file rather than --body, so the markdown below is not at the
           # mercy of how this block is indented.
           cat > "$RUNNER_TEMP/pr-body.md" <<EOF
-          [$VERSION](https://github.com/KensioSoftware/pinyinjs/releases/tag/v$VERSION) is published. This is the part of it that belongs on main: the \`## Unreleased\` heading retitled to $VERSION, a fresh empty one above it, and \`version\` in package.json caught up.
+          [$VERSION](https://github.com/KensioSoftware/pinyinjs/releases/tag/v$VERSION) is published. This is the part of it that belongs on main: \`version\` in package.json caught up to it.
 
-          Nothing depends on this being merged — the tag and the registry are the version of record — but the next release reads the empty heading, so leaving it open means writing the next set of notes underneath the last one.
+          Nothing depends on this being merged — the tag and the registry are the version of record, and the next release works out its own number from the tags rather than from this file.
           EOF
 
           gh pr create \
             --base main \
             --head "$branch" \
-            --title "chore: changelog and version for $VERSION" \
+            --title "chore: version $VERSION" \
             --body-file "$RUNNER_TEMP/pr-body.md"
