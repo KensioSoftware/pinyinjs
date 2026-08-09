@@ -63,8 +63,10 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   character wins its own key once it is present. 242 entries added to `core` and
   to `standard`, and both got _smaller_ — 71,366 to 71,151 bytes compressed for
   `core` — because a character present is a character every word containing it
-  can derive its reading from rather than storing one. CPP polyphone accuracy
-  and the gold corpus are unmoved to the digit.
+  can derive its reading from rather than storing one. `pnpm polyphones` and
+  `pnpm accuracy` produce byte-identical output to their runs against the
+  previous artifacts: CPP polyphone accuracy and every gold-corpus figure are
+  unchanged.
 
   The build now fails if any tier disagrees with `full` about a key they share,
   and the committed artifacts are checked the same way in CI. Both halves of
