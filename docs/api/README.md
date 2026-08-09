@@ -20,6 +20,7 @@ Two entry points:
 | `convertPieces(dictionary, text, options?)`          | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, options?)`          | the same, as HTML                                 |
 | `convertToAnnotatedHtml(dictionary, text, options?)` | hanzi and pinyin together, as ruby HTML           |
+| `segment(dictionary, text)`                          | split text into words                             |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
 | `toAnnotatedHtml(pieces, options?)`                  | render pieces, annotated                          |
@@ -127,6 +128,15 @@ See [HTML output](../html/).
 | `toAnnotatedHtml`        | render pieces, annotated       |
 | `toHtml`                 | render pieces you already have |
 | `HtmlOptions`            | type                           |
+
+## Segmentation
+
+See [segmenting](../segmenting/).
+
+| Export    | Is                                                |
+| --------- | ------------------------------------------------- |
+| `segment` | text → the words in it                            |
+| `Segment` | type: one word, or one stretch that was never Han |
 
 ## Slugs
 

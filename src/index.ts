@@ -255,6 +255,9 @@ export {
 } from "./transcription/ipa.js";
 export type { IpaOptions } from "./transcription/ipa.js";
 
+export { segment } from "./decode/segment.js";
+export type { Segment } from "./decode/segment.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 

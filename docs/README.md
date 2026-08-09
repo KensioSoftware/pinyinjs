@@ -30,6 +30,8 @@ put them at the end of the line.
   by how much.
 - [HTML output](html/): one element per syllable, with tone and uncertainty
   classes.
+- [Segmenting](segmenting/): splitting text into words, and why the split is
+  chosen for the reading it produces.
 - [Slugs](slug/): hanzi to a URL-safe slug, and to search keys and identifiers
   besides.
 - [Dictionaries](dictionaries/): loading, tiers, serving in a browser, and

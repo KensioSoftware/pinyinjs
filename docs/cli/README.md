@@ -15,6 +15,7 @@ Wǒ yào qù Běijīng.
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
+| `segment`    | split text into words                               |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
