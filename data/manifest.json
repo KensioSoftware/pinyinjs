@@ -1,20 +1,20 @@
 {
   "tiers": {
     "core": {
-      "entries": 16727,
+      "entries": 16969,
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 218019,
-      "compressedBytes": 71366
+      "bytes": 217022,
+      "compressedBytes": 71151
     },
     "standard": {
-      "entries": 66727,
+      "entries": 66969,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1395795,
-      "compressedBytes": 386701
+      "bytes": 1394798,
+      "compressedBytes": 386552
     },
     "full": {
       "entries": 461555,

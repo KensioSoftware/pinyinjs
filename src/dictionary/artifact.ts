@@ -354,6 +354,26 @@ export function readArtifact(
 }
 
 /**
+ * The reading every key in an artifact resolves to, in tone-numbered notation.
+ *
+ * Resolved rather than read off the line, since 87.8% of multi-character lines
+ * store no reading at all and mean "the characters' defaults, in order" — and
+ * those defaults are whatever *this* artifact holds. That is exactly what makes
+ * the comparison between tiers worth doing: a tier missing a character does not
+ * only lose that character, it changes every derived reading that stands on it.
+ */
+export function readingsByKey(
+  artifact: DictionaryArtifact,
+): ReadonlyMap<string, string> {
+  const index = KeyIndex.from(artifact.keys);
+  const readings = new Map<string, string>();
+  for (const [at, entry] of readArtifact(artifact).entries()) {
+    readings.set(index.keyAt(at), encodeReading(entry.readings.cn));
+  }
+  return readings;
+}
+
+/**
  * The first key an artifact does not read back the same, or undefined.
  *
  * Only the fields the artifact stores are compared: frequency is quantised on
