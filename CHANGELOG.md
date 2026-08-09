@@ -11,6 +11,48 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ### Added
 
+- **A search box on a Latin keyboard, filtering Chinese text.** `match` says
+  where a pinyin query lands in a text, or undefined where it does not land at
+  all — the most-used feature of the Chinese JS ecosystem this package did not
+  have.
+
+  ```ts
+  match(dictionary, "北京大学", "bjdx")?.ranges;
+  // [{ at: 0, length: 4 }]
+  ```
+
+  Every way anybody types it: full syllables joined or spaced, `beijing` and
+  `bei jing`; initials, `bj`; the two mixed, `beij` and `bjing`; tones as digits
+  where they are worth writing, `bei3jing1`; and `v` or `u:` for ü. A part
+  syllable counts at the end, so a box filtering on every keystroke keeps
+  matching while the query is typed. 儿化 is matched as it is said, the r on the
+  syllable in front of it, so 玩儿 answers to `wanr` and both characters are
+  marked.
+
+  **No index is built and none is needed.** The haystack is Chinese, so the
+  query is tested as a path over each character's readings rather than the text
+  being spelled out in advance and searched. That is what makes every reading of
+  a polyphone matchable, where matching against a table of default readings only
+  ever offers one of them — and the decoder's own reading is then what ranks
+  them:
+
+  ```ts
+  match(dictionary, "银行", "yh")?.score; // 7 — 银行 is yínháng
+  match(dictionary, "银行", "yx")?.score; // 5 — a reading 行 has, but not here
+  ```
+
+  Neither is refused, because a reader who thinks of 行 as `xíng` is not wrong
+  about the character. 长江 answers to `cj` above `zj`, 重庆 to `cq` above `zq`,
+  and 垃圾 to `laji` above the 國語 `lese`, which is matched too. Starting where
+  a word starts is worth ranking as well, so 大学生活 sorts above 上海大学 for
+  `dx`.
+
+  Ranges rather than a boolean, in code points, so a caller can highlight what
+  matched — and more than one where the query stepped over something with no
+  reading of its own, as 北京·大学 does. The `core` tier is enough, so a page
+  that never loads a word list can still filter. `pinyinjs match --query bjdx`
+  at the command line, which reads a list from standard input and ranks it.
+
 - **`segment` returns the words, rather than throwing them away.** Finding the
   words is what converting has always had to do first, because the unit a
   reading belongs to is the word — 行 is `xíng`, `háng`, `héng` or `hàng` and

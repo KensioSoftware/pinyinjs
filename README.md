@@ -43,6 +43,11 @@ $ pinyinjs explain 银行
 $ pinyinjs lookup 头发
 头发  tóu fa  n
 
+$ pinyinjs match --query bjdx 北京大学 我在北京大学学中文 上海大学
+[北京大学]  7.00
+我在[北京大学]学中文  6.33
+上海大学  no match
+
 $ pinyinjs syllable nǐhǎo
 nǐhǎo  nǐ hǎo
   nǐ        n + i, tone 3         nǐ  ni3  ni³
@@ -61,6 +66,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | `html`       | the same, as HTML                                   |
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
 | `segment`    | split text into words                               |
+| `match`      | filter text by a pinyin query, best first           |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -419,6 +425,43 @@ segments as 他 / 看 / 了 and converts as `tā kànle`, because attaching an a
 particle to its verb is a fact about writing pinyin rather than about where the
 words are.
 
+## Match a pinyin query
+
+A search box on a Latin keyboard, filtering Chinese text. `match` returns where
+a query landed, or undefined where it did not land at all.
+
+```ts
+import { match } from "@kensio/pinyinjs";
+
+match(dictionary, "北京大学", "bjdx")?.ranges; // [{ at: 0, length: 4 }]
+match(dictionary, "北京大学", "beijing")?.ranges; // [{ at: 0, length: 2 }]
+match(dictionary, "北京大学", "nanjing"); // undefined
+```
+
+Every way anybody types it: full syllables joined or spaced, `beijing` and
+`bei jing`; initials, `bj`; the two mixed, `beij` and `bjing`; tones as digits
+where they are worth writing, `bei3jing1`; `v` or `u:` for ü; and the r of 儿化
+on the syllable it belongs to, so 玩儿 answers to `wanr`.
+
+**No index is built and none is needed.** The haystack is Chinese, so the query
+is tested as a path over each character's readings rather than the text being
+spelled out in advance — which is why every reading of a polyphone is
+matchable, where a default reading table only ever offers one of them:
+
+```ts
+match(dictionary, "银行", "yh")?.score; // 7, and 银行 is yínháng
+match(dictionary, "银行", "yx")?.score; // 5 — a reading 行 has, but not here
+```
+
+Both match, and the decoder's own reading is what ranks them, along with
+whether the match starts a word. Sort a filtered list by `score`, highest
+first. Ranges rather than a boolean, in code points, so a caller can highlight
+what matched — and there is more than one where the query stepped over
+something with no reading of its own, as 北京·大学 does.
+
+The `core` tier is enough, so a page that never loads a word list can still
+filter. See [matching](docs/matching/).
+
 ## Look words up
 
 ```ts
@@ -670,6 +713,7 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertToHtml(dictionary, text, ...)`               | the same, as HTML                                 |
 | `convertToAnnotatedHtml(dictionary, text, ...)`      | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
+| `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
@@ -685,8 +729,8 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 
 Types (`Syllable`, `Tone`, `ConvertOptions`, `ConvertedPiece`,
-`ReadingConfidence`, `HtmlOptions`, `Segment`, `WordEntry`, `Tier`, `Locale`,
-`Script`) are exported alongside them.
+`ReadingConfidence`, `HtmlOptions`, `Segment`, `PinyinMatch`, `MatchRange`,
+`WordEntry`, `Tier`, `Locale`, `Script`) are exported alongside them.
 
 ## Development
 

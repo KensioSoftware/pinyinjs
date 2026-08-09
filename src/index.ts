@@ -258,6 +258,9 @@ export type { IpaOptions } from "./transcription/ipa.js";
 export { segment } from "./decode/segment.js";
 export type { Segment } from "./decode/segment.js";
 
+export { match } from "./search/match.js";
+export type { MatchRange, PinyinMatch } from "./search/match.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 

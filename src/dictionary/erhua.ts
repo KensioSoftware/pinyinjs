@@ -65,6 +65,13 @@ export function isErFinal(word: string): boolean {
 }
 
 /**
+ * Whether a character is the 儿 that 儿化 folds into the syllable before it.
+ */
+export function isErCharacter(character: string): boolean {
+  return character === ER || character === ER_HANT;
+}
+
+/**
  * Whether a syllable is a bare `er`, which is how the phrase corpus writes 儿化.
  *
  * The tone is deliberately not looked at. Upstream writes 玩儿 as `wán er` and

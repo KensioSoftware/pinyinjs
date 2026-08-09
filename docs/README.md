@@ -32,6 +32,8 @@ put them at the end of the line.
   classes.
 - [Segmenting](segmenting/): splitting text into words, and why the split is
   chosen for the reading it produces.
+- [Matching](matching/): filtering Chinese text by a pinyin query typed on a
+  Latin keyboard, and ranking what it finds.
 - [Slugs](slug/): hanzi to a URL-safe slug, and to search keys and identifiers
   besides.
 - [Dictionaries](dictionaries/): loading, tiers, serving in a browser, and

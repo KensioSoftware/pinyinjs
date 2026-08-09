@@ -16,6 +16,7 @@ Wǒ yào qù Běijīng.
 | `html`       | the same, as HTML                                   |
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
 | `segment`    | split text into words                               |
+| `match`      | filter text by a pinyin query, best first           |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -85,6 +86,30 @@ $ pinyinjs lookup 垃圾
 The word, its 普通话 reading, and jieba's part-of-speech tag. A 國語 reading
 appears on its own line only where it differs. Both scripts are keys, so
 `pinyinjs lookup 頭髮` finds the same entry.
+
+### match
+
+```console
+$ pinyinjs match --query bjdx 北京大学 我在北京大学学中文 上海大学
+[北京大学]  7.00
+我在[北京大学]学中文  6.33
+上海大学  no match
+```
+
+Filters texts by a pinyin query typed on a Latin keyboard: `beijing`,
+`bei jing`, `bj`, `beij` or `bei3jing1` all find 北京. The matches come first,
+best first, with the matched stretches in brackets and the score beside them;
+every text still gets a line, so a run over a file says what it did with each.
+
+The query is a flag rather than the first argument, so that the texts stay
+where every other command has them — which is what lets a list be piped in:
+
+```console
+$ cat titles.txt | pinyinjs match --query bjdx
+```
+
+`--json` carries `ranges` and `score`, for filtering with `jq`. See
+[matching](../matching/) for what the score weighs.
 
 ### syllable
 

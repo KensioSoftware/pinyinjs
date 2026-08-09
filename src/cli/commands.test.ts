@@ -269,6 +269,42 @@ describe("the segment command", () => {
   });
 });
 
+describe("the match command", () => {
+  it("marks what matched, and ranks the matches", async () => {
+    assertArrayEquals(
+      await cli("match", "--query", "bj", "去北京", "北京", "上海"),
+      ["[北京]  7.00", "去[北京]  6.50", "上海  no match"],
+    );
+  });
+
+  it("marks each stretch it matched, and not what it stepped over", async () => {
+    assertArrayEquals(await cli("match", "--query", "bj", "北 京"), [
+      "[北] [京]  7.00",
+    ]);
+  });
+
+  it("reports the ranges and the score as JSON", async () => {
+    assertObjectEquals(await json("match", "--query", "yx", "银行"), {
+      query: "yx",
+      text: "银行",
+      matched: true,
+      score: 5,
+      ranges: [{ at: 0, length: 2 }],
+    });
+    assertObjectEquals(await json("match", "--query", "bj", "上海"), {
+      query: "bj",
+      text: "上海",
+      matched: false,
+    });
+  });
+
+  it("says so when it is given no query at all", async () => {
+    const result = await runCli(["match", "北京"], environment);
+    assertIdentical(result.status, 1);
+    assertArrayIncludes(result.errors, "match needs --query <pinyin>");
+  });
+});
+
 describe("the slug command", () => {
   it("writes one slug per argument", async () => {
     assertArrayEquals(await cli("slug", "银行", "北京市"), [

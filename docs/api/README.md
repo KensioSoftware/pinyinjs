@@ -21,6 +21,7 @@ Two entry points:
 | `convertToHtml(dictionary, text, options?)`          | the same, as HTML                                 |
 | `convertToAnnotatedHtml(dictionary, text, options?)` | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
+| `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
 | `toAnnotatedHtml(pieces, options?)`                  | render pieces, annotated                          |
@@ -137,6 +138,16 @@ See [segmenting](../segmenting/).
 | --------- | ------------------------------------------------- |
 | `segment` | text → the words in it                            |
 | `Segment` | type: one word, or one stretch that was never Han |
+
+## Matching
+
+See [matching](../matching/).
+
+| Export        | Is                                                |
+| ------------- | ------------------------------------------------- |
+| `match`       | where a pinyin query matches a text, and how well |
+| `PinyinMatch` | type: the ranges a query matched, and its score   |
+| `MatchRange`  | type: one stretch, in code points from the start  |
 
 ## Slugs
 

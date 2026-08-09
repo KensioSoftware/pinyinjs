@@ -24,6 +24,7 @@ const FLAG_HELP = new Map<string, string>([
   ["max-length", "the longest the slug may be, cut at a word"],
   ["fallback", "what to write where a text slugs to nothing"],
   ["read-numbers", "say the digits rather than keeping them"],
+  ["query", "the pinyin to look for: beijing, bei jing or bj"],
   ["greedy", "decode with the old longest-match baseline"],
   ["system", "write it in bopomofo, wade-giles, yale, gwoyeu or ipa"],
   ["no-tone-classes", "leave the tone classes off"],
@@ -51,6 +52,7 @@ const COMMAND_WIDTH =
  * The flags that take a value after them, as opposed to standing alone.
  */
 const VALUE_FLAGS = new Set([
+  "query",
   "from",
   "to",
   "from-script",
@@ -160,6 +162,7 @@ export function generalHelp(): readonly string[] {
     "  pinyinjs slug 我想学中文。",
     "  pinyinjs explain 长江大桥",
     "  pinyinjs lookup 头发",
+    "  pinyinjs match --query bjdx 北京大学 上海大学",
     "  pinyinjs syllable nǐhǎo",
     "  pinyinjs transcribe běijīng",
     "  cat article.txt | pinyinjs convert",
