@@ -210,13 +210,19 @@ export class Dictionary {
    *
    * The lattice needs these for its single-character fallback edges: 行 has to
    * offer `xíng`, `háng` and `héng` at a position no word covers.
+   *
+   * The alternates are read off the canonical form's line, the same form
+   * {@link Dictionary.lookup} found the entry under. Searching the index for
+   * the raw character instead would land on the insertion point for a Hong Kong
+   * glyph form that is not itself a key — 裏 sits between whatever keys
+   * surround it — and take some unrelated entry's alternates.
    */
   readingsOf(character: string): readonly (readonly Syllable[])[] {
     const entry = this.lookup(character);
     if (entry === undefined) {
       return [];
     }
-    const found = this.#index.lookup(character);
+    const found = this.#index.lookup(toCanonicalGlyphs(character));
     const alternates = (this.#columns(found.index)[4] ?? "")
       .split(ALTERNATE)
       .map((text) => decodeReading(text))
