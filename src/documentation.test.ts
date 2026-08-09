@@ -47,6 +47,7 @@ import {
   toScript,
   toScriptPieces,
 } from "./decode/script.js";
+import { match } from "./search/match.js";
 import { slug } from "./format/slug.js";
 import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
@@ -169,6 +170,24 @@ function dropped(spelling: string): string {
   return spelling.replaceAll(/['êŭü]/gu, (mark) =>
     mark === "ê" ? "e" : mark === "'" ? "" : "u",
   );
+}
+
+/**
+ * Where a query matched, each range as `at+length`, or the empty string.
+ */
+function matched(haystack: string, query: string): string {
+  return (match(dictionary, haystack, query)?.ranges ?? [])
+    .map((range) => `${String(range.at)}+${String(range.length)}`)
+    .join(" ");
+}
+
+/**
+ * What a match scored, for the assertions about ranking.
+ */
+function scored(haystack: string, query: string): number {
+  const found = match(dictionary, haystack, query);
+  assertNonNullable(found, `${haystack} does not match ${query}`);
+  return found.score;
 }
 
 /**
@@ -842,6 +861,119 @@ describe("the examples in docs/", () => {
         toScript(dictionary, scriptTables, "软件", { to: "zh-Hant" }),
         "軟件",
       );
+    });
+  });
+
+  describe("matching", () => {
+    it("matches the four ways the page opens on, and refuses the fifth", () => {
+      for (const query of [
+        "bjdx",
+        "beijingdaxue",
+        "bei jing da xue",
+        "beijingdx",
+        "bjdaxue",
+      ]) {
+        assertIdentical(matched("北京大学", query), "0+4", query);
+      }
+      assertUndefined(match(dictionary, "北京大学", "nanjing"));
+    });
+
+    it("takes every ü convention the page tabulates", () => {
+      assertIdentical(matched("绿色", "lvse"), "0+2");
+      assertIdentical(matched("绿色", "lu:se"), "0+2");
+    });
+
+    it("grows the match as the query is typed", () => {
+      assertIdentical(matched("北京", "b"), "0+1");
+      assertIdentical(matched("北京", "be"), "0+1");
+      assertIdentical(matched("北京", "bei"), "0+1");
+      assertIdentical(matched("北京", "beij"), "0+2");
+    });
+
+    it("holds a query to a tone it wrote as a digit, and not to a mark", () => {
+      assertIdentical(matched("北京大学", "bei3jing1"), "0+2");
+      assertIdentical(matched("北京大学", "bei1jing1"), "");
+      // A mark is dropped rather than honoured, so it matches whatever tone.
+      assertIdentical(matched("北京大学", "běijīng"), "0+2");
+    });
+
+    it("takes a written syllable boundary as one", () => {
+      assertIdentical(matched("县城", "xian"), "0+1");
+      assertIdentical(matched("县城", "xi an"), "");
+      assertIdentical(matched("西安", "xi an"), "0+2");
+    });
+
+    it("matches a polyphone by either reading and ranks the right one up", () => {
+      // The three the page names, each of them a reading the character has
+      // and only one of them the reading this text takes.
+      const pairs = [
+        ["银行", "yh", "yx"],
+        ["长江大桥", "cj", "zj"],
+        ["重庆", "cq", "zq"],
+      ] as const;
+      for (const [text, inContext, other] of pairs) {
+        assertIdentical(matched(text, inContext), "0+2", text);
+        assertIdentical(matched(text, other), "0+2", text);
+        assertTrue(scored(text, inContext) > scored(text, other), text);
+      }
+      assertIdentical(scored("银行", "yh"), 7);
+      assertIdentical(scored("银行", "yx"), 5);
+    });
+
+    it("matches the 國語 reading, below the one the text takes", () => {
+      assertIdentical(matched("垃圾", "lese"), "0+2");
+      assertTrue(scored("垃圾", "laji") > scored("垃圾", "lese"));
+    });
+
+    it("ranks a word-initial match above one inside a word", () => {
+      const query = "dx";
+      const ranked = ["上海大学", "大学生活"]
+        .map((text) => ({ text, found: match(dictionary, text, query) }))
+        .filter((one) => one.found !== undefined)
+        .toSorted(
+          (first, second) =>
+            (second.found?.score ?? 0) - (first.found?.score ?? 0),
+        )
+        .map((one) => one.text);
+      assertArrayEquals(ranked, ["大学生活", "上海大学"]);
+    });
+
+    it("gives back the ranges, in code points, of what it matched", () => {
+      assertIdentical(matched("我在北京大学学中文", "bjdx"), "2+4");
+    });
+
+    it("steps over what has no reading, and reports the rest as two", () => {
+      assertIdentical(matched("北京·大学", "bjdx"), "0+2 3+2");
+    });
+
+    it("matches on the core tier, which is what the page promises", async () => {
+      const core = await loadDictionary(fileSource(dataDirectory), "core");
+      const found = match(core, "北京大学", "bjdx");
+      assertNonNullable(found);
+      assertArrayLength(found.ranges, 1);
+      assertObjectEquals(found.ranges[0], { at: 0, length: 4 });
+    });
+
+    it("takes the r of 儿化 onto the syllable in front of it", () => {
+      assertIdentical(matched("玩儿", "wanr"), "0+2");
+      assertIdentical(matched("这儿", "zher"), "0+2");
+      assertIdentical(matched("一点儿", "yidianr"), "0+3");
+      // And the characters read as themselves still match, below it.
+      assertIdentical(matched("玩儿", "wane"), "0+2");
+      assertTrue(scored("玩儿", "wanr") > scored("玩儿", "wane"));
+    });
+
+    it("offers the r wherever an 儿 follows, and lets the reading rank it", () => {
+      // 女儿 is nǚ'ér and not nǚr, so `nvr` is not how it is said — and it is
+      // how plenty of people type it, so it finds the word and sorts below the
+      // spelling that reads correctly rather than being refused.
+      assertIdentical(matched("女儿", "nvr"), "0+2");
+      assertIdentical(matched("女儿", "nver"), "0+2");
+      assertTrue(scored("女儿", "nver") > scored("女儿", "nvr"));
+    });
+
+    it("does not guess at a typo in the middle of a query", () => {
+      assertIdentical(matched("北京", "bejing"), "");
     });
   });
 
@@ -1758,6 +1890,33 @@ describe("the examples in docs/", () => {
         "  Dà      word    dài +22.6",
         "  qiáo    locked",
       ]);
+    });
+
+    it("filters and ranks by a pinyin query, as the page shows", async () => {
+      assertArrayEquals(
+        await cli(
+          "match",
+          "--query",
+          "bjdx",
+          "北京大学",
+          "我在北京大学学中文",
+          "上海大学",
+        ),
+        [
+          "[北京大学]  7.00",
+          "我在[北京大学]学中文  6.33",
+          "上海大学  no match",
+        ],
+      );
+      // And the query forms the section lists, each finding the same word.
+      const forms = ["beijing", "bei jing", "bj", "beij", "bei3jing1"];
+      const found = await Promise.all(
+        forms.map(async (query) => cli("match", "--query", query, "北京")),
+      );
+      assertArrayEquals(
+        found.flat(),
+        forms.map(() => "[北京]  7.00"),
+      );
     });
 
     it("shows the Taiwan reading on its own line", async () => {

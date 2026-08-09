@@ -22,6 +22,7 @@ import { convertToAnnotatedHtml, convertToHtml } from "./format/html.js";
 import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { segment } from "./decode/segment.js";
+import { match } from "./search/match.js";
 import {
   numeralHanzi,
   percentHanzi,
@@ -106,6 +107,15 @@ function guesses(text: string): readonly string[] {
         piece.confidence !== undefined && isUncertain(piece.confidence),
     )
     .map((piece) => piece.text);
+}
+
+/**
+ * Where a query matched, each range as `at+length`.
+ */
+function rangesOf(haystack: string, query: string): readonly string[] {
+  return (match(dictionary, haystack, query)?.ranges ?? []).map(
+    (range) => `${String(range.at)}+${String(range.length)}`,
+  );
 }
 
 /**
@@ -377,6 +387,24 @@ describe("the examples in README.md", () => {
       assertArrayEquals(await cli("lookup", "头发"), ["头发  tóu fa  n"]);
     });
 
+    it("filters by a pinyin query as the README shows", async () => {
+      assertArrayEquals(
+        await cli(
+          "match",
+          "--query",
+          "bjdx",
+          "北京大学",
+          "我在北京大学学中文",
+          "上海大学",
+        ),
+        [
+          "[北京大学]  7.00",
+          "我在[北京大学]学中文  6.33",
+          "上海大学  no match",
+        ],
+      );
+    });
+
     it("takes a syllable apart as the README shows", async () => {
       assertArrayEquals(await cli("syllable", "nǐhǎo"), [
         "nǐhǎo  nǐ hǎo",
@@ -433,6 +461,7 @@ describe("the examples in README.md", () => {
       for (const command of [
         "convert",
         "html",
+        "match",
         "explain",
         "lookup",
         "syllable",
@@ -547,6 +576,19 @@ describe("the examples in README.md", () => {
         ["他", "看", "了"],
       );
       assertIdentical(convert(dictionary, "他看了"), "tā kànle");
+    });
+  });
+
+  describe("matching a pinyin query", () => {
+    it("matches the three the section shows", () => {
+      assertArrayEquals(rangesOf("北京大学", "bjdx"), ["0+4"]);
+      assertArrayEquals(rangesOf("北京大学", "beijing"), ["0+2"]);
+      assertUndefined(match(dictionary, "北京大学", "nanjing"));
+    });
+
+    it("scores 银行 as the section scores it, by either reading", () => {
+      assertIdentical(match(dictionary, "银行", "yh")?.score, 7);
+      assertIdentical(match(dictionary, "银行", "yx")?.score, 5);
     });
   });
 

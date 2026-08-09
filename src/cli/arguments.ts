@@ -43,6 +43,7 @@ const FLAGS = {
   separator: { type: "string" },
   syllables: { type: "string" },
   umlaut: { type: "string" },
+  query: { type: "string" },
   hash: { type: "boolean" },
   "hash-length": { type: "string" },
   "max-length": { type: "string" },
@@ -127,6 +128,27 @@ export const SLUG_FLAGS: readonly FlagName[] = [
   "third-tone",
   "no-sandhi",
 ];
+
+/**
+ * The flags `match` takes, beyond the global ones.
+ *
+ * The query is a flag rather than the first argument, so that the texts stay
+ * where every other command has them: `match` reads a list to filter from
+ * standard input, and a command line whose first positional meant something
+ * else could not be piped into.
+ */
+export const MATCH_FLAGS: readonly FlagName[] = ["query"];
+
+/**
+ * Read the `--query` flag, which `match` cannot do without.
+ */
+export function matchQuery(flags: Flags): string {
+  const given = flags.query;
+  if (given === undefined) {
+    throw new UsageError("match needs --query <pinyin>");
+  }
+  return String(given);
+}
 
 /**
  * The flags `script` takes, beyond the global ones.

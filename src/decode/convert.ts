@@ -1,5 +1,5 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
-import { isErFinal } from "../dictionary/erhua.js";
+import { isErCharacter, isErFinal } from "../dictionary/erhua.js";
 import { isSameReading } from "../dictionary/entry.js";
 import { type ApostropheStyle, markWord } from "../orthography/apostrophe.js";
 import {
@@ -217,13 +217,6 @@ function sourcePiece(text: string): ConvertedPiece {
 }
 
 /**
- * Whether a character is the 儿 that 儿化 folds into the syllable before it.
- */
-function isErCharacter(character: string): boolean {
-  return character === "儿" || character === "兒";
-}
-
-/**
  * Which characters of a word each of its syllables reads.
  *
  * One per syllable, in order, and undefined where a syllable reads on into the
@@ -238,7 +231,7 @@ function isErCharacter(character: string): boolean {
  * 哪儿 is the case that needs it: two syllables short over six characters, and
  * both 儿 attach to the character in front of them rather than one taking two.
  */
-function sourcesOf(
+export function sourcesOf(
   word: string,
   reading: readonly Syllable[],
 ): readonly (string | undefined)[] {
