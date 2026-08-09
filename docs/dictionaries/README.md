@@ -142,6 +142,25 @@ dictionary
 here?" is the question that decides whether to keep walking, and it is answered
 by the same binary search as a lookup, with no second index beside it.
 
+### By position
+
+The keys are sorted and numbered, and three methods take that number rather than
+a word. They are the seam a second index over the same dictionary is built
+through — [candidates](../candidates/) derives one from them:
+
+```ts
+dictionary.wordAt(0); // the first key in code-unit order
+dictionary.frequencyAt(0); // its frequency bucket, 0 rarest to 15
+dictionary.readingsInOrder().readingAt(0); // "yin2 hang2", at the string level
+```
+
+`readingsInOrder` hands back a cursor rather than an array, because the array is
+39 MB on the full tier. What the cursor holds instead is the character defaults
+that a derived reading is assembled from — 83.25% of the full tier's keys store
+no reading of their own — so build what needs it, use it, and let it go.
+Nothing along that path constructs a `Syllable`, which is what makes a pass over
+every key affordable.
+
 ## What it costs in memory
 
 The index is a sorted, newline-joined string plus a `Uint32Array` of offsets,

@@ -27,6 +27,79 @@ const PROPER_NOUN_FLAG = "p";
 const NAME_BOUNDARIES = /^p(?<at>\d+(?:\.\d+)*)$/u;
 
 /**
+ * The lowest code unit that begins a surrogate pair.
+ */
+const HIGH_SURROGATE = 0x1_00_00;
+
+/**
+ * Whether a key is written with exactly one character, without allocating.
+ *
+ * Asked of every key in the dictionary when {@link Dictionary.readingsInOrder}
+ * gathers the character defaults, which is where splitting each key into
+ * characters would cost an array per key for an answer that is a length check.
+ */
+function isOneCharacter(key: string): boolean {
+  if (key.length === 1) {
+    return true;
+  }
+  return key.length === 2 && (key.codePointAt(0) ?? 0) >= HIGH_SURROGATE;
+}
+
+/**
+ * A word's reading, joined from its characters' default readings.
+ *
+ * Walked by code point rather than split into characters first, for the same
+ * reason as {@link isOneCharacter}: this runs over every key in the dictionary
+ * three times during a reverse index build, and the array `toCharacters`
+ * allocates per key is 20% of it.
+ *
+ * Returns the empty string where any character has no default, which is what a
+ * tier missing a character would look like. No tier does: `selectTier` never
+ * drops a character some word is written with.
+ */
+function derivedReading(
+  key: string,
+  defaults: ReadonlyMap<string, string>,
+): string {
+  let joined = "";
+  let at = 0;
+  while (at < key.length) {
+    const width = (key.codePointAt(at) ?? 0) >= HIGH_SURROGATE ? 2 : 1;
+    const value = defaults.get(key.slice(at, at + width));
+    if (value === undefined) {
+      return "";
+    }
+    joined = joined === "" ? value : `${joined} ${value}`;
+    at += width;
+  }
+  return joined;
+}
+
+/**
+ * Every key's reading, in key order, at the string level.
+ *
+ * The seam a second index over the same artifact is built through. A reading is
+ * `yin2 hang2` on the way in and on the way out, and no {@link Syllable} is
+ * constructed anywhere along it — which is what makes a pass over all 723,147
+ * keys affordable at load time rather than a decode of the whole dictionary.
+ *
+ * Handed out as a cursor rather than as an array because the array is 39 MB on
+ * the full tier. What the cursor holds instead is the character defaults a
+ * derived reading is assembled from, and dropping it releases them.
+ */
+export interface DictionaryReadings {
+  /** How many positions there are, which is the dictionary's own size. */
+  readonly size: number;
+  /**
+   * The reading at a position, in the artifact's tone-numbered spelling.
+   *
+   * Empty where the position is out of range, or where a character the word is
+   * written with is not itself a key.
+   */
+  readonly readingAt: (at: number) => string;
+}
+
+/**
  * What the dictionary knows about one word.
  */
 export interface WordEntry {
@@ -166,10 +239,84 @@ export class Dictionary {
   }
 
   /**
+   * The reading column of a line, without slicing or splitting the rest of it.
+   *
+   * Deriving a word's reading needs its characters' readings and nothing else
+   * about them, and this is asked of every line in the dictionary during a
+   * reverse index build, so the other four columns are never touched.
+   */
+  #readingColumn(at: number): string {
+    const start = this.#lineStarts[at];
+    const nextStart = this.#lineStarts[at + 1];
+    if (start === undefined || nextStart === undefined) {
+      return "";
+    }
+    const end = nextStart - 1;
+    const column = this.#entries.indexOf(COLUMN, start);
+    return this.#entries.slice(
+      start,
+      column === -1 || column > end ? end : column,
+    );
+  }
+
+  /**
    * How many words the dictionary holds, counting each script's key.
    */
   get size(): number {
     return this.#index.size;
+  }
+
+  /**
+   * The word at a position, or the empty string where there is none.
+   *
+   * Positions are what a second index over the dictionary stores, since a
+   * position is one number where a word is a string — the reverse index in
+   * `src/search/` is built on that. The same position indexes
+   * {@link Dictionary.frequencyAt} and {@link DictionaryReadings.readingAt}.
+   */
+  wordAt(at: number): string {
+    return this.#index.keyAt(at);
+  }
+
+  /**
+   * The frequency bucket of the word at a position, 0 rarest to 15 commonest.
+   *
+   * The bucket rather than {@link WordEntry.cost}, because ranking a candidate
+   * list wants the sixteen-value scale a counting sort runs on — and because
+   * reading it costs no decode, where asking for the entry would decode every
+   * candidate to learn one number. See {@link FrequencyTable.bucketOf}.
+   */
+  frequencyAt(at: number): number {
+    return this.#frequencies.bucketOf(at);
+  }
+
+  /**
+   * A cursor over every key's reading, in key order.
+   *
+   * Two passes, mirroring `readArtifact`: the character defaults are gathered
+   * first, because 83.25% of the full tier's keys store no reading and mean
+   * "the characters' defaults, in order". Holding the cursor holds those
+   * defaults, so build what needs it, use it, and let it go.
+   */
+  readingsInOrder(): DictionaryReadings {
+    const defaults = new Map<string, string>();
+    for (let at = 0; at < this.#index.size; at++) {
+      const key = this.#index.keyAt(at);
+      const reading = isOneCharacter(key) ? this.#readingColumn(at) : "";
+      if (reading !== "") {
+        defaults.set(key, reading);
+      }
+    }
+
+    return {
+      size: this.#index.size,
+      readingAt: (at: number): string => {
+        const stored = this.#readingColumn(at);
+        return stored === ""
+          ? derivedReading(this.#index.keyAt(at), defaults)
+          : stored;
+      },
+    };
   }
 
   /**

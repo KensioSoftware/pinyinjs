@@ -64,7 +64,7 @@ export { pairScripts, TraditionalTable } from "./dictionary/traditional.js";
 export type { ScriptPairing } from "./dictionary/traditional.js";
 
 export { Dictionary } from "./dictionary/dictionary.js";
-export type { WordEntry } from "./dictionary/dictionary.js";
+export type { DictionaryReadings, WordEntry } from "./dictionary/dictionary.js";
 
 export {
   fetchSource,
@@ -260,6 +260,18 @@ export type { Segment } from "./decode/segment.js";
 
 export { match } from "./search/match.js";
 export type { MatchRange, PinyinMatch } from "./search/match.js";
+
+export { candidates, homophonesOf } from "./search/candidates.js";
+export type {
+  CandidateOptions,
+  ScriptPreference,
+} from "./search/candidates.js";
+
+export { ReverseIndex } from "./search/reverse-index.js";
+export type {
+  ReverseIndexBuild,
+  ReverseIndexData,
+} from "./search/reverse-index.js";
 
 export { check } from "./grade/check.js";
 export type {
