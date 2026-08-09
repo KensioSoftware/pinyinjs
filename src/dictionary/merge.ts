@@ -9,6 +9,7 @@ import {
 } from "../sources/unihan.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
+import { countCorpusMass, rankByCorpusMass } from "./corpus-mass.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { attachErhua, isErFinal, NON_ERHUA_ER_WORDS } from "./erhua.js";
 import { composeLocaleDeltas } from "./locale.js";
@@ -456,18 +457,10 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // like that already reads in 普通话.
   const cedictByHant = indexCedict(cedict, (entry) => entry.traditional);
 
-  // ── Character defaults, which every later step leans on ────
-  const defaults = new Map<string, readonly Syllable[]>();
-  for (const [character, readings] of unihanReadings) {
-    const parsed = resolveFrequencyTones(readings)
-      .map((reading) => characterSyllable(character, reading))
-      .filter((syllable) => syllable !== undefined);
-    if (parsed.length > 0) {
-      defaults.set(character, parsed);
-    }
-  }
-
   // ── 繁體 evidence, mined from CC-CEDICT's own pairings ──────
+  // Before the character defaults, because the corpus mass those are ranked by
+  // has to reach 繁體 characters through this table: jieba's corpus and the
+  // phrase corpus are both 简体, so nothing else would count a vote for 髮.
   const pairings: ScriptPairing[] = [];
   for (const entry of cedict) {
     const aligned = readAlignedReading(entry.simplified, entry.readings);
@@ -478,6 +471,24 @@ export function mergeSources(sources: MergeSources): MergeResult {
     unihanVariants,
     unihanReadings,
   );
+
+  // ── Character defaults, which every later step leans on ────
+  // Unihan ranks the readings and the corpus re-ranks the ones it has seen: a
+  // character's default is whichever of its readings the dictionary's own words
+  // spend the most of jieba's corpus on, and Unihan's order decides the rest.
+  const mass = countCorpusMass({ phrase, cedict, jieba }, traditional);
+  const defaults = new Map<string, readonly Syllable[]>();
+  for (const [character, readings] of unihanReadings) {
+    const parsed = resolveFrequencyTones(readings)
+      .map((reading) => characterSyllable(character, reading))
+      .filter((syllable) => syllable !== undefined);
+    if (parsed.length > 0) {
+      defaults.set(
+        character,
+        rankByCorpusMass(character, parsed, readings.fields, mass),
+      );
+    }
+  }
 
   const words = new Set<string>([
     ...defaults.keys(),
