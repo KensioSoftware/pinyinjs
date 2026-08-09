@@ -236,6 +236,69 @@ describe("merging the sources", () => {
       );
     });
 
+    it("demotes a 轻声 the field only counted inside words", () => {
+      // 西 is `xi(902) xī(738)`, and the 902 are 东西. Left leading, 往西 read
+      // `wǎng xi`.
+      const { byWord } = merge({
+        unihanReadings: new Map([["西", withFrequencyField(["xi", "xī"], [])]]),
+      });
+      assertIdentical(reading(byWord, "西"), "xī");
+    });
+
+    it("keeps the demoted reading as a candidate", () => {
+      const { byWord } = merge({
+        unihanReadings: new Map([["西", withFrequencyField(["xi", "xī"], [])]]),
+      });
+      assertArrayEquals(
+        (byWord.get("西")?.alternates ?? []).map((alternate) =>
+          alternate.map((syllable) => writeSyllable(syllable)).join(""),
+        ),
+        ["xi"],
+      );
+    });
+
+    it("holds it where CC-CEDICT reads the bare character 轻声", () => {
+      // 吗 is `ma(1456) má(93)`, and CC-CEDICT calls the bare character a
+      // question particle. A particle's whole use is the bare character.
+      const { byWord } = merge({
+        unihanReadings: new Map([["吗", withFrequencyField(["ma", "má"], [])]]),
+        cedict: [cedictEntry("嗎", "吗", "ma5", { definitions: ["particle"] })],
+      });
+      assertIdentical(reading(byWord, "吗"), "ma");
+    });
+
+    it("holds it for the 繁體 spelling too", () => {
+      const { byWord } = merge({
+        unihanReadings: new Map([["嗎", withFrequencyField(["ma", "má"], [])]]),
+        cedict: [cedictEntry("嗎", "吗", "ma5", { definitions: ["particle"] })],
+      });
+      assertIdentical(reading(byWord, "嗎"), "ma");
+    });
+
+    it("does not take a suffix sense for a claim about the character", () => {
+      // 子's neutral CC-CEDICT headword is `noun suffix, as in 椅子`, which
+      // says the character is unstressed in words — and words are what the
+      // corpus can already see. A bare 子 is `zǐ`.
+      const { byWord } = merge({
+        unihanReadings: new Map([["子", withFrequencyField(["zi", "zǐ"], [])]]),
+        cedict: [
+          cedictEntry("子", "子", "zi5", {
+            definitions: ['noun suffix, as in 椅子[yi3 zi5] "chair"'],
+          }),
+        ],
+      });
+      assertIdentical(reading(byWord, "子"), "zǐ");
+    });
+
+    it("leaves a 轻声 the field never wrote with a tone", () => {
+      // 吧 is `ba(2073)` and nothing else, so there is no twin to demote it
+      // under and the 语气词 keeps its reading.
+      const { byWord } = merge({
+        unihanReadings: new Map([["吧", withFrequencyField(["ba"], ["ba"])]]),
+      });
+      assertIdentical(reading(byWord, "吧"), "ba");
+    });
+
     it("leaves a character with no frequency reading untouched", () => {
       const { byWord } = merge({
         unihanReadings: new Map([
@@ -322,6 +385,56 @@ describe("merging the sources", () => {
         ],
       });
       assertIdentical(reading(byWord, "行长"), "háng zhang");
+    });
+
+    it("makes no correction where the nearest sense already agrees", () => {
+      // The shape the 轻声 sense list exists for: 东西's `dong1 xi1` is exactly
+      // what the corpus wrote, so it is the nearest sense and has no neutral
+      // tone to give. Unlisted, the word keeps the reading it came with.
+      const { byWord } = merge({
+        phrase: new Map([["买东", ["dōng", "xī"]]]),
+        cedict: [
+          cedictEntry("買東", "买东", "dong1 xi1"),
+          cedictEntry("買東", "买东", "dong1 xi5"),
+        ],
+      });
+      assertIdentical(reading(byWord, "买东"), "dōng xī");
+    });
+
+    it("takes the sense that reduces a syllable for a listed word", () => {
+      const { byWord } = merge({
+        phrase: new Map([["东西", ["dōng", "xī"]]]),
+        cedict: [
+          cedictEntry("東西", "东西", "dong1 xi1"),
+          cedictEntry("東西", "东西", "dong1 xi5"),
+        ],
+      });
+      assertIdentical(reading(byWord, "东西"), "dōng xi");
+    });
+
+    it("leaves a listed word alone where no sense reduces one", () => {
+      // The list names a word, not a reading, so a CC-CEDICT that stopped
+      // carrying the 轻声 sense would leave the word as its sources have it
+      // rather than as a hand-typed reading — which is what the build
+      // assertion covering the list is there to catch.
+      const { byWord } = merge({
+        phrase: new Map([["东西", ["dōng", "xī"]]]),
+        cedict: [cedictEntry("東西", "东西", "dong1 xi1")],
+      });
+      assertIdentical(reading(byWord, "东西"), "dōng xī");
+    });
+
+    it("takes the listed sense's neutral tone and nothing else of it", () => {
+      // Still only the tone, and only where it is neutral: the reduced 手 is
+      // taken and the 把 the sense writes `bà` is not.
+      const { byWord } = merge({
+        phrase: new Map([["把手", ["bǎ", "shǒu"]]]),
+        cedict: [
+          cedictEntry("把手", "把手", "ba3 shou3"),
+          cedictEntry("把手", "把手", "ba4 shou5"),
+        ],
+      });
+      assertIdentical(reading(byWord, "把手"), "bǎ shou");
     });
   });
 
