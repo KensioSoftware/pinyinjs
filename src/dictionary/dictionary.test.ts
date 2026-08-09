@@ -14,7 +14,7 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { writeSyllable } from "../syllable/syllable.js";
+import { type Syllable, writeSyllable } from "../syllable/syllable.js";
 import { buildArtifact } from "./artifact.js";
 import { Dictionary } from "./dictionary.js";
 
@@ -28,6 +28,15 @@ function readingOf(word: string): string | undefined {
     .lookup(word)
     ?.reading.map((syllable) => writeSyllable(syllable))
     .join(" ");
+}
+
+/**
+ * A list of readings, written out.
+ */
+function written(readings: readonly (readonly Syllable[])[]): string {
+  return readings
+    .map((found) => found.map((syllable) => writeSyllable(syllable)).join(""))
+    .join(",");
 }
 
 describe("querying a compiled dictionary", () => {
@@ -120,6 +129,21 @@ describe("querying a compiled dictionary", () => {
           )
           .join(","),
         "xíng,háng,héng",
+      );
+    });
+
+    it("gives a Hong Kong glyph form its Taiwan counterpart's readings", () => {
+      // 裏 is not a key — the entry is under Taiwan's 裡 — so the alternates
+      // have to be read off that line rather than off wherever 裏 would be
+      // inserted, which here is 裒, sorting between the two.
+      const glyphs = dictionaryOf([
+        entry("裒", "póu"),
+        entry("裡", "lǐ", { alternates: [reading("li")] }),
+      ]);
+      assertIdentical(written(glyphs.readingsOf("裏")), "lǐ,li");
+      assertIdentical(
+        written(glyphs.readingsOf("裏")),
+        written(glyphs.readingsOf("裡")),
       );
     });
 

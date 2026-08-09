@@ -72,6 +72,15 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   and the committed artifacts are checked the same way in CI. Both halves of
   the previous release's 特徵/沈溺 defect would have been caught by it.
 
+- **A Hong Kong glyph form no longer borrows another character's alternate
+  readings.** `Dictionary.readingsOf` found the entry under the canonical form —
+  裏 under 裡, as it should — but then searched the key index for the character
+  as written to read its alternates. A variant that is not itself a key has no
+  position of its own, so the search landed on whichever key sorts next and the
+  alternates came off that unrelated line: `readingsOf("裏")` reported `li, li`
+  where `readingsOf("裡")` reported `li, lǐ`. Both are now read off the
+  canonical form's line, so the two spellings agree.
+
 ## 1.6.0
 
 ### Added
