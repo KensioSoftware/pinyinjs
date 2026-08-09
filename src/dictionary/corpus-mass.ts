@@ -3,6 +3,7 @@ import type { CedictEntry } from "../sources/cedict.js";
 import type { JiebaEntry } from "../sources/jieba.js";
 import { isFrequencyRanked, type ReadingField } from "../sources/unihan.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { NEUTRAL_TONE } from "../tone/tone.js";
 import { readAlignedReading } from "./reading.js";
 import type { TraditionalTable } from "./traditional.js";
 
@@ -123,12 +124,53 @@ export function countCorpusMass(
 }
 
 /**
+ * The mass each reading is ranked on, with a leading 轻声 held in place.
+ *
+ * A 轻声 the fields put ahead of every full-tone reading ranks on the mass of
+ * whichever reading carries the most, so the corpus can reorder the readings
+ * behind it but never take the default away from it.
+ *
+ * 轻声 is the unstressed reading — a 语气词, a suffix, the second half of a
+ * reduplication — and unstressed is precisely the use this mass cannot see. It
+ * counts a character only inside the words the dictionary holds, and a particle
+ * spends its life on the end of a sentence rather than inside a word: every
+ * occurrence of 吧 the corpus can reach is 酒吧, 网吧 or 吧台, so `bā` carries
+ * 1027 of it and the `ba` that ends four sentences in five carries 225. The
+ * sources are not silent about that reading — `kMandarin` names `ba` and
+ * `kHanyuPinlu` counted it 2073 times — they say it about the bare character,
+ * which is the one place a word cannot vote.
+ *
+ * Only a 轻声 the fields already lead with is held, and only against being
+ * displaced. Where the corpus reaches a neutral reading the fields rank lower
+ * it still promotes it — 蔔 takes 萝卜's `bo` over `bó` — and where they lead
+ * with a full tone it ranks the readings as it finds them: 哩 is `lī` in
+ * `kMandarin`, and the corpus is free to prefer the `lǐ` of 哩程 and 平方哩.
+ */
+function rankingMass(
+  readings: readonly Syllable[],
+  massOf: (syllable: Syllable) => number,
+): readonly { readonly syllable: Syllable; mass: number }[] {
+  const ranked = readings.map((syllable) => ({
+    syllable,
+    mass: massOf(syllable),
+  }));
+  const heaviest = Math.max(0, ...ranked.map((reading) => reading.mass));
+  for (const reading of ranked) {
+    if (reading.syllable.tone !== NEUTRAL_TONE) {
+      break;
+    }
+    reading.mass = heaviest;
+  }
+  return ranked;
+}
+
+/**
  * Re-rank one character's readings by how much corpus each carries.
  *
  * The sort is stable and the mass of an unseen reading is zero, so a character
  * no word covers keeps Unihan's order exactly, and so does the tail of readings
  * below the ones words attest. The corpus only ever reorders what it has
- * evidence about.
+ * evidence about, and never past a leading 轻声 — see {@link rankingMass}.
  *
  * **Only where `kHanyuPinlu` did not already rank the character**, which is the
  * whole of what this instrument is for. `kMandarin` names one reading and orders
@@ -155,7 +197,11 @@ export function rankByCorpusMass(
   if (byReading === undefined || isFrequencyRanked(fields)) {
     return readings;
   }
-  const massOf = (syllable: Syllable): number =>
-    byReading.get(readingKey(syllable)) ?? 0;
-  return readings.toSorted((left, right) => massOf(right) - massOf(left));
+  const ranking = rankingMass(
+    readings,
+    (syllable) => byReading.get(readingKey(syllable)) ?? 0,
+  );
+  return ranking
+    .toSorted((left, right) => right.mass - left.mass)
+    .map((ranked) => ranked.syllable);
 }

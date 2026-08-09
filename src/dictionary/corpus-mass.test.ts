@@ -3,8 +3,17 @@ import { describe, it } from "vitest";
 
 import type { CedictEntry } from "../sources/cedict.js";
 import type { JiebaEntry } from "../sources/jieba.js";
-import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
-import { readSyllable, type Syllable } from "../syllable/syllable.js";
+import type {
+  ReadingField,
+  UnihanReadings,
+  UnihanVariants,
+} from "../sources/unihan.js";
+import {
+  readSyllable,
+  type Syllable,
+  writeSyllable,
+} from "../syllable/syllable.js";
+import { NEUTRAL_TONE } from "../tone/tone.js";
 import {
   countCorpusMass,
   type MassSources,
@@ -22,6 +31,27 @@ function syllable(text: string): Syllable {
     throw new Error(`not a syllable: ${text}`);
   }
   return parsed;
+}
+
+/**
+ * A 轻声 syllable, which a source writes with no tone mark at all.
+ */
+function neutral(text: string): Syllable {
+  return { ...syllable(text), tone: NEUTRAL_TONE };
+}
+
+/**
+ * The fields of a character `kMandarin` names one reading for.
+ */
+function named(reading: string): ReadonlyMap<ReadingField, string[]> {
+  return new Map([["kMandarin", [reading]]]);
+}
+
+/**
+ * A ranking written out, for readable expectations.
+ */
+function order(readings: readonly Syllable[]): string {
+  return readings.map((reading) => writeSyllable(reading)).join(" ");
 }
 
 /**
@@ -292,6 +322,80 @@ describe("corpus mass", () => {
         rankByCorpusMass("发", READINGS, ranked, mass)[0]?.tone,
         1,
       );
+    });
+
+    describe("轻声", () => {
+      it("keeps a 轻声 above a full tone the words carry more of", () => {
+        // Every 吧 a word can vote for is 酒吧, 网吧 or 吧台, so the corpus
+        // holds all of the noun and only the scraps of the particle. The
+        // reading it cannot see is the one the bare character usually has.
+        const readings = [neutral("ba"), syllable("bā")];
+        const mass = new Map([
+          [
+            "吧",
+            new Map([
+              ["b|a|1", 1027],
+              ["b|a|5", 225],
+            ]),
+          ],
+        ]);
+        const ranked = rankByCorpusMass("吧", readings, named("ba"), mass);
+        assertIdentical(order(ranked), "ba bā");
+      });
+
+      it("keeps a 轻声 above a full tone no word attests at all", () => {
+        // 呗 is 梵呗 `bài` in the dictionary and a sentence-final `bei`
+        // everywhere else, so the 轻声 carries no mass whatsoever.
+        const readings = [neutral("bei"), syllable("bài")];
+        const mass = new Map([["呗", new Map([["b|ai|4", 8]])]]);
+        const ranked = rankByCorpusMass("呗", readings, named("bei"), mass);
+        assertIdentical(order(ranked), "bei bài");
+      });
+
+      it("still promotes a 轻声 the words do attest", () => {
+        // Only a 轻声 the fields lead with is held. 蔔 takes 萝卜's `bo` over
+        // the `bó` they rank first, which is a reading words do vote for.
+        const readings = [syllable("bó"), neutral("bo")];
+        const mass = new Map([["蔔", new Map([["b|o|5", 30]])]]);
+        const ranked = rankByCorpusMass("蔔", readings, named("bó"), mass);
+        assertIdentical(order(ranked), "bo bó");
+      });
+
+      it("ranks freely where the fields lead with a full tone", () => {
+        // 哩 is `lī` in kMandarin and a 轻声 only further down, so the corpus
+        // decides between them: 哩程 and 平方哩 carry `lǐ`.
+        const readings = [syllable("lī"), neutral("li"), syllable("lǐ")];
+        const mass = new Map([
+          [
+            "哩",
+            new Map([
+              ["l|i|1", 9],
+              ["l|i|5", 26],
+              ["l|i|3", 106],
+            ]),
+          ],
+        ]);
+        const ranked = rankByCorpusMass("哩", readings, named("lī"), mass);
+        assertIdentical(order(ranked), "lǐ li lī");
+      });
+
+      it("holds a second 轻声 behind the one that leads", () => {
+        // 么 keeps `me` whatever happens, and what sits behind it are the
+        // lattice's fallback edges: `ma` is 轻声 too and no more visible to the
+        // words than `me` is, so it does not sink below 幺's `yāo` either.
+        const readings = [neutral("me"), neutral("ma"), syllable("yāo")];
+        const mass = new Map([
+          [
+            "么",
+            new Map([
+              ["m|e|5", 158_167],
+              ["|iao|1", 30],
+            ]),
+          ],
+        ]);
+        const ranked = rankByCorpusMass("么", readings, named("me"), mass);
+        assertIdentical(order(ranked), "me ma yāo");
+      });
     });
   });
 });
