@@ -47,8 +47,56 @@ plugins:
         - type: build
           release: patch
 
-  # Four commands, and between them the whole of what this repository does
-  # differently from a stock semantic-release setup.
+  # The release notes, assembled from the commit subjects since the last tag.
+  #
+  # Which is to say from the pull request titles. Everything lands on main as a
+  # squash, so a subject is the title someone wrote on a pull request with the
+  # number GitHub appended to it, and both halves of that become links: the
+  # number back to the pull request, the hash to the commit. A reader of the
+  # release gets from a line of notes to the diff behind it in one click.
+  #
+  # This replaces a hand-written CHANGELOG.md, and the reason it replaces it is
+  # not that generated notes read better — they read worse, and that is the
+  # trade being made here. It is that a committed file is a file every open
+  # pull request edits in the same place, at the top, so merging any one of
+  # them puts every other one into conflict. Notes assembled at release time
+  # out of history cannot conflict with anything.
+  #
+  # What the notes are now worth is exactly what the pull request titles are
+  # worth, which is why .github/workflows/pr.yml checks that a title parses
+  # before it can become one.
+  #
+  # `types` is the whole list rather than an addition to the preset's: a type
+  # not named here is left out of the notes entirely. So this is the list from
+  # the analyzer above, given section headings. docs, test, chore, ci and style
+  # are absent for the same reason they are absent there — they publish
+  # nothing, so there is no release for them to describe.
+  #
+  # conventional-changelog-conventionalcommits is pinned to 9.3.1 in
+  # package.json and cannot be taken to 10 while semantic-release is on 25.
+  # Both plugins here reach for that package by name, but the notes generator
+  # renders it through conventional-changelog-writer 8, which is Handlebars
+  # and reads `mainTemplate` and the partials as strings; the preset's 10 line
+  # returns functions instead. Nothing errors when they are mismatched. The
+  # header renders, every commit is dropped, and the release goes out with a
+  # version number and no notes under it.
+  - - "@semantic-release/release-notes-generator"
+    - preset: conventionalcommits
+      presetConfig:
+        types:
+          - type: feat
+            section: Added
+          - type: fix
+            section: Fixed
+          - type: perf
+            section: Faster
+          - type: refactor
+            section: Changed
+          - type: build
+            section: Data and packaging
+
+  # Two commands, and between them what this repository does differently from a
+  # stock semantic-release setup.
   #
   # analyzeCommitsCmd raises the release to a minor when the workflow was
   # started with its checkbox ticked. semantic-release takes the highest
@@ -57,25 +105,16 @@ plugins:
   # nothing, which is what happens when the box is unticked, is read as "no
   # opinion" rather than "no release".
   #
-  # verifyReleaseCmd refuses two things, after the version is worked out and
-  # before anything is published. Majors, because a breaking change is a
-  # decision about what consumers have to rewrite, made by a person publishing
-  # by hand rather than by a marker in a subject line — mapping them down to a
-  # minor was rejected, since it would put a false version number against a
-  # genuinely breaking change. And a release nobody has written anything
-  # about, which is what an empty `## Unreleased` section means.
+  # verifyReleaseCmd refuses a major, after the version is worked out and
+  # before anything is published, because a breaking change is a decision about
+  # what consumers have to rewrite, made by a person publishing by hand rather
+  # than by a marker in a subject line. Mapping them down to a minor was
+  # rejected, since it would put a false version number against a genuinely
+  # breaking change.
   #
-  # generateNotesCmd is why there is no @semantic-release/release-notes-
-  # generator here. The notes are the changelog: prose written by hand while
-  # the change was fresh, rather than a list of commit subjects. Keeping the
-  # two in one place is also what stops them disagreeing.
-  #
-  # prepareCmd retitles that section to the version being published. It runs
-  # before the tarball is packed, so what a reader installs does not describe
-  # itself as unreleased. Committing the same rewrite back to main is a
-  # separate pull request the workflow opens, because nothing here can push to
-  # main: the ruleset's required checks cannot pass on a commit that does not
-  # exist yet.
+  # It used to refuse a second thing — a release with nothing written under
+  # `## Unreleased` — which no longer has anything to refuse: every commit that
+  # releases now produces a line of notes by existing.
   - - "@semantic-release/exec"
     - analyzeCommitsCmd: >-
         if [ "$RELEASE_MINOR" = "true" ]; then echo minor; fi
@@ -84,13 +123,11 @@ plugins:
         echo "Refusing to publish ${nextRelease.version} automatically:
         major releases are published by hand." >&2;
         exit 1;
-        fi;
-        ./scripts/sh/changelog.sh notes > /dev/null
-      generateNotesCmd: ./scripts/sh/changelog.sh notes
-      prepareCmd: ./scripts/sh/changelog.sh release ${nextRelease.version}
-      # Read by the workflow, which needs the version to open that pull
-      # request. Guarded because this file is also runnable outside Actions,
-      # where the variable is unset and the redirect would be an error.
+        fi
+      # Read by the workflow, which needs the version to open the pull request
+      # that catches package.json up. Guarded because this file is also
+      # runnable outside Actions, where the variable is unset and the redirect
+      # would be an error.
       successCmd: >-
         if [ -n "$GITHUB_OUTPUT" ]; then
         echo "version=${nextRelease.version}" >> "$GITHUB_OUTPUT";
@@ -106,8 +143,9 @@ plugins:
   # build packs correctly on this same commit.
   - "@semantic-release/npm"
 
-  # Creates the git tag and the GitHub Release, with the changelog section as
-  # its body.
+  # Creates the git tag and the GitHub Release, with the generated notes as its
+  # body. That release is now the only place the notes exist — there is no file
+  # in the repository holding them, and none in the tarball either.
   #
   # Note there is no @semantic-release/git plugin: nothing here commits the
   # bumped version back to main directly. It could not work anyway — the main

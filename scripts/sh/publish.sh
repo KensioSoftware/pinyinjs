@@ -38,18 +38,12 @@ pnpm build
 # build hides. See scripts/sh/pack-check.sh.
 pnpm pack:check
 
-# The version is written before anything is committed, so that the changelog
-# rewrite lands in the same commit and the tag points at a tree where the two
-# agree. `pnpm version` on its own would commit and tag first, leaving the
-# changelog to a second commit the tag does not cover.
+# `--no-git-tag-version` so the commit and the tag are made below rather than
+# by pnpm, which names them its own way.
 pnpm version major --no-git-tag-version
 version="$(node -p "require('./package.json').version")"
 
-# What the workflow's prepare step does, done here: the `## Unreleased`
-# section becomes this version, and a fresh empty one opens above it.
-./scripts/sh/changelog.sh release "$version"
-
-git add package.json CHANGELOG.md
+git add package.json
 git commit --message "$version"
 git tag "v$version"
 
@@ -58,6 +52,15 @@ pnpm publish --access public
 git push
 git push --tags
 
+# The release notes are not written here and not held anywhere in this
+# repository: they live on the GitHub Release, and the workflow builds them out
+# of the commit subjects since the last tag. This path has no semantic-release
+# run to do that, so GitHub's own "Generate release notes" does it instead —
+# same source, the pull requests merged since the previous tag.
 echo
-echo "Published $version. The release notes are the changelog section:"
+echo "Published $version. Draft the release and press Generate release notes:"
 echo "  https://github.com/KensioSoftware/pinyinjs/releases/new?tag=v$version"
+echo
+echo "A major is the one release nobody generated notes for automatically, so"
+echo "it is also the one worth writing a paragraph at the top of: what breaks,"
+echo "and what a consumer has to change."

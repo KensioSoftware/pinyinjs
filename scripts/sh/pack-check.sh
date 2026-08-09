@@ -50,8 +50,7 @@ for required in \
   package/data/manifest.json \
   package/LICENSE \
   package/NOTICE \
-  package/README.md \
-  package/CHANGELOG.md; do
+  package/README.md; do
   grep -qxF "$required" "$listing" || note "missing $required"
 done
 
