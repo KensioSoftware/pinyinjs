@@ -1,40 +1,40 @@
 {
   "tiers": {
     "core": {
-      "entries": 16969,
+      "entries": 16970,
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 217022,
-      "compressedBytes": 71151
+      "bytes": 217054,
+      "compressedBytes": 71313
     },
     "standard": {
-      "entries": 66969,
+      "entries": 66970,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1394798,
-      "compressedBytes": 386552
+      "bytes": 1391194,
+      "compressedBytes": 385589
     },
     "full": {
       "entries": 461555,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9305534,
-      "compressedBytes": 2437932
+      "bytes": 9296469,
+      "compressedBytes": 2434620
     }
   },
   "script": {
     "file": "script.map",
-    "toTraditional": 5943,
-    "toSimplified": 6120,
+    "toTraditional": 5944,
+    "toSimplified": 6119,
     "traditionalWords": 2327,
     "simplifiedWords": 849,
     "hansOnly": 5785,
     "hantOnly": 5498,
-    "bytes": 291590,
-    "compressedBytes": 99594
+    "bytes": 291571,
+    "compressedBytes": 99639
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",

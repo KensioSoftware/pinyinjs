@@ -108,6 +108,20 @@ function readFieldValue(field: ReadingField, value: string): string[] {
 }
 
 /**
+ * Whether `kHanyuPinlu` ranks this character's readings against each other.
+ *
+ * True only where it lists more than one, which is the difference between a
+ * ranking and a bare observation — see {@link fieldOrder}. It decides both what
+ * ranks the readings here and whether anything downstream is entitled to
+ * re-rank them, so it is one predicate rather than two.
+ */
+export function isFrequencyRanked(
+  fields: ReadonlyMap<ReadingField, readonly string[]>,
+): boolean {
+  return (fields.get(FREQUENCY_FIELD) ?? []).length > 1;
+}
+
+/**
  * Which fields to trust, in order, for one character.
  *
  * `kHanyuPinlu` is a ranking, and a ranking of one thing is not a ranking. Where
@@ -132,7 +146,7 @@ function readFieldValue(field: ReadingField, value: string): string[] {
 function fieldOrder(
   fields: ReadonlyMap<ReadingField, readonly string[]>,
 ): readonly ReadingField[] {
-  if ((fields.get(FREQUENCY_FIELD) ?? []).length > 1) {
+  if (isFrequencyRanked(fields)) {
     return READING_FIELDS;
   }
   return [
