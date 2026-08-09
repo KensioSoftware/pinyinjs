@@ -109,3 +109,13 @@ $ pinyinjs segment 我要去北京。
 ```
 
 `--json` gives one document per text, with `at` and the flags on every word.
+
+<!-- card
+```ts
+segment(dictionary, "南京市长江大桥")
+  .map((found) => found.text);
+// ["南京市",
+//  "长江", "大桥"]
+// not 南京 / 市长, which reads zhǎng
+```
+-->
