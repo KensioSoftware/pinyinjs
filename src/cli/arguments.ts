@@ -1,6 +1,7 @@
 import { type ParseArgsConfig, parseArgs } from "node:util";
 
 import type { ConvertOptions } from "../decode/convert.js";
+import type { CheckOptions } from "../grade/check.js";
 import { type ScriptTarget, SCRIPT_TARGETS } from "../decode/script.js";
 import type { ColourDepth } from "./colour.js";
 import type { Tier } from "../dictionary/tiers.js";
@@ -40,6 +41,8 @@ const FLAGS = {
   "third-tone": { type: "boolean" },
   "no-sandhi": { type: "boolean" },
   tones: { type: "string" },
+  "require-tones": { type: "boolean" },
+  "require-spacing": { type: "boolean" },
   separator: { type: "string" },
   syllables: { type: "string" },
   umlaut: { type: "string" },
@@ -103,6 +106,18 @@ export const CONVERT_FLAGS: readonly FlagName[] = [
   "keep-numbers",
   "third-tone",
   "no-sandhi",
+];
+
+/**
+ * The flags `check` takes, beyond the conversion ones.
+ *
+ * Positive rather than negated — `--require-tones` rather than `--no-tones` —
+ * because both dimensions default to lenient, and a flag naming what it turns
+ * on is the one that reads the way the library's own option does.
+ */
+export const CHECK_FLAGS: readonly FlagName[] = [
+  "require-tones",
+  "require-spacing",
 ];
 
 /**
@@ -417,6 +432,20 @@ export function convertOptions(flags: Flags): ConvertOptions {
     ...(punctuation !== undefined && { punctuation }),
     ...(flags["no-grouping"] === true && { grouping: false }),
     ...(Object.keys(sandhi).length > 0 && { sandhi }),
+  };
+}
+
+/**
+ * Turn the checking flags into the options the library takes.
+ *
+ * Every conversion flag goes through too, since a check grades against a
+ * conversion and `--locale` or `--third-tone` changes what the answer is.
+ */
+export function checkOptions(flags: Flags): CheckOptions {
+  return {
+    ...convertOptions(flags),
+    ...(flags["require-tones"] === true && { tones: "required" as const }),
+    ...(flags["require-spacing"] === true && { spacing: "required" as const }),
   };
 }
 

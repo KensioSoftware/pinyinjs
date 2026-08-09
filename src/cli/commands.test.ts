@@ -305,6 +305,109 @@ describe("the match command", () => {
   });
 });
 
+describe("the check command", () => {
+  it("writes the answer, the score, and a line per syllable", async () => {
+    assertArrayEquals(await cli("check", "银行", "yínxíng"), [
+      "银行  yínháng  50%",
+      "  银     yín     yín     correct",
+      "  行     háng    xíng    wrong",
+    ]);
+  });
+
+  it("writes the answer with its own spacing, not syllable by syllable", async () => {
+    // The heading is what the text converts to, spacing and all, since the
+    // spacing is one of the things being marked.
+    assertArrayIncludes(
+      await cli("check", "北京市", "běijīng shì"),
+      "北京市  Běijīng Shì  100%",
+    );
+  });
+
+  it("joins the arguments after the first, so quoting is optional", async () => {
+    assertArrayEquals(await cli("check", "北京市", "běijīng", "shì"), [
+      "北京市  Běijīng Shì  100%",
+      "  北     běi     běi     correct",
+      "  京     jīng    jīng    correct",
+      "  市     shì     shì     correct",
+    ]);
+  });
+
+  it("writes the spacing only where it went wrong", async () => {
+    assertArrayEquals(
+      await cli("check", "银行", "yín háng", "--require-spacing"),
+      [
+        "银行  yínháng  50%",
+        "  银     yín     yín     correct",
+        "  行     háng    háng    correct   split",
+      ],
+    );
+  });
+
+  it("counts a missing tone where asked", async () => {
+    assertArrayIncludes(
+      await cli("check", "北京", "bei jing", "--require-tones"),
+      "北京  Běijīng  0%",
+    );
+  });
+
+  it("passes the conversion options through", async () => {
+    assertArrayIncludes(
+      await cli("check", "垃圾", "lèsè", "--locale", "zh-TW"),
+      "垃圾  lèsè  100%",
+    );
+  });
+
+  it("reads a tab-separated pair per line, for a piped file", async () => {
+    const piped: CliEnvironment = {
+      ...environment,
+      readInput: () => Promise.resolve("银行\tyínháng\n北京\tbei3jing3\n"),
+    };
+    const result = await runCli(["check"], piped);
+    assertIdentical(result.status, 0, result.errors.join("\n"));
+    assertArrayIncludes(result.output, "银行  yínháng  100%");
+    assertArrayIncludes(result.output, "北京  Běijīng  50%");
+  });
+
+  it("reports the verdicts and positions as JSON", async () => {
+    assertObjectEquals(await json("check", "银行", "yín háng"), {
+      text: "银行",
+      typed: "yín háng",
+      isCorrect: true,
+      score: 1,
+      pinyin: "yínháng",
+      syllables: [
+        {
+          verdict: "correct",
+          isCorrect: true,
+          spacing: "correct",
+          expected: "yín",
+          typed: "yín",
+          source: "银",
+          at: 0,
+        },
+        {
+          verdict: "correct",
+          isCorrect: true,
+          spacing: "split",
+          expected: "háng",
+          typed: "háng",
+          source: "行",
+          at: 1,
+        },
+      ],
+    });
+  });
+
+  it("says so when it was given no pinyin to check", async () => {
+    const result = await runCli(["check", "银行"], environment);
+    assertIdentical(result.status, 1);
+    assertArrayIncludes(
+      result.errors,
+      "check needs a text and the pinyin typed for it",
+    );
+  });
+});
+
 describe("the slug command", () => {
   it("writes one slug per argument", async () => {
     assertArrayEquals(await cli("slug", "银行", "北京市"), [

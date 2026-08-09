@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   assertArrayEquals,
+  assertArrayIncludes,
   assertArrayLength,
   assertFalse,
   assertIdentical,
@@ -28,6 +29,7 @@ import {
   joinPieces,
 } from "./decode/convert.js";
 import { applySandhi } from "./decode/sandhi.js";
+import { check } from "./grade/check.js";
 import {
   fractionHanzi,
   numeralHanzi,
@@ -665,6 +667,157 @@ describe("the examples in docs/", () => {
       assertIdentical(space.text, " ");
       assertUndefined(space.syllable);
       assertUndefined(space.confidence);
+    });
+  });
+
+  describe("checking", () => {
+    it("marks 银行 typed yínxíng where the page says it does", () => {
+      const marked = check(dictionary, "银行", "yínxíng");
+      assertArrayEquals(
+        marked.syllables.map((one) => one.verdict),
+        ["correct", "wrong"],
+      );
+      assertIdentical(marked.syllables[1]?.source, "行");
+      assertIdentical(marked.score, 0.5);
+    });
+
+    it("takes either notation, mixed", () => {
+      for (const typed of ["běijīng", "bei3jing1", "bei3jīng"]) {
+        assertTrue(check(dictionary, "北京", typed).isCorrect, typed);
+      }
+    });
+
+    it("takes a reading the decoder was guessing at, and no more", () => {
+      assertTrue(check(dictionary, "行", "xíng").isCorrect);
+      assertTrue(check(dictionary, "行", "háng").isCorrect);
+      assertIdentical(
+        check(dictionary, "银行", "yínxíng").syllables[1]?.verdict,
+        "wrong",
+      );
+    });
+
+    it("takes sandhi either way", () => {
+      for (const [text, typed] of [
+        ["你好", "nǐ hǎo"],
+        ["你好", "ní hǎo"],
+        ["不是", "bú shì"],
+        ["不是", "bù shì"],
+      ] as const) {
+        assertTrue(check(dictionary, text, typed).isCorrect, typed);
+      }
+    });
+
+    it("tells a missing tone apart from a wrong one", () => {
+      assertArrayEquals(
+        check(dictionary, "北京", "bei jing").syllables.map(
+          (one) => one.verdict,
+        ),
+        ["toneless", "toneless"],
+      );
+      assertArrayEquals(
+        check(dictionary, "北京", "bei3jing3").syllables.map(
+          (one) => one.verdict,
+        ),
+        ["correct", "tone"],
+      );
+      assertTrue(check(dictionary, "我的书", "wǒ de shū").isCorrect);
+    });
+
+    it("ignores the spacing and the 隔音符号, but not one that spells 先", () => {
+      for (const typed of ["Xī'ān", "xī ān", "xi1an1"]) {
+        assertTrue(check(dictionary, "西安", typed).isCorrect, typed);
+      }
+      assertFalse(check(dictionary, "西安", "Xīān").isCorrect);
+    });
+
+    it("counts a missing tone only where the caller asks for tones", () => {
+      assertTrue(check(dictionary, "北京", "bei jing").isCorrect);
+      assertFalse(
+        check(dictionary, "北京", "bei jing", { tones: "required" }).isCorrect,
+      );
+    });
+
+    it("names the characters of the one mistake in a sentence", () => {
+      const marked = check(dictionary, "我要去银行", "wǒ yào qù yínxíng");
+      assertArrayEquals(
+        marked.syllables
+          .filter((one) => !one.isCorrect)
+          .map((one) => `${one.source ?? ""} ${String(one.at)} ${one.text}`),
+        ["行 4 xíng"],
+      );
+    });
+
+    it("charges an invented syllable as much as a dropped one", () => {
+      assertIdentical(check(dictionary, "北京", "běi běi jīng").score, 2 / 3);
+      assertIdentical(check(dictionary, "北京市", "běi shì").score, 2 / 3);
+      assertArrayEquals(
+        check(dictionary, "北京市", "běi shì").syllables.map(
+          (one) => one.verdict,
+        ),
+        ["correct", "missing", "correct"],
+      );
+    });
+
+    it("grades against a reading the caller asserts", () => {
+      assertTrue(
+        check(
+          dictionary,
+          "这篇文章不太长。",
+          "zhè piān wénzhāng bú tài cháng",
+          {
+            readings: { 太长: "tài cháng" },
+          },
+        ).isCorrect,
+      );
+    });
+
+    it("reports the spacing on its own axis", () => {
+      const split = check(dictionary, "银行", "yín háng");
+      assertArrayEquals(
+        split.syllables.map((one) => one.verdict),
+        ["correct", "correct"],
+      );
+      assertArrayEquals(
+        split.syllables.map((one) => one.spacing),
+        ["correct", "split"],
+      );
+      assertTrue(split.isCorrect);
+      assertFalse(
+        check(dictionary, "银行", "yín háng", { spacing: "required" })
+          .isCorrect,
+      );
+    });
+
+    it("takes either spacing convention, and a hyphen either way", () => {
+      const graded = { spacing: "required" } as const;
+      for (const [text, typed] of [
+        ["他看了", "tā kànle"],
+        ["他看了", "tā kàn le"],
+        ["南京市", "Nánjīng Shì"],
+        ["南京市", "Nánjīngshì"],
+        ["干干净净", "gāngān-jìngjìng"],
+        ["干干净净", "gāngān jìngjìng"],
+        ["干干净净", "gāngānjìngjìng"],
+      ] as const) {
+        assertTrue(check(dictionary, text, typed, graded).isCorrect, typed);
+      }
+    });
+
+    it("marks a sentence written with no boundaries in it", () => {
+      assertArrayEquals(
+        check(dictionary, "我要去北京。", "wǒyàoqùběijīng", {
+          spacing: "required",
+        }).syllables.map((one) => one.spacing),
+        ["correct", "joined", "joined", "joined", "correct"],
+      );
+    });
+
+    it("grades 垃圾 against the locale's reading", () => {
+      assertTrue(check(dictionary, "垃圾", "lājī").isCorrect);
+      assertTrue(
+        check(dictionary, "垃圾", "lèsè", { locale: "zh-TW" }).isCorrect,
+      );
+      assertFalse(check(dictionary, "垃圾", "lèsè").isCorrect);
     });
   });
 
@@ -1917,6 +2070,45 @@ describe("the examples in docs/", () => {
         found.flat(),
         forms.map(() => "[北京]  7.00"),
       );
+    });
+
+    it("checks the three answers the page marks", async () => {
+      assertArrayEquals(await cli("check", "银行", "yínxíng"), [
+        "银行  yínháng  50%",
+        "  银     yín     yín     correct",
+        "  行     háng    xíng    wrong",
+      ]);
+      assertArrayEquals(await cli("check", "北京", "bei3jing3"), [
+        "北京  Běijīng  50%",
+        "  北     běi     bei3    correct",
+        "  京     jīng    jing3   tone",
+      ]);
+      assertArrayEquals(
+        await cli("check", "银行", "yín háng", "--require-spacing"),
+        [
+          "银行  yínháng  50%",
+          "  银     yín     yín     correct",
+          "  行     háng    háng    correct   split",
+        ],
+      );
+    });
+
+    it("joins the arguments after the first, as the page shows", async () => {
+      assertArrayIncludes(
+        await cli("check", "北京市", "běijīng", "shì"),
+        "北京市  Běijīng Shì  100%",
+      );
+    });
+
+    it("reads a tab-separated pair per line, as the page shows", async () => {
+      const piped: CliEnvironment = {
+        ...environment,
+        readInput: () => Promise.resolve("银行\tyínxíng\n北京\tbei3jing3\n"),
+      };
+      const result = await runCli(["check"], piped);
+      assertIdentical(result.status, 0, result.errors.join("\n"));
+      assertArrayIncludes(result.output, "银行  yínháng  50%");
+      assertArrayIncludes(result.output, "北京  Běijīng  50%");
     });
 
     it("shows the Taiwan reading on its own line", async () => {

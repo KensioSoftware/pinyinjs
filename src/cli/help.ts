@@ -16,6 +16,8 @@ const FLAG_HELP = new Map<string, string>([
   ["third-tone", "write third-tone sandhi: nǐ hǎo becomes ní hǎo"],
   ["no-sandhi", "do not write 一 and 不 sandhi"],
   ["tones", "numbers (default) or none"],
+  ["require-tones", "count a syllable typed with no tone as wrong"],
+  ["require-spacing", "count the word spacing towards the score"],
   ["separator", "what goes between words, - by default"],
   ["syllables", "join (default) or separate"],
   ["umlaut", "how ü is written: v (default) or u"],

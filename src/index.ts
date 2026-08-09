@@ -261,6 +261,16 @@ export type { Segment } from "./decode/segment.js";
 export { match } from "./search/match.js";
 export type { MatchRange, PinyinMatch } from "./search/match.js";
 
+export { check } from "./grade/check.js";
+export type {
+  CheckedSyllable,
+  CheckOptions,
+  CheckRequirement,
+  PinyinCheck,
+  PinyinVerdict,
+  SpacingVerdict,
+} from "./grade/check.js";
+
 export { splitRuns } from "./decode/runs.js";
 export type { TextRun } from "./decode/runs.js";
 
