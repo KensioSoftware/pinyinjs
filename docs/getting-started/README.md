@@ -73,9 +73,9 @@ decodes entries lazily, so building it twice is pure waste.
 
 | Tier       | Entries | Download (brotli) | Contains               |
 | ---------- | ------: | ----------------: | ---------------------- |
-| `core`     |  16,969 |             70 KB | single characters only |
-| `standard` |  66,969 |            377 KB | the most common words  |
-| `full`     | 461,555 |          2,381 KB | every word             |
+| `core`     |  16,970 |             70 KB | single characters only |
+| `standard` |  66,970 |            377 KB | the most common words  |
+| `full`     | 461,555 |          2,378 KB | every word             |
 
 `full` is the default and is what you want on a server. The tiers are nested,
 so a page can load `standard`, start converting, and swap in `full` when it
