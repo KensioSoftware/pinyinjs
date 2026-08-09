@@ -685,8 +685,8 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 
 Types (`Syllable`, `Tone`, `ConvertOptions`, `ConvertedPiece`,
-`ReadingConfidence`, `HtmlOptions`, `WordEntry`, `Tier`, `Locale`, `Script`) are
-exported alongside them.
+`ReadingConfidence`, `HtmlOptions`, `Segment`, `WordEntry`, `Tier`, `Locale`,
+`Script`) are exported alongside them.
 
 ## Development
 
