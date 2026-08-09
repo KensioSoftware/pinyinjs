@@ -19,7 +19,7 @@ syllable went wrong and how.
 ## Why a dictionary is worth having for this
 
 **A string comparison marks a learner wrong for being right**, and there are
-five distinct ways it does. Being fair about them is the whole reason this
+six distinct ways it does. Being fair about them is the whole reason this
 belongs in a library that already knows how the text is read.
 
 **Either notation.** `bei3` and `běi` are the same syllable, and mix freely
@@ -89,8 +89,9 @@ The one exception is the 隔音符号 that is not decoration: `Xīān` is how `x
 spelled, and reading it as two syllables is the thing the mark exists to make
 possible. That one is marked wrong, because it says something else.
 
-**Word spacing** is the fifth, and it is an axis of its own rather than a
-tolerance — see [word spacing](#word-spacing) below.
+**Word spacing.** The one that is an axis of its own rather than a tolerance,
+because it is a mistake in its own right — see [word spacing](#word-spacing)
+below.
 
 ## The verdicts
 
@@ -163,13 +164,18 @@ Turn it on for an exercise where the spacing is the point.
 
 ### The tolerance
 
+These all grade the spacing, so they share one option:
+
+```ts
+const graded = { spacing: "required" } as const;
+```
+
 **Two spacing conventions, and both are accepted.** 分词连写 is what puts an
 aspect particle on its verb and separates the generic half of a place name; the
 words the dictionary knows are what `grouping: false` writes. Both come out of
 this package, and a learner may have been taught either:
 
 ```ts
-const graded = { spacing: "required" } as const;
 check(dictionary, "他看了", "tā kànle", graded).isCorrect; // true, 分词连写
 check(dictionary, "他看了", "tā kàn le", graded).isCorrect; // true, the words
 check(dictionary, "南京市", "Nánjīng Shì", graded).isCorrect; // true
