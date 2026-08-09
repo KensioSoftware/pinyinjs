@@ -85,6 +85,8 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("长大", "zhǎng dà", { hant: "長大", partOfSpeech: "ns" }),
   entry("李", "lǐ"),
   entry("们", "men"),
+  entry("吧", "ba", { partOfSpeech: "y", alternates: [reading("bā")] }),
+  entry("酒吧", "jiǔ bā"),
   entry("垃圾分类", "lā jī fēn lèi", {
     hant: "垃圾分類",
     readings: {
@@ -242,6 +244,33 @@ describe("build assertions", () => {
 
     it("allows a reading shorter than the word, which punctuation causes", () => {
       assertArrayLength(checkBuild([...SOUND, entry("好，好", "hǎo hǎo")]), 0);
+    });
+
+    it("catches a 语气词 reading the full tone its words carry", () => {
+      // The whole class: a particle ranked on the words it appears inside
+      // rather than on the bare character it almost always is.
+      const failures = checkBuild([
+        ...SOUND,
+        entry("呗", "bài", { partOfSpeech: "y", alternates: [reading("bei")] }),
+      ]);
+      assertTrue(failures.some((failure) => failure.includes("呗 bài")));
+    });
+
+    it("leaves a 语气词 whose full tone is what the sources rank", () => {
+      // 呵 is `ā(392)` over `hē(64)` in kHanyuPinlu, which counted the bare
+      // character. Only the words are barred from deciding, not the sources.
+      const failures = checkBuild([
+        ...SOUND,
+        entry("呵", "ā", { partOfSpeech: "y", alternates: [reading("a")] }),
+      ]);
+      assertArrayLength(failures, 0);
+    });
+
+    it("leaves a 语气词 with no 轻声 reading to rank", () => {
+      assertArrayLength(
+        checkBuild([...SOUND, entry("哉", "zāi", { partOfSpeech: "y" })]),
+        0,
+      );
     });
   });
 
