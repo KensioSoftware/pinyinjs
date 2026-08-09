@@ -23,6 +23,7 @@ import {
   decodeReading,
   encodeReading,
   readArtifact,
+  readingsByKey,
   findRoundTripFailure,
 } from "./artifact.js";
 import type { DictionaryArtifact } from "./artifact.js";
@@ -313,6 +314,43 @@ describe("dictionary artifacts", () => {
         }),
       );
       assertStringIncludes(error.message, "no readable reading");
+    });
+  });
+
+  describe("readingsByKey", () => {
+    it("answers every key the artifact holds, in both scripts", () => {
+      const artifact = buildArtifact(ENTRIES);
+      const readings = readingsByKey(artifact);
+      assertIdentical(readings.size, KeyIndex.from(artifact.keys).size);
+      assertIdentical(readings.get("头发"), "tou2 fa5");
+      assertIdentical(readings.get("頭髮"), "tou2 fa5");
+    });
+
+    it("resolves a reading the artifact stores as nothing at all", () => {
+      // 中国 is its characters' defaults in order, so its line is empty and
+      // the answer only exists once the characters have been read.
+      assertIdentical(lineFor("中国").split("\t")[0], "");
+      assertIdentical(
+        readingsByKey(buildArtifact(ENTRIES)).get("中国"),
+        "zhong1 guo2",
+      );
+    });
+
+    it("resolves it from this artifact's characters, not another's", () => {
+      // Which is what makes the build's comparison between tiers worth
+      // running: an empty line means "the characters, in order", so two
+      // artifacts that disagree about a character disagree about every derived
+      // reading standing on it, without either line differing by a byte.
+      const shifted = [
+        entry("中", "zhòng"),
+        entry("国", "guó", { hant: "國" }),
+        entry("中国", "zhòng guó", { hant: "中國" }),
+      ];
+      assertIdentical(lineFor("中国", shifted).split("\t")[0], "");
+      assertIdentical(
+        readingsByKey(buildArtifact(shifted)).get("中国"),
+        "zhong4 guo2",
+      );
     });
   });
 

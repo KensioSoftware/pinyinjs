@@ -1,4 +1,5 @@
 import { isSingleCharacter, toCharacters } from "../script/characters.js";
+import { traditionalForms } from "./artifact.js";
 import type { DictionaryEntry } from "./entry.js";
 
 /**
@@ -80,13 +81,86 @@ function charactersInUse(
 }
 
 /**
+ * The characters a tier holds: the ones in use, and the ones it has to answer.
+ *
+ * "In use" alone is not enough, because a tier is keyed by more than the
+ * headwords it holds — an entry claims every 繁體 spelling attested for it, and
+ * some of those spellings are rare characters with entries of their own. A tier
+ * holding 卒 is keyed for 䘚 whether or not it holds 䘚, so without the
+ * character's own entry it answers that key from the 卒 that reached it
+ * sideways and reads `zú`, where `full` lets 䘚's own entry win the key and
+ * reads `zhú`. Neither reading is wrong — 䘚 written for 卒 really is `zú` —
+ * but which one you get must not depend on how much of the dictionary has
+ * loaded, or the documented upgrade path contradicts itself mid-paragraph.
+ *
+ * Admitting the entry is all it takes: the artifact's `claimKeys` puts
+ * headwords ahead of 繁體 aliases in every tier, so once 䘚 is present it wins
+ * its own key exactly as it does in `full`.
+ *
+ * It repeats to a fixpoint because an admitted character claims spellings of
+ * its own, and one of those can be another character with an entry behind it.
+ * On the current sources it settles at once — 242 characters admitted, then a
+ * confirming pass that admits none — but nothing in the merge rules a chain
+ * out, and the pass is a set lookup per entry against a build that reads four
+ * source files.
+ */
+function charactersHeld(
+  entries: readonly DictionaryEntry[],
+  words: readonly DictionaryEntry[],
+): ReadonlySet<string> {
+  const headed = new Set<string>();
+  for (const entry of entries) {
+    if (isSingleCharacter(entry.hans)) {
+      headed.add(entry.hans);
+    }
+  }
+
+  const inUse = charactersInUse(entries);
+  const held = new Set<string>();
+  for (const character of headed) {
+    if (inUse.has(character)) {
+      held.add(character);
+    }
+  }
+
+  /**
+   * Admit the characters this entry claims the key of, reporting any news.
+   */
+  const admitClaims = (entry: DictionaryEntry): boolean => {
+    let admitted = false;
+    for (const form of traditionalForms(entry)) {
+      if (headed.has(form) && !held.has(form)) {
+        held.add(form);
+        admitted = true;
+      }
+    }
+    return admitted;
+  };
+
+  for (const entry of words) {
+    admitClaims(entry);
+  }
+  let growing = true;
+  while (growing) {
+    growing = false;
+    for (const entry of entries) {
+      if (isSingleCharacter(entry.hans) && held.has(entry.hans)) {
+        growing = admitClaims(entry) || growing;
+      }
+    }
+  }
+  return held;
+}
+
+/**
  * The entries a tier contains.
  *
  * The smaller tiers hold every character in use, because characters are what
  * makes a dictionary usable at all: they cover roughly half of running text on
  * their own, and they are the fallback for every position no word matches.
  * Tiering cuts the phrase tail and the unused characters, never a character
- * that some word is written with.
+ * that some word is written with — and never one the tier is keyed for anyway,
+ * which is what {@link charactersHeld} adds on top.
  *
  * `full` holds everything, including the characters no source uses in a word.
  * They cost little there and are the difference between reading a rare
@@ -100,17 +174,17 @@ export function selectTier(
     return entries;
   }
 
-  const inUse = charactersInUse(entries);
-  const characters = entries.filter(
-    (entry) => isSingleCharacter(entry.hans) && inUse.has(entry.hans),
-  );
-  if (tier === "core") {
-    return characters;
-  }
+  const words =
+    tier === "core"
+      ? []
+      : entries
+          .filter((entry) => !isSingleCharacter(entry.hans))
+          .toSorted(byFrequency)
+          .slice(0, STANDARD_TIER_WORDS);
 
-  const words = entries
-    .filter((entry) => !isSingleCharacter(entry.hans))
-    .toSorted(byFrequency)
-    .slice(0, STANDARD_TIER_WORDS);
-  return [...characters, ...words];
+  const held = charactersHeld(entries, words);
+  const characters = entries.filter(
+    (entry) => isSingleCharacter(entry.hans) && held.has(entry.hans),
+  );
+  return tier === "core" ? characters : [...characters, ...words];
 }

@@ -43,6 +43,33 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   pinyin rather than about where the words are. `pinyinjs segment` at the
   command line.
 
+### Fixed
+
+- **48 rare characters read differently depending on how much of the dictionary
+  had loaded.** A tier is keyed for more than the headwords it holds: an entry
+  claims every 繁體 spelling attested for it, and some of those spellings are
+  rare characters with entries of their own. 卒 is attested as 䘚, so `core` and
+  `standard` answered 䘚 from 卒 and read it `zú` where `full` let 䘚's own entry
+  win its own key and read it `zhú`.
+
+  Neither reading is wrong — 䘚 written for 卒 really is `zú`, and read as
+  itself Unihan gives it `zhú` — but the answer must not depend on the tier.
+  [The browser upgrade path](docs/dictionaries/) is to convert on `standard` and
+  re-render as `full` arrives, and a paragraph that changes reading on the
+  second render has shown the reader a wrong one whichever way round it is.
+
+  A tier now holds any single-character entry whose key it is claimed for, which
+  is all it takes: headwords already outrank 繁體 aliases in every tier, so the
+  character wins its own key once it is present. 242 entries added to `core` and
+  to `standard`, and both got _smaller_ — 71,366 to 71,151 bytes compressed for
+  `core` — because a character present is a character every word containing it
+  can derive its reading from rather than storing one. CPP polyphone accuracy
+  and the gold corpus are unmoved to the digit.
+
+  The build now fails if any tier disagrees with `full` about a key they share,
+  and the committed artifacts are checked the same way in CI. Both halves of
+  the previous release's 特徵/沈溺 defect would have been caught by it.
+
 ## 1.6.0
 
 ### Added

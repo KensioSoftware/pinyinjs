@@ -5,6 +5,7 @@ import { brotliCompressSync, constants } from "node:zlib";
 import {
   buildArtifact,
   findRoundTripFailure,
+  readingsByKey,
 } from "../../src/dictionary/artifact.js";
 import { checkBuild } from "../../src/dictionary/assertions.js";
 import { mergeSources } from "../../src/dictionary/merge.js";
@@ -224,6 +225,51 @@ const compiled = TIERS.map((tier) => {
     } satisfies TierManifest,
   };
 });
+
+// ── No tier may contradict `full` on a key they share ───────
+//
+// The assertions in src/dictionary/assertions.ts run against the merge, which
+// is one dictionary; this one is about the *set* of artifacts, so it can only
+// be made here, where every tier has been compiled. The documented upgrade path
+// is to convert on `standard` and re-render as `full` lands, and that is only
+// safe if the larger tier never disagrees with the smaller one — a browser that
+// re-renders a paragraph and gets a different reading has shown the reader a
+// wrong one, whichever of the two is better.
+report("checking the tiers agree with full");
+const complete = compiled.find(({ tier }) => tier === "full");
+if (complete === undefined) {
+  throw new Error("no full tier was compiled to check the other tiers against");
+}
+const authority = readingsByKey(complete.artifact);
+const contradictions = compiled
+  .filter(({ tier }) => tier !== "full")
+  .flatMap(({ tier, artifact }) =>
+    [...readingsByKey(artifact)]
+      .filter(([key, reading]) => {
+        const expected = authority.get(key);
+        return expected !== undefined && expected !== reading;
+      })
+      .map(
+        ([key, reading]) =>
+          `${tier} reads ${key} ${reading}, full reads ${String(authority.get(key))}`,
+      ),
+  );
+if (contradictions.length > 0) {
+  // Named rather than counted, up to a point: the count says how bad it is and
+  // the examples say where to look, and a full list of a few thousand would
+  // bury the rest of the build output.
+  const SHOWN = 10;
+  for (const contradiction of contradictions.slice(0, SHOWN)) {
+    report(`FAILED: ${contradiction}`);
+  }
+  if (contradictions.length > SHOWN) {
+    report(`  and ${String(contradictions.length - SHOWN)} more`);
+  }
+  throw new Error(
+    `${String(contradictions.length)} key(s) read differently between tiers; no artifact written`,
+  );
+}
+report(`  ${String(authority.size)} keys, no tier disagrees`);
 
 const manifest: Record<string, TierManifest> = Object.fromEntries(
   compiled.map(({ tier, manifest: entry }) => [tier, entry]),

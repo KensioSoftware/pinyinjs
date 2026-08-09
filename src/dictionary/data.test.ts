@@ -290,6 +290,43 @@ describe("the committed dictionary", () => {
       }
     });
 
+    it("holds a rare character some other entry claims the key of", () => {
+      // 卒 is attested with the 繁體 spelling 䘚, so every tier is keyed for 䘚
+      // whether or not it holds 䘚's own entry. Read as a spelling of 卒 it is
+      // `zú` and read as itself Unihan gives it `zhú`; a tier that answers the
+      // first while full answers the second contradicts itself as the larger
+      // tier lands, which is what the documented upgrade path cannot survive.
+      for (const tier of [core, standard, full]) {
+        assertIdentical(tier.reading("䘚"), "zhú");
+        assertIdentical(tier.reading("卒"), "zú");
+      }
+    });
+
+    // Every key in both smaller tiers, resolved the way the loader resolves it.
+    // At roughly 700 ms this does not fit the 100 ms the rest of the suite is
+    // held to, and sampling would not do instead: the keys this is here to
+    // catch were 48 of 114,974, and a sample that steps over them proves
+    // nothing. The build has the same check, but the build is not what CI runs
+    // — these are the artifacts that get published.
+    const WHOLE_INDEX_TIMEOUT = 3000;
+
+    it(
+      "reads every key it shares with full the way full reads it",
+      () => {
+        const disagreements: string[] = [];
+        for (const tier of [core, standard]) {
+          for (let at = 0; at < tier.index.size; at++) {
+            const key = tier.index.keyAt(at);
+            if (tier.reading(key) !== full.reading(key)) {
+              disagreements.push(key);
+            }
+          }
+        }
+        assertArrayEquals(disagreements, []);
+      },
+      WHOLE_INDEX_TIMEOUT,
+    );
+
     it("keeps the phrase tail out of the smaller tiers", () => {
       assertFalse(core.index.has("银行"));
       assertTrue(standard.index.has("银行"));

@@ -25,10 +25,16 @@ const YI: Syllable = { initial: "", final: "i", tone: 1 };
 /**
  * A minimal entry, since tiering only looks at the key and the frequency.
  */
-function entry(hans: string, frequency: number, hant = hans): DictionaryEntry {
+function entry(
+  hans: string,
+  frequency: number,
+  hant = hans,
+  hantVariants?: readonly string[],
+): DictionaryEntry {
   return {
     hans,
     hant,
+    ...(hantVariants !== undefined && { hantVariants }),
     readings: { cn: [YI] },
     frequency,
     partOfSpeech: "",
@@ -153,6 +159,59 @@ describe("dictionary tiers", () => {
 
     it("is the same array it was given, not a copy", () => {
       assertIdentical(selectTier(ENTRIES, "full"), ENTRIES);
+    });
+  });
+
+  describe("a character some other entry claims the key of", () => {
+    /**
+     * 卒 with the rare 繁體 spelling it really is attested with, and 䘚's own
+     * entry, which no word uses and jieba does not attest.
+     *
+     * The two disagree, which is the whole point: 䘚 read as a spelling of 卒
+     * is `zú`, and read as itself Unihan gives it `zhú`.
+     */
+    const CLAIMED: readonly DictionaryEntry[] = [
+      entry("卒", 0, "卒", ["䘚"]),
+      entry("䘚", 0),
+      entry("士卒", 41),
+    ];
+
+    it("holds it, so it wins its own key as it does in full", () => {
+      // Without this the tier is keyed for 䘚 anyway, through 卒, and answers
+      // it with 卒's reading — a different answer from the one full gives.
+      assertArrayIncludes(
+        selectTier(CLAIMED, "core").map((held) => held.hans),
+        "䘚",
+      );
+      assertArrayIncludes(
+        selectTier(CLAIMED, "standard").map((held) => held.hans),
+        "䘚",
+      );
+    });
+
+    it("follows a chain of claims, not just the first step", () => {
+      // No such chain exists on the current sources — the walk admits 242
+      // characters and then nothing — but a variant's own variant would be
+      // one, and it would be silently half-fixed if the walk stopped at one
+      // step. 㠯 and 㕥 are both spellings recorded for 以.
+      const chained = [
+        entry("以", 900, "以", ["㠯"]),
+        entry("㠯", 0, "㠯", ["㕥"]),
+        entry("㕥", 0),
+      ];
+      const keys = selectTier(chained, "core").map((held) => held.hans);
+      assertArrayIncludes(keys, "㠯");
+      assertArrayIncludes(keys, "㕥");
+    });
+
+    it("admits nothing for a spelling with no entry of its own", () => {
+      // A 繁體 spelling nothing heads is answered by the entry that claims it
+      // in every tier alike, so there is nothing for a tier to disagree about.
+      const unheaded = [entry("卒", 0, "卒", ["䘚"]), entry("士卒", 41)];
+      assertArrayEquals(
+        selectTier(unheaded, "core").map((held) => held.hans),
+        ["卒"],
+      );
     });
   });
 
