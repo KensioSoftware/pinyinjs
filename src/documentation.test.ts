@@ -50,6 +50,8 @@ import {
   toScriptPieces,
 } from "./decode/script.js";
 import { match } from "./search/match.js";
+import { candidates, homophonesOf } from "./search/candidates.js";
+import { ReverseIndex } from "./search/reverse-index.js";
 import { slug } from "./format/slug.js";
 import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
@@ -113,6 +115,23 @@ import { NEUTRAL_TONE, TONES } from "./tone/tone.js";
 const dataDirectory = fileURLToPath(new URL("../data", import.meta.url));
 const dictionary = await loadDictionary(fileSource(dataDirectory), "full");
 const scriptTables = await loadScriptTables(fileSource(dataDirectory));
+const coreDictionary = await loadDictionary(fileSource(dataDirectory), "core");
+
+/**
+ * Long enough to derive the reverse index over the full tier, which is about
+ * half a second and is not what any of these tests is timing.
+ */
+const INDEX_TIMEOUT = 10_000;
+
+let derived: ReverseIndex | undefined;
+
+/**
+ * The reverse index, derived once and only where a test asks for it.
+ */
+function reverseIndex(): ReverseIndex {
+  derived ??= ReverseIndex.of(dictionary);
+  return derived;
+}
 
 /**
  * A reading written out, for readable expectations.
@@ -1017,6 +1036,153 @@ describe("the examples in docs/", () => {
     });
   });
 
+  describe("candidates", () => {
+    it(
+      "finds the ü spellings the page tabulates, and 路 only from u",
+      () => {
+        const index = reverseIndex();
+        for (const query of ["lvse", "lu:se", "lüse"]) {
+          assertArrayEquals(candidates(index, query), ["綠色", "绿色"], query);
+        }
+        assertArrayEquals(candidates(index, "luse"), [
+          "綠色",
+          "绿色",
+          "卢瑟",
+          "盧瑟",
+          "路涩",
+          "路澀",
+        ]);
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "takes 儿化 with the r and without it",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(candidates(index, "wanr"), [
+          "玩儿",
+          "玩兒",
+          "腕儿",
+          "腕兒",
+        ]);
+        assertTrue(candidates(index, "wan").includes("玩儿"));
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "refuses a half-typed query, since a reading key is a key",
+      () => {
+        assertArrayLength(candidates(reverseIndex(), "yinha"), 0);
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "ranks the likeliest first, and takes the top on a limit",
+      () => {
+        assertArrayEquals(candidates(reverseIndex(), "beijing", { limit: 6 }), [
+          "北京",
+          "背景",
+          "北境",
+          "背静",
+          "背靜",
+          "倍經",
+        ]);
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "keeps whichever writing a script preference asks for",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(
+          candidates(index, "yinhang", {
+            script: { prefer: "Hant", tables: scriptTables },
+          }),
+          ["銀行", "引吭", "引航", "印航"],
+        );
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "lists homophones, and does not count the other writing as one",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(homophonesOf(index, "公式", { limit: 5 }), [
+          "攻势",
+          "攻勢",
+          "公事",
+          "宫室",
+          "宮室",
+        ]);
+        assertArrayEquals(
+          homophonesOf(index, "实施", {
+            script: { prefer: "Hans", tables: scriptTables },
+          }),
+          ["石狮", "十失", "时失", "时师", "石师"],
+        );
+        assertArrayEquals(homophonesOf(index, "银行"), ["銀行"]);
+        assertArrayLength(
+          homophonesOf(index, "银行", {
+            script: { prefer: "Hans", tables: scriptTables },
+          }),
+          0,
+        );
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "leaves out the 281 keys the dictionary cannot return",
+      () => {
+        const index = reverseIndex();
+        // 校覈 derives to xiào hé and folds to a 校核 that reads jiào hé, so it is
+        // offered under neither; 中峯 folds to a 中峰 already in the list.
+        assertFalse(candidates(index, "xiaohe").includes("校覈"));
+        assertTrue(candidates(index, "jiaohe").includes("校核"));
+        const feng = candidates(index, "zhongfeng");
+        assertTrue(feng.includes("中峰"));
+        assertFalse(feng.includes("中峯"));
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "gives the postings the page reads directly",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(
+          [...index.positionsFor("yinhang")].map((at) => dictionary.wordAt(at)),
+          ["銀行", "银行", "引吭", "引航", "印航"],
+        );
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "reaches the same index a slice at a time as in one go",
+      () => {
+        // The page shows a build driven from requestIdleCallback; this is that
+        // loop, on the core tier so it is a test rather than a benchmark.
+        const build = ReverseIndex.building(coreDictionary);
+        let stepped = build.step(2000);
+        while (stepped === undefined) {
+          stepped = build.step(2000);
+        }
+        assertIdentical(build.progress, 1);
+        assertIdentical(
+          stepped.serialise().keys,
+          ReverseIndex.of(coreDictionary).serialise().keys,
+        );
+      },
+      INDEX_TIMEOUT,
+    );
+  });
+
   describe("matching", () => {
     it("matches the four ways the page opens on, and refuses the fifth", () => {
       for (const query of [
@@ -1222,6 +1388,18 @@ describe("the examples in docs/", () => {
   });
 
   describe("dictionaries", () => {
+    it("reads a key, its bucket and its reading by position", () => {
+      // The page's three positional calls, checked against the key rather than
+      // against a fixed position, which a rebuild would move.
+      const at = [...Array.from({ length: dictionary.size }).keys()].find(
+        (position) => dictionary.wordAt(position) === "银行",
+      );
+      assertNonNullable(at);
+      assertIdentical(dictionary.wordAt(at), "银行");
+      assertIdentical(dictionary.readingsInOrder().readingAt(at), "yin2 hang2");
+      assertTrue(dictionary.frequencyAt(at) > 0);
+    });
+
     it("holds the entry fields the page tabulates", () => {
       const entry = dictionary.lookup("垃圾");
       assertNonNullable(entry);

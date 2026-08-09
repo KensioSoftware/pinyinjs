@@ -34,6 +34,8 @@ put them at the end of the line.
   chosen for the reading it produces.
 - [Matching](matching/): filtering Chinese text by a pinyin query typed on a
   Latin keyboard, and ranking what it finds.
+- [Candidates](candidates/): the other direction — a pinyin query answered with
+  hanzi, homophone lists, and the reverse index derived to do it.
 - [Checking](checking/): marking typed pinyin against a text, and the six ways
   a string comparison would be unfair about it.
 - [Slugs](slug/): hanzi to a URL-safe slug, and to search keys and identifiers

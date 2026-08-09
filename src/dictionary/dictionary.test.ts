@@ -156,6 +156,83 @@ describe("querying a compiled dictionary", () => {
     });
   });
 
+  describe("positions", () => {
+    /**
+     * Where a word sits in key order, which is what a posting is.
+     */
+    function positionOf(word: string): number {
+      for (let at = 0; at < dictionary.size; at++) {
+        if (dictionary.wordAt(at) === word) {
+          return at;
+        }
+      }
+      throw new Error(`${word} is not a key`);
+    }
+
+    it("names the word at a position", () => {
+      assertIdentical(dictionary.wordAt(positionOf("银行")), "银行");
+    });
+
+    it("gives nothing for a position it does not hold", () => {
+      assertIdentical(dictionary.wordAt(dictionary.size), "");
+    });
+
+    it("buckets a common word above a rare one", () => {
+      assertTrue(
+        dictionary.frequencyAt(positionOf("北京")) >
+          dictionary.frequencyAt(positionOf("玩儿")),
+      );
+    });
+
+    it("reads a stored reading off the line", () => {
+      const readings = dictionary.readingsInOrder();
+      assertIdentical(readings.readingAt(positionOf("行长")), "hang2 zhang3");
+    });
+
+    it("derives a reading the line does not store", () => {
+      // 长大 is exactly its characters' defaults, so nothing is written on its
+      // line at all and the reading has to be put back together.
+      const readings = dictionary.readingsInOrder();
+      assertIdentical(readings.readingAt(positionOf("长大")), "zhang3 da4");
+    });
+
+    it("counts as many readings as the dictionary has keys", () => {
+      // `DictionaryReadings.size` is a plain number field on a cursor; the
+      // rule's Map and Set assertions do not apply to it.
+      assertIdentical(dictionary.readingsInOrder().size, dictionary.size);
+    });
+
+    it("gives no reading for a position it does not hold", () => {
+      assertIdentical(
+        dictionary.readingsInOrder().readingAt(dictionary.size),
+        "",
+      );
+    });
+
+    it("gives nothing where a character has no reading of its own", () => {
+      const orphan = dictionaryOf([entry("银行", "yín háng")]);
+      // The line stores the reading, so the word itself is fine; a word whose
+      // characters are missing and whose line is empty is what comes back
+      // empty, which is what a tier dropping a character would look like.
+      assertIdentical(orphan.readingsInOrder().readingAt(0), "yin2 hang2");
+      const derived = Dictionary.from({
+        ...buildArtifact([entry("银行", "yín háng")]),
+        entries: "",
+      });
+      assertIdentical(derived.readingsInOrder().readingAt(0), "");
+    });
+
+    it("reads a key outside the basic plane as one character", () => {
+      // 𠀀 is a surrogate pair, so a walk that counted code units would take it
+      // for two characters and derive nothing.
+      const wide = dictionaryOf([entry("𠀀", "hē"), entry("𠀀𠀀", "hē hē")]);
+      const readings = wide.readingsInOrder();
+      const at = wide.wordAt(0) === "𠀀" ? 1 : 0;
+      assertIdentical(wide.wordAt(at), "𠀀𠀀");
+      assertIdentical(readings.readingAt(at), "he1 he1");
+    });
+  });
+
   describe("size", () => {
     it("counts every key, both scripts", () => {
       const distinctHant = SAMPLE_ENTRIES.filter(

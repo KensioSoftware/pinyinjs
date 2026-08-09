@@ -24,6 +24,8 @@ import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { segment } from "./decode/segment.js";
 import { match } from "./search/match.js";
+import { candidates, homophonesOf } from "./search/candidates.js";
+import { ReverseIndex } from "./search/reverse-index.js";
 import {
   numeralHanzi,
   percentHanzi,
@@ -108,6 +110,25 @@ function guesses(text: string): readonly string[] {
         piece.confidence !== undefined && isUncertain(piece.confidence),
     )
     .map((piece) => piece.text);
+}
+
+/**
+ * Long enough to derive the reverse index over the full tier, which is about
+ * half a second and is not what any of these tests is timing.
+ */
+const INDEX_TIMEOUT = 10_000;
+
+let derived: ReverseIndex | undefined;
+
+/**
+ * The reverse index, derived once and only where a test asks for it.
+ *
+ * Lazily, because deriving it is too much to charge to the import cost of every
+ * other test in the file.
+ */
+function reverseIndex(): ReverseIndex {
+  derived ??= ReverseIndex.of(dictionary);
+  return derived;
 }
 
 /**
@@ -599,6 +620,76 @@ describe("the examples in README.md", () => {
       assertIdentical(match(dictionary, "银行", "yh")?.score, 7);
       assertIdentical(match(dictionary, "银行", "yx")?.score, 5);
     });
+  });
+
+  describe("pinyin to hanzi", () => {
+    it(
+      "answers the four queries the section shows",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(candidates(index, "shi", { limit: 5 }), [
+          "是",
+          "时",
+          "事",
+          "使",
+          "市",
+        ]);
+        assertArrayEquals(candidates(index, "yinhang"), [
+          "銀行",
+          "银行",
+          "引吭",
+          "引航",
+          "印航",
+        ]);
+        assertArrayEquals(candidates(index, "yínháng"), ["銀行", "银行"]);
+        assertArrayEquals(homophonesOf(index, "长城"), [
+          "長城",
+          "長程",
+          "长程",
+          "常程",
+        ]);
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "takes the ü and 儿化 spellings the section claims",
+      () => {
+        const index = reverseIndex();
+        for (const query of ["lv", "lu:", "lu"]) {
+          assertTrue(candidates(index, query).includes("绿"), query);
+        }
+        for (const query of ["wanr", "wan"]) {
+          assertTrue(candidates(index, query).includes("玩儿"), query);
+        }
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "keeps one writing of a word when given a script preference",
+      () => {
+        const index = reverseIndex();
+        assertArrayEquals(
+          candidates(index, "yinhang", {
+            script: { prefer: "Hans", tables: scriptTables },
+          }),
+          ["银行", "引吭", "引航", "印航"],
+        );
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "holds the tier figures the section quotes",
+      () => {
+        // The download the section weighs a shipped index against, and the size
+        // of the index it derives instead.
+        assertIdentical(reverseIndex().size, 201_379);
+        assertIdentical(dictionary.size, 723_147);
+      },
+      INDEX_TIMEOUT,
+    );
   });
 
   describe("checking what somebody typed", () => {

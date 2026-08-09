@@ -468,6 +468,42 @@ something with no reading of its own, as 北京·大学 does.
 The `core` tier is enough, so a page that never loads a word list can still
 filter. See [matching](docs/matching/).
 
+## Go the other way: pinyin to hanzi
+
+`candidates` answers a pinyin query with the words it could be spelling, and
+`homophonesOf` lists the words read exactly like one you already have. Both run
+off a reverse index derived from the dictionary in memory.
+
+```ts
+import { candidates, homophonesOf, ReverseIndex } from "@kensio/pinyinjs";
+
+const index = ReverseIndex.of(dictionary);
+
+candidates(index, "shi", { limit: 5 }); // ["是", "时", "事", "使", "市"]
+candidates(index, "yinhang"); // ["銀行", "银行", "引吭", "引航", "印航"]
+candidates(index, "yínháng"); // ["銀行", "银行"], narrowed by tone
+homophonesOf(index, "长城"); // ["長城", "長程", "长程", "常程"]
+```
+
+This is the half of search with no haystack: `match` filters Chinese text you
+already hold, and this answers a query with nothing behind it but the
+dictionary. Pinyin-only lookup, a homophones section on a word page, or a
+browser input method for somebody with no Chinese keyboard.
+
+**Nothing is downloaded for it.** Shipping a reverse index of the `full` tier
+would add 1,924 KB to a 2,381 KB download and could not be compressed below
+about 1,475 KB, so the client derives it instead — 540 ms and 2.03 MB of heap on
+`full`, and 4 ms on `core`. `ReverseIndex.building` drives that build a slice at
+a time, and `serialise` hands it out of a worker, so nothing has to hold the
+main thread for it.
+
+Candidates come back likeliest first, because a posting is a dictionary position
+and a position indexes the frequency table. Tones may be written or left off,
+`v` and `u:` reach ü, and the r of 儿化 is optional, so 玩儿 answers to `wanr`
+and to `wan`. Both scripts are dictionary keys, so pass a script preference and
+the conversion tables to keep one writing of a word rather than both. See
+[candidates](docs/candidates/).
+
 ## Check what somebody typed
 
 `check` marks a typed pinyin transcription against the Chinese it was written
@@ -804,6 +840,9 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertToAnnotatedHtml(dictionary, text, ...)`      | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
 | `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
+| `candidates(index, query, options?)`                 | pinyin → the hanzi it could be                    |
+| `homophonesOf(index, word, options?)`                | the words read exactly like this one              |
+| `ReverseIndex.of(dictionary)`                        | derive the reading → words index                  |
 | `check(dictionary, text, typed, options?)`           | mark typed pinyin against the text                |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |

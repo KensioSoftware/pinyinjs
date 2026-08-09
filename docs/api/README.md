@@ -22,6 +22,9 @@ Two entry points:
 | `convertToAnnotatedHtml(dictionary, text, options?)` | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
 | `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
+| `candidates(index, query, options?)`                 | pinyin → the hanzi it could be                    |
+| `homophonesOf(index, word, options?)`                | the words read exactly like this one              |
+| `ReverseIndex.of(dictionary)`                        | derive the reading → words index                  |
 | `check(dictionary, text, typed, options?)`           | mark typed pinyin against the text                |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
@@ -150,6 +153,25 @@ See [matching](../matching/).
 | `PinyinMatch` | type: the ranges a query matched, and its score   |
 | `MatchRange`  | type: one stretch, in code points from the start  |
 
+## Candidates
+
+See [candidates](../candidates/).
+
+| Export              | Is                                                                               |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `candidates`        | a pinyin query → the hanzi it could be, likeliest first                          |
+| `homophonesOf`      | the words read exactly as this one is                                            |
+| `ReverseIndex`      | the reading → words index: `of`, `building`, `from`, `positionsFor`, `serialise` |
+| `CandidateOptions`  | type: `limit` and `script`                                                       |
+| `ScriptPreference`  | type: which script to keep, and the tables that can tell                         |
+| `ReverseIndexBuild` | type: a build being driven a slice at a time                                     |
+| `ReverseIndexData`  | type: the pieces, for posting between threads                                    |
+
+The index is derived from a loaded `Dictionary` and nothing is fetched for it;
+see the page for the measurement that settled that. What it is derived through
+is `Dictionary.wordAt`, `Dictionary.frequencyAt` and
+`Dictionary.readingsInOrder`, which are exported with the dictionary below.
+
 ## Checking typed pinyin
 
 See [checking](../checking/).
@@ -180,16 +202,17 @@ See [slugs](../slug/).
 
 See [dictionaries](../dictionaries/).
 
-| Export                                                       | Is                                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------ |
-| `loadDictionary`                                             | build a `Dictionary` from a source and a tier          |
-| `loadArtifact`                                               | the artifact without the `Dictionary` around it        |
-| `fetchSource`                                                | an HTTP source                                         |
-| `fileSource`                                                 | a filesystem source, from `@kensio/pinyinjs/node`      |
-| `tierFiles`                                                  | which files a tier needs                               |
-| `Dictionary`                                                 | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
-| `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier` | the tiers                                              |
-| `WordEntry`, `DictionarySource`, `Tier`                      | types                                                  |
+| Export                                                        | Is                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------ |
+| `loadDictionary`                                              | build a `Dictionary` from a source and a tier          |
+| `loadArtifact`                                                | the artifact without the `Dictionary` around it        |
+| `fetchSource`                                                 | an HTTP source                                         |
+| `fileSource`                                                  | a filesystem source, from `@kensio/pinyinjs/node`      |
+| `tierFiles`                                                   | which files a tier needs                               |
+| `Dictionary`                                                  | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
+| `dictionary.wordAt / frequencyAt / readingsInOrder`           | the same by position, for a second index over it       |
+| `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier`  | the tiers                                              |
+| `WordEntry`, `DictionaryReadings`, `DictionarySource`, `Tier` | types                                                  |
 
 The build pipeline is exported as well, since the artifacts are reproducible
 from the sources: `buildArtifact`, `readArtifact`, `encodeReading`,
