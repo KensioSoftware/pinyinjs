@@ -1,3 +1,4 @@
+import type { NumeralContext } from "../numerals/text.js";
 import { toCharacters } from "../script/characters.js";
 
 /**
@@ -49,4 +50,28 @@ export function splitRuns(text: string): readonly TextRun[] {
   }
 
   return runs;
+}
+
+/**
+ * The Han either side of a run, as the two characters a number goes on.
+ *
+ * A number's context, bar one syllable of it. The characters decide how it is
+ * read — 年 makes 1998 a year, 个 makes 3 a count and 2 两, and 第 makes 2 an
+ * ordinal — and characters are all they are, so this is known before anything
+ * has been decoded. Which is what lets the numbers be read first and the decode
+ * of the Han after them see what the digits stood for.
+ */
+export function surroundingCharacters(
+  runs: readonly TextRun[],
+  at: number,
+): NumeralContext {
+  const previous = runs[at - 1];
+  const next = runs[at + 1];
+  return {
+    following: next?.isHan === true ? (toCharacters(next.text)[0] ?? "") : "",
+    preceding:
+      previous?.isHan === true
+        ? (toCharacters(previous.text).at(-1) ?? "")
+        : "",
+  };
 }

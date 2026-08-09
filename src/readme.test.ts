@@ -21,6 +21,7 @@ import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToAnnotatedHtml, convertToHtml } from "./format/html.js";
 import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
+import { segment } from "./decode/segment.js";
 import {
   numeralHanzi,
   percentHanzi,
@@ -506,6 +507,46 @@ describe("the examples in README.md", () => {
       const number = convertToAnnotatedHtml(dictionary, "95%");
       assertStringIncludes(number, '<ruby lang="zh">95%<rp>(</rp>');
       assertArrayLength(number.match(/<ruby/gu) ?? [], 1);
+    });
+  });
+
+  describe("segmenting", () => {
+    it("splits 南京市长江大桥 the way the section shows", () => {
+      assertArrayEquals(
+        segment(dictionary, "南京市长江大桥").map((found) => found.text),
+        ["南京市", "长江", "大桥"],
+      );
+    });
+
+    it("reports the fields the section shows for 我要去北京。", () => {
+      const found = segment(dictionary, "我要去北京。");
+      assertArrayEquals(
+        found.map((one) => one.text),
+        ["我", "要", "去", "北京", "。"],
+      );
+      const beijing = found[3];
+      assertNonNullable(beijing);
+      assertIdentical(beijing.partOfSpeech, "ns");
+      assertTrue(beijing.isProperNoun);
+      assertIdentical(beijing.at, 3);
+    });
+
+    it("rejoins into the text, as the section claims", () => {
+      const text = "我要去北京。";
+      assertIdentical(
+        segment(dictionary, text)
+          .map((one) => one.text)
+          .join(""),
+        text,
+      );
+    });
+
+    it("leaves the word spacing to the conversion", () => {
+      assertArrayEquals(
+        segment(dictionary, "他看了").map((one) => one.text),
+        ["他", "看", "了"],
+      );
+      assertIdentical(convert(dictionary, "他看了"), "tā kànle");
     });
   });
 

@@ -60,6 +60,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
+| `segment`    | split text into words                               |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -389,6 +390,35 @@ ruby rt {
 `ConvertedPiece.source` is what makes that possible: the characters each piece
 reads, or undefined where it reads on into the ones before it.
 
+## Segment
+
+Converting has to find the words before it can read them, because the unit a
+reading belongs to is the word — 行 is `xíng` or `háng` and only 银行 and 行长
+say which. `segment` returns that answer instead of throwing it away.
+
+```ts
+import { segment } from "@kensio/pinyinjs";
+
+segment(dictionary, "南京市长江大桥").map((found) => found.text);
+// ["南京市", "长江", "大桥"], not ["南京", "市长", "江大桥"]
+
+const found = segment(dictionary, "我要去北京。");
+found.map((one) => one.text); // ["我", "要", "去", "北京", "。"]
+found[3]?.partOfSpeech; // "ns", jieba's tag
+found[3]?.isProperNoun; // true
+found[3]?.at; // 3, in code points from the start of the text
+```
+
+Every stretch comes back in order, including the ones that were never Han, so
+the segments rejoin into exactly the text they came from — which is what makes
+it safe to rebuild a document, highlight in place, or index a corpus. Filter on
+`isKnown` for the stretches the dictionary recognised.
+
+What it does not apply is 分词连写, the word spacing written pinyin wants: 他看了
+segments as 他 / 看 / 了 and converts as `tā kànle`, because attaching an aspect
+particle to its verb is a fact about writing pinyin rather than about where the
+words are.
+
 ## Look words up
 
 ```ts
@@ -639,6 +669,7 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertPieces(dictionary, text, ...)`               | the same, per syllable, with confidence           |
 | `convertToHtml(dictionary, text, ...)`               | the same, as HTML                                 |
 | `convertToAnnotatedHtml(dictionary, text, ...)`      | hanzi and pinyin together, as ruby HTML           |
+| `segment(dictionary, text)`                          | split text into words                             |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |

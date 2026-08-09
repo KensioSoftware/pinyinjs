@@ -225,6 +225,50 @@ describe("the html command", () => {
   });
 });
 
+describe("the segment command", () => {
+  it("writes the split, then a line for each word", async () => {
+    assertArrayEquals(await cli("segment", "行长银行"), [
+      "行长 / 银行",
+      "  行长  háng zhǎng",
+      "  银行  yín háng",
+    ]);
+  });
+
+  it("shows a stretch that was never Han as itself", async () => {
+    // Part of the text and not part of the segmentation, so it is written
+    // with a dash where a tag would go rather than left out.
+    assertArrayEquals(await cli("segment", "银行。"), [
+      "银行 / 。",
+      "  银行  yín háng",
+      "  。  —",
+    ]);
+  });
+
+  it("reports the position and the flags as JSON", async () => {
+    assertObjectEquals(await json("segment", "北京。"), {
+      text: "北京。",
+      words: [
+        {
+          text: "北京",
+          at: 0,
+          reading: "běi jīng",
+          partOfSpeech: "ns",
+          isProperNoun: true,
+          isKnown: true,
+        },
+        {
+          text: "。",
+          at: 2,
+          reading: "",
+          partOfSpeech: "",
+          isProperNoun: false,
+          isKnown: false,
+        },
+      ],
+    });
+  });
+});
+
 describe("the slug command", () => {
   it("writes one slug per argument", async () => {
     assertArrayEquals(await cli("slug", "银行", "北京市"), [

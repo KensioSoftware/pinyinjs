@@ -9,6 +9,40 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
 
 ## Unreleased
 
+### Added
+
+- **`segment` returns the words, rather than throwing them away.** Finding the
+  words is what converting has always had to do first, because the unit a
+  reading belongs to is the word — 行 is `xíng`, `háng`, `héng` or `hàng` and
+  only 银行 and 行长 say which — but the answer went no further than the string
+  `convert` built out of it.
+
+  ```ts
+  segment(dictionary, "南京市长江大桥").map((found) => found.text);
+  // ["南京市", "长江", "大桥"]
+  ```
+
+  Which is a segmenter with something most do not have: **the split is chosen
+  for the reading it produces**. That example cuts either way — the other is
+  南京 / 市长 / 江大桥 — and the two disagree about whether 长 is `cháng` or
+  `zhǎng`, so a cut that reads correctly is preferred over one that merely
+  matches something longer. No wasm, no backend and no model; the dictionary is
+  already loaded.
+
+  A `Segment` carries the characters, the reading, jieba's tag, the proper-noun
+  mark, whether the dictionary knew it, and `at`, its position in code points.
+  Every stretch of the text comes back in order — punctuation, Latin and
+  whitespace included — so the segments rejoin into exactly the text they came
+  from, which is what makes it safe to rebuild a document from or to highlight
+  in place.
+
+  The boundaries are the ones `convert` uses, down to the number in front of a
+  run: 2个人 is 个 + 人 where 个人 alone is the word `gèrén`. What is not applied
+  is 分词连写, so 他看了 segments as 他 / 看 / 了 and still converts as
+  `tā kànle` — attaching an aspect particle to its verb is a fact about writing
+  pinyin rather than about where the words are. `pinyinjs segment` at the
+  command line.
+
 ## 1.6.0
 
 ### Added
