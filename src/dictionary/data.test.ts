@@ -16,7 +16,7 @@ import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
-import { toCharacters } from "../script/characters.js";
+import { isSingleCharacter, toCharacters } from "../script/characters.js";
 import { KeyIndex } from "./key-index.js";
 import { HYPHENATED_IDIOMS } from "../orthography/idiom-list.js";
 import { TIERS } from "./tiers.js";
@@ -32,6 +32,10 @@ import { TIERS } from "./tiers.js";
  */
 class Tier {
   readonly #lines: readonly string[];
+
+  #keys?: readonly string[];
+
+  #defaults?: ReadonlyMap<string, string>;
 
   readonly index: KeyIndex;
 
@@ -49,6 +53,43 @@ class Tier {
   }
 
   /**
+   * Every key, in index order.
+   *
+   * The index is built for lookup rather than for iteration — `keyAt` slices a
+   * fresh string every call — so a sweep over all of them takes them once.
+   * Built on demand, since only the sweep wants it.
+   */
+  get keys(): readonly string[] {
+    this.#keys ??= this.index.serialise().split("\n");
+    return this.#keys;
+  }
+
+  /**
+   * What each single character stores, which is what a derived reading is made
+   * of.
+   *
+   * Also built on demand, and for the same reason the artifact has the
+   * characters at all: resolving one derived reading means reading its
+   * characters, and doing that through the index costs a binary search per
+   * character.
+   */
+  get defaults(): ReadonlyMap<string, string> {
+    if (this.#defaults === undefined) {
+      const defaults = new Map<string, string>();
+      for (const [at, key] of this.keys.entries()) {
+        // A character is one UTF-16 code unit, or two for a surrogate pair.
+        // The length test alone settles all but a handful, and it is what
+        // keeps this off the regex in `toCharacters` for 723,147 keys.
+        if (key.length <= 2 && isSingleCharacter(key)) {
+          defaults.set(key, this.storedReadingAt(at));
+        }
+      }
+      this.#defaults = defaults;
+    }
+    return this.#defaults;
+  }
+
+  /**
    * The columns recorded for a key, or undefined when it is not a key.
    */
   columns(word: string): readonly string[] | undefined {
@@ -57,6 +98,32 @@ class Tier {
       return undefined;
     }
     return (this.#lines[found.index] ?? "").split("\t");
+  }
+
+  /**
+   * The reading column at a position, empty where the line derives it.
+   */
+  storedReadingAt(at: number): string {
+    const line = this.#lines[at] ?? "";
+    const end = line.indexOf("\t");
+    return end === -1 ? line : line.slice(0, end);
+  }
+
+  /**
+   * The reading at a position, in the tone-numbered notation of the file.
+   *
+   * The stored notation rather than the tone-marked one {@link Tier.reading}
+   * returns, because comparing two tiers is comparing what is on disk: equal
+   * here is equal byte for byte, with no decoding in between to agree about.
+   */
+  readingAt(at: number): string {
+    const stored = this.storedReadingAt(at);
+    if (stored !== "") {
+      return stored;
+    }
+    return toCharacters(this.keys[at] ?? "")
+      .map((character) => this.defaults.get(character) ?? "")
+      .join(" ");
   }
 
   /**
@@ -302,23 +369,38 @@ describe("the committed dictionary", () => {
       }
     });
 
-    // Every key in both smaller tiers, resolved the way the loader resolves it.
-    // At roughly 700 ms this does not fit the 100 ms the rest of the suite is
-    // held to, and sampling would not do instead: the keys this is here to
-    // catch were 48 of 114,974, and a sample that steps over them proves
-    // nothing. The build has the same check, but the build is not what CI runs
-    // — these are the artifacts that get published.
-    const WHOLE_INDEX_TIMEOUT = 3000;
+    // Every key in both smaller tiers, resolved the way the loader resolves
+    // it. Sampling would not do instead: the keys this is here to catch were
+    // 48 of 114,974, and a sample that steps over them proves nothing. The
+    // build makes the same check, but the build is not what CI runs — these
+    // are the artifacts that get published.
+    //
+    // Both key lists are sorted the same way and the tiers nest, so this walks
+    // them together rather than searching full for each key: one pointer that
+    // only ever moves forward, against 114,974 binary searches through 723,147
+    // keys and a further search per character of every derived reading. That
+    // is the difference between about 50 ms and about 700 ms, and 700 ms on a
+    // laptop was enough to time out on a CI runner.
+    const WHOLE_INDEX_TIMEOUT = 10_000;
 
     it(
       "reads every key it shares with full the way full reads it",
       () => {
         const disagreements: string[] = [];
         for (const tier of [core, standard]) {
-          for (let at = 0; at < tier.index.size; at++) {
-            const key = tier.index.keyAt(at);
-            if (tier.reading(key) !== full.reading(key)) {
-              disagreements.push(key);
+          let there = 0;
+          for (const [here, key] of tier.keys.entries()) {
+            let ahead = full.keys[there];
+            while (ahead !== undefined && ahead < key) {
+              there++;
+              ahead = full.keys[there];
+            }
+            if (ahead !== key) {
+              disagreements.push(`${key} is not a key in full`);
+            } else if (tier.readingAt(here) !== full.readingAt(there)) {
+              disagreements.push(
+                `${key} reads ${tier.readingAt(here)}, full reads ${full.readingAt(there)}`,
+              );
             }
           }
         }
