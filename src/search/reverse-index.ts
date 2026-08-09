@@ -21,7 +21,7 @@ const PLAIN_U = "u";
  * How many positions one {@link ReverseIndexBuild.step} covers by default.
  *
  * Sized so that a step is a frame rather than several: the full tier's build is
- * about 540 ms of work over 723,147 keys, so 20,000 keys is roughly 15 ms of it.
+ * about 510 ms of work over 723,147 keys, so 20,000 keys is roughly 14 ms of it.
  * A caller with a frame budget of its own should pass its own number rather than
  * trust this one.
  */
@@ -79,9 +79,9 @@ export interface ReverseIndexData {
 /**
  * A reverse index being built, a slice at a time.
  *
- * The full tier costs about 540 ms to derive, which is thirty-odd frames, so the
+ * The full tier costs about 510 ms to derive, which is thirty-odd frames, so the
  * build is a state machine a caller can drive from `requestIdleCallback` rather
- * than a function that takes the thread. `core` is 4 ms and `standard` is 65 ms,
+ * than a function that takes the thread. `core` is 4 ms and `standard` is 62 ms,
  * and both can simply be built with {@link ReverseIndex.of}.
  *
  * ```ts
@@ -145,8 +145,8 @@ function readAt(values: Uint32Array, at: number): number {
  *
  * Every index in the package runs hanzi → reading; this is the other direction,
  * and it is **derived on load rather than downloaded**. The measurement is in
- * issue #71 and the summary is that shipping it would add 1,924 KB to the full
- * tier — an 81% increase — to save under 60% of a build the client can do from
+ * issue #71 and the summary is that shipping it would add 1,995 KB to the full
+ * tier — an 84% increase — to save under 60% of a build the client can do from
  * bytes it already holds. Nothing new is fetched and no artifact exists.
  *
  * Held the way the forward index is held, and for the same reason: the reading
@@ -162,7 +162,7 @@ export class ReverseIndex {
   /**
    * Derive the whole index in one go.
    *
-   * About 4 ms on `core`, 65 ms on `standard` and 540 ms on `full`, measured on
+   * About 4 ms on `core`, 62 ms on `standard` and 510 ms on `full`, measured on
    * a machine roughly 2.5× a mid-range laptop. Use {@link ReverseIndex.building}
    * for anything that has a frame to hold on to.
    */

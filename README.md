@@ -491,8 +491,8 @@ dictionary. Pinyin-only lookup, a homophones section on a word page, or a
 browser input method for somebody with no Chinese keyboard.
 
 **Nothing is downloaded for it.** Shipping a reverse index of the `full` tier
-would add 1,924 KB to a 2,381 KB download and could not be compressed below
-about 1,475 KB, so the client derives it instead — 540 ms and 2.03 MB of heap on
+would add 1,995 KB to a 2,378 KB download and could not be compressed below
+about 1,474 KB, so the client derives it instead — 510 ms and 2.03 MB of heap on
 `full`, and 4 ms on `core`. `ReverseIndex.building` drives that build a slice at
 a time, and `serialise` hands it out of a worker, so nothing has to hold the
 main thread for it.

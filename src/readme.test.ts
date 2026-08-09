@@ -679,17 +679,6 @@ describe("the examples in README.md", () => {
       },
       INDEX_TIMEOUT,
     );
-
-    it(
-      "holds the tier figures the section quotes",
-      () => {
-        // The download the section weighs a shipped index against, and the size
-        // of the index it derives instead.
-        assertIdentical(reverseIndex().size, 201_379);
-        assertIdentical(dictionary.size, 723_147);
-      },
-      INDEX_TIMEOUT,
-    );
   });
 
   describe("checking what somebody typed", () => {

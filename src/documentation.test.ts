@@ -8,6 +8,7 @@ import {
   assertFalse,
   assertIdentical,
   assertNonNullable,
+  assertNumberBetween,
   assertObjectEquals,
   assertSetSize,
   assertStringIncludes,
@@ -1147,6 +1148,22 @@ describe("the examples in docs/", () => {
         const feng = candidates(index, "zhongfeng");
         assertTrue(feng.includes("中峰"));
         assertFalse(feng.includes("中峯"));
+      },
+      INDEX_TIMEOUT,
+    );
+
+    it(
+      "holds the tier counts the page tabulates",
+      () => {
+        // Bracketed rather than pinned, the way `data.test.ts` brackets the
+        // dictionary's own size. These are counts *derived* from the artifacts,
+        // so a dictionary rebuild moves them a little without anything here
+        // being wrong — re-ranking the readings in #73 moved the full tier's
+        // from 201,379 to 201,378. A band still catches the failure that
+        // matters, which is the index emptying out or doubling.
+        assertNumberBetween(dictionary.size, 700_000, 750_000);
+        assertNumberBetween(reverseIndex().size, 195_000, 210_000);
+        assertNumberBetween(ReverseIndex.of(coreDictionary).size, 380, 440);
       },
       INDEX_TIMEOUT,
     );

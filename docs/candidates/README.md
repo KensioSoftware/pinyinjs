@@ -33,8 +33,8 @@ The index is **derived from the dictionary already in memory**. There is no
 second artifact, no extra fetch, and nothing added to `data/`.
 
 That was measured rather than assumed. Shipping a reverse index of the `full`
-tier costs 1,924 KB brotli — an 81% increase on that tier's download — and no
-encoding can go below about 1,475 KB, because the postings are a permutation of
+tier costs 1,995 KB brotli — an 84% increase on that tier's download — and no
+encoding can go below about 1,474 KB, because the postings are a permutation of
 the key list and that is the information floor. It would still cost the same
 2 MB of heap once loaded, and would save under 60% of the work, since the
 fetched bytes still have to be scanned and grouped. So the client computes it
@@ -42,12 +42,14 @@ from bytes it already has:
 
 | tier       |    keys | readings |  build | heap on top of the dictionary |
 | ---------- | ------: | -------: | -----: | ----------------------------: |
-| `core`     |  16,976 |      409 |   4 ms |                       0.04 MB |
-| `standard` |  97,998 |   39,168 |  65 ms |                       0.37 MB |
-| `full`     | 723,147 |  201,379 | 540 ms |                       2.03 MB |
+| `core`     |  16,977 |      408 |   4 ms |                       0.04 MB |
+| `standard` |  97,999 |   39,167 |  62 ms |                       0.37 MB |
+| `full`     | 723,147 |  201,378 | 510 ms |                       2.03 MB |
 
-Fifty to sixty times what loading the forward index costs, on a machine about
-2.5× a mid-range laptop; a mid-range phone is nearer a second on `full`.
+Twenty-five to sixty times what loading the forward index costs, on a machine
+about 2.5× a mid-range laptop; a mid-range phone is nearer a second on `full`.
+The counts move a little whenever the dictionary is rebuilt, which is why the
+tests bracket them rather than pin them.
 
 It is held the way the forward index is held, and for the same reason: the
 reading keys are one sorted blob searched by binary search, and the postings are
@@ -150,7 +152,7 @@ candidates while a syllable is half-typed should ask on each completed syllable.
 
 A posting is a dictionary position, and a position indexes the frequency table
 directly, so the ordering needs no extra data at all — the groups are sorted
-during the build by a counting sort over the sixteen frequency buckets, 8.6 ms
+during the build by a counting sort over the sixteen frequency buckets, 8.2 ms
 for the whole of `full`. A query pays nothing for its order.
 
 ```ts
@@ -197,8 +199,8 @@ in the first place.
 
 `homophonesOf` is the toned question, and it is answered from the same toneless
 index by narrowing the group to the words whose reading is the same string.
-Across the eight busiest readings in `full` — 4,659 candidates — that narrowing
-costs 1.2 ms in total, which is why there is no second index keyed by tone.
+Across the eight busiest readings in `full` — 4,656 candidates — that narrowing
+costs 1.9 ms in total, which is why there is no second index keyed by tone.
 
 ```ts
 homophonesOf(index, "公式", { limit: 5 });
@@ -229,8 +231,8 @@ from its characters where the 校核 it folds to reads `jiào hé`.
 
 They are left out, and **at the query rather than at the build**, which is what
 makes it free. Filtering the whole key list with `toCanonicalGlyphs` costs
-52.9 ms on `full` — a 19% build tax to remove 0.04% of the candidates — where
-filtering one answer costs nothing anybody can measure. Dropping them is not
+43.2 ms on `full` — a build tax of nearly a tenth to remove 0.04% of the
+candidates — where filtering one answer costs nothing anybody can measure. Dropping them is not
 losing anything: the canonical writing of each is already in the list.
 
 ## Querying by reading key directly
@@ -260,7 +262,7 @@ the candidates it gets back.
 
 **Come with its own dictionary.** The candidates are the dictionary's keys, so
 what a bigger tier buys is a longer tail. It buys less than you would think: the
-busiest reading in `core` has 302 words and in `full` it has 805, because the
+busiest reading in `core` has 301 words and in `full` it has 805, because the
 tail a bigger tier adds is rare words spread thinly across many readings. An
 input method's candidate bar is a `core`-sized problem even when the dictionary
 is not.
