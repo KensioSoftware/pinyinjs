@@ -53,6 +53,53 @@ which a dictionary rebuild can change, and the artifact format under `data/`.
   that never loads a word list can still filter. `pinyinjs match --query bjdx`
   at the command line, which reads a list from standard input and ranks it.
 
+- **`check` marks typed pinyin against the text it was written for.** A learner
+  types the pinyin for a sentence and gets the mistake identified, syllable by
+  syllable, rather than a pass or a fail.
+
+  ```ts
+  check(dictionary, "银行", "yínxíng").syllables.map((one) => one.verdict);
+  // ["correct", "wrong"]
+  ```
+
+  Six verdicts — `correct`, `toneless`, `tone`, `wrong`, `missing`, `extra` —
+  with a score, and with `source` and `at` on each one naming the characters it
+  reads, so a mistake can be shown against the text rather than against the
+  answer.
+
+  **The point of it is being fair in the ways a string comparison cannot be.**
+  `bei3` and `běi` are the same syllable and mix freely. A reading the decoder
+  was guessing at is accepted — 行 alone is chosen by a prior and nothing more —
+  while one a word settles is not, so `yínxíng` for 银行 is still wrong. 你好
+  passes written `nǐ hǎo` and said `ní hǎo`, and 不是 either side of its sandhi.
+  Tones left off are `toneless` rather than `tone`, because `Syllable.tone`
+  knows the difference. An apostrophe is neither a boundary nor a sound and
+  decides nothing.
+
+  **Word spacing is graded on its own axis**, reported as `spacing` — `correct`,
+  `split` or `joined` — beside the syllable's own verdict, because it is a
+  separate mistake: `yín háng` reads 银行 perfectly and writes it as two words.
+  It is tolerant in the same spirit as everything else. 分词连写 and the words
+  the dictionary knows are two conventions this package writes, and a learner
+  may have been taught either, so `tā kànle` and `tā kàn le` both pass; a hyphen
+  is a boundary written inside a word, so 干干净净 passes hyphenated, spaced or
+  solid.
+
+  ```ts
+  check(dictionary, "银行", "yín háng").syllables.map((one) => one.spacing);
+  // ["correct", "split"]
+  ```
+
+  `tones` and `spacing` both default to `"optional"`: the verdict is always
+  reported, and `"required"` is what counts it towards the score, for an
+  exercise that has got as far as teaching them.
+
+  Aligned rather than compared position by position, by the machinery that
+  scores the decoder against the gold corpus, so a dropped syllable costs a
+  syllable instead of everything after it. Takes every `convert` option
+  besides. `pinyinjs check 银行 yínxíng` at the command line, with
+  `--require-tones` and `--require-spacing`. See [checking](docs/checking/).
+
 - **`segment` returns the words, rather than throwing them away.** Finding the
   words is what converting has always had to do first, because the unit a
   reading belongs to is the word — 行 is `xíng`, `háng`, `héng` or `hàng` and

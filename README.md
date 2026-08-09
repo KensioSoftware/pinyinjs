@@ -35,6 +35,11 @@ wo3-xiang3-xue2-zhong1wen2
 $ pinyinjs script 我们后来发现了头发问题 --to zh-Hant
 我們後來發現了頭髮問題
 
+$ pinyinjs check 银行 yínxíng
+银行  yínháng  50%
+  银     yín     yín     correct
+  行     háng    xíng    wrong
+
 $ pinyinjs explain 银行
 银行  yínháng
   yín     locked
@@ -67,6 +72,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
 | `segment`    | split text into words                               |
 | `match`      | filter text by a pinyin query, best first           |
+| `check`      | mark typed pinyin against the text                  |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -462,6 +468,90 @@ something with no reading of its own, as 北京·大学 does.
 The `core` tier is enough, so a page that never loads a word list can still
 filter. See [matching](docs/matching/).
 
+## Check what somebody typed
+
+`check` marks a typed pinyin transcription against the Chinese it was written
+for, syllable by syllable.
+
+```ts
+import { check } from "@kensio/pinyinjs";
+
+const marked = check(dictionary, "银行", "yínxíng");
+marked.syllables.map((one) => one.verdict); // ["correct", "wrong"]
+marked.syllables[1]?.source; // "行", the character that was misread
+marked.score; // 0.5
+```
+
+Each syllable comes back as one of six verdicts, with `source` and `at` naming
+the characters it reads so a mistake can be shown against the text rather than
+against the answer:
+
+| Verdict    | Means                                          |
+| ---------- | ---------------------------------------------- |
+| `correct`  | right syllable, right tone                     |
+| `toneless` | right syllable, no tone written                |
+| `tone`     | right syllable, wrong tone                     |
+| `wrong`    | wrong syllable                                 |
+| `missing`  | a syllable of the reading that was not typed   |
+| `extra`    | a syllable typed that the reading does not use |
+
+**The point is being fair in the ways a string comparison cannot be.** All of
+these are a learner being marked wrong for being right, and all of them pass:
+
+```ts
+check(dictionary, "北京", "bei3jīng").isCorrect; // true, either notation, mixed
+check(dictionary, "行", "háng").isCorrect; // true, the decoder was guessing too
+check(dictionary, "你好", "ní hǎo").isCorrect; // true, said with sandhi
+check(dictionary, "不是", "bù shì").isCorrect; // true, written without it
+check(dictionary, "海鸥", "hǎiōu").isCorrect; // true, an apostrophe is not a sound
+check(dictionary, "我的书", "wǒ de shū").isCorrect; // true, pinyin marks no neutral tone
+```
+
+A guess is only forgiven where the library was guessing: 行 alone is chosen by a
+prior and nothing more, whereas 银行 settles both its syllables, so `yínxíng` is
+a real mistake. See [confidence](docs/confidence/).
+
+### Tones and word spacing
+
+Two axes an exercise may or may not be teaching yet, each reported always and
+each counted only when asked for.
+
+Tones left off are `toneless` rather than `tone`, because `Syllable.tone` knows
+the difference:
+
+```ts
+check(dictionary, "北京", "bei jing").isCorrect; // true
+check(dictionary, "北京", "bei jing", { tones: "required" }).isCorrect; // false
+```
+
+Word spacing is graded on `spacing`, separately from the syllable's own verdict,
+because it is a separate mistake: `yín háng` reads 银行 perfectly and writes it
+as two words.
+
+```ts
+const split = check(dictionary, "银行", "yín háng");
+split.syllables.map((one) => one.spacing); // ["correct", "split"]
+split.isCorrect; // true, spacing is not counted by default
+check(dictionary, "银行", "yín háng", { spacing: "required" }).isCorrect; // false
+```
+
+It is `split` for a word written as two and `joined` for two written as one, and
+it is tolerant in the same spirit as everything else — 分词连写 and the words the
+dictionary knows are two conventions this package writes, and a learner may have
+been taught either:
+
+```ts
+const graded = { spacing: "required" } as const;
+check(dictionary, "他看了", "tā kànle", graded).isCorrect; // true, 分词连写
+check(dictionary, "他看了", "tā kàn le", graded).isCorrect; // true, the words
+check(dictionary, "干干净净", "gāngān jìngjìng", graded).isCorrect; // true, a hyphen is a boundary
+check(dictionary, "我要去北京。", "wǒyàoqùběijīng", graded).isCorrect; // false
+```
+
+Takes every `convert` option besides, so an exercise that knows which sense of 长
+its own sentence uses can say so with `readings`. More in
+[checking](docs/checking/).
+
 ## Look words up
 
 ```ts
@@ -714,6 +804,7 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 | `convertToAnnotatedHtml(dictionary, text, ...)`      | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
 | `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
+| `check(dictionary, text, typed, options?)`           | mark typed pinyin against the text                |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
@@ -730,6 +821,7 @@ This is orthography and not translation — 软件 becomes 軟件, never 軟體.
 
 Types (`Syllable`, `Tone`, `ConvertOptions`, `ConvertedPiece`,
 `ReadingConfidence`, `HtmlOptions`, `Segment`, `PinyinMatch`, `MatchRange`,
+`ReadingConfidence`, `HtmlOptions`, `Segment`, `PinyinCheck`, `CheckedSyllable`,
 `WordEntry`, `Tier`, `Locale`, `Script`) are exported alongside them.
 
 ## Development

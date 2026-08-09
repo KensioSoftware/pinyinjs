@@ -17,6 +17,7 @@ Wǒ yào qù Běijīng.
 | `annotate`   | hanzi with its pinyin above, as ruby HTML           |
 | `segment`    | split text into words                               |
 | `match`      | filter text by a pinyin query, best first           |
+| `check`      | mark typed pinyin against the text                  |
 | `slug`       | hanzi to a URL-safe slug                            |
 | `script`     | 简体 ↔ 繁體 conversion                              |
 | `explain`    | each syllable, how settled it was, and what it beat |
@@ -71,6 +72,35 @@ One line per syllable: the syllable, how settled it was (`locked`, `word` or
 `uncertain`), and the readings it was chosen over with what taking each would
 have cost. [Confidence](../confidence/) explains what the states and the
 numbers mean.
+
+### check
+
+```console
+$ pinyinjs check 银行 yínxíng
+银行  yínháng  50%
+  银     yín     yín     correct
+  行     háng    xíng    wrong
+
+$ pinyinjs check 北京 bei3jing3
+北京  Běijīng  50%
+  北     běi     bei3    correct
+  京     jīng    jing3   tone
+
+$ pinyinjs check 银行 "yín háng" --require-spacing
+银行  yínháng  50%
+  银     yín     yín     correct
+  行     háng    háng    correct   split
+```
+
+The text, the answer as the conversion writes it, and the score. Then one line
+per syllable: the characters it reads, what was expected, what was typed, the
+verdict, and the word spacing where that went wrong. See
+[checking](../checking/) for what the verdicts mean and how much it forgives.
+
+Two arguments, and everything after the first is joined back up, so unquoted
+pinyin works: `pinyinjs check 北京市 běijīng shì`. `--require-tones` and
+`--require-spacing` count those two axes towards the score; every conversion
+flag works too.
 
 ### lookup
 
@@ -237,8 +267,8 @@ Which dictionary got loaded, from where, and how big it is. Useful when
 
 ## Options
 
-Every conversion option the library takes is a flag on `convert`, `html` and
-`explain`:
+Every conversion option the library takes is a flag on `convert`, `html`,
+`explain` and `check`:
 
 | Flag                    | Library option                |
 | ----------------------- | ----------------------------- |
@@ -256,8 +286,8 @@ Every conversion option the library takes is a flag on `convert`, `html` and
 transcription system, and `--greedy`, which decodes with the old longest-match
 baseline instead of the lattice; see [converting](../converting/#the-greedy-baseline).
 `html` also takes `--no-tone-classes`, `--no-uncertain` and `--no-lang`.
-`sandhi` takes
-`--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
+`check` also takes `--require-tones` and `--require-spacing`, which count those
+two axes towards the score. `sandhi` takes `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
 `--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
 `transcribe` takes `--from` and `--notation`.
 
@@ -324,6 +354,14 @@ $ cat article.txt | pinyinjs convert
 
 That is one answer per line in, one line out, so it stays usable on a file of
 any size.
+
+`check` is the one command that needs two things per answer, so a piped line is
+a tab-separated pair — both halves can have spaces in them, and a tab is the one
+thing neither has:
+
+```console
+$ printf '银行\tyínxíng\n北京\tbei3jing3\n' | pinyinjs check
+```
 
 ## JSON output
 

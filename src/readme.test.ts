@@ -17,6 +17,7 @@ import { describe, it } from "vitest";
 
 import { isUncertain } from "./decode/confidence.js";
 import { convert, convertPieces, joinPieces } from "./decode/convert.js";
+import { check } from "./grade/check.js";
 import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToAnnotatedHtml, convertToHtml } from "./format/html.js";
 import { toScript } from "./decode/script.js";
@@ -375,6 +376,14 @@ describe("the examples in README.md", () => {
       ]);
     });
 
+    it("checks as the README shows", async () => {
+      assertArrayEquals(await cli("check", "银行", "yínxíng"), [
+        "银行  yínháng  50%",
+        "  银     yín     yín     correct",
+        "  行     háng    xíng    wrong",
+      ]);
+    });
+
     it("explains as the README shows", async () => {
       assertArrayEquals(await cli("explain", "银行"), [
         "银行  yínháng",
@@ -589,6 +598,59 @@ describe("the examples in README.md", () => {
     it("scores 银行 as the section scores it, by either reading", () => {
       assertIdentical(match(dictionary, "银行", "yh")?.score, 7);
       assertIdentical(match(dictionary, "银行", "yx")?.score, 5);
+    });
+  });
+
+  describe("checking what somebody typed", () => {
+    it("marks 银行 typed yínxíng the way the section shows", () => {
+      const marked = check(dictionary, "银行", "yínxíng");
+      assertArrayEquals(
+        marked.syllables.map((one) => one.verdict),
+        ["correct", "wrong"],
+      );
+      assertIdentical(marked.syllables[1]?.source, "行");
+      assertIdentical(marked.score, 0.5);
+    });
+
+    it("passes every answer the section calls fair", () => {
+      assertTrue(check(dictionary, "北京", "bei3jīng").isCorrect);
+      assertTrue(check(dictionary, "行", "háng").isCorrect);
+      assertTrue(check(dictionary, "你好", "ní hǎo").isCorrect);
+      assertTrue(check(dictionary, "不是", "bù shì").isCorrect);
+      assertTrue(check(dictionary, "海鸥", "hǎiōu").isCorrect);
+      assertTrue(check(dictionary, "我的书", "wǒ de shū").isCorrect);
+    });
+
+    it("counts a missing tone only where the caller asks for tones", () => {
+      assertTrue(check(dictionary, "北京", "bei jing").isCorrect);
+      assertFalse(
+        check(dictionary, "北京", "bei jing", { tones: "required" }).isCorrect,
+      );
+    });
+
+    it("reports the spacing beside the verdict, as the section shows", () => {
+      const split = check(dictionary, "银行", "yín háng");
+      assertArrayEquals(
+        split.syllables.map((one) => one.spacing),
+        ["correct", "split"],
+      );
+      assertTrue(split.isCorrect);
+      assertFalse(
+        check(dictionary, "银行", "yín háng", { spacing: "required" })
+          .isCorrect,
+      );
+    });
+
+    it("takes either spacing convention, as the section shows", () => {
+      const graded = { spacing: "required" } as const;
+      assertTrue(check(dictionary, "他看了", "tā kànle", graded).isCorrect);
+      assertTrue(check(dictionary, "他看了", "tā kàn le", graded).isCorrect);
+      assertTrue(
+        check(dictionary, "干干净净", "gāngān jìngjìng", graded).isCorrect,
+      );
+      assertFalse(
+        check(dictionary, "我要去北京。", "wǒyàoqùběijīng", graded).isCorrect,
+      );
     });
   });
 

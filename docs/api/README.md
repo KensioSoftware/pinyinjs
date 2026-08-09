@@ -22,6 +22,7 @@ Two entry points:
 | `convertToAnnotatedHtml(dictionary, text, options?)` | hanzi and pinyin together, as ruby HTML           |
 | `segment(dictionary, text)`                          | split text into words                             |
 | `match(dictionary, haystack, query)`                 | where a pinyin query matches a text               |
+| `check(dictionary, text, typed, options?)`           | mark typed pinyin against the text                |
 | `slug(dictionary, text, options?)`                   | hanzi → a URL-safe slug                           |
 | `joinPieces(pieces)` / `toHtml(pieces, options?)`    | render pieces                                     |
 | `toAnnotatedHtml(pieces, options?)`                  | render pieces, annotated                          |
@@ -148,6 +149,20 @@ See [matching](../matching/).
 | `match`       | where a pinyin query matches a text, and how well |
 | `PinyinMatch` | type: the ranges a query matched, and its score   |
 | `MatchRange`  | type: one stretch, in code points from the start  |
+
+## Checking typed pinyin
+
+See [checking](../checking/).
+
+| Export             | Is                                                               |
+| ------------------ | ---------------------------------------------------------------- |
+| `check`            | mark a typed transcription against the text it was written for   |
+| `PinyinCheck`      | type: the verdicts, the score, and the reading expected          |
+| `CheckedSyllable`  | type: one syllable's verdict, and the characters it reads        |
+| `PinyinVerdict`    | type: `correct`, `toneless`, `tone`, `wrong`, `missing`, `extra` |
+| `SpacingVerdict`   | type: `correct`, `split` or `joined`                             |
+| `CheckOptions`     | type: every `ConvertOptions` field, plus `tones` and `spacing`   |
+| `CheckRequirement` | type: `optional` or `required`                                   |
 
 ## Slugs
 
