@@ -13,6 +13,7 @@ import { countCorpusMass, rankByCorpusMass } from "./corpus-mass.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { attachErhua, isErFinal, NON_ERHUA_ER_WORDS } from "./erhua.js";
 import { composeLocaleDeltas } from "./locale.js";
+import { NEUTRAL_SENSE_LOOKUP } from "./neutral-senses.js";
 import { OVERRIDE_READINGS } from "./overrides.js";
 import {
   ERHUA_TOKEN,
@@ -45,6 +46,11 @@ export interface MergeStats {
   readonly cedictWords: number;
   /** Words whose reading CC-CEDICT corrected to a neutral tone. */
   readonly neutralToneCorrections: number;
+  /**
+   * Characters whose default was a 轻声 the frequency field only counted inside
+   * words — see {@link demoteReducedNeutrals}.
+   */
+  readonly reducedNeutrals: number;
   /** Words whose trailing 儿 was folded into the syllable before it. */
   readonly erhuaRepairs: number;
   /** Words whose 繁體 form was derived rather than taken from CC-CEDICT. */
@@ -230,6 +236,34 @@ function isErhua(
     return cedictReadings.some((reading) => reading.at(-1)?.erhua === true);
   }
   return !NON_ERHUA_ER_WORDS.has(word);
+}
+
+/**
+ * Whether a candidate reads a syllable 轻声 that the chosen reading tones.
+ *
+ * What separates a sense that is the same word said more carefully from one
+ * that is a different word: 东西's `dong1 xi5` reduces the `dōng xī` the corpus
+ * wrote, while its `dong1 xi1` is that same reading and 行长's `háng zhang` has
+ * a different initial. Length is checked because a reading of another length
+ * describes another pronunciation entirely.
+ */
+function reducesToNeutral(
+  reading: readonly Syllable[],
+  candidate: readonly Syllable[],
+): boolean {
+  if (reading.length !== candidate.length) {
+    return false;
+  }
+  return reading.some((syllable, at) => {
+    const other = candidate[at];
+    return (
+      other !== undefined &&
+      syllable.initial === other.initial &&
+      syllable.final === other.final &&
+      syllable.tone !== NEUTRAL_TONE &&
+      other.tone === NEUTRAL_TONE
+    );
+  });
 }
 
 /**
@@ -426,6 +460,96 @@ function resolveFrequencyTones(unihan: UnihanReadings): readonly string[] {
 }
 
 /**
+ * A CC-CEDICT sense that describes a suffix rather than a word.
+ *
+ * Matches its own wording: 子 is `/noun suffix, as in 椅子[yi3 zi5] "chair"/`,
+ * and the other suffix senses are written the same way.
+ */
+const SUFFIX_SENSE = /\bsuffix\b/iu;
+
+/**
+ * Whether CC-CEDICT reads the bare character 轻声 in its own right.
+ *
+ * The exception to {@link demoteReducedNeutrals}, and the thing that separates
+ * a 语气词 from a syllable that is only ever unstressed inside a word. A
+ * single-character CC-CEDICT headword with a neutral reading is a claim about
+ * the character standing alone, which is exactly what the frequency field's
+ * counting cannot distinguish: 吗 is `(question particle for "yes-no"
+ * questions)`, 啊 is `modal particle ending sentence`, 得 is `structural
+ * particle: used after a verb`. Nine characters carry one — 得, 啊, 吗, 呀, 啦,
+ * 哇, 嘛, 罢 and 子 — and their 繁體 spellings with them.
+ *
+ * **A suffix sense is not such a claim.** 子's neutral headword is `noun
+ * suffix, as in 椅子`, which says the character is unstressed *in words*, and
+ * words are what the corpus can already see. 子 is `zǐ` on its own — 子曰, 母子
+ * — and CPP's human labelling has it `zi3` in 30 of its 38 cases.
+ *
+ * 罢 is the known loss. CC-CEDICT calls its `ba5` a final particle, so it is
+ * held here, and CPP labels the character `ba4` in all 40 of its cases: the
+ * particle is the literary 也罢 and 罢了, while a modern bare 罢 is 罢工. Left
+ * protected because the rule is about what a source claims of the character,
+ * and singling one out because a dataset disagrees is fitting to the dataset.
+ */
+function isNeutralAlone(
+  character: string,
+  entries: readonly CedictEntry[],
+): boolean {
+  return entries.some((entry) => {
+    const reading = readDictionaryReading(character, entry.readings);
+    return (
+      reading?.length === 1 &&
+      reading[0]?.tone === NEUTRAL_TONE &&
+      !entry.definitions.some((definition) => SUFFIX_SENSE.test(definition))
+    );
+  });
+}
+
+/**
+ * Demote a 轻声 the frequency field counted only inside words.
+ *
+ * `kHanyuPinlu` counts occurrences in running text, and a character's neutral
+ * count there mixes two unrelated things: a character that stands alone
+ * unstressed, and one reduced *inside a word*. Where the field writes the same
+ * spelling both bare and toned it is reporting that split with no way to say
+ * which is which — 西 is `xi(902) xī(738)`, and the 902 are 东西 — and since the
+ * field leads {@link import("../sources/unihan.js").READING_FIELDS}, the
+ * reduction became the character's reading. 西 read `xi`, so 往西 was `wǎng xi`;
+ * 夫 read `fu`, 识 `shi`, 拾 `shi`, 候 `hou`, 姐 `jie`, 友 `you`.
+ *
+ * So a bare spelling the field also writes with a tone ranks below that twin —
+ * demoted rather than dropped, keeping it as a candidate without letting it set
+ * the default, exactly as a lone `kHanyuPinlu` reading is. It reaches 50
+ * characters, and {@link isNeutralAlone} holds back the ones a source says are
+ * neutral on their own.
+ *
+ * The other half of the same blind spot is already handled: where the field
+ * marks *no* tone at all it omitted the mark rather than meaning 轻声, which is
+ * {@link resolveFrequencyTones}.
+ */
+function demoteReducedNeutrals(
+  unihan: UnihanReadings,
+  readings: readonly string[],
+): readonly string[] {
+  const frequency = unihan.fields.get(FREQUENCY_FIELD) ?? [];
+  const reduced = new Set(
+    frequency.filter(
+      (reading) =>
+        !isToneMarked(reading) &&
+        frequency.some(
+          (other) => isToneMarked(other) && tonelessReading(other) === reading,
+        ),
+    ),
+  );
+  if (reduced.size === 0) {
+    return readings;
+  }
+  return [
+    ...readings.filter((reading) => !reduced.has(reading)),
+    ...readings.filter((reading) => reduced.has(reading)),
+  ];
+}
+
+/**
  * Parse a Unihan reading string for one character.
  *
  * Goes through the dictionary reader so that a Unihan reading gets the same
@@ -478,8 +602,21 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // spend the most of jieba's corpus on, and Unihan's order decides the rest.
   const mass = countCorpusMass({ phrase, cedict, jieba }, traditional);
   const defaults = new Map<string, readonly Syllable[]>();
+  let reducedNeutrals = 0;
   for (const [character, readings] of unihanReadings) {
-    const parsed = resolveFrequencyTones(readings)
+    const resolved = resolveFrequencyTones(readings);
+    // A 轻声 the frequency field only ever counted inside words is not the
+    // character's reading — unless a source says the bare character is neutral.
+    const ranked = isNeutralAlone(character, [
+      ...(cedictByWord.get(character) ?? []),
+      ...(cedictByHant.get(character) ?? []),
+    ])
+      ? resolved
+      : demoteReducedNeutrals(readings, resolved);
+    if (ranked !== resolved && ranked[0] !== resolved[0]) {
+      reducedNeutrals++;
+    }
+    const parsed = ranked
       .map((reading) => characterSyllable(character, reading))
       .filter((syllable) => syllable !== undefined);
     if (parsed.length > 0) {
@@ -598,10 +735,23 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
 
     // ── Disagreements: CC-CEDICT wins on neutral tones ────────
+    // Which sense to correct against is normally the nearest one. For a word on
+    // the 轻声 list it is the nearest sense that *reduces* a syllable, because
+    // there the nearest sense is the full-tone homograph the corpus happens to
+    // have written and the everyday word is the other one — see
+    // {@link NEUTRAL_SENSE_WORDS}.
+    const chosen = reading;
     const nearest =
       phraseAligned === undefined
         ? undefined
-        : nearestReading(reading, cedictReadings);
+        : ((NEUTRAL_SENSE_LOOKUP.has(word)
+            ? nearestReading(
+                chosen,
+                cedictReadings.filter((candidate) =>
+                  reducesToNeutral(chosen, candidate),
+                ),
+              )
+            : undefined) ?? nearestReading(chosen, cedictReadings));
     // A sense of a different length describes a different pronunciation, so
     // there is no syllable-for-syllable correction to make against it.
     if (nearest !== undefined) {
@@ -787,6 +937,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       phraseWords,
       cedictWords,
       neutralToneCorrections,
+      reducedNeutrals,
       erhuaRepairs,
       derivedTraditional,
       scriptPairs,

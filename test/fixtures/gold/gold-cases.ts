@@ -49,7 +49,25 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "睡觉", pinyin: "shuìjiào", script: "Hans", tags: ["polyphone"] },
   { hanzi: "觉得", pinyin: "juéde", script: "Hans", tags: ["polyphone", "neutral-tone"] },
   { hanzi: "大夫", pinyin: "dàifu", script: "Hans", tags: ["polyphone", "source-defect"] },
+  // Words CC-CEDICT reads two ways, where the phrase corpus wrote the full-tone
+  // sense and the everyday word is the 轻声 one: 东西 the thing against the
+  // compass directions, 告诉 the everyday verb against filing a complaint, 妻子
+  // the wife against the classical wife-and-children.
+  { hanzi: "飞机上可以吃东西吗？", pinyin: "Fēijī shàng kěyǐ chī dōngxi ma?", script: "Hans", tags: ["neutral-tone", "source-disagreement"] },
+  { hanzi: "东西方的文化", pinyin: "dōngxīfāng de wénhuà", script: "Hans", tags: ["neutral-tone", "source-disagreement"] },
+  { hanzi: "他告诉我", pinyin: "tā gàosu wǒ", script: "Hans", tags: ["neutral-tone", "source-disagreement"] },
+  { hanzi: "他的妻子", pinyin: "tā de qīzi", script: "Hans", tags: ["neutral-tone", "source-disagreement"] },
   { hanzi: "还是", pinyin: "háishi", script: "Hans", tags: ["polyphone", "source-disagreement"] },
+
+  // ── A character read on its own, not inside a word ─────────
+  // kHanyuPinlu counts occurrences, so a character reduced inside a common word
+  // — 西 in 东西, 朵 in 一朵, 夫 in 大夫 — outranked its own full tone there and
+  // became the character's reading. The 语气词 below are the control: their
+  // 轻声 really is what the bare character says.
+  { hanzi: "往西走", pinyin: "wǎng xī zǒu", script: "Hans", tags: ["neutral-tone", "source-defect"] },
+  { hanzi: "一朵花", pinyin: "yì duǒ huā", script: "Hans", tags: ["neutral-tone", "source-defect", "sandhi-yi"] },
+  { hanzi: "你去吗", pinyin: "nǐ qù ma", script: "Hans", tags: ["neutral-tone", "particle"] },
+  { hanzi: "我跑得快", pinyin: "wǒ pǎo de kuài", script: "Hans", tags: ["neutral-tone", "particle"] },
 
   // ── The crossing ambiguity that actually matters ───────────
   { hanzi: "南京市长江大桥", pinyin: "Nánjīng Shì Cháng Jiāng Dàqiáo", script: "Hans", tags: ["polyphone", "segmentation", "proper-noun"] },

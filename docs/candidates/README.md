@@ -42,8 +42,8 @@ from bytes it already has:
 
 | tier       |    keys | readings |  build | heap on top of the dictionary |
 | ---------- | ------: | -------: | -----: | ----------------------------: |
-| `core`     |  16,977 |      408 |   4 ms |                       0.04 MB |
-| `standard` |  97,999 |   39,167 |  62 ms |                       0.37 MB |
+| `core`     |  16,976 |      408 |   4 ms |                       0.04 MB |
+| `standard` |  97,998 |   39,167 |  62 ms |                       0.37 MB |
 | `full`     | 723,147 |  201,378 | 510 ms |                       2.03 MB |
 
 Twenty-five to sixty times what loading the forward index costs, on a machine
