@@ -189,8 +189,52 @@ than a `force`, which leaves `cháng` standing as a rival a single bucket dearer
 lengthens, so the decode answers with the likelier reading and still reports
 itself as [guessing](../confidence/). 漂亮 is out of the list for that reason.
 
+The sixth reads 弹 as `tán` where it is playing rather than a projectile:
+
+```ts
+convert(dictionary, "他会弹一点儿古筝。"); // "Tā huì tán yìdiǎnr gǔzhēng."
+convert(dictionary, "他钢琴弹得很好"); // "tā gāngqín tán de hěn hǎo"
+convert(dictionary, "子弹"); // "zǐdàn", through the word
+```
+
+弹 is stored `dàn` with `tán` as an alternate, and the sources agree about the
+character alone — Unihan counts `dàn(313)` against `tán(50)`. That is a fact
+about a corpus in which nearly every 弹 is ammunition, and every one of those is
+a word that carries its own reading: 子弹, 炸弹, 导弹, 原子弹 and 手榴弹 were
+right already. What the default was left deciding is the 弹 standing as a word
+of its own, and in running text that one is the verb.
+
+The object is what says so, as it is for 教: an instrument, a piece or its
+composer after it, or 了, 过, 着 or 得, since only a verb takes those. That
+object has to be **two characters or more**, which is the one place this
+departs from 教. 弹 joins bound morphemes into nouns far more readily —
+着弹点, 掷弹兵, 供弹爪, 底排弹时, 弹洞 — and each of those puts a single tagged
+character where an object would go, whereas what the verb governs is a word.
+教 could not take the same guard, 教我 and 教你 being its commonest shape.
+Nothing is needed for the other side, because the nominal compounds starting
+with 弹 are all listed: 弹匣, 弹坑, 弹壳, 弹片, 弹药, 弹道 and 弹头 reach their
+reading through the word.
+
+The 88,866 lines are the wrong corpus for this rule on their own, holding 38
+bare 弹 of which 31 are somebody playing something, so CPP's 20,147 sentences
+are measured with them as plain text: the benchmark is drawn from military
+articles, which is where the shapes this can break live. Over the 109,013
+lines together, 60 弹 decode as a word of their own, every one read `dàn`, and
+34 of the 60 are wrong. This moves 30, of which 29 are right and one is not —
+拆弹专家, a compound with an object's shape on both sides. It leaves five:
+开始弹, 四手联弹 and 弹起三次, which have no object to see, then
+用那种指法弹不会觉得费力 and 反手持法去弹班卓琴, where the decode reaches 班
+rather than 班卓琴. On CPP's 40 hand-labelled 弹 nothing moves, all 40 having
+been right through a word.
+
+As with 教, forcing the single-character edge is not enough on its own, since a
+reading spanning two characters carries its own 弹 in — 我的爱好是开车和弹吉他
+read `dàn` off 和弹, a pair held with no part of speech. A tagged word ending in
+弹 is left alone, which is every one that matters.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `TEACHING_JIAO`,
-`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `applyEdgeRules`) and
+`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`,
+`applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 
