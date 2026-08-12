@@ -19,6 +19,7 @@ import {
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
+  PLAYING_TAN,
   READING_RULES,
   TEACHING_JIAO,
 } from "./reading-rules.js";
@@ -119,6 +120,48 @@ const changDictionary = dictionaryOf([
   // part of speech, and the only member of its paradigm — 越高 and 越好 are
   // absent here as they are there.
   entry("越长", "yuè cháng", { frequency: 400 }),
+]);
+
+/**
+ * A dictionary of its own for 弹, kept apart for the reason 长's is: the costs
+ * are quantised from whatever entries a dictionary holds, so the 量词 cases
+ * should not pay for an instrument being added.
+ */
+const tanDictionary = dictionaryOf([
+  // 弹 as the real dictionary stores it: `dàn` with the verbal `tán` as an
+  // alternate, and tagged `v` for the verb the character mostly is.
+  entry("弹", "dàn", {
+    partOfSpeech: "v",
+    frequency: 4000,
+    alternates: [reading("tán")],
+  }),
+  entry("吉他", "jí tā", { partOfSpeech: "ns", frequency: 500 }),
+  entry("吉", "jí", { frequency: 800 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("得", "de", {
+    partOfSpeech: "ud",
+    frequency: 60_000,
+    alternates: [reading("dé"), reading("děi")],
+  }),
+  entry("的", "de", { partOfSpeech: "uj", frequency: 95_000 }),
+  entry("好", "hǎo", { partOfSpeech: "a", frequency: 70_000 }),
+  entry("和", "hé", { partOfSpeech: "c", frequency: 50_000 }),
+  // 和弹 exactly as the artifact holds it: a `hé dàn` reading carrying no part
+  // of speech, which is how the `dàn` reached 开车和弹吉他 from outside the
+  // character's own edges.
+  entry("和弹", "hé dàn", { frequency: 400 }),
+  // A tagged word ending in 弹, which the rule must leave whole.
+  entry("子", "zǐ", { frequency: 9000 }),
+  entry("子弹", "zǐ dàn", { partOfSpeech: "n", frequency: 2000 }),
+  // A bound morpheme with a noun's tag, which is what 弹洞, 掷弹兵 and 供弹爪
+  // put where an object would go.
+  entry("洞", "dòng", { partOfSpeech: "n", frequency: 5000 }),
+  // The 繁體 character, which is a different one and has to be named as such.
+  entry("彈", "dàn", {
+    partOfSpeech: "v",
+    frequency: 4000,
+    alternates: [reading("tán")],
+  }),
 ]);
 
 /**
@@ -332,5 +375,70 @@ describe("长 as an adjective", () => {
     const settled = grown.confidence[0];
     assertNonNullable(settled, "with a confidence for its one syllable");
     assertTrue(isUncertain(settled));
+  });
+});
+
+describe("弹 where it is playing", () => {
+  /** How a run of the 弹 cases reads, word by word. */
+  function readTan(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(tanDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads 弹 as tán in front of the instrument", () => {
+    assertArrayEquals(readTan("弹吉他"), ["tán", "jítā"]);
+  });
+
+  it("reads it as tán before the complement marker", () => {
+    // 弹得好: no object, and the 得 says it is a verb anyway.
+    assertArrayEquals(readTan("弹得好"), ["tán", "de", "hǎo"]);
+  });
+
+  it("keeps the default dàn where nothing is governed", () => {
+    // 毛瑟弹的 and 南部弹是 are the shape: a cartridge named after its maker,
+    // with a particle rather than an object behind it.
+    assertArrayEquals(readTan("弹的"), ["dàn", "de"]);
+  });
+
+  it("leaves the reading a tagged word carries alone", () => {
+    assertArrayEquals(readTan("子弹"), ["zǐdàn"]);
+  });
+
+  it("takes a single character after it for a compound, not an object", () => {
+    // 弹洞, 掷弹兵 and 供弹爪 are nouns 弹 is a morpheme of, and each puts one
+    // tagged character where an instrument would go.
+    assertArrayEquals(readTan("弹洞"), ["dàn", "dòng"]);
+  });
+
+  it("keeps the default where nothing follows at all", () => {
+    assertArrayEquals(readTan("弹"), ["dàn"]);
+  });
+
+  it("reads the 繁體 character the same way", () => {
+    assertArrayEquals(readTan("彈吉他"), ["tán", "jítā"]);
+  });
+
+  it("does nothing at all when the rule is not applied", () => {
+    assertArrayEquals(readTan("弹吉他", []), ["dàn", "jítā"]);
+  });
+
+  it("takes the dàn a two-character reading would carry in", () => {
+    // 和弹 is a pair the dictionary holds with no part of speech, and its `dàn`
+    // reached 我的爱好是开车和弹吉他 from outside the character's own edges.
+    assertArrayEquals(readTan("和弹吉他", [PLAYING_TAN]), [
+      "hé",
+      "tán",
+      "jítā",
+    ]);
+    assertArrayEquals(readTan("和弹吉他", []), ["hédàn", "jítā"]);
+  });
+
+  it("leaves a verb alone after a particle, which one cannot follow", () => {
+    assertArrayEquals(readTan("的弹吉他"), ["de", "dàn", "jítā"]);
+  });
+
+  it("settles the reading and not the spacing", () => {
+    assertArrayLength(decodeRun(tanDictionary, "弹吉他", [PLAYING_TAN]), 2);
   });
 });
