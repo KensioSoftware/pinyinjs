@@ -189,6 +189,29 @@ describe("the committed dictionary", () => {
       assertIdentical(full.reading("大夫"), "dài fu");
     });
 
+    it("takes the 轻声 sense of a word CC-CEDICT reads two ways", () => {
+      assertIdentical(full.reading("东西"), "dōng xi");
+      assertIdentical(full.reading("告诉"), "gào su");
+      assertIdentical(full.reading("故事"), "gù shi");
+      assertIdentical(full.reading("妻子"), "qī zi");
+    });
+
+    it("reaches only the word the list names", () => {
+      // 东西 is the thing; the compass directions are longer words of their own.
+      assertIdentical(full.reading("东西方"), "dōng xī fāng");
+      assertIdentical(full.reading("各奔东西"), "gè bèn dōng xī");
+      assertIdentical(full.reading("买东西"), "mǎi dōng xi");
+    });
+
+    it("leaves the words whose two senses are both current", () => {
+      // Not on the list, deliberately: 地方 is the place and the opposite of
+      // central, 大意 the gist and carelessness, 地道 a tunnel and the real
+      // thing. Choosing for these trades one wrong answer for another.
+      assertIdentical(full.reading("地方"), "dì fāng");
+      assertIdentical(full.reading("大意"), "dà yì");
+      assertIdentical(full.reading("地道"), "dì dào");
+    });
+
     it("keeps the polyphone collocations apart", () => {
       assertIdentical(full.reading("银行"), "yín háng");
       assertIdentical(full.reading("行长"), "háng zhǎng");

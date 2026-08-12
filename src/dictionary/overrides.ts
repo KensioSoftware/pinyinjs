@@ -26,6 +26,12 @@ export interface ReadingOverride {
  * override is for the case where the sources agree with each other and are
  * still wrong, which is rare and almost always means a word whose everyday
  * sense has been displaced by an archaic one.
+ *
+ * A word CC-CEDICT reads *both* ways, where only the choice between its senses
+ * is wrong, belongs in
+ * {@link import("./neutral-senses.js").NEUTRAL_SENSE_WORDS} instead — that
+ * table names the word and lets CC-CEDICT supply the reading, so nothing is
+ * typed by hand that a source already holds.
  */
 export const READING_OVERRIDES: readonly ReadingOverride[] = [
   {

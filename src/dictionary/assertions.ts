@@ -4,6 +4,7 @@ import { type Syllable, writeSyllable } from "../syllable/syllable.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
 import { traditionalForms } from "./artifact.js";
 import type { DictionaryEntry } from "./entry.js";
+import { NEUTRAL_SENSE_WORDS } from "./neutral-senses.js";
 
 /**
  * One thing that must be true of a freshly built dictionary.
@@ -166,6 +167,9 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("一丁不识", "yī dīng bù shí", "一 sandhi normalised out"),
   reads("一不小心", "yī bù xiǎo xīn", "一 and 不 sandhi normalised out"),
   reads("大夫", "dài fu", "override applied over both sources"),
+  reads("东西", "dōng xi", "the thing, not the compass directions"),
+  reads("东西方", "dōng xī fāng", "and the directions where that is the word"),
+  reads("告诉", "gào su", "the everyday verb, not filing a complaint"),
   reads("银行", "yín háng", "polyphone survives"),
   reads("行长", "háng zhǎng", "polyphone survives"),
   reads("头发", "tóu fa", "CC-CEDICT wins on the neutral tone"),
@@ -191,6 +195,36 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   reads("们", "men", "a genuine 轻声 is not given a tone it never had"),
   reads("吧", "ba", "the 语气词, not the 酒吧 the corpus mass counts"),
   reads("酒吧", "jiǔ bā", "and the word the character keeps its full tone in"),
+  // kHanyuPinlu writes 西 as `xi(902) xī(738)`, and the 902 are 东西: a 轻声 the
+  // field counted only inside words is not the bare character's reading. 吗 is
+  // the control — CC-CEDICT calls it a question particle in its own right, and
+  // a particle's whole use *is* the bare character.
+  {
+    // The table names words and lets CC-CEDICT supply the reading, so the way
+    // it can fail silently is a source refresh dropping or retoning the 轻声
+    // sense — after which the word would quietly go back to the full-tone
+    // homograph the list exists to get away from.
+    description: "every word on the 轻声 sense list reads with one",
+    check: (dictionary: BuiltDictionary): string | undefined => {
+      const wrong = NEUTRAL_SENSE_WORDS.filter(
+        (listed) =>
+          !(dictionary.get(listed.word)?.readings.cn ?? []).some(
+            (syllable) => syllable.tone === NEUTRAL_TONE,
+          ),
+      ).map(
+        (listed) =>
+          `${listed.word} ${dictionary.reading(listed.word) ?? "(missing)"}`,
+      );
+      return wrong.length === 0
+        ? undefined
+        : `listed for their 轻声 sense and not reading one: ${wrong.join(", ")}`;
+    },
+  },
+  reads("西", "xī", "a 轻声 counted only inside words does not lead"),
+  reads("子", "zǐ", "and a suffix sense is not a claim about the character"),
+  reads("夫", "fū", "nor is 大夫's and 丈夫's reduction"),
+  reads("吗", "ma", "but a 语气词 CC-CEDICT reads 轻声 alone keeps it"),
+  reads("得", "de", "and so does the structural particle"),
   {
     // The corpus mass ranking the character defaults counts a character only
     // inside the words the dictionary holds, and a 语气词 is never inside one:
