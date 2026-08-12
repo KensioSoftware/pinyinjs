@@ -345,6 +345,27 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "很长的道路"), "hěn cháng de dàolù");
     });
 
+    it("reads 弹 as tán where it is playing", () => {
+      assertIdentical(
+        convert(dictionary, "他会弹一点儿古筝。"),
+        "Tā huì tán yìdiǎnr gǔzhēng.",
+      );
+      assertIdentical(
+        convert(dictionary, "他钢琴弹得很好"),
+        "tā gāngqín tán de hěn hǎo",
+      );
+      // The other side of the page's claim: the words carry `dàn` themselves,
+      // and a cartridge with a particle behind it keeps the stored default.
+      assertIdentical(convert(dictionary, "子弹"), "zǐdàn");
+      assertIdentical(convert(dictionary, "弹药"), "dànyào");
+      assertStringIncludes(convert(dictionary, "魔弹的射手"), "dàn");
+      // The `dàn` that reached the position from a two-character reading.
+      assertIdentical(
+        convert(dictionary, "我的爱好是开车和弹吉他。"),
+        "Wǒ de àihào shì kāichē hé tán jítā.",
+      );
+    });
+
     it("takes the readings a caller asserts, with the reach the page gives", () => {
       assertIdentical(
         convert(dictionary, "这篇文章不太长。", {
