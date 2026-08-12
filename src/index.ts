@@ -187,6 +187,7 @@ export {
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
+  PLAYING_TAN,
   READING_RULES,
   TEACHING_JIAO,
 } from "./decode/reading-rules.js";
