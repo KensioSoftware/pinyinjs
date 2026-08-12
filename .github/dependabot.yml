@@ -13,6 +13,12 @@ updates:
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 5
+      # Our own packages skip the wait: we publish them, so there is no
+      # unknown publisher to wait out. This has to stay in step with
+      # minimumReleaseAgeExclude in pnpm-workspace.yaml — pnpm holds new
+      # releases back for a day of its own, and excluding a package here
+      # without excluding it there just moves the wait to a bump PR whose
+      # every job dies at "pnpm install --frozen-lockfile".
       exclude:
         - "@kensio/*"
     open-pull-requests-limit: 5

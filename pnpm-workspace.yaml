@@ -1,0 +1,11 @@
+---
+# pnpm holds every new release back for a day before it will install it, which
+# is the right default against a compromised publish but wrong for our own
+# packages: Dependabot excludes "@kensio/*" from its cooldown (see
+# .github/dependabot.yml) so the bump PR opens minutes after the publish, and
+# the lockfile it writes then fails "pnpm install --frozen-lockfile" on the
+# very same version. Every job on the PR dies at install, so the failure reads
+# as a broken bump rather than a policy one. We publish these ourselves and
+# they are dev-only, so the day of quarantine buys nothing.
+minimumReleaseAgeExclude:
+  - "@kensio/*"
