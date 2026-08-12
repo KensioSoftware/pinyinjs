@@ -79,7 +79,10 @@ plugins:
   # and reads `mainTemplate` and the partials as strings; the preset's 10 line
   # returns functions instead. Nothing errors when they are mismatched. The
   # header renders, every commit is dropped, and the release goes out with a
-  # version number and no notes under it.
+  # version number and no notes under it. Which is how 1.7.3 shipped empty: the
+  # pin was right, and Dependabot walked straight past it, because there was
+  # nothing for it to break. .github/dependabot.yml now holds it back, and that
+  # entry is the only thing keeping this pin in place.
   - - "@semantic-release/release-notes-generator"
     - preset: conventionalcommits
       presetConfig:
