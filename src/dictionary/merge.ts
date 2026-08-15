@@ -1,8 +1,6 @@
 import { characterCount, isSingleCharacter } from "../script/characters.js";
-import { toCanonicalGlyphs } from "../script/glyphs.js";
-import { type CedictEntry, nameBoundariesOf } from "../sources/cedict.js";
-import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
-import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
+import { nameBoundariesOf } from "../sources/cedict.js";
+import { isProperNounTag } from "../sources/jieba.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { attachErhua } from "./erhua.js";
@@ -19,7 +17,6 @@ import {
   nearestReading,
   preferNeutralTones,
   reducesToNeutral,
-  sensesForReading,
 } from "./reading-agreement.js";
 import {
   cedictReadingsOf,
@@ -32,64 +29,10 @@ import {
   buildCharacterDefaults,
   characterSyllable,
 } from "./character-defaults.js";
+import { traditionalFormOf } from "./traditional-form.js";
+import type { MergeResult, MergeSources } from "./merge-types.js";
 
-/**
- * The parsed sources the merge combines.
- */
-export interface MergeSources {
-  readonly unihanReadings: ReadonlyMap<string, UnihanReadings>;
-  readonly unihanVariants: UnihanVariants;
-  readonly phrase: ReadonlyMap<string, readonly string[]>;
-  readonly cedict: readonly CedictEntry[];
-  readonly jieba: ReadonlyMap<string, JiebaEntry>;
-}
-
-/**
- * Counts describing what the merge did, for the build to report and check.
- */
-export interface MergeStats {
-  readonly characters: number;
-  readonly phraseWords: number;
-  readonly cedictWords: number;
-  /** Words whose reading CC-CEDICT corrected to a neutral tone. */
-  readonly neutralToneCorrections: number;
-  /**
-   * Characters whose default was a 轻声 the frequency field only counted inside
-   * words — see {@link import("./frequency-tones.js").demoteReducedNeutrals}.
-   */
-  readonly reducedNeutrals: number;
-  /** Words whose trailing 儿 was folded into the syllable before it. */
-  readonly erhuaRepairs: number;
-  /** Words whose 繁體 form was derived rather than taken from CC-CEDICT. */
-  readonly derivedTraditional: number;
-  /** Entries with a 繁體 form differing from their 简体 one. */
-  readonly scriptPairs: number;
-  /** Entries a source writes more than one 繁體 spelling of. */
-  readonly variantSpellings: number;
-  /** Entries carrying a zh-TW reading delta a source stated. */
-  readonly taiwanReadings: number;
-  /** Compounds given a zh-TW delta composed from their constituents. */
-  readonly composedTaiwanReadings: number;
-  /**
-   * Words jieba tagged a proper noun that CC-CEDICT's lowercase pinyin vetoed.
-   */
-  readonly properNounVetoes: number;
-  /** Entries whose parts CC-CEDICT's capitalisation divides. */
-  readonly nameBoundaries: number;
-  /** Words dropped because no source gave a usable reading. */
-  readonly rejected: number;
-}
-
-/**
- * What the merge produced.
- */
-export interface MergeResult {
-  /** Entries, ordered by their 简体 form. */
-  readonly entries: readonly DictionaryEntry[];
-  /** Words no source could be read, with the reading that failed. */
-  readonly rejected: ReadonlyMap<string, readonly string[]>;
-  readonly stats: MergeStats;
-}
+export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
 
 /**
  * Order two strings by UTF-16 code unit, matching the key index's ordering.
@@ -267,52 +210,19 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
 
     // ── 繁體: taken from CC-CEDICT, derived where it is silent ─
-    // Which sense matters: 万 is 萬 when read wàn but stays 万 when read mò, and
-    // CC-CEDICT carries both as separate entries. Taking whichever came first
-    // in the file would pair the chosen reading with another sense's script.
-    const senses = sensesForReading(word, cedictEntries, reading);
-    const sense = senses[0];
-    let hant: string;
-    if (sense === undefined) {
-      // Canonicalised because the derivation settles each word against Unihan's
-      // variant lists with no single standard behind it, so 里 derives as 裏
-      // where the corpus overwhelmingly writes 裡. Both are the same character
-      // with the same reading, and a key written in the form the lookup path
-      // normalises *away from* can never be found — see the note below.
-      hant = toCanonicalGlyphs(traditional.convert(aligned ?? []));
-      if (hant !== word) {
-        derivedTraditional++;
-      }
-    } else {
-      hant = toCanonicalGlyphs(sense.traditional);
+    const { senses, hant, hantVariants, isDerived } = traditionalFormOf(
+      word,
+      cedictEntries,
+      reading,
+      aligned,
+      traditional,
+    );
+    if (isDerived) {
+      derivedTraditional++;
     }
     if (hant !== word) {
       scriptPairs++;
     }
-
-    // Other spellings of the same word, so that a 繁體 reader of either finds
-    // it. Only what a source writes out: composing spellings from per-character
-    // variants instead would add 229,482 keys to the full tier, almost all of
-    // them forms nobody writes — 方麵 for 方面, 公裡 for 公里 — because the
-    // reading that picks the right variant for one word does not generalise to
-    // every word the character appears in.
-    //
-    // Canonicalised for the same reason `hant` is, and deduplicated after:
-    // 裏面 and 裡面 are one spelling once the glyph forms are folded, and
-    // keying both would claim a variant that does not exist.
-    //
-    // The 简体 headword's own canonical spelling joins them where it differs,
-    // and that is not a nicety: the lookup path normalises 繁體 glyph forms
-    // before it searches, so a key written in a form it normalises *away from*
-    // can never be found. The phrase corpus carries a few hundred headwords
-    // spelled with 峯, 藴 or 枱 — 鹫峯寺, 义藴, 写字枱 — and without this they
-    // are entries nothing can reach.
-    const hantVariants = [
-      ...new Set([
-        ...senses.map((other) => toCanonicalGlyphs(other.traditional)),
-        toCanonicalGlyphs(word),
-      ]),
-    ].filter((form) => form !== hant && form !== word);
     if (hantVariants.length > 0) {
       variantSpellings++;
     }
