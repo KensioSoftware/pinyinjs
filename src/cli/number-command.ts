@@ -1,8 +1,5 @@
 /**
- * The subcommands that report on the run rather than on a text.
- *
- * `info` says which dictionary is loaded and how big it is; `number` reads a
- * number out in 汉字. Neither converts anything the user typed as Chinese.
+ * Reading numbers aloud, as quantities or digit by digit.
  */
 import { applySandhi, type SandhiOptions } from "../decode/sandhi.js";
 import { toCharacters } from "../script/characters.js";
@@ -12,46 +9,9 @@ import {
   percentHanzi,
   readNumeralHanzi,
 } from "../numerals/numerals.js";
-import {
-  ATTESTED_SYLLABLES,
-  DICTIONARY_SYLLABLES,
-} from "../syllable/inventory.js";
 import { type Syllable, writeSyllable } from "../syllable/syllable.js";
 import { convertOptions } from "./arguments.js";
-import { type Command, column, dictionaryOf } from "./command.js";
-
-/**
- * Report what is loaded, which is the first thing to check when output looks
- * wrong.
- */
-export const INFO: Command = {
-  name: "info",
-  summary: "which dictionary is loaded, and how big it is",
-  argument: "",
-  flags: [],
-  needsDictionary: true,
-  run: (input) => {
-    const keys = dictionaryOf(input).size;
-    const directory = input.choice.directory;
-    return [
-      {
-        lines: [
-          `tier       ${input.choice.tier}`,
-          `data       ${directory ?? "the artifacts that shipped"}`,
-          `keys       ${keys.toLocaleString("en-GB")}`,
-          `syllables  ${String(ATTESTED_SYLLABLES.length)} attested, ${String(DICTIONARY_SYLLABLES.size)} spellings in the inventory`,
-        ],
-        data: {
-          tier: input.choice.tier,
-          ...(directory !== undefined && { data: directory }),
-          keys,
-          attestedSyllables: ATTESTED_SYLLABLES.length,
-          inventorySpellings: DICTIONARY_SYLLABLES.size,
-        },
-      },
-    ];
-  },
-};
+import { type Command, column } from "./command.js";
 
 /**
  * Apply the sandhi a counted quantity takes, and only there.

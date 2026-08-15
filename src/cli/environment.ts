@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary, loadScriptTables } from "../dictionary/source.js";
 import { type ColourDepth, depthFrom } from "./colour.js";
-import type { CliEnvironment } from "./run.js";
+import type { CliEnvironment } from "./cli-input.js";
 
 /**
  * Where the artifacts that shipped with the package are.

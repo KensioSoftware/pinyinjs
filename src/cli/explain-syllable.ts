@@ -1,24 +1,15 @@
 /**
- * The subcommands that report what the dictionary and the decoder know.
+ * How one decoded syllable is reported by `explain`.
  *
- * `explain`, `lookup`, `syllable` and `sandhi` all answer questions about a
- * word rather than converting one, and they share the shape of that answer:
- * a decoded reading, the evidence behind it, and what else was on offer.
+ * Three questions about a single piece — how settled it was, what it beat, and
+ * how to write both — kept apart from the command so that the command is only
+ * the sweep over a text and the shape of its output.
  */
 import { isUncertain } from "../decode/confidence.js";
-export { SYLLABLE } from "./syllable-command.js";
-import { convertPieces, type ConvertedPiece } from "../decode/convert.js";
+import type { ConvertedPiece } from "../decode/convert.js";
 import { writeSyllable } from "../syllable/syllable.js";
-import { convertOptions, CONVERT_FLAGS } from "./arguments.js";
-import {
-  type Command,
-  type CommandInput,
-  column,
-  dictionaryOf,
-  paintedPieces,
-} from "./command.js";
-
-export { LOOKUP, SANDHI } from "./lookup-commands.js";
+import { convertOptions } from "./arguments.js";
+import { column, type CommandInput } from "./command.js";
 
 /**
  * How settled a decoded syllable was, in one word.
@@ -68,7 +59,7 @@ function alternativesOf(
 /**
  * One decoded syllable, as `explain` reports it.
  */
-function explainSyllable(
+export function explainSyllable(
   piece: ConvertedPiece,
   input: CommandInput,
 ): { readonly line: string; readonly data: unknown } {
@@ -98,38 +89,3 @@ function explainSyllable(
     },
   };
 }
-
-/**
- * Show what the decoder chose, syllable by syllable, and what it rejected.
- */
-export const EXPLAIN: Command = {
-  name: "explain",
-  summary: "show each syllable, how settled it was, and what it beat",
-  argument: "[text...]",
-  flags: [...CONVERT_FLAGS],
-  needsDictionary: true,
-  run: (input) => {
-    const dictionary = dictionaryOf(input);
-    const options = convertOptions(input.flags);
-
-    return input.texts.map((text) => {
-      const pieces = convertPieces(dictionary, text, options);
-      const pinyin = pieces.map((piece) => piece.text).join("");
-      const syllables = pieces
-        .filter((piece) => piece.syllable !== undefined)
-        .map((piece) => explainSyllable(piece, input));
-
-      return {
-        lines: [
-          `${text}  ${paintedPieces(pieces, input)}`,
-          ...syllables.map((syllable) => syllable.line),
-        ],
-        data: {
-          text,
-          pinyin,
-          syllables: syllables.map((syllable) => syllable.data),
-        },
-      };
-    });
-  },
-};
