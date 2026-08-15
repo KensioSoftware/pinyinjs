@@ -92,6 +92,21 @@ export function tagOf(context: EdgeContext, word: string | undefined): string {
 }
 
 /**
+ * What follows a 教 that is teaching where no object does: aspect and the
+ * complement marker, which only a verb takes.
+ *
+ * 他教了三年书, 他教过我英语, 她教书教得很快乐. Matched as characters rather
+ * than through their tags, because what the dictionary has starting at a 得 is
+ * as likely to be 得很 as the particle itself.
+ */
+export const ASPECT = new Set(["了", "过", "過", "着", "著", "得"]);
+
+/**
+ * The tag prefix jieba gives a particle, which nothing teaching can follow.
+ */
+export const PARTICLE_TAG = "u";
+
+/**
  * Whether every position can still be left, and the end still reached.
  *
  * A rule that forbids an edge can strand a stretch of the run — that is the one
