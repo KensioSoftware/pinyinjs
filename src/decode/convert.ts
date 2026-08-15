@@ -9,10 +9,7 @@ import { readNumbersIn } from "../numerals/text.js";
 import { toCharacters } from "../script/characters.js";
 import type { Locale } from "../script/script.js";
 import { divisionOf } from "./constituents.js";
-import { decodeRun, decodeRunScored } from "./decode.js";
-import { hintsWithin, resolveHints, type ResolvedHints } from "./hints.js";
-import { decodeGreedily } from "./greedy.js";
-import { READING_RULES } from "./reading-rules.js";
+import { hintsWithin, resolveHints } from "./hints.js";
 import { splitRuns, surroundingCharacters } from "./runs.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
@@ -32,57 +29,7 @@ export {
   type NumberStyle,
   sourcesOf,
 } from "./pieces.js";
-
-/**
- * How a Han run is turned into words, with whatever the decoder can say about
- * how settled they were.
- */
-type Decode = (
-  dictionary: Dictionary,
-  run: string,
-  before: string,
-  hints: ResolvedHints | undefined,
-) => readonly ScoredWord[];
-
-/**
- * A decoder that reports no confidence at all, which is every decoder but one.
- */
-function unscored(
-  decode: (
-    dictionary: Dictionary,
-    run: string,
-    before: string,
-    hints: ResolvedHints | undefined,
-  ) => readonly DecodedWord[],
-): Decode {
-  return (dictionary, run, before, hints) =>
-    decode(dictionary, run, before, hints).map((word) => ({
-      word,
-      confidence: [],
-    }));
-}
-
-/**
- * The lattice decoder, reporting nothing about its own confidence.
- */
-const LATTICE: Decode = unscored((dictionary, run, before, hints) =>
-  decodeRun(dictionary, run, READING_RULES, before, hints),
-);
-
-/**
- * The lattice decoder, with what each reading was chosen over.
- */
-const SCORED: Decode = (dictionary, run, before, hints) =>
-  decodeRunScored(dictionary, run, READING_RULES, before, hints);
-
-/**
- * The greedy baseline, which has nothing to report either way.
- *
- * The context in front of a run goes unused: longest-match has no way to weigh
- * one segmentation against another, which is the whole reason it is the
- * baseline, and a 汉字 it cannot report would only be another thing to trim.
- */
-const GREEDY: Decode = unscored(decodeGreedily);
+import { type Decode, GREEDY, LATTICE, SCORED } from "./decoders.js";
 
 /**
  * Write one Han run's worth of decoded words.

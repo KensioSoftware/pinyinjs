@@ -1,27 +1,16 @@
 /**
  * The romanisation systems the CLI can write, and the command that writes them.
  */
-import {
-  isBopomofo,
-  readBopomofo,
-  writeBopomofo,
-  writeBopomofoWord,
-} from "../transcription/bopomofo.js";
-import {
-  readGwoyeu,
-  writeGwoyeu,
-  writeGwoyeuWord,
-} from "../transcription/gwoyeu.js";
-import { readIpa, writeIpa, writeIpaWord } from "../transcription/ipa.js";
+import { isBopomofo, readBopomofo } from "../transcription/bopomofo.js";
+import { readGwoyeu } from "../transcription/gwoyeu.js";
+import { readIpa } from "../transcription/ipa.js";
 import {
   readWadeGiles,
   readWadeGilesLoosely,
   readWadeGilesWord,
   splitWadeGiles,
-  writeWadeGiles,
-  writeWadeGilesWord,
 } from "../transcription/wade-giles.js";
-import { readYale, writeYale, writeYaleWord } from "../transcription/yale.js";
+import { readYale } from "../transcription/yale.js";
 import { splitSyllables } from "../syllable/split.js";
 import {
   readSyllable,
@@ -36,6 +25,16 @@ import {
 } from "./arguments.js";
 import { type Painter, PLAIN, visibleLength } from "./colour.js";
 import { type Command, column } from "./command.js";
+import {
+  BOPOMOFO,
+  GWOYEU,
+  IPA,
+  WADE_GILES,
+  writtenWith,
+  YALE,
+} from "./systems.js";
+
+export { type System, SYSTEMS, systemNamed, writtenWith } from "./systems.js";
 
 /**
  * One syllable or word, in every system.
@@ -63,116 +62,6 @@ interface Reading {
   readonly syllables: readonly Syllable[];
   /** Whether the Wade-Giles this came from was spelled exactly. */
   readonly isExact?: boolean;
-}
-
-/**
- * How one system writes a word: a syllable at a time, and what it joins on.
- *
- * The `write*Word` helpers are each a map and a join, and this takes them apart
- * so that every syllable can be painted its own colour. That duplicates five
- * separators, so each entry carries the helper it stands in for and
- * `commands.test.ts` asserts the two agree over the whole inventory in every
- * tone state — rather than the list being trusted.
- */
-export interface System {
-  /** What `--from` and `--system` call it. */
-  readonly name: TranscriptionSource;
-  readonly write: (syllable: Syllable) => string;
-  readonly separator: string;
-  /**
-   * How the system writes a word, with its tones or without them.
-   *
-   * `--notation none` can only be honoured where the tone is written
-   * separately*: Wade-Giles, Yale and IPA all have a way to leave it off.
-   * Bopomofo marks it with a symbol of the script and Gwoyeu Romatzyh spells
-   * it into the syllable, so for those two there is nothing to leave off and
-   * the flag is ignored rather than approximated.
-   */
-  readonly word: (syllables: readonly Syllable[], hasTones: boolean) => string;
-  /**
-   * Whether the system writes the capitals the conversion settled.
-   *
-   * The three romanisations do, since a romanisation is a way of writing
-   * Chinese in the Latin alphabet and inherits what that alphabet does with a
-   * proper noun. IPA and bopomofo do not — see {@link toTranscription}.
-   */
-  readonly capitals: boolean;
-}
-
-const BOPOMOFO: System = {
-  name: "bopomofo",
-  write: writeBopomofo,
-  separator: " ",
-  word: (syllables) => writeBopomofoWord(syllables),
-  capitals: false,
-};
-
-const WADE_GILES: System = {
-  name: "wade-giles",
-  write: writeWadeGiles,
-  separator: "-",
-  word: (syllables, hasTones) =>
-    writeWadeGilesWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: true,
-};
-
-const YALE: System = {
-  name: "yale",
-  write: writeYale,
-  separator: "",
-  word: (syllables, hasTones) =>
-    writeYaleWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: true,
-};
-
-const GWOYEU: System = {
-  name: "gwoyeu",
-  write: writeGwoyeu,
-  separator: "",
-  word: (syllables) => writeGwoyeuWord(syllables),
-  capitals: true,
-};
-
-const IPA: System = {
-  name: "ipa",
-  write: writeIpa,
-  separator: "",
-  word: (syllables, hasTones) =>
-    writeIpaWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: false,
-};
-
-/**
- * Every system `transcribe` writes a column for, for the guard above.
- */
-export const SYSTEMS: readonly System[] = [
-  BOPOMOFO,
-  WADE_GILES,
-  YALE,
-  GWOYEU,
-  IPA,
-];
-
-/**
- * The system a `--system` or `--from` name stands for.
- */
-export function systemNamed(
-  name: TranscriptionSource | undefined,
-): System | undefined {
-  return SYSTEMS.find((system) => system.name === name);
-}
-
-/**
- * Write a run of syllables in one system, each syllable in its tone's colour.
- */
-export function writtenWith(
-  syllables: readonly Syllable[],
-  system: System,
-  paint: Painter,
-): string {
-  return syllables
-    .map((syllable) => paint(system.write(syllable), syllable.tone))
-    .join(system.separator);
 }
 
 /**

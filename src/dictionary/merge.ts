@@ -1,19 +1,11 @@
-import { characterCount, isSingleCharacter } from "../script/characters.js";
-import { nameBoundariesOf } from "../sources/cedict.js";
-import { isProperNounTag } from "../sources/jieba.js";
+import { isSingleCharacter } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
-import { attachErhua } from "./erhua.js";
 import { composeLocaleDeltas } from "./locale.js";
 import { NEUTRAL_SENSE_LOOKUP } from "./neutral-senses.js";
 import { OVERRIDE_READINGS } from "./overrides.js";
+import { readAlignedReading } from "./reading.js";
 import {
-  ERHUA_TOKEN,
-  readAlignedReading,
-  readDictionaryReading,
-} from "./reading.js";
-import {
-  isErhua,
   nearestReading,
   preferNeutralTones,
   reducesToNeutral,
@@ -21,15 +13,13 @@ import {
 import {
   cedictReadingsOf,
   indexCedict,
-  isOwnSense,
-  isSenseScopedNote,
   isSpeltTraditionally,
 } from "./cedict-senses.js";
-import {
-  buildCharacterDefaults,
-  characterSyllable,
-} from "./character-defaults.js";
+import { buildCharacterDefaults } from "./character-defaults.js";
 import { traditionalFormOf } from "./traditional-form.js";
+import { taiwanReadingOf } from "./taiwan-reading.js";
+import { properNounOf } from "./proper-noun.js";
+import { repairErhua } from "./erhua-repair.js";
 import type { MergeResult, MergeSources } from "./merge-types.js";
 
 export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
@@ -130,49 +120,17 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
 
     // ── 儿化, before anything compares two readings ────────────
-    if (isErhua(word, cedictReadings)) {
-      const attached = attachErhua(reading);
-      if (attached !== reading) {
-        erhuaRepairs++;
-        reading = attached;
-        // Fold the alignment the same way, so the 繁體 derivation still knows
-        // which character each syllable reads.
-        const last = aligned?.at(-1);
-        const previous = aligned?.at(-2);
-        if (
-          aligned !== undefined &&
-          last !== undefined &&
-          previous !== undefined
-        ) {
-          aligned = [
-            ...aligned.slice(0, -2),
-            {
-              characters: previous.characters + last.characters,
-              syllable: attached.at(-1),
-            },
-          ];
-        }
-      }
-    } else if (reading.every((syllable) => syllable.erhua !== true)) {
-      // 儿化 in the middle of a word, which the trailing repair above cannot
-      // reach: 一点儿事 is `yìdiǎnr shì`, three syllables over four characters,
-      // and the phrase corpus writes four. Only CC-CEDICT's `r5` marks it, and
-      // only it knows where, so where it does the whole reading is taken from
-      // it — 53 of its 683 `r5` entries carry the marker mid-word.
-      const marked = cedictEntries.find((entry) =>
-        entry.readings.includes(ERHUA_TOKEN),
-      );
-      const markedAligned =
-        marked === undefined
-          ? undefined
-          : readAlignedReading(word, marked.readings);
-      if (markedAligned !== undefined) {
-        erhuaRepairs++;
-        aligned = markedAligned;
-        reading = markedAligned
-          .map((read) => read.syllable)
-          .filter((syllable) => syllable !== undefined);
-      }
+    const repaired = repairErhua(
+      word,
+      reading,
+      aligned,
+      cedictEntries,
+      cedictReadings,
+    );
+    reading = repaired.reading;
+    aligned = repaired.aligned;
+    if (repaired.isRepaired) {
+      erhuaRepairs++;
     }
 
     // ── Disagreements: CC-CEDICT wins on neutral tones ────────
@@ -228,34 +186,13 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
 
     // ── zh-TW delta ───────────────────────────────────────────
-    // Only from a sense that reads the way this entry reads. CC-CEDICT hangs
-    // `Taiwan pr.` on one sense of a headword and the others know nothing about
-    // it: 著 is marked `zhuó` on the chess-move sense that reads `zhāo`, and
-    // reaching across for it gave the aspect particle 着 a 國語 reading of
-    // `zhuó`.
-    //
-    // A note can also sit on a sense of the *right* reading and still not be
-    // about the character — see `isSenseScopedNote`.
-    const taiwanSense = senses.find(
-      (entry) => entry.taiwanReadings !== undefined,
+    const taiwan = taiwanReadingOf(
+      word,
+      senses,
+      senseReadings,
+      reading,
+      unihanReadings.get(word),
     );
-    const taiwanTokens = isSenseScopedNote(word, taiwanSense)
-      ? undefined
-      : taiwanSense?.taiwanReadings;
-    const unihanTaiwan = unihanReadings.get(word)?.taiwanReading;
-    let taiwan: readonly Syllable[] | undefined;
-    if (taiwanTokens !== undefined) {
-      taiwan = readDictionaryReading(word, taiwanTokens);
-    } else if (isSingleCharacter(word) && unihanTaiwan !== undefined) {
-      const syllable = characterSyllable(word, unihanTaiwan);
-      taiwan = syllable === undefined ? undefined : [syllable];
-    }
-    if (
-      taiwan !== undefined &&
-      (isSameReading(taiwan, reading) || isOwnSense(taiwan, senseReadings))
-    ) {
-      taiwan = undefined;
-    }
     if (taiwan !== undefined) {
       taiwanReadings++;
     }
@@ -263,39 +200,16 @@ export function mergeSources(sources: MergeSources): MergeResult {
     // ── Frequency, part of speech and the proper noun bit ─────
     const jiebaEntry = jieba.get(word);
     const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
-    // jieba's tags propose a proper noun and CC-CEDICT's capitalisation can
-    // veto it. The tags on their own are noisy enough to be worth correcting:
-    // 沙发, 城市, 阿姨, 智能卡 and 花生仁 are all tagged nr or nz, and the
-    // decoder capitalises straight off this bit, so 我买了一个沙发 came out as
-    // `Wǒ mǎile yīge Shāfā`.
-    //
-    // The veto only ever demotes, never promotes. CC-CEDICT capitalises the
-    // pinyin of a proper noun, which is a claim about the word rather than a
-    // category it was sorted into — but it also capitalises any headword
-    // written with Latin letters, so a capital there is not proof on its own.
-    // A lowercase one is much better evidence, since nothing else would write
-    // it that way.
-    const isProperNoun =
-      jiebaEntry === undefined
-        ? cedictEntries.some((entry) => entry.isProperNoun)
-        : isProperNounTag(partOfSpeech) &&
-          (senses.length === 0 || senses.some((entry) => entry.isProperNoun));
-    if (isProperNounTag(partOfSpeech) && !isProperNoun) {
+    const { isProperNoun, boundaries, isVetoed } = properNounOf(
+      word,
+      jiebaEntry,
+      cedictEntries,
+      senses,
+      reading,
+    );
+    if (isVetoed) {
       properNounVetoes++;
     }
-
-    // ── Where the 姓 ends, where CC-CEDICT says so ────────────
-    // Only for a word that survived the veto above: an entry no one takes for a
-    // proper noun has no 姓 to end. The boundary counts characters, so it is
-    // only meaningful where this word reads one syllable per character — 儿化
-    // reads two characters as one syllable and could not be cut by it.
-    const isAligned = characterCount(word) === reading.length;
-    const boundaries =
-      isProperNoun && isAligned
-        ? (cedictEntries
-            .map((entry) => nameBoundariesOf(entry.readings))
-            .find((found) => found.length > 0) ?? [])
-        : [];
     if (boundaries.length > 0) {
       nameBoundaries++;
     }
