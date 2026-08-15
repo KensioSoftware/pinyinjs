@@ -1,7 +1,7 @@
 {
   "output_limit": 250,
-  "score_cap": 1000,
-  "exclude_directories": ["dist", "node_modules"],
+  "score_cap": 81,
+  "exclude_directories": ["dist", "node_modules", "scripts"],
   "exclude_filenames": ["*.test.ts", "*.d.ts"],
   "include_comments": false
 }
