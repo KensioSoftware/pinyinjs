@@ -1,58 +1,21 @@
+/**
+ * Walking the word list, and gathering what each word came to.
+ */
+import { byCodeUnit } from "./artifact-format.js";
 import type { DictionaryEntry } from "./entry.js";
 import { composeLocaleDeltas } from "./locale.js";
 import { indexCedict, isSpeltTraditionally } from "./cedict-senses.js";
 import { buildCharacterDefaults } from "./character-defaults.js";
-import { mergeWord, type WordSources, type WordTally } from "./merge-word.js";
-import type { MergeResult, MergeSources } from "./merge-types.js";
+import { mergeWord } from "./merge-word.js";
+import {
+  addTally,
+  type MergeResult,
+  type MergeSources,
+  NO_TALLY,
+  type WordSources,
+} from "./merge-types.js";
 
 export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
-
-/**
- * Order two strings by UTF-16 code unit, matching the key index's ordering.
- */
-function byCodeUnit(left: string, right: string): number {
-  if (left < right) {
-    return -1;
-  }
-  return left > right ? 1 : 0;
-}
-
-/**
- * Nothing counted yet.
- */
-const NO_COUNTS: WordTally = {
-  neutralToneCorrections: 0,
-  erhuaRepairs: 0,
-  derivedTraditional: 0,
-  scriptPairs: 0,
-  variantSpellings: 0,
-  taiwanReadings: 0,
-  properNounVetoes: 0,
-  nameBoundaries: 0,
-  characters: 0,
-  phraseWords: 0,
-  cedictWords: 0,
-};
-
-/**
- * Add one word's tally to the running total.
- */
-function added(total: WordTally, tally: WordTally): WordTally {
-  return {
-    neutralToneCorrections:
-      total.neutralToneCorrections + tally.neutralToneCorrections,
-    erhuaRepairs: total.erhuaRepairs + tally.erhuaRepairs,
-    derivedTraditional: total.derivedTraditional + tally.derivedTraditional,
-    scriptPairs: total.scriptPairs + tally.scriptPairs,
-    variantSpellings: total.variantSpellings + tally.variantSpellings,
-    taiwanReadings: total.taiwanReadings + tally.taiwanReadings,
-    properNounVetoes: total.properNounVetoes + tally.properNounVetoes,
-    nameBoundaries: total.nameBoundaries + tally.nameBoundaries,
-    characters: total.characters + tally.characters,
-    phraseWords: total.phraseWords + tally.phraseWords,
-    cedictWords: total.cedictWords + tally.cedictWords,
-  };
-}
 
 /**
  * Build the merged dictionary from the four parsed sources.
@@ -98,11 +61,11 @@ export function mergeSources(sources: MergeSources): MergeResult {
 
   const entries: DictionaryEntry[] = [];
   const rejected = new Map<string, readonly string[]>();
-  let counts = NO_COUNTS;
+  let counts = NO_TALLY;
 
   for (const word of [...words].toSorted(byCodeUnit)) {
     const merged = mergeWord(word, wordSources);
-    counts = added(counts, merged.tally);
+    counts = addTally(counts, merged.tally);
     if (merged.rejected !== undefined) {
       rejected.set(word, merged.rejected);
       continue;

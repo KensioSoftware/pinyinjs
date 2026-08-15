@@ -133,3 +133,23 @@ export interface MergedWord {
   readonly rejected: readonly string[] | undefined;
   readonly tally: WordTally;
 }
+
+/**
+ * Add one word's tally to the running total.
+ */
+export function addTally(total: WordTally, tally: WordTally): WordTally {
+  return {
+    neutralToneCorrections:
+      total.neutralToneCorrections + tally.neutralToneCorrections,
+    erhuaRepairs: total.erhuaRepairs + tally.erhuaRepairs,
+    derivedTraditional: total.derivedTraditional + tally.derivedTraditional,
+    scriptPairs: total.scriptPairs + tally.scriptPairs,
+    variantSpellings: total.variantSpellings + tally.variantSpellings,
+    taiwanReadings: total.taiwanReadings + tally.taiwanReadings,
+    properNounVetoes: total.properNounVetoes + tally.properNounVetoes,
+    nameBoundaries: total.nameBoundaries + tally.nameBoundaries,
+    characters: total.characters + tally.characters,
+    phraseWords: total.phraseWords + tally.phraseWords,
+    cedictWords: total.cedictWords + tally.cedictWords,
+  };
+}

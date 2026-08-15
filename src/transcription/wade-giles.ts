@@ -9,11 +9,9 @@
  */
 import type { Syllable } from "../syllable/syllable.js";
 import { ERHUA_SUFFIX } from "./wade-giles-spelling.js";
-import {
-  INDEX,
-  normalise,
-  readWadeGilesLoosely,
-} from "./wade-giles-syllable.js";
+import { INDEX } from "./wade-giles-index.js";
+import { normalise } from "./wade-giles-parse.js";
+import { readWadeGilesLoosely } from "./wade-giles-syllable.js";
 
 export {
   type WadeGilesOptions,
