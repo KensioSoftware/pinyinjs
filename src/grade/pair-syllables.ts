@@ -7,7 +7,8 @@
 import type { PinyinVerdict, SpacingVerdict } from "./check.js";
 import { alignSequences } from "../accuracy/align.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
-import type { ExpectedSyllable, TypedSyllable } from "./check-readings.js";
+import type { ExpectedSyllable } from "./check-readings.js";
+import type { TypedSyllable } from "./typed-reading.js";
 
 /**
  * Which expected syllable a typed one was matched with, where either has one.

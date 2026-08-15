@@ -1,6 +1,17 @@
+/**
+ * The script conversion tables, and what a conversion does with them.
+ *
+ * How the tables are stored is a separate question, and lives in the
+ * `conversion-format`, `-write` and `-read` modules: everything here is about
+ * the mapping itself, so that a caller converting text never meets the file
+ * format, and changing the format never touches the conversion.
+ */
 import type { Syllable } from "../syllable/syllable.js";
 import { readSyllable, writeSyllable } from "../syllable/syllable.js";
 import { toCharacters } from "./characters.js";
+
+export { readScriptTables } from "./conversion-read.js";
+export { writeScriptTables } from "./conversion-write.js";
 
 /**
  * How one character converts into the other script.
@@ -135,149 +146,6 @@ export function convertCharacters(
     converted += convertCharacter(table, character, readings[at]);
   }
   return converted;
-}
-
-const COLUMN = "\t";
-
-const LINE = "\n";
-
-const READING = ",";
-
-const READING_FORM = "=";
-
-/**
- * Line tags, one per table, so that all six ship as one fetchable file.
- */
-const TAGS = {
-  toTraditional: "t",
-  toSimplified: "s",
-  traditionalWord: "w",
-  simplifiedWord: "x",
-  hansOnly: "h",
-  hantOnly: "H",
-} as const;
-
-/**
- * Write one character table's lines.
- */
-function writeCharacterTable(
-  tag: string,
-  table: ReadonlyMap<string, CharacterConversion>,
-): string[] {
-  return [...table].map(([character, conversion]) => {
-    const readings = [...(conversion.byReading ?? [])]
-      .map(([key, form]) => `${key}${READING_FORM}${form}`)
-      .join(READING);
-    const also = (conversion.also ?? []).join("");
-    const columns = [tag, character, conversion.to, readings, also];
-    // Trailing empty columns say nothing and are dropped, which is most lines:
-    // the common case is a character with one form and no reading to condition.
-    while (columns.at(-1) === "") {
-      columns.pop();
-    }
-    return columns.join(COLUMN);
-  });
-}
-
-/**
- * Write the tables as the artifact text.
- *
- * One line per mapping, tagged by which table it belongs to, so the whole of
- * script conversion is a single file to fetch and a single scan to read. The
- * format is the same shape as the dictionary's: separators rather than syntax,
- * so that reading it back is a split rather than a parse.
- */
-export function writeScriptTables(tables: ScriptTables): string {
-  return [
-    ...writeCharacterTable(TAGS.toTraditional, tables.toTraditional),
-    ...writeCharacterTable(TAGS.toSimplified, tables.toSimplified),
-    ...[...tables.traditionalWords].map(([hans, hant]) =>
-      [TAGS.traditionalWord, hans, hant].join(COLUMN),
-    ),
-    ...[...tables.simplifiedWords].map(([hant, hans]) =>
-      [TAGS.simplifiedWord, hant, hans].join(COLUMN),
-    ),
-    ...[...tables.hansOnly].map((character) =>
-      [TAGS.hansOnly, character].join(COLUMN),
-    ),
-    ...[...tables.hantOnly].map((character) =>
-      [TAGS.hantOnly, character].join(COLUMN),
-    ),
-    "",
-  ].join(LINE);
-}
-
-/**
- * Read one character table line into its conversion.
- */
-function readConversion(
-  to: string,
-  readings: string,
-  also: string,
-): CharacterConversion {
-  const pairs = readings === "" ? [] : readings.split(READING);
-  const byReading = new Map<string, string>();
-  for (const pair of pairs) {
-    const [key = "", form = ""] = pair.split(READING_FORM);
-    if (form !== "") {
-      byReading.set(key, form);
-    }
-  }
-  return {
-    to,
-    ...(byReading.size > 0 && { byReading }),
-    ...(also !== "" && { also: toCharacters(also) }),
-  };
-}
-
-/**
- * Read the tables back from the artifact text.
- *
- * Unknown tags are skipped rather than rejected, so that a future table can be
- * added without an older reader refusing the file outright.
- */
-export function readScriptTables(text: string): ScriptTables {
-  const toTraditional = new Map<string, CharacterConversion>();
-  const toSimplified = new Map<string, CharacterConversion>();
-  const traditionalWords = new Map<string, string>();
-  const simplifiedWords = new Map<string, string>();
-  const hansOnly = new Set<string>();
-  const hantOnly = new Set<string>();
-
-  const characterTables = new Map<string, Map<string, CharacterConversion>>([
-    [TAGS.toTraditional, toTraditional],
-    [TAGS.toSimplified, toSimplified],
-  ]);
-  const wordTables = new Map<string, Map<string, string>>([
-    [TAGS.traditionalWord, traditionalWords],
-    [TAGS.simplifiedWord, simplifiedWords],
-  ]);
-  const characterSets = new Map<string, Set<string>>([
-    [TAGS.hansOnly, hansOnly],
-    [TAGS.hantOnly, hantOnly],
-  ]);
-
-  for (const line of text.split(LINE)) {
-    const [tag = "", from = "", to = "", readings = "", also = ""] =
-      line.split(COLUMN);
-    if (from === "") {
-      continue;
-    }
-    // Dispatching on a map rather than a switch keeps an unknown tag a no-op,
-    // so a file written by a later version reads as much as this one knows.
-    characterTables.get(tag)?.set(from, readConversion(to, readings, also));
-    wordTables.get(tag)?.set(from, to);
-    characterSets.get(tag)?.add(from);
-  }
-
-  return {
-    toTraditional,
-    toSimplified,
-    traditionalWords,
-    simplifiedWords,
-    hansOnly,
-    hantOnly,
-  };
 }
 
 /**

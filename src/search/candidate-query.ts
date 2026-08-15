@@ -6,7 +6,7 @@
  */
 import { stripToneMarks } from "../tone/tone-mark.js";
 import { readingKey } from "./reverse-index-format.js";
-import { SEPARATORS } from "./candidates.js";
+import { SEPARATORS } from "./candidate-writings.js";
 import { normaliseUmlaut } from "../syllable/syllable.js";
 
 /**
