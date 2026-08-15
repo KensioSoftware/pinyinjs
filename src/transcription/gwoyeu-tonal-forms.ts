@@ -6,6 +6,7 @@
  * it. `gwoyeu.ts` builds the basic form and hands it here.
  */
 import type { Initial } from "../syllable/phonology.js";
+import { firstTone, secondTone, swapped } from "./gwoyeu-first-second.js";
 
 /**
  * A tone that GR spells, which is the four contour tones.
@@ -14,91 +15,7 @@ import type { Initial } from "../syllable/phonology.js";
  * tone has nothing to write.
  */
 export type ContourTone = 1 | 2 | 3 | 4;
-import {
-  isVowel,
-  MAIN_VOWELS,
-  SONORANT_INITIALS,
-  vowelSpan,
-} from "./gwoyeu-vowels.js";
-/**
- * Tone 1: the basic form, with `-h-` inserted after a sonorant initial.
- */
-function firstTone(form: string, initial: Initial): string {
-  return SONORANT_INITIALS.has(initial)
-    ? `${form.slice(0, 1)}h${form.slice(1)}`
-    : form;
-}
-
-/**
- * The i or u a glide can be written on, turned into y or w.
- *
- * The rule is `NiV → NyV` and `NuV → NwV`, where N is a non-vowel or nothing at
- * all: the i or u has to be the medial rather than part of a diphthong, which
- * is what the "not preceded by a vowel" test says. The `+ -i if final` clause
- * covers the rimes that are nothing but the medial — `i` becomes `yi` and not
- * a bare `y`.
- */
-function glided(form: string): string | undefined {
-  for (const [letter, glide] of [
-    ["i", "y"],
-    ["u", "w"],
-  ] as const) {
-    const at = form.indexOf(letter);
-    if (at !== -1 && !isVowel(form[at - 1])) {
-      const rest = form.slice(at + 1);
-      return `${form.slice(0, at)}${glide}${rest === "" ? letter : rest}`;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Tone 2: i/u to y/w, or an `-r` after the vowels.
- */
-function secondTone(form: string, initial: Initial): string {
-  if (SONORANT_INITIALS.has(initial)) {
-    return form;
-  }
-  const glide = glided(form);
-  if (glide !== undefined) {
-    return glide;
-  }
-  const [, end] = vowelSpan(form);
-  return `${form.slice(0, end + 1)}r${form.slice(end + 1)}`;
-}
-
-/**
- * The i or u a third tone can be swapped for e or o.
- *
- * `Vi`/`iV` becomes `Ve`/`eV` and `Vu`/`uV` becomes `Vo`/`oV`, so the letter
- * has to sit beside a vowel; where both an i and a u are available it is
- * whichever comes *first* that changes, which is why 交 jiǎo is `jeau` and not
- * `jiao`. The swap is abandoned where it would produce `ee` or `oo`, both of
- * which are the doubling below and would collide with it.
- */
-function swapped(form: string): string | undefined {
-  const found = (
-    [
-      ["i", "e"],
-      ["u", "o"],
-    ] as const
-  )
-    .map(([letter, swap]) => [form.indexOf(letter), swap] as const)
-    .filter(([at]) => at !== -1)
-    .toSorted((one, other) => one[0] - other[0])[0];
-  if (found === undefined) {
-    return undefined;
-  }
-  const [at, swap] = found;
-  const before = form[at - 1];
-  const after = form[at + 1];
-  const isBeside = isVowel(before) || isVowel(after);
-  const isDoubles = before === swap || after === swap;
-  return isBeside && !isDoubles
-    ? `${form.slice(0, at)}${swap}${form.slice(at + 1)}`
-    : undefined;
-}
-
+import { isVowel, MAIN_VOWELS, vowelSpan } from "./gwoyeu-vowels.js";
 /**
  * Tone 3, where the swap does not apply: double the main vowel.
  *
