@@ -1,20 +1,24 @@
-import { slug } from "../format/slug.js";
-import {
-  SCRIPT_FLAGS,
-  scriptFrom,
-  scriptTarget,
-  SLUG_FLAGS,
-  slugOptions,
-  UsageError,
-} from "./arguments.js";
-import { isUncertainChoice, toScriptPieces } from "../decode/script.js";
-import type { ScriptTables } from "../script/conversion.js";
-import { type Command, type CommandInput, dictionaryOf } from "./command.js";
+/**
+ * Every subcommand the CLI has, and how one is found by name.
+ *
+ * Only the list: each command lives in a module beside its subject, so that
+ * adding one is a new file and a new line here rather than an edit to whatever
+ * this file happened to have grown into.
+ */
+import type { Command } from "./command.js";
 import { TRANSCRIBE } from "./transcribe-command.js";
-import { EXPLAIN, LOOKUP, SANDHI, SYLLABLE } from "./inspect-commands.js";
-import { CHECK, MATCH } from "./search-commands.js";
-import { ANNOTATE, CONVERT, HTML, SEGMENT } from "./convert-commands.js";
-import { INFO, NUMBER } from "./report-commands.js";
+import { SLUG } from "./slug-command.js";
+import { SCRIPT } from "./script-command.js";
+import { EXPLAIN } from "./explain-command.js";
+import { LOOKUP, SANDHI } from "./lookup-commands.js";
+import { SYLLABLE } from "./syllable-command.js";
+import { CHECK } from "./check-command.js";
+import { MATCH } from "./match-command.js";
+import { CONVERT } from "./convert-command.js";
+import { ANNOTATE, HTML } from "./html-commands.js";
+import { SEGMENT } from "./segment-command.js";
+import { INFO } from "./info-command.js";
+import { NUMBER } from "./number-command.js";
 
 export type { Command, CommandInput, Reported } from "./command.js";
 export {
@@ -23,86 +27,6 @@ export {
   systemNamed,
   writtenWith,
 } from "./transcribe-command.js";
-
-/**
- * Write a text as a slug.
- *
- * Uncoloured, for the reason `html` is: a slug is a string for a machine, and
- * colouring the tones in something meant to be pasted into a URL would be
- * putting escape codes where they cannot go.
- */
-const SLUG: Command = {
-  name: "slug",
-  summary: "hanzi to a URL-safe slug",
-  argument: "[text...]",
-  flags: [...SLUG_FLAGS],
-  needsDictionary: true,
-  run: (input) => {
-    const options = slugOptions(input.flags);
-    return input.texts.map((text) => {
-      const written = slug(dictionaryOf(input), text, options);
-      return { lines: [written], data: { text, slug: written } };
-    });
-  },
-};
-
-/**
- * The tables a command declared it needs.
- */
-function scriptTablesOf(input: CommandInput): ScriptTables {
-  /* c8 ignore next 3 -- loaded for every command that declares it needs them */
-  if (input.scriptTables === undefined) {
-    throw new UsageError("the script conversion tables were not loaded");
-  }
-  return input.scriptTables;
-}
-
-/**
- * Convert between 简体 and 繁體, one line in and one line out.
- *
- * The per-character evidence rides in the JSON rather than the lines, because
- * the answer a person wants here is the converted text and a second column of
- * `locked` on every character would bury it. `--json` carries what was a guess.
- */
-const SCRIPT: Command = {
-  name: "script",
-  summary: "简体 ↔ 繁體 conversion",
-  argument: "[text...]",
-  flags: [...SCRIPT_FLAGS],
-  needsDictionary: true,
-  needsScriptTables: true,
-  run: (input) => {
-    const to = scriptTarget(input.flags);
-    const from = scriptFrom(input.flags);
-    return input.texts.map((text) => {
-      const { text: written, choices } = toScriptPieces(
-        dictionaryOf(input),
-        scriptTablesOf(input),
-        text,
-        { to, ...(from !== undefined && { from }) },
-      );
-      return {
-        lines: [written],
-        data: {
-          text,
-          script: written,
-          to,
-          characters: choices.map((choice) => ({
-            from: choice.from,
-            to: choice.to,
-            evidence: choice.evidence,
-            ...(choice.alternatives.length > 0 && {
-              alternatives: [...choice.alternatives],
-            }),
-          })),
-          uncertain: choices
-            .filter((choice) => isUncertainChoice(choice))
-            .map((choice) => choice.from),
-        },
-      };
-    });
-  },
-};
 
 /**
  * Every subcommand, in the order the help lists them.
