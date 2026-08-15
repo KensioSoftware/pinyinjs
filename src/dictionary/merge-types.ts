@@ -7,7 +7,9 @@
 import type { CedictEntry } from "../sources/cedict.js";
 import type { JiebaEntry } from "../sources/jieba.js";
 import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
+import type { Syllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
+import type { TraditionalTable } from "./traditional-table.js";
 
 /**
  * The parsed sources the merge combines.
@@ -65,4 +67,69 @@ export interface MergeResult {
   /** Words no source could be read, with the reading that failed. */
   readonly rejected: ReadonlyMap<string, readonly string[]>;
   readonly stats: MergeStats;
+}
+
+/**
+ * What the sources between them say about one word, indexed once for all of
+ * them.
+ *
+ * The per-word view of {@link MergeSources}: the same data, turned inside out
+ * so that merging a word is a handful of map reads rather than a scan.
+ */
+export interface WordSources {
+  readonly cedictByWord: ReadonlyMap<string, readonly CedictEntry[]>;
+  readonly cedictByHant: ReadonlyMap<string, readonly CedictEntry[]>;
+  readonly phrase: ReadonlyMap<string, readonly string[]>;
+  readonly jieba: ReadonlyMap<string, JiebaEntry>;
+  readonly unihanReadings: ReadonlyMap<string, UnihanReadings>;
+  readonly traditional: TraditionalTable;
+  readonly defaults: ReadonlyMap<string, readonly Syllable[]>;
+}
+
+/**
+ * What one word contributed to the build's counts.
+ *
+ * The per-word view of {@link MergeStats}, minus the counts no single word can
+ * move: `reducedNeutrals` and `composedTaiwanReadings` are settled by passes
+ * over the whole dictionary, and `rejected` is counted by the caller.
+ */
+export interface WordTally {
+  readonly neutralToneCorrections: number;
+  readonly erhuaRepairs: number;
+  readonly derivedTraditional: number;
+  readonly scriptPairs: number;
+  readonly variantSpellings: number;
+  readonly taiwanReadings: number;
+  readonly properNounVetoes: number;
+  readonly nameBoundaries: number;
+  readonly characters: number;
+  readonly phraseWords: number;
+  readonly cedictWords: number;
+}
+
+/**
+ * A word that contributed nothing, because no source could read it.
+ */
+export const NO_TALLY: WordTally = {
+  neutralToneCorrections: 0,
+  erhuaRepairs: 0,
+  derivedTraditional: 0,
+  scriptPairs: 0,
+  variantSpellings: 0,
+  taiwanReadings: 0,
+  properNounVetoes: 0,
+  nameBoundaries: 0,
+  characters: 0,
+  phraseWords: 0,
+  cedictWords: 0,
+};
+
+/**
+ * One word's entry, or the reading that failed.
+ */
+export interface MergedWord {
+  readonly entry: DictionaryEntry | undefined;
+  /** The reading no source could make sense of, where that is what happened. */
+  readonly rejected: readonly string[] | undefined;
+  readonly tally: WordTally;
 }

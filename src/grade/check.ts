@@ -2,12 +2,8 @@ import type { ConvertOptions } from "../decode/convert.js";
 import { pairSyllables, spacingFor, verdictFor } from "./pair-syllables.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { type Syllable, writeSyllableSpelling } from "../syllable/syllable.js";
-import {
-  type ExpectedSyllable,
-  expectedReading,
-  type TypedSyllable,
-  typedReading,
-} from "./check-readings.js";
+import { type ExpectedSyllable, expectedReading } from "./check-readings.js";
+import { type TypedSyllable, typedReading } from "./typed-reading.js";
 
 /**
  * What one syllable of a typed transcription turned out to be.
@@ -195,7 +191,7 @@ function checkPair(
  *   and both parse, so `bei3jīng` is not a spelling mistake.
  * - **A reading the decoder itself was unsure of.** Where another reading of
  *   the same character was there for the taking, it is accepted — see
- *   {@link rejectedReadings}. 银行 is not one of those: the word settles both
+ *   {@link import("./reading-tolerance.js").rejectedReadings}. 银行 is not one of those: the word settles both
  *   syllables, so `yínxíng` really is wrong.
  * - **Sandhi either way.** 你好 is written `nǐ hǎo` and said `ní hǎo`, and 不是
  *   is `bú shì` written and `bù shì` underneath. Both pass.

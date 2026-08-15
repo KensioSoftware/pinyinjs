@@ -7,77 +7,19 @@
  */
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
+import { chunksFor } from "./match-chunks.js";
+import { bestMatch, type PinyinMatch } from "./match-ranking.js";
 import { CharacterReadings } from "./match-readings.js";
-import type { Syllable } from "../syllable/syllable.js";
-import { type QueryChunk, readQueryChunks, skipSeparators } from "./query.js";
+import { skipSeparators } from "./query.js";
 import {
   COMPLETE,
-  CONTEXT_READING,
-  contextOf,
   CROSSED,
-  EARLINESS,
-  type MatchRange,
   type Path,
   RARE_READING,
-  rangesOf,
   SPELLED_OUT,
-  type Step,
-  WORD_START,
 } from "./match-scoring.js";
 
-/**
- * What a query matched, and how well.
- */
-export interface PinyinMatch {
-  /**
-   * The stretches of the haystack the query spelled, in order.
-   *
-   * Usually one. There is more than one where the query ran over something
-   * with no reading of its own: 北京·大学 is matched by `bjdx` as two ranges
-   * with the separator between them left out, so that highlighting them marks
-   * what was matched rather than what lay between.
-   */
-  readonly ranges: readonly MatchRange[];
-  /**
-   * How good the match is, where higher is better.
-   *
-   * For ordering the haystacks one query matched — sort descending and the
-   * best is first. Comparable within a query and not across queries: what it
-   * weighs is described at {@link CONTEXT_READING}, and none of it is a
-   * probability.
-   */
-  readonly score: number;
-}
-
-/**
- * How much of a match was written the way the text is actually read.
- *
- * Asked of what the query wrote rather than of the reading the search happened
- * to take it by: 西 is stored with a neutral-toned `xi` and a first-tone `xī`,
- * and a query writing `xi` has picked neither of them over the other. What it
- * has done is write something the settled reading can account for, which is the
- * question — and the one `yx` over 银行 answers differently from `yh`.
- */
-function agreementOf(
-  query: string,
-  steps: readonly Step[],
-  preferred: readonly (Syllable | undefined)[],
-): number {
-  let comparable = 0;
-  let agreeing = 0;
-  for (const step of steps) {
-    const settled = preferred[step.at];
-    if (!step.isRead || settled === undefined) {
-      continue;
-    }
-    comparable++;
-    const written = readQueryChunks(query, step.from, settled);
-    if (written.some((chunk) => chunk.next === step.next)) {
-      agreeing++;
-    }
-  }
-  return comparable === 0 ? 0 : agreeing / comparable;
-}
+export type { PinyinMatch } from "./match-ranking.js";
 
 /**
  * One query being read over one haystack.
@@ -102,38 +44,6 @@ export class Search {
     this.#characters = toCharacters(haystack);
     this.#readings = new CharacterReadings(dictionary, this.#characters);
     this.#query = query;
-  }
-
-  /**
-   * Every position the query can be read up to by one whole reading.
-   *
-   * A reading is usually one syllable, and is not always: 瓩 is `qiānwǎ`, one
-   * character read as two. The query accounts for them in order, and may run
-   * out partway through, which is a query still being typed.
-   */
-  #chunksFor(
-    from: number,
-    reading: readonly Syllable[],
-  ): readonly QueryChunk[] {
-    let reached: readonly QueryChunk[] = [{ next: from, isFull: true }];
-    for (const syllable of reading) {
-      const found: QueryChunk[] = [];
-      for (const chunk of reached) {
-        const start = skipSeparators(this.#query, chunk.next);
-        if (start === this.#query.length) {
-          found.push({ next: start, isFull: chunk.isFull });
-          continue;
-        }
-        for (const one of readQueryChunks(this.#query, start, syllable)) {
-          found.push({
-            next: one.next,
-            isFull: chunk.isFull && one.isFull,
-          });
-        }
-      }
-      reached = found;
-    }
-    return reached;
   }
 
   /**
@@ -168,7 +78,7 @@ export class Search {
 
     let best: Path | undefined;
     for (const candidate of candidates) {
-      for (const chunk of this.#chunksFor(start, candidate.reading)) {
+      for (const chunk of chunksFor(this.#query, start, candidate.reading)) {
         const rest = this.#from(at + candidate.characters, chunk.next);
         if (rest === undefined) {
           continue;
@@ -235,29 +145,8 @@ export class Search {
    */
   best(): PinyinMatch | undefined {
     const found = this.#everyMatch();
-    if (found.length === 0) {
-      return undefined;
-    }
-
-    const context = contextOf(this.#dictionary, this.#haystack);
-    let best: PinyinMatch | undefined;
-    for (const path of found) {
-      const ranges = rangesOf(path.steps);
-      /* c8 ignore next 3 -- a match always starts on a character it read */
-      if (ranges[0] === undefined) {
-        continue;
-      }
-      const start = ranges[0].at;
-      const score =
-        CONTEXT_READING *
-          agreementOf(this.#query, path.steps, context.preferred) +
-        (context.wordStarts.has(start) ? WORD_START : 0) +
-        EARLINESS / (1 + start);
-      // Strictly better, so that two matches worth the same keep the earlier.
-      if (best === undefined || score > best.score) {
-        best = { ranges, score };
-      }
-    }
-    return best;
+    return found.length === 0
+      ? undefined
+      : bestMatch(this.#dictionary, this.#haystack, this.#query, found);
   }
 }

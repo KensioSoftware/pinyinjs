@@ -7,7 +7,6 @@
  * instead of being written into eleven variables the caller owns.
  */
 import { isSingleCharacter } from "../script/characters.js";
-import type { Syllable } from "../syllable/syllable.js";
 import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { readAlignedReading } from "./reading.js";
 import { cedictReadingsOf } from "./cedict-senses.js";
@@ -15,68 +14,9 @@ import { traditionalFormOf } from "./traditional-form.js";
 import { taiwanReadingOf } from "./taiwan-reading.js";
 import { properNounOf } from "./proper-noun.js";
 import { settleReading } from "./word-reading.js";
+import { type MergedWord, NO_TALLY, type WordSources } from "./merge-types.js";
 
-import type { CedictEntry } from "../sources/cedict.js";
-import type { JiebaEntry } from "../sources/jieba.js";
-import type { UnihanReadings } from "../sources/unihan.js";
-import type { TraditionalTable } from "./traditional-table.js";
-
-/**
- * What one word contributed to the build's counts.
- */
-export interface WordTally {
-  readonly neutralToneCorrections: number;
-  readonly erhuaRepairs: number;
-  readonly derivedTraditional: number;
-  readonly scriptPairs: number;
-  readonly variantSpellings: number;
-  readonly taiwanReadings: number;
-  readonly properNounVetoes: number;
-  readonly nameBoundaries: number;
-  readonly characters: number;
-  readonly phraseWords: number;
-  readonly cedictWords: number;
-}
-
-/**
- * A word that contributed nothing, because no source could read it.
- */
-const NOTHING: WordTally = {
-  neutralToneCorrections: 0,
-  erhuaRepairs: 0,
-  derivedTraditional: 0,
-  scriptPairs: 0,
-  variantSpellings: 0,
-  taiwanReadings: 0,
-  properNounVetoes: 0,
-  nameBoundaries: 0,
-  characters: 0,
-  phraseWords: 0,
-  cedictWords: 0,
-};
-
-/**
- * What the sources between them say, indexed once for every word.
- */
-export interface WordSources {
-  readonly cedictByWord: ReadonlyMap<string, readonly CedictEntry[]>;
-  readonly cedictByHant: ReadonlyMap<string, readonly CedictEntry[]>;
-  readonly phrase: ReadonlyMap<string, readonly string[]>;
-  readonly jieba: ReadonlyMap<string, JiebaEntry>;
-  readonly unihanReadings: ReadonlyMap<string, UnihanReadings>;
-  readonly traditional: TraditionalTable;
-  readonly defaults: ReadonlyMap<string, readonly Syllable[]>;
-}
-
-/**
- * One word's entry, or the reading that failed.
- */
-export interface MergedWord {
-  readonly entry: DictionaryEntry | undefined;
-  /** The reading no source could make sense of, where that is what happened. */
-  readonly rejected: readonly string[] | undefined;
-  readonly tally: WordTally;
-}
+export type { MergedWord, WordSources, WordTally } from "./merge-types.js";
 
 /**
  * Merge one word.
@@ -91,17 +31,6 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     traditional,
     defaults,
   } = sources;
-  let neutralToneCorrections = 0;
-  let erhuaRepairs = 0;
-  let derivedTraditional = 0;
-  let scriptPairs = 0;
-  let variantSpellings = 0;
-  let taiwanReadings = 0;
-  let properNounVetoes = 0;
-  let nameBoundaries = 0;
-  let characters = 0;
-  let phraseWords = 0;
-  let cedictWords = 0;
 
   const cedictEntries = cedictByWord.get(word) ?? [];
   const cedictReadings = cedictReadingsOf(word, cedictEntries);
@@ -123,13 +52,11 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     cedictReadings,
     phraseAligned,
   );
-  neutralToneCorrections += settled.neutralToneCorrections;
-  erhuaRepairs += settled.erhuaRepairs;
   if (settled.reading === undefined) {
     return {
       entry: undefined,
       rejected: phraseReading ?? cedictEntries[0]?.readings ?? [],
-      tally: NOTHING,
+      tally: NO_TALLY,
     };
   }
   const reading = settled.reading;
@@ -143,15 +70,6 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     aligned,
     traditional,
   );
-  if (isDerived) {
-    derivedTraditional++;
-  }
-  if (hant !== word) {
-    scriptPairs++;
-  }
-  if (hantVariants.length > 0) {
-    variantSpellings++;
-  }
 
   // ── zh-TW delta ───────────────────────────────────────────
   const taiwan = taiwanReadingOf(
@@ -161,13 +79,9 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     reading,
     unihanReadings.get(word),
   );
-  if (taiwan !== undefined) {
-    taiwanReadings++;
-  }
 
   // ── Frequency, part of speech and the proper noun bit ─────
   const jiebaEntry = jieba.get(word);
-  const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
   const { isProperNoun, boundaries, isVetoed } = properNounOf(
     word,
     jiebaEntry,
@@ -175,16 +89,11 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     senses,
     reading,
   );
-  if (isVetoed) {
-    properNounVetoes++;
-  }
-  if (boundaries.length > 0) {
-    nameBoundaries++;
-  }
 
   // ── Polyphone priors, for single characters only ──────────
+  const isCharacter = isSingleCharacter(word);
   const characterReadings = defaults.get(word) ?? [];
-  const alternates = isSingleCharacter(word)
+  const alternates = isCharacter
     ? characterReadings
         .filter((syllable) => !isSameReading([syllable], reading))
         .map((syllable) => [syllable])
@@ -196,34 +105,30 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     ...(hantVariants.length > 0 && { hantVariants }),
     readings: { cn: reading, ...(taiwan !== undefined && { tw: taiwan }) },
     frequency: jiebaEntry?.frequency ?? 0,
-    partOfSpeech,
+    partOfSpeech: jiebaEntry?.partOfSpeech ?? "",
     isProperNoun,
     ...(boundaries.length > 0 && { nameBoundaries: boundaries }),
     ...(alternates.length > 0 && { alternates }),
   };
 
-  if (isSingleCharacter(word)) {
-    characters++;
-  }
-  if (phraseReading !== undefined) {
-    phraseWords++;
-  }
-  if (cedictEntries.length > 0) {
-    cedictWords++;
-  }
-
-  const tally: WordTally = {
-    neutralToneCorrections,
-    erhuaRepairs,
-    derivedTraditional,
-    scriptPairs,
-    variantSpellings,
-    taiwanReadings,
-    properNounVetoes,
-    nameBoundaries,
-    characters,
-    phraseWords,
-    cedictWords,
+  // Read off the decisions above rather than counted as they were made: every
+  // one of these is a fact about the finished entry, so a running total would
+  // only be a second place for it to be recorded.
+  return {
+    entry,
+    rejected: undefined,
+    tally: {
+      neutralToneCorrections: settled.neutralToneCorrections,
+      erhuaRepairs: settled.erhuaRepairs,
+      derivedTraditional: isDerived ? 1 : 0,
+      scriptPairs: hant === word ? 0 : 1,
+      variantSpellings: hantVariants.length > 0 ? 1 : 0,
+      taiwanReadings: taiwan === undefined ? 0 : 1,
+      properNounVetoes: isVetoed ? 1 : 0,
+      nameBoundaries: boundaries.length > 0 ? 1 : 0,
+      characters: isCharacter ? 1 : 0,
+      phraseWords: phraseReading === undefined ? 0 : 1,
+      cedictWords: cedictEntries.length > 0 ? 1 : 0,
+    },
   };
-  return { entry, rejected: undefined, tally };
 }
