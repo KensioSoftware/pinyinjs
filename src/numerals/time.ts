@@ -5,7 +5,13 @@
  * 六点三十分 rather than the digits in order, the 分 is written even where a
  * speaker would drop it, and the hour takes 两 where a bare 2 takes 二.
  */
-import { numeralHanzi, type NumeralOptions } from "./numerals.js";
+import {
+  numeralHanzi,
+  type NumeralOptions,
+  readNumeralHanzi,
+} from "./numerals.js";
+import { HOURS_IN_A_DAY, MINUTES_IN_AN_HOUR, TIME } from "./numeral-shapes.js";
+import type { NumeralSegment } from "./read-numeral.js";
 
 /**
  * The minute below which the zero is said: 6:05 is 六点零五分.
@@ -61,4 +67,45 @@ export function timeWords(hanzi: string): readonly number[] {
   return minutes === ""
     ? [hour.length, 1]
     : [hour.length, 1, minutes.length, 1];
+}
+
+/**
+ * Read a digit run as a time, where that is what it is.
+ *
+ * Tried before the identifier rule, which would otherwise leave the whole
+ * thing alone: a colon between digits is exactly the mark that makes 6:30 a
+ * time rather than two numbers.
+ */
+export function readTime(
+  text: string,
+  from: number,
+  options: NumeralOptions,
+): NumeralSegment | undefined {
+  TIME.lastIndex = from;
+  const found = TIME.exec(text);
+  const written = found?.[1];
+  const minutes = found?.[2];
+  if (found === null || written === undefined || minutes === undefined) {
+    return undefined;
+  }
+  const hourValue = Number(written);
+  const minuteValue = Number(minutes);
+  if (hourValue >= HOURS_IN_A_DAY || minuteValue >= MINUTES_IN_AN_HOUR) {
+    return undefined;
+  }
+  const hanzi = timeHanzi(hourValue, minuteValue, options);
+  const reading =
+    hanzi === undefined ? undefined : readNumeralHanzi(hanzi, options);
+  /* c8 ignore next 3 -- the hanzi is built out of the same table that reads it
+     back, so it reads whenever it was built at all */
+  if (hanzi === undefined || reading === undefined) {
+    return undefined;
+  }
+  return {
+    text: found[0],
+    reading,
+    hanzi,
+    style: "cardinal",
+    words: timeWords(hanzi),
+  };
 }
