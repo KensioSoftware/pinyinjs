@@ -20,7 +20,7 @@ import {
   type ScriptPairing,
   TraditionalTable,
 } from "./traditional.js";
-import type { MergeSources } from "./merge.js";
+import type { MergeSources } from "./merge-types.js";
 
 /**
  * Parse a Unihan reading string for one character.
