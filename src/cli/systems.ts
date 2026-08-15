@@ -5,17 +5,12 @@
  * separator it joins on, so that every syllable can be painted its own colour.
  * `commands.test.ts` holds the pair together over the whole inventory.
  */
-import { writeBopomofo, writeBopomofoWord } from "../transcription/bopomofo.js";
-import { writeGwoyeu, writeGwoyeuWord } from "../transcription/gwoyeu.js";
-import { writeIpa, writeIpaWord } from "../transcription/ipa.js";
-import {
-  writeWadeGiles,
-  writeWadeGilesWord,
-} from "../transcription/wade-giles.js";
-import { writeYale, writeYaleWord } from "../transcription/yale.js";
 import type { Syllable } from "../syllable/syllable.js";
+
+export { BOPOMOFO, GWOYEU, IPA, WADE_GILES, YALE } from "./system-table.js";
 import type { TranscriptionSource } from "./arguments.js";
 import type { Painter } from "./colour.js";
+import { BOPOMOFO, GWOYEU, IPA, WADE_GILES, YALE } from "./system-table.js";
 
 /**
  * How one system writes a word: a syllable at a time, and what it joins on.
@@ -50,49 +45,6 @@ export interface System {
    */
   readonly capitals: boolean;
 }
-
-export const BOPOMOFO: System = {
-  name: "bopomofo",
-  write: writeBopomofo,
-  separator: " ",
-  word: (syllables) => writeBopomofoWord(syllables),
-  capitals: false,
-};
-
-export const WADE_GILES: System = {
-  name: "wade-giles",
-  write: writeWadeGiles,
-  separator: "-",
-  word: (syllables, hasTones) =>
-    writeWadeGilesWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: true,
-};
-
-export const YALE: System = {
-  name: "yale",
-  write: writeYale,
-  separator: "",
-  word: (syllables, hasTones) =>
-    writeYaleWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: true,
-};
-
-export const GWOYEU: System = {
-  name: "gwoyeu",
-  write: writeGwoyeu,
-  separator: "",
-  word: (syllables) => writeGwoyeuWord(syllables),
-  capitals: true,
-};
-
-export const IPA: System = {
-  name: "ipa",
-  write: writeIpa,
-  separator: "",
-  word: (syllables, hasTones) =>
-    writeIpaWord(syllables, hasTones ? {} : { tones: "none" }),
-  capitals: false,
-};
 
 /**
  * Every system `transcribe` writes a column for, for the guard above.
