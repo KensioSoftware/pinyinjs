@@ -1,3 +1,4 @@
+import { digitsHanzi, parse } from "./numeral-parse.js";
 import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import {
@@ -5,11 +6,7 @@ import {
   type CardinalOptions,
   LARGEST_CARDINAL,
 } from "./cardinal.js";
-import {
-  DIGIT_CHARACTERS,
-  numeralSyllable,
-  yaoSyllable,
-} from "./characters.js";
+import { numeralSyllable, yaoSyllable } from "./characters.js";
 
 /**
  * How a number is said: as a quantity, or digit by digit.
@@ -42,57 +39,6 @@ export interface NumeralOptions extends CardinalOptions {
    * Which zero the digit style writes. Defaults to 〇, as dates and years do.
    */
   readonly zero?: "零" | "〇";
-}
-
-/**
- * What a number is made of, once its sign and its point are taken off.
- */
-interface Parsed {
-  readonly isNegative: boolean;
-  /** The digits before the point, as written. */
-  readonly whole: string;
-  /** The digits after it, as written, or the empty string. */
-  readonly fraction: string;
-}
-
-/**
- * Anything this module will read: digits, optionally signed and pointed.
- *
- * `security/detect-unsafe-regex` flags the optional group after `\d+`, and the
- * literal `.` in front of it means no input can be split between the two. Timed
- * on a signed decimal that cannot match, it is linear to 128k characters.
- */
-const NUMBER = /^(?<sign>-?)(?<whole>\d+)(?:\.(?<fraction>\d+))?$/u;
-
-/**
- * Take a number apart, keeping the digits exactly as they were written.
- *
- * A string rather than a number is the input that carries the most: `007` and
- * `7` are the same quantity and different digits, and a room number keeps its
- * zeros. A `number` is stringified first, which is why a caller who cares about
- * leading zeros should pass the string.
- */
-function parse(value: string | number): Parsed | undefined {
-  const found = NUMBER.exec(String(value))?.groups;
-  if (found === undefined) {
-    return undefined;
-  }
-  return {
-    isNegative: found["sign"] === "-",
-    whole: found["whole"] ?? "",
-    fraction: found["fraction"] ?? "",
-  };
-}
-
-/**
- * Write digits one at a time: 2019 → 二〇一九.
- */
-function digitsHanzi(digits: string, zero: string): string {
-  return toCharacters(digits)
-    .map((digit) =>
-      digit === "0" ? zero : (DIGIT_CHARACTERS[Number(digit)] ?? digit),
-    )
-    .join("");
 }
 
 /**
