@@ -1,13 +1,10 @@
 import { encodeReading } from "../dictionary/artifact.js";
+import { applyToneMark } from "../tone/tone-mark.js";
+import { readQuery } from "./candidate-query.js";
 import { convertCharacters, type ScriptTables } from "../script/conversion.js";
 import { toCanonicalGlyphs } from "../script/glyphs.js";
 import type { Script } from "../script/script.js";
-import {
-  normaliseUmlaut,
-  readSyllable,
-  writeSyllable,
-} from "../syllable/syllable.js";
-import { applyToneMark, stripToneMarks } from "../tone/tone-mark.js";
+import { readSyllable, writeSyllable } from "../syllable/syllable.js";
 import { TONES } from "../tone/tone.js";
 import { readingKey, type ReverseIndex } from "./reverse-index.js";
 
@@ -19,7 +16,7 @@ import { readingKey, type ReverseIndex } from "./reverse-index.js";
  * one way. A reverse index is asked for one reading and answers with the words
  * that have it, so `yin hang` and `yinhang` are the same question.
  */
-const SEPARATORS = /[\s'’‘-]+/gu;
+export const SEPARATORS = /[\s'’‘-]+/gu;
 
 /**
  * A tone written as a digit, which is the last character of a syllable.
@@ -81,38 +78,6 @@ export interface CandidateOptions {
   /** Keep one writing of a word rather than both; see {@link ScriptPreference}. */
   readonly script?: ScriptPreference;
 }
-
-/**
- * A query in the one form the index is searched by, and the one it is filtered
- * by.
- */
-interface Query {
-  /** The folded spelling, which is a reading key: toneless, no ü, no spaces. */
-  readonly key: string;
-  /** What was typed, with `v` and `u:` resolved and any tone still on it. */
-  readonly written: string;
-}
-
-/**
- * Put a typed query into both the forms a search needs.
- *
- * Case, spacing and the ways of writing ü are all noise on the way to the key,
- * and the tone is noise there too — the index is keyed toneless. None of it is
- * noise on the way to the *filter*, which is what honours a tone the query
- * wrote, so the resolved spelling is kept alongside.
- *
- * A tone written as a mark counts here, unlike in `match`. The reason it cannot
- * count there is that a mark says nothing about where its syllable ends and a
- * half-typed query is exactly where that is unsettled; here the candidate's own
- * reading says where every syllable ends, so the mark has somewhere to land.
- */
-function readQuery(query: string): Query {
-  const written = normaliseUmlaut(
-    query.normalize("NFC").toLowerCase(),
-  ).replaceAll(SEPARATORS, "");
-  return { key: readingKey(stripToneMarks(written)), written };
-}
-
 /**
  * Every way a typist may write one syllable of a stored reading.
  *
