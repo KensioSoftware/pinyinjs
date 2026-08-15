@@ -5,10 +5,8 @@ import {
   type ReadingProjection,
   type ReadingUnit,
   settledUnits,
-  unitKey,
-  unitsOf,
 } from "./locking.js";
-import { readingCost, shortestPath } from "./viterbi.js";
+import { scoreStretch } from "./alternatives.js";
 
 /**
  * A reading the decode considered at a position and did not take.
@@ -70,48 +68,6 @@ export interface ScoredUnit extends ReadingUnit, ReadingConfidence {}
 export function isUncertain(confidence: ReadingConfidence): boolean {
   return (confidence.alternatives[0]?.cost ?? Infinity) < READING_CHARGE;
 }
-
-import { scoreClaims, type ScoredStretch } from "./lattice-costs.js";
-function alternativesTo(
-  stretch: ScoredStretch,
-  unit: ReadingUnit,
-): readonly ReadingAlternative[] {
-  const key = unitKey(unit);
-  return [...stretch.claims.values()]
-    .filter(
-      (claim) =>
-        unitKey(claim.unit) !== key &&
-        claim.unit.from < unit.to &&
-        unit.from < claim.unit.to,
-    )
-    .map((claim) => ({
-      from: claim.unit.from,
-      to: claim.unit.to,
-      reading: claim.unit.reading,
-      cost: claim.cost - stretch.best,
-    }))
-    .toSorted((left, right) => left.cost - right.cost);
-}
-
-/**
- * Decode one stretch's readings, keeping what the cheapest path rejected.
- */
-function scoreStretch(
-  lattice: Lattice,
-  projection: ReadingProjection,
-  from: number,
-  to: number,
-): readonly ScoredUnit[] {
-  const stretch = scoreClaims(lattice, from, to, readingCost);
-  return shortestPath(lattice, from, to, readingCost)
-    .flatMap((edge) => unitsOf(edge))
-    .map((unit) => ({
-      ...unit,
-      isLocked: projection.locked[unit.from] !== undefined,
-      alternatives: alternativesTo(stretch, unit),
-    }));
-}
-
 /**
  * Decode the run's readings, keeping what each choice rejected.
  *
