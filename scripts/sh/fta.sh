@@ -5,9 +5,9 @@
 # Thresholds live in fta.json; fta exits non-zero when a file exceeds
 # score_cap, which is what makes this usable as a CI gate.
 #
-# score_cap is a ratchet: it sits just above the worst file so the gate
-# blocks regressions today, and steps down as files are split up. The
-# target is 50, which is where fta stops calling a file "could be better".
+# score_cap was a ratchet, stepping down as files were split up. It has
+# reached its target of 50, which is where fta stops calling a file "could
+# be better", so it is now a floor to hold rather than a number to lower.
 
 set -euo pipefail
 

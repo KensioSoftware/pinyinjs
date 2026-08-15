@@ -1,13 +1,9 @@
 /**
- * Wade-Giles, in both directions.
+ * Reading one written Wade-Giles syllable.
  *
- * Writing it is a table, in the same way bopomofo is: an underlying initial and
- * final go in and a spelling comes out, with a handful of context rules for the
- * places Wade-Giles respells a final after particular initials (歌 gē is `ko`,
- * 作 zuò is `tso`, 貴 guì is `kuei`).
- *
- * Reading it is not a table, and that asymmetry is the whole of this file.
- * Three things stand in the way:
+ * Writing it is a table, in the same way bopomofo is — see
+ * `wade-giles-spelling.ts`. Reading it is not a table, and that asymmetry is
+ * the whole of this file. Three things stand in the way:
  *
  * - The spelling is not injective even when written correctly: `lo` is both
  *   luō and lo, and `o` is both ē and ō.
@@ -31,105 +27,20 @@
  */
 import { narrowToAttested } from "../syllable/inventory.js";
 import type { Syllable } from "../syllable/syllable.js";
-import { normaliseSuperscript } from "../tone/tone-mark.js";
-import { type Tone, toneFromNotation } from "../tone/tone.js";
+import type { Tone } from "../tone/tone.js";
 import {
-  APOSTROPHE,
-  APOSTROPHES,
-  ERHUA_SUFFIX,
-} from "./wade-giles-spelling.js";
-
-export {
-  type WadeGilesOptions,
-  writeWadeGiles,
-  writeWadeGilesSpelling,
-  writeWadeGilesWord,
-} from "./wade-giles-spelling.js";
+  isMarksDropped,
+  normalise,
+  splitErhua,
+  splitTone,
+} from "./wade-giles-parse.js";
 
 import {
-  DROPPED_MARKS,
   INDEX,
   isSameSyllable,
   type Spelt,
   withoutMarks,
 } from "./wade-giles-index.js";
-
-export { INDEX } from "./wade-giles-index.js";
-
-/**
- * Take a trailing tone digit off, raised or on the line.
- */
-function splitTone(text: string): readonly [string, Tone | undefined] {
-  const found = /^(.*?)([0-5])$/u.exec(normaliseSuperscript(text));
-  const digit = found?.[2];
-  if (found === null || digit === undefined) {
-    return [text, undefined];
-  }
-  return [found[1] ?? "", toneFromNotation(Number(digit))];
-}
-
-/**
- * Normalise a written syllable to the shape the exact index is keyed by.
- */
-export function normalise(text: string): string {
-  return text
-    .trim()
-    .normalize("NFC")
-    .toLowerCase()
-    .replaceAll(APOSTROPHES, () => APOSTROPHE);
-}
-
-/**
- * Whether `written` is `spelling` with some of its marks dropped.
- *
- * Dropped, and never added: a text that wrote `chʻu` did not mean `chü`, and
- * only a text that wrote `chu` could have meant either. Allowing for a mark
- * that should not be there would double the candidate lists to catch a mistake
- * nobody makes, since the marks are dropped by not being typed rather than by
- * being typed wrongly.
- *
- * Per mark rather than all or nothing, because that is how they come off:
- * `chʻu` has kept its apostrophe and lost a diaeresis it may or may not have
- * had, so it is 出 chū or 去 qù but not 朱 zhū.
- */
-function isMarksDropped(spelling: string, written: string): boolean {
-  let at = 0;
-  for (const character of spelling) {
-    const dropped = DROPPED_MARKS.get(character);
-    if (written[at] === character) {
-      at += 1;
-    } else if (dropped !== undefined && written.startsWith(dropped, at)) {
-      at += dropped.length;
-    } else {
-      return false;
-    }
-  }
-  return at === written.length;
-}
-
-/**
- * Take the 儿化 suffix off a normalised spelling.
- *
- * Done before the tone digit is read rather than after, because the digit is
- * written in front of the suffix: `wan²-'rh` is a second-tone 玩 carrying it.
- *
- * Read loosely the apostrophe may have fallen off, so `-rh` is a suffix too;
- * read exactly it is not, and neither is `-êrh` under either reading. That is
- * the point of the reduced form: 女儿 nǚ'ér is `nü³-êrh²`, two syllables, and
- * a suffix spelled the same way would make the two indistinguishable.
- */
-function splitErhua(
-  spelling: string,
-  isLoose: boolean,
-): readonly [string, boolean] {
-  const suffixes = isLoose
-    ? [ERHUA_SUFFIX, withoutMarks(ERHUA_SUFFIX)]
-    : [ERHUA_SUFFIX];
-  const suffix = suffixes.find((one) => spelling.endsWith(one));
-  return suffix === undefined
-    ? [spelling, false]
-    : [spelling.slice(0, -suffix.length), true];
-}
 
 /**
  * Read a normalised spelling out of one of the two indexes.

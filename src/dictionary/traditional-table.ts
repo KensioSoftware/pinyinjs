@@ -6,8 +6,9 @@
  */
 import { toCharacters } from "../script/characters.js";
 import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
-import { readSyllable, type Syllable } from "../syllable/syllable.js";
+import type { Syllable } from "../syllable/syllable.js";
 import type { ReadCharacters } from "./reading.js";
+import { VariantRanking } from "./traditional-ranking.js";
 import {
   ANY_READING,
   mostFrequent,
@@ -68,8 +69,7 @@ export class TraditionalTable {
 
   readonly #observed: ReadonlyMap<string, ReadonlyMap<string, VariantCounts>>;
   readonly #variants: UnihanVariants;
-  readonly #unihanReadings: ReadonlyMap<string, UnihanReadings>;
-  readonly #parsed = new Map<string, Syllable | undefined>();
+  readonly #ranking: VariantRanking;
 
   /**
    * Wrap prepared tables. Use {@link TraditionalTable.build}.
@@ -81,56 +81,7 @@ export class TraditionalTable {
   ) {
     this.#observed = observed;
     this.#variants = variants;
-    this.#unihanReadings = unihanReadings;
-  }
-
-  /**
-   * Parse a Unihan reading string, remembering the result.
-   *
-   * Worth caching: the fallback path reads the same few thousand strings once
-   * per candidate per word.
-   */
-  #syllableOf(reading: string): Syllable | undefined {
-    if (this.#parsed.has(reading)) {
-      return this.#parsed.get(reading);
-    }
-    const syllable = readSyllable(reading);
-    this.#parsed.set(reading, syllable);
-    return syllable;
-  }
-
-  /**
-   * How well a candidate character's readings match the one we want.
-   *
-   * Lower is better. A candidate whose most likely reading is the one we want
-   * beats one that merely lists it among its rarer readings, which is exactly
-   * what separates 髮 (`fà` alone) from 發 (`fā` first, `fà` third).
-   */
-  #rank(candidate: string, syllable: Syllable | undefined): number {
-    const readings = this.#unihanReadings.get(candidate)?.readings ?? [];
-    if (syllable === undefined) {
-      return readings.length === 0 ? Infinity : 0;
-    }
-    let tonelessMatch = Infinity;
-    for (const [at, reading] of readings.entries()) {
-      const parsed = this.#syllableOf(reading);
-      if (parsed === undefined) {
-        continue;
-      }
-      if (
-        parsed.initial !== syllable.initial ||
-        parsed.final !== syllable.final
-      ) {
-        continue;
-      }
-      if (parsed.tone === syllable.tone) {
-        return at;
-      }
-      // A match on the syllable but not the tone still beats no match at all,
-      // since sources disagree about tone far more often than about spelling.
-      tonelessMatch = Math.min(tonelessMatch, readings.length + at);
-    }
-    return tonelessMatch;
+    this.#ranking = new VariantRanking(unihanReadings);
   }
 
   /**
@@ -146,23 +97,11 @@ export class TraditionalTable {
       return observed;
     }
 
-    const candidates = this.#variants.traditional.get(hans) ?? [];
-    if (candidates.length === 0) {
-      return hans;
-    }
-
-    let best = hans;
-    let bestRank = Infinity;
-    for (const candidate of candidates) {
-      const rank = this.#rank(candidate, syllable);
-      // Ties prefer a form other than the character itself, for the same reason
-      // mostFrequent does.
-      if (rank < bestRank || (rank === bestRank && best === hans)) {
-        best = candidate;
-        bestRank = rank;
-      }
-    }
-    return best;
+    return this.#ranking.best(
+      this.#variants.traditional.get(hans) ?? [],
+      hans,
+      syllable,
+    );
   }
 
   /**
