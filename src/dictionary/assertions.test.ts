@@ -90,6 +90,10 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("还是", "hái shi", { hant: "還是" }),
   entry("重复", "chóng fù", { hant: "重複", hantVariants: ["重覆"] }),
   entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
+  // The keys step 9 holds to the words inside them, and the one it must not.
+  entry("做什么", "zuò shén me", { hant: "做什麼" }),
+  entry("什么意思", "shén me yì si", { hant: "什麼意思" }),
+  entry("分子结构", "fēn zǐ jié gòu", { hant: "分子結構" }),
   entry("特征", "tè zhēng", { hant: "特徵" }),
   entry("沉溺", "chén nì", { hant: "沈溺" }),
   entry("虱子", "shī zi", { hant: "蝨子" }),

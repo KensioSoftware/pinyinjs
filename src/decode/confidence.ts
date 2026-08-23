@@ -61,9 +61,17 @@ export interface ScoredUnit extends ReadingUnit, ReadingConfidence {}
  * only be had by rejecting a word the dictionary attests.
  *
  * **Measured** against the CPP dataset's 20,139 hand-labelled polyphones: a
- * reading this reports uncertain is wrong 27.2% of the time, against 4.5% for
- * one backed by a word and 1.5% for a locked one. It lands on 18.7% of the
- * syllables of everyday text and 13.2% of encyclopedic text — see ROADMAP.md.
+ * reading this reports uncertain is wrong 19.9% of the time, against 4.4% for
+ * one backed by a word and 1.5% for a locked one. It lands on 17.6% of the
+ * syllables of everyday text and 12.6% of encyclopedic text — see ROADMAP.md.
+ *
+ * What it is not is a graded score, and the threshold is not the lever it
+ * looks like. A character's second reading costs one `ALTERNATE_PENALTY`
+ * more than its first whatever the real odds are, so nearly every uncertain
+ * reading is uncertain by exactly that margin: moving the threshold anywhere
+ * between 1.5 and 6 moves the share of everyday text flagged from 16.5% to
+ * 17.6%. The flag says a word did not cover the character. It does not say the
+ * decode was close.
  */
 export function isUncertain(confidence: ReadingConfidence): boolean {
   return (confidence.alternatives[0]?.cost ?? Infinity) < READING_CHARGE;
