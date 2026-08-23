@@ -170,14 +170,35 @@ the verbs too. 得, 着 and the 越…越 correlative are guarded, since 真长�
 adverb they are the sentence particle and the attributive, which makes 时间太长了
 and 很长的道路 both `cháng`.
 
-Two more contexts need both sides:
+Two more read the far side alone. A quality can be compared, intensified and
+conjoined where a growing cannot, and a length can be given in metres:
+
+```ts
+convert(dictionary, "长一点"); // "cháng yìdiǎn"
+convert(dictionary, "队伍已经长极了"); // "duìwǔ yǐjīng cháng jíle"
+convert(dictionary, "神经棘长而狭窄"); // "shénjīng jí cháng ér xiázhǎi"
+convert(dictionary, "那条河长三百公里"); // "nà tiáo hé cháng sānbǎi gōnglǐ"
+```
+
+Only a distance or a stretch of time counts as a measurement, and the corpus is
+why: a numeral after a 长 is more often counting something else, as in
+学校现有通榆和新长两个校区 and 竞争马华总会长一职, and both of those are `zhǎng`.
+
+Two more need both sides:
 
 ```ts
 convert(dictionary, "那座桥不长。"); // "Nà zuò qiáo bù cháng."
 convert(dictionary, "胡子不长在前额上"); // "húzi bù zhǎng zài qián'é shàng"
 convert(dictionary, "他有长头发。"); // "Tā yǒu cháng tóufa."
 convert(dictionary, "树长叶子"); // "shù zhǎng yèzi"
+convert(dictionary, "我看见一个长头发的女生"); // "wǒ kànjiàn yí gè cháng tóufa de nǚshēng"
+convert(dictionary, "这是我第一次长胡子"); // "zhè shì wǒ dìyīcì zhǎng húzi"
 ```
+
+A 量词 in front is asked of every word ending there rather than the longest,
+since 一个 is tagged a numeral and the 量词 is the 个 inside it. An ordinal is
+excluded, because 第一次 is when the growing happened rather than what is being
+counted.
 
 不 and 还 scope a verb as readily as a quality, so neither is a degree adverb,
 and a noun after a 长 is 长知识 as readily as 长头发. What separates the pairs is
@@ -186,10 +207,12 @@ left to say, so a scoped 长 that closes its clause is the adjective; and a 量�
 or 有 in front of a 长 leaves it nothing to be the verb of, since the subject is
 already spoken for.
 
-Over 88,866 lines, 260 长 decode as a word of their own and this moves 83 to
-`cháng`, all 83 correctly. On CPP's 40 hand-labelled 长 the character goes
-85.00% to 90.00%. The shapes left are the ones nothing marks, in 长约8分,
-干流长175公里 and 存续期长而明显.
+Over 88,866 lines, 260 长 decode as a word of their own and this moves 116 to
+`cháng`. On CPP's 40 hand-labelled 长 the character goes 85.00% to 92.50%.
+
+A verb in front is **not** one of the contexts, though 他留长头发 wears long hair
+where 他长头发 grows it. jieba tags 树 a verb and 习惯 a noun, so no tag names the
+set, and taking every verb read 树长叶子 and 教育长邓演达 as adjectives.
 
 The same rule pushes the other way on 越长越X, where growing is what the
 correlative is about:
@@ -278,7 +301,22 @@ Over 88,866 lines it forbids edges in 40 runs and every one is a correction.
 Half of them correct the spacing as much as the reading, since 你說的對 was one
 word, `deduì`.
 
-Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
+The eighth reads the 得 of a potential complement as the particle:
+
+```ts
+convert(dictionary, "他算得上一个作家"); // "tā suàn de shàng yí gè zuòjiā"
+convert(dictionary, "取得上级批准"); // "qǔdé shàngjí pīzhǔn", the word
+```
+
+算得 is a key jieba counted and the phrase corpus reads `suàn dé`, which is what
+it says standing alone and not what a complement leaves it doing. Both sides are
+needed: a verb before the 得 rules out 只得上山, where the 得 belongs to an adverb,
+and the complement after it has to stand on its own, which rules out 取得上级批准
+where 上 is the front of 上级. 了 and 过 are left out of the complement set
+because both are aspect markers too, and 获得了 and 赢得过 are far commoner than
+吃得了 and 说得过去.
+
+Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`,
 `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`,
 `PLAYING_TAN`, `applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to

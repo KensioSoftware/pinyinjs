@@ -189,6 +189,7 @@ export {
   MODAL_DE,
   PARTICLE_DE,
   PLAYING_TAN,
+  POTENTIAL_DE,
   READING_RULES,
   TEACHING_JIAO,
 } from "./decode/reading-rules.js";
