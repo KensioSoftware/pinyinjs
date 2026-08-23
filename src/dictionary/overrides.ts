@@ -32,6 +32,11 @@ export interface ReadingOverride {
  * {@link import("./neutral-senses.js").NEUTRAL_SENSE_WORDS} instead — that
  * table names the word and lets CC-CEDICT supply the reading, so nothing is
  * typed by hand that a source already holds.
+ *
+ * 一个 was listed here for `yī gè` until the whole of 个 was settled by
+ * position. One word taken out of a disagreement the sources have about 262 of
+ * them is a rule missing rather than an override earned, and the rule is
+ * {@link import("./measure-tone.js").settleMeasureTones}.
  */
 export const READING_OVERRIDES: readonly ReadingOverride[] = [
   {
@@ -39,12 +44,6 @@ export const READING_OVERRIDES: readonly ReadingOverride[] = [
     reading: "dài fu",
     reason:
       "Both sources give dà fū, the ancient court title. The everyday sense, doctor, is dàifu and is overwhelmingly the more common.",
-  },
-  {
-    word: "一个",
-    reading: "yī gè",
-    reason:
-      "Not a source defect but a real disagreement: CC-CEDICT has yi1 ge5 and large_pinyin has yí gè, and both are attested speech. Step 7 prefers CC-CEDICT on neutral tones, which is right for the other 771 words it settles and wrong here — 个 counting is written with its tone. Stored underlyingly, so the runtime sandhi pass writes yí gè.",
   },
 ];
 

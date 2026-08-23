@@ -189,6 +189,26 @@ describe("the committed dictionary", () => {
       assertIdentical(full.reading("大夫"), "dài fu");
     });
 
+    it("settles 个 by what stands in front of it", () => {
+      // CC-CEDICT writes the tone one entry at a time: 一个 `ge5` beside 一个人
+      // `ge4`, 那个 `ge5` beside 那个人 `ge4`, 每个 `ge4` beside 每个人 `ge5`.
+      assertIdentical(full.reading("一个"), "yī gè");
+      assertIdentical(full.reading("一个人"), "yī gè rén");
+      assertIdentical(full.reading("那个"), "nà ge");
+      assertIdentical(full.reading("那个人"), "nà ge rén");
+      assertIdentical(full.reading("每个"), "měi ge");
+      assertIdentical(full.reading("每个人"), "měi ge rén");
+    });
+
+    it("leaves the 个 nothing in front of it settles", () => {
+      // 几 and 半 are not numeral characters and are on no determiner list, so
+      // their 轻声 is the source's to give. 独自个 is 个's other reading.
+      assertIdentical(full.reading("几个"), "jǐ ge");
+      assertIdentical(full.reading("半个"), "bàn ge");
+      assertIdentical(full.reading("独自个"), "dú zì gě");
+      assertIdentical(full.reading("我勒个去"), "wǒ lè ge qù");
+    });
+
     it("takes the 轻声 sense of a word CC-CEDICT reads two ways", () => {
       assertIdentical(full.reading("东西"), "dōng xi");
       assertIdentical(full.reading("告诉"), "gào su");

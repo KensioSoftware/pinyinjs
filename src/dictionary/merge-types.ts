@@ -38,6 +38,11 @@ export interface MergeStats {
   readonly reducedNeutrals: number;
   /** Words whose trailing 儿 was folded into the syllable before it. */
   readonly erhuaRepairs: number;
+  /**
+   * Entries whose 个 was retoned by its position — see
+   * {@link import("./measure-tone.js").settleMeasureTones}.
+   */
+  readonly settledMeasureTones: number;
   /** Words whose 繁體 form was derived rather than taken from CC-CEDICT. */
   readonly derivedTraditional: number;
   /** Entries with a 繁體 form differing from their 简体 one. */
@@ -95,9 +100,9 @@ export interface WordSources {
  * What one word contributed to the build's counts.
  *
  * The per-word view of {@link MergeStats}, minus the counts no single word can
- * move: `reducedNeutrals`, `repairedConstituents` and `composedTaiwanReadings`
- * are settled by passes over the whole dictionary, and `rejected` is counted by
- * the caller.
+ * move: `reducedNeutrals`, `settledMeasureTones`, `repairedConstituents` and
+ * `composedTaiwanReadings` are settled by passes over the whole dictionary, and
+ * `rejected` is counted by the caller.
  */
 export interface WordTally {
   readonly neutralToneCorrections: number;
