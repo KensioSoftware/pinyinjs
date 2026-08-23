@@ -164,7 +164,7 @@ const { choices } = toScriptPieces(dictionary, tables, "头发", {
 choices.map((choice) => choice.evidence); // ["locked", "reading"]
 ```
 
-Over the gold corpus, 98.0% of characters are `locked` and 1.2% are guesses,
+Over the gold corpus, 97.6% of characters are `locked` and 1.7% are guesses,
 which is what `pnpm accuracy` reports.
 
 ## Detecting the input

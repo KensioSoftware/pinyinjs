@@ -178,6 +178,7 @@ convert(dictionary, "长一点"); // "cháng yìdiǎn"
 convert(dictionary, "队伍已经长极了"); // "duìwǔ yǐjīng cháng jíle"
 convert(dictionary, "神经棘长而狭窄"); // "shénjīng jí cháng ér xiázhǎi"
 convert(dictionary, "那条河长三百公里"); // "nà tiáo hé cháng sānbǎi gōnglǐ"
+convert(dictionary, "那条河长300公里"); // "nà tiáo hé cháng sānbǎi gōnglǐ"
 ```
 
 Only a distance or a stretch of time counts as a measurement, and the corpus is
@@ -207,8 +208,9 @@ left to say, so a scoped 长 that closes its clause is the adjective; and a 量�
 or 有 in front of a 长 leaves it nothing to be the verb of, since the subject is
 already spoken for.
 
-Over 88,866 lines, 260 长 decode as a word of their own and this moves 116 to
-`cháng`. On CPP's 40 hand-labelled 长 the character goes 85.00% to 92.50%.
+Over 88,866 lines, 379 长 and 長 decode as a word of their own and this moves
+125 to `cháng`. On CPP's 40 hand-labelled 长 the character goes 85.00% to
+92.50%.
 
 A verb in front is **not** one of the contexts, though 他留长头发 wears long hair
 where 他长头发 grows it. jieba tags 树 a verb and 习惯 a noun, so no tag names the
@@ -389,12 +391,24 @@ convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
 convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
 ```
 
-**The Han after a number is decoded with that number in front of it**, as the
-汉字 it would have been written with. Without it a run has no idea what preceded
+**The Han around a number is decoded with that number beside it**, as the 汉字
+it would have been written with. Without it a run has no idea what surrounded
 it, and 2个人 read as `liǎng gèrén`, two _personals_, where 两个人 written out
 has always been `liǎng gè rén`. The digits are read first, since what decides
 how they are said is the character after them, which needs no decode, and the
-run is then decoded knowing them.
+runs are then decoded knowing them.
+
+Both directions, since a rule reads both. 那条河长300公里 is four runs and the 长
+ends the first of them, so a rule asking what the 长 is measured in used to see
+nothing at all — the numeral is one run away and the 公里 two.
+
+```ts
+convert(dictionary, "那条河长300公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
+convert(dictionary, "那条河长三百公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
+```
+
+The trailing context stops four characters past the number, which is as far as
+a rule can look ahead.
 
 Which style a number takes comes from what follows it, since 1998年 is a year
 and 3个 is a count, and it needs no dictionary. `src/numerals/` is arithmetic

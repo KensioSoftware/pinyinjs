@@ -12,11 +12,28 @@ import { shiftHints, type ResolvedHints } from "./hints.js";
 import { ruledLattice } from "./run-lattice.js";
 
 /**
- * A lattice to decode over, and where in it the run itself starts.
+ * The 汉字 either side of a run that the decode should see and not report.
+ *
+ * What a run would have been written with had the digits around it been spelled
+ * out. Both sides are the same kind of claim about the same text, so they travel
+ * together even where the exported signatures keep them apart.
+ */
+export interface DecodeContext {
+  /** 汉字 standing in front of the run. */
+  readonly before: string;
+  /** 汉字 standing after it. */
+  readonly after: string;
+}
+
+/**
+ * A lattice to decode over, and where in it the run itself lies.
  */
 export interface RunLattice {
   readonly lattice: Lattice;
+  /** Where the run starts, past whatever context stands in front of it. */
   readonly at: number;
+  /** Where the run ends, before whatever context stands after it. */
+  readonly to: number;
 }
 
 /**
@@ -39,36 +56,43 @@ export function isJoinedAt(lattice: Lattice, at: number): boolean {
 }
 
 /**
- * The lattice a run decodes over, with whatever context stands in front of it.
+ * The lattice a run decodes over, with whatever context stands around it.
  *
- * The context is dropped where a reading would hold it to the run, leaving the
- * run decoded on its own, which is what it would have been before there was any
- * context to give.
+ * Each side is dropped where a reading would hold it to the run, and only that
+ * side: a run whose trailing context is joined still gets the leading one, which
+ * is what it would have had before there was any context to give.
  */
 export function runLattice(
   dictionary: Dictionary,
   run: string,
   rules: readonly EdgeRule[],
-  before: string,
+  context: DecodeContext,
   hints: ResolvedHints | undefined,
 ): RunLattice {
-  const alone = (): RunLattice => ({
-    lattice: ruledLattice(dictionary, run, rules, hints),
-    at: 0,
-  });
-  if (before === "") {
-    return alone();
+  const length = toCharacters(run).length;
+  const build = (before: string, after: string): RunLattice => {
+    const at = toCharacters(before).length;
+    // The context is decoded with the run, so every hint position moves along
+    // with it. Shifting a copy keeps the caller's positions relative to the run
+    // they were given for.
+    return {
+      lattice: ruledLattice(
+        dictionary,
+        before + run + after,
+        rules,
+        hints === undefined ? undefined : shiftHints(hints, at),
+      ),
+      at,
+      to: at + length,
+    };
+  };
+
+  const { before, after } = context;
+  const held = build(before, after);
+  const isLeadJoined = before !== "" && isJoinedAt(held.lattice, held.at);
+  const isTailJoined = after !== "" && isJoinedAt(held.lattice, held.to);
+  if (!isLeadJoined && !isTailJoined) {
+    return held;
   }
-  const held = toCharacters(before).length;
-  // The context is decoded with the run, so every hint position moves along
-  // with it. Shifting a copy keeps the caller's positions relative to the run
-  // they were given for.
-  const lattice = ruledLattice(
-    dictionary,
-    before + run,
-    rules,
-    hints === undefined ? undefined : shiftHints(hints, held),
-  );
-  const at = held;
-  return isJoinedAt(lattice, at) ? alone() : { lattice, at };
+  return build(isLeadJoined ? "" : before, isTailJoined ? "" : after);
 }

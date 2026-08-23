@@ -10,7 +10,7 @@ export { runLattice } from "./lattice-slice.js";
  * is where a lattice is cut down to a run and the words are read back out of
  * it. `decode.ts` is what asks for one.
  */
-import { decodeSpacing } from "./decode.js";
+import { decodeSpacing } from "./lattice-decode.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
 import type { ReadingUnit } from "./locking.js";
 import { applyEdgeRules, type EdgeRule } from "./rules.js";
@@ -95,19 +95,20 @@ export function ruledLattice(
 }
 
 /**
- * Cut a decode of the whole lattice down to the run at the end of it.
+ * Cut a decode of the whole lattice down to the run inside it.
  *
- * Everything before `at` was context rather than run — 汉字 a caller put in
- * front so that the decode could see them — and is dropped once it has done its
- * work.
+ * Everything outside `at` and `to` was context rather than run — 汉字 a caller
+ * put either side so that the decode could see them — and is dropped once it
+ * has done its work. A unit is kept only where it lies wholly inside the run,
+ * which is what `isJoinedAt` guarantees for the ones that cannot be cut.
  */
 export function runGroups<Unit extends ReadingUnit>(
-  { lattice, at }: RunLattice,
+  { lattice, at, to }: RunLattice,
   units: readonly Unit[],
 ): readonly (readonly Unit[])[] {
   return groupUnits(
-    units.filter((unit) => unit.from >= at),
-    decodeSpacing(lattice).filter((from) => from >= at),
+    units.filter((unit) => unit.from >= at && unit.to <= to),
+    decodeSpacing(lattice).filter((from) => from >= at && from < to),
   );
 }
 
@@ -118,9 +119,11 @@ export function runGroups<Unit extends ReadingUnit>(
  * lock the positions that cannot vary, score the rest — where the greedy
  * baseline commits to the longest match at each position and never revisits it.
  *
- * `before` is 汉字 standing in front of the run that the decode should see and
- * not report: the 汉字 a number written in digits would have been written with.
- * A run is decoded on its own without it, and a run reached that way has no idea
- * what preceded it — 个人 alone is the word `gèrén`, while the 两 of 2个人 makes
- * 两个 the word and leaves 人 to itself.
+ * `before` and `after` are 汉字 standing either side of the run that the decode
+ * should see and not report: the 汉字 a number written in digits would have been
+ * written with, and whatever carries on from it. A run is decoded on its own
+ * without them, and a run reached that way has no idea what surrounded it —
+ * 个人 alone is the word `gèrén`, while the 两 of 2个人 makes 两个 the word and
+ * leaves 人 to itself, and 那条河长 ends where 那条河长三百公里 goes on to say
+ * how long the river is.
  */

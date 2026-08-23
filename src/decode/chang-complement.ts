@@ -94,6 +94,11 @@ const MEASURED_IN = new Set([
  * 那条河长三百公里, 隧道长五公里. A quantity after a 长 is how long the thing is,
  * and a growing takes an aspect marker before it can take one — 长了三厘米 —
  * which is the 了 this never sees.
+ *
+ * A number written in digits reads the same, though nothing here knows the
+ * difference. 那条河长300公里 is four runs and the 长 ends the first of them, so
+ * the numeral and the 公里 are one run and two runs away; the decode is handed
+ * the 汉字 they stand for before this is ever asked. See `convert-pipeline.ts`.
  */
 export function isMeasured(context: EdgeContext): boolean {
   const { characters, edge } = context;

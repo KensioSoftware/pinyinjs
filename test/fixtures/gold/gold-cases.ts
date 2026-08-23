@@ -102,6 +102,11 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "要多长时间", pinyin: "yào duō cháng shíjiān", script: "Hans", tags: ["polyphone", "rule-override"] },
   { hanzi: "她长得很漂亮", pinyin: "tā zhǎng de hěn piàoliang", script: "Hans", tags: ["polyphone"] },
   { hanzi: "校长", pinyin: "xiàozhǎng", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "那条河长三百公里。", pinyin: "Nà tiáo hé cháng sānbǎi gōnglǐ.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  // The same sentence with the number in digits. The 长 ends its Han run and
+  // the 公里 that measures it is two runs away, so the decode is handed what
+  // the sentence would have said spelled out.
+  { hanzi: "那条河长300公里。", pinyin: "Nà tiáo hé cháng sānbǎi gōnglǐ.", script: "Hans", tags: ["polyphone", "rule-override", "numbers", "sentence"] },
 
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },
