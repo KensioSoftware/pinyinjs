@@ -1,8 +1,8 @@
 # API
 
-Everything the package exports, grouped by what it is for. Exports are listed
-one by one in `src/index.ts` rather than re-exported wholesale, so the surface
-is a deliberate choice rather than whatever happened to be internal.
+Everything the package exports, grouped by what it is for. `src/index.ts` names
+every export one by one. The surface is a deliberate choice, and internal code
+stays internal unless it appears there.
 
 Two entry points:
 
@@ -56,8 +56,8 @@ See [converting](../converting/), [options](../options/) and
 | `ConvertOptions`, `ConvertedPiece`                      | types                                          |
 | `ReadingConfidence`, `ReadingAlternative`, `ScoredUnit` | types                                          |
 
-The decoder's own parts are exported too, for anyone building on the lattice
-rather than on `convert`: `buildLattice`, `allEdges`, `cutPoints`,
+The decoder's own parts are exported too, for anyone building directly on the
+lattice: `buildLattice`, `allEdges`, `cutPoints`,
 `READING_CHARGE`, `decodeReadings`, `decodeRun`, `decodeRunScored`,
 `decodeSpacing`, `decodeGreedily`, `shortestPath`, `readingCost`,
 `spacingCost`, `projectReadings`, `settledUnits`, `unitsOf`, `isSettled`,
@@ -72,10 +72,10 @@ The rules that run over the lattice are exported with them: `READING_RULES`,
 an application with its own vocabulary may want to add to it, or pass `[]` to
 decode with none.
 
-Readings a caller asserts are supplied through `ConvertOptions.readings` rather
-than through the rules, since a rule can only keep or drop an edge and a hint is
-a reading no source attests. The types are `ReadingHints`, `ReadingHint`,
-`WordReading` and `PositionalReading`; see
+Readings a caller asserts are supplied through `ConvertOptions.readings`. A rule
+can only keep or drop an edge, and a hint is a reading no source attests, so a
+rule has nowhere to carry one. The types are `ReadingHints`, `ReadingHint`,
+`WordReading` and `PositionalReading`. See
 [readings you assert yourself](../converting/#readings-you-assert-yourself).
 
 ## Numbers
@@ -117,10 +117,9 @@ See [romanisation](../romanization/).
 | `BopomofoOptions`, `WadeGilesOptions`, `YaleOptions` | types                                    |
 | `IpaOptions`, `WriteWord`                            | types                                    |
 
-The syllable tables live in `src/transcription/` rather than `src/romanization/`,
-since bopomofo has a script of its own and IPA is a transcription rather than a
-spelling, so half of them are not romanisations. The docs path keeps the older
-name because it is published.
+The syllable tables live in `src/transcription/`. Bopomofo has a script of its
+own and IPA writes sounds, so half of them are transcriptions and only half are
+romanisations. The docs path keeps the older name because it is published.
 
 ## HTML
 
@@ -167,9 +166,9 @@ See [candidates](../candidates/).
 | `ReverseIndexBuild` | type: a build being driven a slice at a time                                     |
 | `ReverseIndexData`  | type: the pieces, for posting between threads                                    |
 
-The index is derived from a loaded `Dictionary` and nothing is fetched for it;
-see the page for the measurement that settled that. What it is derived through
-is `Dictionary.wordAt`, `Dictionary.frequencyAt` and
+The index is derived from a loaded `Dictionary`, with no second fetch. See the
+page for the measurement that settled that. It derives through
+`Dictionary.wordAt`, `Dictionary.frequencyAt` and
 `Dictionary.readingsInOrder`, which are exported with the dictionary below.
 
 ## Checking typed pinyin
@@ -297,7 +296,7 @@ See [scripts and locales](../scripts-and-locales/).
 
 ## Script conversion
 
-简体 ↔ 繁體, which is orthography and not translation. See
+简体 ↔ 繁體. The change is orthographic, and the words themselves stay put. See
 [scripts and locales](../scripts-and-locales/).
 
 | Export                                               | Is                                         |
@@ -319,25 +318,25 @@ See [scripts and locales](../scripts-and-locales/).
 ## Stability
 
 **Everything on this page is covered by semantic versioning from 1.0.0.** That
-includes the decoder internals and the build pipeline, which were exported
-because they are useful and testable rather than because anyone needed them.
-Committing to them is the price of having exported them, and the alternative was
-to withdraw them at 1.0 for the sake of a smaller promise.
+includes the decoder internals and the build pipeline, exported because they are
+useful and testable. Committing to them is the price of having exported them.
+The alternative was to withdraw them at 1.0 for the sake of a smaller promise.
 
-Two things are deliberately outside it, because they are not the API:
+Two things sit deliberately outside it:
 
 - **The readings themselves.** A dictionary rebuild can change what a word
-  converts to, which is what a source refresh is for, and every rule this
-  package adds is measured in exactly those terms. The figures in
+  converts to. That is what a source refresh is for, and every rule this package
+  adds is measured in exactly those terms. The figures in
   `docs/orthography/` and the accuracy harnesses are where those changes are
   recorded.
-- **The artifact format under `data/`.** It is loaded by `loadDictionary` and
-  read by nothing else; `./data/*` is exported so a page can be served the
-  files, not so they can be parsed by hand.
+- **The artifact format under `data/`.** `loadDictionary` is the only reader.
+  `./data/*` is exported so a page can be served the files. Anything that parses
+  one by hand is on its own.
 
 `Dictionary` is a class with a private constructor, so `Dictionary.from` and the
 loaders are the only ways to build one. New optional fields may appear on
-`WordEntry`, as `nameBoundaries` did, which is additive and not a break.
+`WordEntry`, as `nameBoundaries` did. Adding one is additive, and additive
+changes ship in a minor release.
 
 <!-- card
 ```ts

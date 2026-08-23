@@ -19,7 +19,7 @@ convert(dictionary, text, { notation: "numbers", capitals: "none" });
 | `numbers`     | `"read"`                           | `"keep"` leaves every digit as it was written     |
 | `sandhi`      | `{ yiBu: true, thirdTone: false }` | `{ yiBu?: boolean; thirdTone?: boolean }`         |
 
-`convertToHtml` takes all of these plus three of its own; see
+`convertToHtml` takes all of these plus three of its own. See
 [HTML output](../html/#options).
 
 ## locale
@@ -32,8 +32,8 @@ convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 ```
 
 Only about 490 items differ at all, so `zh-TW` is stored as a delta over
-`zh-CN` and most words are unaffected by this option. Note that locale is not
-the same axis as script; see [scripts and locales](../scripts-and-locales/).
+`zh-CN` and most words are unaffected by this option. Locale and script are two
+separate axes. See [scripts and locales](../scripts-and-locales/).
 
 ## notation
 
@@ -54,7 +54,7 @@ convert(dictionary, "银行", { notation: "none" }); // "yinhang"
 | `"none"`        | no tone at all: `yinhang`                  |
 
 The neutral tone is 5 in the numbered notations and unmarked in `marks`.
-`superscript` is the useful one for prose that has to stay searchable: a reader
+`superscript` is the useful one for prose that has to stay searchable. A reader
 can ignore the digits, and `yin` still matches `yin²`.
 
 ## apostrophe
@@ -74,13 +74,12 @@ convert(dictionary, "海鸥", { apostrophe: "standard" }); // "hǎiōu"
 | `"standard"` | only where leaving it out would read as something else   |
 | `"never"`    | not at all                                               |
 
-`a`, `o` and `e` are the complete trigger set: `i`, `u` and `ü` surface as `y`
-and `w` at the start of a syllable and cannot create the ambiguity.
+`a`, `o` and `e` are the complete trigger set. `i`, `u` and `ü` surface as `y`
+and `w` at the start of a syllable, where the ambiguity cannot arise.
 
-GB/T 16159 technically conditions the apostrophe on there being an actual
-ambiguity, which is what `"standard"` implements. Essentially every style guide
-and implementation writes it unconditionally, which is why `"always"` is the
-default.
+GB/T 16159 conditions the apostrophe on there being an actual ambiguity, and
+`"standard"` implements the standard to the letter. Essentially every style
+guide and implementation writes it unconditionally, and `"always"` follows them.
 
 ## capitals
 
@@ -98,7 +97,7 @@ convert(dictionary, "北京。", { capitals: "none" }); // "běijīng."
 
 "The first word of a sentence" needs the source to be punctuated as one. That
 is the only thing separating 学生 looked up as a word from 这是我的书。written
-as a sentence, and a comma does not count:
+as a sentence. A comma leaves the next word lower case:
 
 ```ts
 convert(dictionary, "你好，世界"); // "nǐ hǎo, shìjiè"
@@ -126,7 +125,7 @@ convert(dictionary, "南京市"); // "Nánjīng Shì"
 convert(dictionary, "南京市", { grouping: false }); // "Nánjīngshì"
 ```
 
-`true` applies 分词连写, the GB/T 16159 word-spacing rules: aspect particles
+`true` applies 分词连写, the GB/T 16159 word-spacing rules. Aspect particles
 attach to their verb, suffixes to their stem, and the generic half of a place
 name separates and capitalises. `false` writes each decoded word as one
 unbroken run.
@@ -163,9 +162,8 @@ convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 | `thirdTone` | `false` | third tone before third tone: `nǐ hǎo` → `ní hǎo` |
 
 Third-tone sandhi is off by default because standard orthography writes the
-underlying tone: 你好 is written `nǐ hǎo` even though it is said `ní hǎo`.
-Turn it on when transcribing speech rather than writing pinyin. More in
-[sandhi](../sandhi/).
+underlying tone. 你好 is written `nǐ hǎo` even though it is said `ní hǎo`.
+Turn it on when transcribing speech. More in [sandhi](../sandhi/).
 
 The object is merged with the defaults, so `{ thirdTone: true }` leaves `yiBu`
 on.

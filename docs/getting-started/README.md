@@ -1,8 +1,8 @@
 # Getting started
 
 Install the package, load a dictionary, convert some hanzi. This page goes from
-nothing to a working conversion in Node and in the browser, and points at the
-guide for each thing it touches on the way.
+an empty project to a working conversion in Node and in the browser, and points
+at the guide for each thing it touches on the way.
 
 ## Install
 
@@ -11,12 +11,12 @@ pnpm add @kensio/pinyinjs
 ```
 
 Node 22+, or any browser. The package is ESM only, and the core imports no Node
-built-ins: the one Node-specific entry point is `@kensio/pinyinjs/node`, and
-nothing in the browser path reaches it.
+built-ins. The one Node-specific entry point is `@kensio/pinyinjs/node`, and the
+browser path never reaches it.
 
 It is a 4 MB download, because `data/` is 10 MB of compiled dictionaries and
-they are the point of the whole thing. You do not load all of it at runtime;
-see [tiers](#pick-a-tier) below.
+they are the point of the whole thing. At runtime you load one tier of it (see
+[tiers](#pick-a-tier) below).
 
 ## Try it without writing any code
 
@@ -37,9 +37,9 @@ Every option the library takes is a flag, and every command writes JSON with
 
 ## Load a dictionary
 
-Converting needs a dictionary. It is a fetchable file rather than a JavaScript
-module, which is what keeps it out of your bundle, so loading it is
-asynchronous.
+Converting needs a dictionary. A dictionary is a fetchable file, so loading one
+is asynchronous. Keeping it out of the module graph also keeps it out of your
+bundle.
 
 In Node, read it off disk:
 
@@ -63,11 +63,11 @@ convert(dictionary, "长城"); // "Chángchéng"
 ```
 
 Serve the artifacts uncompressed and let HTTP `Content-Encoding: br` do the
-compressing. `DecompressionStream` has no brotli, so decompressing in
-JavaScript is not an option worth taking.
+compressing. `DecompressionStream` has no brotli. The transfer encoding is the
+only route to a brotli-compressed artifact in a browser.
 
 Load the dictionary once and keep it. It is immutable, safe to share, and
-decodes entries lazily, so building it twice is pure waste.
+decodes entries lazily. Building a second one repeats the work for no gain.
 
 ## Pick a tier
 
@@ -77,9 +77,9 @@ decodes entries lazily, so building it twice is pure waste.
 | `standard` |  66,970 |            377 KB | the most common words  |
 | `full`     | 461,555 |          2,378 KB | every word             |
 
-`full` is the default and is what you want on a server. The tiers are nested,
-so a page can load `standard`, start converting, and swap in `full` when it
-arrives. More in [dictionaries](../dictionaries/).
+`full` is the default and is what you want on a server. The tiers are nested. A
+page can load `standard`, start converting, and swap in `full` when it arrives.
+More in [dictionaries](../dictionaries/).
 
 ## Convert something
 
@@ -90,9 +90,9 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
-The two readings of 行 are the whole reason this package is not a lookup table:
-`银行` is `yínháng` and `行长` is `hángzhǎng`, and only the surrounding word
-says which. See [converting](../converting/).
+行 has two readings. `银行` is `yínháng` and `行长` is `hángzhǎng`, and only the
+surrounding word says which. A lookup table has nowhere to put that. The
+package decodes whole words. See [converting](../converting/).
 
 Options are a third argument:
 
@@ -105,11 +105,11 @@ Every one of them is in [options](../options/).
 
 ## Where to go next
 
-- Hanzi in, pinyin out, and how the decoder decides: [converting](../converting/)
-- Why the spaces and capitals fall where they do: [orthography](../orthography/)
-- Which syllables it was unsure about: [confidence](../confidence/)
-- Marked-up output for a web page: [HTML output](../html/)
-- Pinyin without any hanzi at all: [syllables](../syllables/)
+- [Converting](../converting/): hanzi in, pinyin out, and how the decoder decides
+- [Orthography](../orthography/): why the spaces and capitals fall where they do
+- [Confidence](../confidence/): which syllables it was unsure about
+- [HTML output](../html/): marked-up output for a web page
+- [Syllables](../syllables/): pinyin without any hanzi at all
 
 <!-- card
 ```ts
