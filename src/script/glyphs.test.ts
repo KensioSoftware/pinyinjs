@@ -145,6 +145,32 @@ describe("glyph forms", () => {
     });
   });
 
+  describe("the 參 split", () => {
+    it("writes 蔘 for the ginseng, which is the sense 蔘 covers", () => {
+      assertIdentical(toRegionalGlyph("參", "HK", syllable("shen1")), "蔘");
+    });
+
+    it("keeps 參 for every other reading it has", () => {
+      // 參加 and 參考 are `cān`, 參差 is `cēn`, and the numeral is `sān`. None
+      // of them is ginseng, and all four read 參 in Hong Kong.
+      assertIdentical(toRegionalGlyph("參", "HK", syllable("can1")), "參");
+      assertIdentical(toRegionalGlyph("參", "HK", syllable("cen1")), "參");
+      assertIdentical(toRegionalGlyph("參", "HK", syllable("san1")), "參");
+    });
+
+    it("keeps 參 when no reading is offered, since cān is far the commonest", () => {
+      assertIdentical(toRegionalGlyph("參", "HK"), "參");
+    });
+
+    it("is reported as reading-sensitive, so the caller is told it guessed", () => {
+      assertTrue(isReadingSensitive("參"));
+    });
+
+    it("still normalises Hong Kong's 蔘 back to 參 for a lookup", () => {
+      assertIdentical(toCanonicalGlyph("蔘"), "參");
+    });
+  });
+
   describe("toRegionalGlyphs", () => {
     it("writes a whole word in the Hong Kong forms", () => {
       assertIdentical(toRegionalGlyphs("裡面", "HK"), "裏面");
@@ -168,6 +194,9 @@ describe("glyph forms", () => {
 
     it("falls back to the default where a position has no reading", () => {
       assertIdentical(toRegionalGlyphs("看著", "HK", []), "看着");
+      // The other way round for 參: the default is the canonical form, so a
+      // word with no reading behind it keeps 參 rather than taking 蔘.
+      assertIdentical(toRegionalGlyphs("參加", "HK", []), "參加");
     });
   });
 });

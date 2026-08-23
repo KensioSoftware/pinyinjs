@@ -75,8 +75,11 @@ Converting character by character from the usual baseline yields 爲, 衆, 峯, 
 裏, 麪, which _are_ the Hong Kong forms. Declining to choose means choosing Hong
 Kong silently, and a region is therefore always applied and always named.
 
-One of the 58 needs the reading, the argument again in miniature. Taiwan writes
-著 for every sense. Hong Kong splits it:
+Two of the 58 need the reading, the argument again in miniature. Taiwan merges a
+pair of characters that Hong Kong keeps apart, and where the merge covers one
+sense rather than all of them, reversing it needs to know which sense is meant.
+
+Taiwan writes 著 for every sense. Hong Kong splits it:
 
 ```ts
 toScript(dictionary, tables, "看着", { to: "zh-Hant-HK" }); // "看着"
@@ -84,6 +87,24 @@ toScript(dictionary, tables, "著作", { to: "zh-Hant-HK" }); // "著作"
 ```
 
 看著 is `kànzhe` and takes 着. 著作 is `zhùzuò` and keeps 著.
+
+參 is the same shape pointing the other way. 蔘 is a variant of 參 in its `shēn`
+sense alone, so it is the ginseng that takes it and nothing else:
+
+```ts
+toScript(dictionary, tables, "人参", { to: "zh-Hant-HK" }); // "人蔘"
+toScript(dictionary, tables, "参加", { to: "zh-Hant-HK" }); // "參加"
+toScript(dictionary, tables, "参差", { to: "zh-Hant-HK" }); // "參差"
+```
+
+Where the reading is missing, each takes its own default and the choice is
+reported as a guess: 著 defaults to 着 and 參 to 參, because those are the
+commoner senses. `isReadingSensitive` names both.
+
+These are the only two, and that is measured rather than assumed. 39 of the 58
+are stated by Hong Kong's own table and the other 19 are Taiwan merges read
+backwards; of those 19, 著 and 參 are the only two whose regional form covers
+fewer readings than the canonical one.
 
 ## What it was unsure about
 

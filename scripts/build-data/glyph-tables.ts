@@ -11,7 +11,11 @@
  * form is Taiwan's.
  */
 import { toCharacters } from "../../src/script/characters.js";
-import { CANONICAL_FORMS, HONG_KONG_FORMS } from "../../src/script/glyphs.js";
+import {
+  CANONICAL_FORMS,
+  HONG_KONG_FORMS,
+  isReadingScoped,
+} from "../../src/script/glyphs.js";
 import type { OpenCcTable } from "../../src/sources/opencc.js";
 
 /**
@@ -34,6 +38,8 @@ export interface GlyphTables {
   readonly hongKong: ReadonlyMap<string, string>;
   /** Mappings OpenCC makes that were dropped because the variant is current. */
   readonly excluded: readonly string[];
+  /** Hong Kong mappings a reading scopes, so the flat table declines them. */
+  readonly readingScoped: readonly string[];
 }
 
 /**
@@ -84,12 +90,21 @@ export function deriveGlyphTables(
   const canonical = new Map<string, string>();
   const hongKongForms = new Map<string, string>();
   const excluded: string[] = [];
+  const readingScoped: string[] = [];
 
   for (const key of keys) {
     const target = canonicalOf(key);
     const regional = hongKong.get(key)?.[0] ?? key;
+    // A merge Taiwan makes and Hong Kong does not is a difference between them,
+    // and inverting it is how this table is derived. Where the merge covers one
+    // reading of the character rather than all of them, that inversion
+    // over-reaches and `READING_SPLITS` holds the mapping instead.
     if (target !== regional) {
-      hongKongForms.set(target, regional);
+      if (isReadingScoped(target)) {
+        readingScoped.push(`${target} -> ${regional}`);
+      } else {
+        hongKongForms.set(target, regional);
+      }
     }
 
     const spellings = [
@@ -115,7 +130,7 @@ export function deriveGlyphTables(
     }
   }
 
-  return { canonical, hongKong: hongKongForms, excluded };
+  return { canonical, hongKong: hongKongForms, excluded, readingScoped };
 }
 
 /**
