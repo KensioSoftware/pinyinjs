@@ -441,7 +441,7 @@ same place.
 ## How ambiguous is Wade-Giles, really?
 
 `pnpm transcription` measures it. Over the 424 syllables of the
-[inventory](../syllables/#well-formed-is-not-the-same-as-real):
+[inventory](../syllables/#well-formed-and-attested-are-different-questions):
 
 |                                                   |     |
 | ------------------------------------------------- | --: |
