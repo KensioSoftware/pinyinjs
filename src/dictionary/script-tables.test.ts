@@ -57,6 +57,14 @@ const ENTRIES: readonly DictionaryEntry[] = [
   entry("生", "生", "sheng1"),
 ];
 
+/**
+ * Enough distinct headwords for a single stray to fall under the share.
+ *
+ * The share is a twentieth, so it takes twenty words on the other side before
+ * one stray stops counting. That is the threshold, not the fixture.
+ */
+const MANY = "东南西北中大小上下前后左右内外天地人山水火木金".split("");
+
 describe("script tables", () => {
   describe("buildScriptTables", () => {
     it("gives a character its commonest form as the default", () => {
@@ -150,7 +158,41 @@ describe("script tables", () => {
         entry("出", "出", "chu1"),
       ]);
       assertSetSize(hansOnly, 0);
-      assertSetSize(hantOnly, 0);
+      assertFalse(hantOnly.has("出"));
+    });
+
+    it("holds the variant 繁體 forms whatever the entries say", () => {
+      // Normalisation folds 裏 to 裡 before anything is counted, so no entry can
+      // ever put 裏 in a set. The variant table is 繁體 by construction.
+      const { hantOnly } = buildScriptTables([entry("出", "出", "chu1")]);
+      for (const character of ["裏", "衞", "麪", "羣"]) {
+        assertTrue(hantOnly.has(character));
+      }
+    });
+
+    it("keeps a character only a stray headword writes in 简体 out of 简体", () => {
+      // 见幾而作 is a 简体 headword that failed to simplify its 幾. One of those
+      // against the words that did simplify is not evidence that 简体 writes it,
+      // which is the whole of the 幾 bug.
+      const strays = MANY.map((character) =>
+        entry(`几${character}`, `幾${character}`, "ji1 yi1"),
+      );
+      const { hansOnly, hantOnly } = buildScriptTables([
+        entry("见幾而作", "見幾而作", "jian4 ji1 er2 zuo4"),
+        ...strays,
+      ]);
+      assertTrue(hantOnly.has("幾"));
+      assertFalse(hansOnly.has("幾"));
+    });
+
+    it("counts a handful as evidence where the other script has none", () => {
+      // The floor alone would throw away every rare character. 齶 is written in
+      // two 繁體 words and no 简体 one, and two is all there is to go on.
+      const { hantOnly } = buildScriptTables([
+        entry("上腭", "上齶", "shang4 e4"),
+        entry("硬腭", "硬齶", "ying4 e4"),
+      ]);
+      assertTrue(hantOnly.has("齶"));
     });
   });
 });

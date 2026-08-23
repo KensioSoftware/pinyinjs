@@ -232,7 +232,28 @@ Most characters are unchanged by simplification, so a sentence containing none
 of the changed ones reads identically either way. Treat `undefined` as "either"
 rather than as a failure.
 
-You do not need it to convert. That is the point of keying both scripts.
+```ts
+const { hansOnly, hantOnly } = await loadScriptTables(source);
+detectScript("幾乎所有的工作都完成了。", hansOnly, hantOnly); // "Hant"
+detectScript("看著你", hansOnly, hantOnly); // undefined
+```
+
+The sets come out of the build at 5,818 characters and 5,566. A character both
+scripts write is in neither, and that is the answer rather than a gap: 著 is
+written in 简体 for `zhù` (专著, 显著) and in 繁體 for that and for the aspect
+particle, so 看著你 could be either. 干, 台 and 里 are out for the same reason.
+
+Every syllable of the sets is counted from the dictionary's own paired
+headwords, so a character belongs to a script when enough words in that script
+are written with it. "Enough" is a floor of ten words or a twentieth of what the
+other script has, whichever is easier to meet. Both halves earn their place: the
+floor is what keeps a stray unsimplified headword from claiming a character, and
+幾 was out of the 繁體 set on the strength of two such headwords against 297 that
+went the other way. The share is what keeps a rare character in, since 齶 is
+written in two 繁體 words and no 简体 one and two is all the evidence there is.
+
+You do not need any of this to convert. That is the point of keying both
+scripts.
 
 <!-- card
 ```ts
