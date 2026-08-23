@@ -6,8 +6,9 @@
  * shapes here names one side of that context and checks the other.
  */
 import type { Syllable } from "../syllable/syllable.js";
+import { isCompared, isMeasured } from "./chang-complement.js";
 import { isAttributive, isPredicated } from "./chang-context.js";
-import { type EdgeContext, type EdgeRule, wordEndingAt } from "./rules.js";
+import { type EdgeContext, type EdgeRule, wordsEndingAt } from "./rules.js";
 
 /**
  * Whether a syllable is `cháng`, the stative reading of 长.
@@ -34,6 +35,10 @@ function isChang(syllable: Syllable | undefined): boolean {
  * even though 距离还长 and 那座桥不长 are both `cháng`: they modify verbs as
  * readily as qualities, and 还长有毛 and 胡子不长在前额上 are the same two
  * characters around the verb.
+ *
+ * Matched against every word ending in front of the 长 rather than the longest
+ * one, since 得很 is a word and hides the 很 inside it. See
+ * {@link wordsEndingAt}.
  */
 const DEGREE = new Set([
   "一样",
@@ -142,24 +147,32 @@ function isGrowthCorrelative(context: EdgeContext): boolean {
  * adjective, and nothing in the cost model can prefer an alternate at a
  * position no word covers: 这篇文章不太长 came out `bú tài zhǎng`.
  *
- * Three contexts settle it, and the first of them needs only one side. A 长
- * that is *growing* is a verb, and a degree adverb cannot modify one — there is
- * no 很长 meaning it grew a lot — so 很, 太, 最, 多 and their kin in front of a
- * bare 长 make it the adjective whatever follows. {@link DEGREE} is that set.
+ * Five contexts settle it, and one of them needs a single side. A 长 that is
+ * *growing* is a verb, and a degree adverb cannot modify one — there is no 很长
+ * meaning it grew a lot — so 很, 太, 最, 多 and their kin in front of a bare 长
+ * make it the adjective whatever follows. {@link DEGREE} is that set.
  *
- * The other two need both sides, and they are in `chang-context.ts`:
- * {@link isPredicated} for 那座桥不长, {@link isAttributive} for 他有长头发.
- * What they have in common is that the near side alone would be wrong. 不长 is
- * 不长在耳朵外面 as readily as it is 不长, and a noun after a 长 is 长知识 as
- * readily as 长头发.
+ * Two more read the far side alone, in `chang-complement.ts`. A quality can be
+ * compared, intensified and conjoined where a growing cannot, so 长一点, 长极了
+ * and 长而美丽 need nothing in front of them ({@link isCompared}); and a length
+ * can be given in metres, so 长三百公里 settles itself ({@link isMeasured}).
+ *
+ * The last two need both sides, in `chang-context.ts`: {@link isPredicated} for
+ * 那座桥不长, {@link isAttributive} for 他有长头发. What those two have in common
+ * is that the near side alone would be wrong. 不长 is 不长在耳朵外面 as readily
+ * as it is 不长, and a noun after a 长 is 长知识 as readily as 长头发.
  *
  * Measured over the same 88,866 lines of Tatoeba and zh.wikipedia the other
- * rules were sized against, 260 长 decode as a word of their own. The degree
- * adverbs move 75 of them to `cháng`, all 75 correctly; the two contexts added
- * since move 8 more, also all correct — 那座桥不长, 生命不长, 射程不长, 还长,
- * 生得又瘦又长, 他有长头发, 兔子有长耳朵 and 那位长胡子德国人. On CPP's 40
- * hand-labelled 长 the character stands at 90.00%, against 85.00% with no rule
- * and 87.50% with the degree adverbs alone.
+ * rules were sized against, 260 长 decode as a word of their own and this moves
+ * 116 of them to `cháng`. Every conversion the last three contexts changed is
+ * right: 一个长头发的女生, 一个长毛绒玩具, 没有长胡子的舅舅, 要长一点, 活长点,
+ * 已经长极了, 神经棘长而狭窄 and 拉得很长. On CPP's 40 hand-labelled 长 the
+ * character stands at 92.50%, against 85.00% with no rule at all.
+ *
+ * **A verb in front is not one of the contexts**, though 他留长头发 wears long
+ * hair where 他长头发 grows it. jieba tags 树 a verb and 习惯 a noun, so no tag
+ * names the set, and taking every verb read 树长叶子 and 教育长邓演达 as
+ * adjectives.
  *
  * The last piece is {@link GROWN_INTO}, which pushes the opposite way on the one
  * shape the sources get wrong.
@@ -177,10 +190,16 @@ export const ADJECTIVAL_CHANG: EdgeRule = {
     if (GROWING.has(characters[edge.to] ?? "")) {
       return "keep";
     }
-    if (isPredicated(context) || isAttributive(context)) {
+    if (
+      isPredicated(context) ||
+      isAttributive(context) ||
+      isCompared(context) ||
+      isMeasured(context)
+    ) {
       return "force";
     }
-    const before = wordEndingAt(context, edge.from);
-    return before !== undefined && DEGREE.has(before) ? "force" : "keep";
+    return wordsEndingAt(context, edge.from).some((word) => DEGREE.has(word))
+      ? "force"
+      : "keep";
   },
 };

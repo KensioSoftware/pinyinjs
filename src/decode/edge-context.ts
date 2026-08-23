@@ -33,6 +33,35 @@ export function wordEndingAt(
 }
 
 /**
+ * Every word the dictionary has ending at a position, longest first.
+ *
+ * {@link wordEndingAt} answers with the longest, which is what a rule asking
+ * "what word is this" wants. A rule asking whether a *particular* word stands
+ * here wants all of them, because the longest match is often a word the rule
+ * has no opinion about wrapped around the one it does: 很 is a degree adverb
+ * and 得很 is the longest word ending at the same position, so 留得很长 hid its
+ * 很 and read `zhǎng`. 一个 hides 个 the same way.
+ */
+export function wordsEndingAt(
+  context: EdgeContext,
+  at: number,
+  longest = 4,
+): readonly string[] {
+  const held: string[] = [];
+  for (let length = longest; length > 0; length--) {
+    const from = at - length;
+    if (from < 0) {
+      continue;
+    }
+    const text = context.characters.slice(from, at).join("");
+    if (context.dictionary.lookup(text) !== undefined) {
+      held.push(text);
+    }
+  }
+  return held;
+}
+
+/**
  * The word starting at a position, longest first, or undefined.
  */
 export function wordStartingAt(
@@ -49,6 +78,28 @@ export function wordStartingAt(
     }
   }
   return undefined;
+}
+
+/**
+ * Every word the dictionary has starting at a position, longest first.
+ *
+ * The mirror of {@link wordsEndingAt}, and needed for the same reason: 五公 is a
+ * word and hides the 五 inside it, so a rule asking whether a numeral starts
+ * here has to be shown all of them.
+ */
+export function wordsStartingAt(
+  context: EdgeContext,
+  at: number,
+  longest = 4,
+): readonly string[] {
+  const held: string[] = [];
+  for (let length = longest; length > 0; length--) {
+    const text = context.characters.slice(at, at + length).join("");
+    if (text !== "" && context.dictionary.lookup(text) !== undefined) {
+      held.push(text);
+    }
+  }
+  return held;
 }
 
 /**
