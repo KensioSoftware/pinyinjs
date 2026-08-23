@@ -16,14 +16,8 @@ import {
   conversionKey,
   convertCharacter,
   formsOf,
-  isAmbiguousCharacter,
 } from "../script/conversion.js";
-import {
-  DEFAULT_REGION,
-  isReadingSensitive,
-  type Region,
-  toRegionalGlyph,
-} from "../script/glyphs.js";
+import { DEFAULT_REGION, type Region } from "../script/glyphs.js";
 import type { Script } from "../script/script.js";
 import type { Syllable } from "../syllable/syllable.js";
 
@@ -73,59 +67,44 @@ export function convertWord(
       ? /* c8 ignore next -- the lengths were just checked */
         (attestedCharacters[at] ?? character)
       : convertCharacter(table, character, syllable);
+    // Every form the table names but the one taken. The character's own form
+    // belongs among them: 万 is 萬 counting and 万 in the surname 万俟, 准 is
+    // 準 and 准 in 准將, 著 is 着 and 著 at `zhù`. Excluding it left 42 简→繁
+    // characters and 3,160 繁→简 ones reporting a guess with nothing to have
+    // guessed between.
+    const alternatives = formsOf(conversion).filter((form) => form !== to);
     return {
       from: character,
       to,
       evidence: evidenceFor(
         isAttested,
         atReading !== undefined,
-        isAmbiguousCharacter(table, character),
+        alternatives.length > 0,
       ),
-      alternatives: formsOf(conversion).filter(
-        (form) => form !== character && form !== to,
-      ),
+      alternatives,
     };
   });
 }
 
 /**
  * Rank what settled a character, strongest evidence first.
+ *
+ * `locked` is keyed on whether a rival form survived rather than on
+ * {@link import("../script/conversion.js").isAmbiguousCharacter}, and the two part company where a word overrides
+ * the character table. 钟 has one 繁體 form by the characters and 一见钟情 is
+ * 一見鍾情, so the choice named 鐘 as the road not taken while calling itself
+ * locked. A word settled that one, which is what `word` is for.
  */
 export function evidenceFor(
   isAttested: boolean,
   isAtReading: boolean,
-  isAmbiguous: boolean,
+  hasRival: boolean,
 ): ScriptEvidence {
-  if (!isAmbiguous) {
+  if (!hasRival) {
     return "locked";
   }
   if (isAttested) {
     return "word";
   }
   return isAtReading ? "reading" : "default";
-}
-
-/**
- * Apply the regional 繁體 forms, which never change a reading.
- */
-export function applyRegion(
-  choices: readonly ScriptChoice[],
-  reading: readonly Syllable[],
-  region: Region,
-  isAligned: boolean,
-): readonly ScriptChoice[] {
-  if (region === DEFAULT_REGION) {
-    return choices;
-  }
-  return choices.map((choice, at) => {
-    const syllable = isAligned ? reading[at] : undefined;
-    // A regional form that needs the reading and has none is a guess, whatever
-    // settled the script conversion before it: 著 is 着 or 著 in Hong Kong.
-    const isGuess = isReadingSensitive(choice.to) && syllable === undefined;
-    return {
-      ...choice,
-      to: toRegionalGlyph(choice.to, region, syllable),
-      evidence: isGuess ? "default" : choice.evidence,
-    };
-  });
 }

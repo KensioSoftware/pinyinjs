@@ -1113,6 +1113,35 @@ describe("the examples in docs/", () => {
       assertArrayEquals([...(choices[1]?.alternatives ?? [])], ["麵"]);
     });
 
+    it("names 万 as its own rival, and 麪 as Hong Kong's", () => {
+      const { choices } = toScriptPieces(dictionary, scriptTables, "一万人", {
+        to: "zh-Hant",
+      });
+      const wan = choices[1];
+      assertNonNullable(wan);
+      assertIdentical(wan.evidence, "default");
+      assertArrayEquals([...wan.alternatives], ["万"]);
+
+      const hongKong = toScriptPieces(dictionary, scriptTables, "下面", {
+        to: "zh-Hant-HK",
+      });
+      assertArrayEquals([...(hongKong.choices[1]?.alternatives ?? [])], ["麪"]);
+    });
+
+    it("settles 台 for Hong Kong, which writes one character for two", () => {
+      const { text, choices } = toScriptPieces(
+        dictionary,
+        scriptTables,
+        "台北",
+        { to: "zh-Hant-HK" },
+      );
+      assertIdentical(text, "台北");
+      assertArrayEquals(
+        choices.map((choice) => choice.evidence),
+        ["locked", "locked"],
+      );
+    });
+
     it("credits the reading rather than calling it a guess", () => {
       const { choices } = toScriptPieces(dictionary, scriptTables, "头发", {
         to: "zh-Hant",

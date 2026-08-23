@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 
 import {
+  assertArrayEquals,
   assertArrayIncludes,
   assertArrayLength,
   assertFalse,
@@ -15,6 +16,7 @@ import { loadDictionary, loadScriptTables } from "../dictionary/source.js";
 import { detectScript } from "../script/script.js";
 import {
   isUncertainChoice,
+  SCRIPT_TARGETS,
   type ScriptTarget,
   toScript,
   toScriptPieces,
@@ -205,6 +207,110 @@ describe("script conversion", () => {
       assertIdentical(mian.evidence, "default");
       assertTrue(isUncertainChoice(mian));
       assertArrayIncludes(mian.alternatives, "麵");
+    });
+
+    it("names the character's own form where that is what it beat", () => {
+      // 万 is 萬 counting and stays 万 in the surname 万俟, so the form the
+      // character was already written as is one of the two it was chosen
+      // between. 准 and 划 are the same shape, against 准將 and 划船.
+      for (const [text, to] of [
+        ["万", "萬"],
+        ["准", "準"],
+        ["划", "劃"],
+      ] as const) {
+        const [choice] = toScriptPieces(dictionary, tables, text, {
+          to: "zh-Hant",
+          from: "Hans",
+        }).choices;
+        assertNonNullable(choice);
+        assertIdentical(choice.to, to);
+        assertIdentical(choice.evidence, "default");
+        assertArrayEquals(choice.alternatives, [text]);
+      }
+    });
+
+    it("credits the word where it overrode a one-form character", () => {
+      // 钟 has one 繁體 form by the characters and 一见钟情 is 一見鍾情. The
+      // choice used to name 鐘 as the road not taken while calling itself
+      // locked, which is the same contradiction the other way up.
+      const zhong = toScriptPieces(dictionary, tables, "一见钟情", {
+        to: "zh-Hant",
+        from: "Hans",
+      }).choices[2];
+      assertNonNullable(zhong);
+      assertIdentical(zhong.to, "鍾");
+      assertIdentical(zhong.evidence, "word");
+      assertArrayEquals(zhong.alternatives, ["鐘"]);
+    });
+
+    it("names the rival a region left it choosing between", () => {
+      // 闹着玩儿 is one syllable short of its characters, so nothing says how
+      // the 着 is read and Hong Kong needs the reading to write it. The rival
+      // is 著, which is what the `zhù` reading would have kept.
+      const zhe = toScriptPieces(dictionary, tables, "闹着玩儿", {
+        to: "zh-Hant-HK",
+        from: "Hans",
+      }).choices[1];
+      assertNonNullable(zhe);
+      assertIdentical(zhe.to, "着");
+      assertIdentical(zhe.evidence, "default");
+      assertArrayEquals(zhe.alternatives, ["著"]);
+    });
+
+    it("locks a character a region leaves one form", () => {
+      // 台 and 臺 are two characters in Taiwan and one in Hong Kong, so the
+      // guess the script conversion was making has nothing left in it.
+      const [tai] = toScriptPieces(dictionary, tables, "台北", {
+        to: "zh-Hant-HK",
+        from: "Hans",
+      }).choices;
+      assertNonNullable(tai);
+      assertIdentical(tai.to, "台");
+      assertIdentical(tai.evidence, "locked");
+      assertArrayLength(tai.alternatives, 0);
+    });
+
+    it("keeps the evidence and the alternatives from contradicting each other", () => {
+      // `default` says rival forms existed and `locked` says none did, so an
+      // empty list beside the first and a full one beside the second are both
+      // the choice arguing with itself. Both readings of the contract are
+      // asserted at once, along with all four kinds of evidence still being
+      // reached, so that answering `locked` everywhere would not satisfy it.
+      const texts = [
+        "一万人",
+        "他游过河",
+        "根据这个",
+        "划一条线",
+        "准他去",
+        "只有一只",
+        "下面的头发",
+        "干货和干扰",
+        "闹着玩儿",
+        "台北和台湾",
+        "这里面",
+      ];
+      const seen = new Set<string>();
+      for (const target of SCRIPT_TARGETS) {
+        for (const text of texts) {
+          for (const choice of toScriptPieces(dictionary, tables, text, {
+            to: target,
+            from: "Hans",
+          }).choices) {
+            seen.add(choice.evidence);
+            assertIdentical(
+              choice.alternatives.length === 0,
+              choice.evidence === "locked",
+              `${choice.from}→${choice.to} ${choice.evidence} ${target}`,
+            );
+          }
+        }
+      }
+      assertArrayEquals([...seen].toSorted(), [
+        "default",
+        "locked",
+        "reading",
+        "word",
+      ]);
     });
 
     it("does not offer the form it chose as an alternative to itself", () => {

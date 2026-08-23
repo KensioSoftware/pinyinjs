@@ -44,7 +44,8 @@ export interface ScriptOptions {
  *
  * - `locked` — the character has one form and there was nothing to decide.
  *   True of the great majority: simplification changed a minority of
- *   characters, and most of those are one-to-one.
+ *   characters, and most of those are one-to-one. The one evidence that comes
+ *   with no {@link ScriptChoice.alternatives}, and the only one.
  * - `word` — a word some source wrote in both scripts settled it. The strongest
  *   real evidence, because it was written rather than inferred.
  * - `reading` — the character had rival forms and the syllable it was decoded
@@ -79,7 +80,15 @@ export interface ScriptChoice {
   /** The character as it was converted. */
   readonly to: string;
   readonly evidence: ScriptEvidence;
-  /** The forms this character could also have taken. */
+  /**
+   * The forms this character could also have taken.
+   *
+   * Empty exactly when the evidence is `locked`, so a caller reading one of
+   * them never has to check the other. The character's own form counts: 万 is
+   * 萬 counting and 万 in the surname 万俟, and a conversion that took 萬 was
+   * choosing between the two. So does the region's: Hong Kong writes 麪 where
+   * Taiwan writes 麵, and a Hong Kong conversion says 麪.
+   */
   readonly alternatives: readonly string[];
 }
 
