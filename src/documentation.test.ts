@@ -539,7 +539,7 @@ describe("the examples in docs/", () => {
           dictionary,
           "\u{90A3}\u{662F}\u{5C0F}\u{674E}\u{7684}\u{4E66}\u{3002}",
         ),
-        "N\u{E0} shi Xi\u{1CE}o L\u{1D0} de sh\u{16B}.",
+        "N\u{E0} sh\u{EC} Xi\u{1CE}o L\u{1D0} de sh\u{16B}.",
       );
       // 大 is deliberately not a prefix: it is also an ordinary adjective, and
       // both of the rule's clear mistakes over the corpus were 大.
@@ -2254,9 +2254,9 @@ describe("the examples in docs/", () => {
     it("explains 长江大桥 as the page shows", async () => {
       assertArrayEquals(await cli("explain", "长江大桥"), [
         "长江大桥  Cháng Jiāng Dàqiáo",
-        "  Cháng   word    zhǎng +24.6",
+        "  Cháng   word    zhǎng +14.6",
         "  Jiāng   locked",
-        "  Dà      word    dài +22.6",
+        "  Dà      word    dài +12.6",
         "  qiáo    locked",
       ]);
     });

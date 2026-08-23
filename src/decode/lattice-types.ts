@@ -68,15 +68,34 @@ export const ALTERNATE_PENALTY = 1;
  * outright that those two characters together read `dì qì`. A stored reading is
  * evidence about the characters; a character's default reading is only a prior.
  *
- * So the reading decode charges per *edge* heavily enough that dictionary
- * evidence outranks frequency: at 16 an attested word always beats splitting it
- * into characters, however common those characters are, since the worst word
- * costs `15 + 16` and the best two-character split costs `0 + 16` twice. Word
- * frequency survives as the tiebreak between paths covering the same span with
- * the same number of words. That ordering — fewest words first, frequency
- * second — is the one ALGORITHM.md already gives its data-free fallback tier.
+ * So the reading decode charges per *edge*, and the charge is what a word is
+ * worth against the frequencies around it. The whole frequency scale is 15
+ * buckets wide, so a charge of 15 already makes the rarest possible word beat
+ * the two commonest possible characters. This was 16 for most of the project's
+ * life, and with `WORD_CHARGE` on top of it the real price of a word boundary
+ * was 20.62 — five buckets past the point where frequency can say anything at
+ * all. Every 那是 in the language read `nà shi` on the strength of one
+ * colloquial CC-CEDICT entry no corpus has ever counted, and 都会, 过得, 得了
+ * and 的哥 went the same way.
+ *
+ * At 6 the price is 10.62 and the arithmetic decides something. A word loses
+ * its span to a two-character split when the two characters are more than
+ * 25.62 buckets better than it, which needs a word nothing attests standing
+ * against two characters near the top of the scale. An attested word survives
+ * whatever is beside it, so 地气 is still `dì qì`.
+ *
+ * Measured over the 88,866 lines of Tatoeba and zh.wikipedia the stage-4 rules
+ * were sized against, moving 16 to 6 changes 822 of 139,682 Han runs. The
+ * changes are 那是 (303), 都 read `dū` (141), 得 read `dé` after a verb (98),
+ * 为 read `wéi` where it means *for* (36), 一个 (27), and a tail of 了, 只, 中,
+ * 说 and 的. Against them stand 21 老是, 11 等地 and 10 倒是, where the word
+ * really was one word. On CPP's 20,139 hand-labelled polyphones it is 91.48%
+ * either way, and the gold corpus does not move.
+ *
+ * Word frequency survives as the tiebreak between paths covering the same span
+ * with the same number of words.
  */
-export const READING_CHARGE = 16;
+export const READING_CHARGE = 6;
 
 /**
  * What an edge covering a character no dictionary entry knows costs.

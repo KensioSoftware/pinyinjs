@@ -130,8 +130,8 @@ describe("writing JSON", () => {
           state: "word",
           tone: 2,
           alternatives: [
-            { reading: "xíng", cost: 48.62 },
-            { reading: "héng", cost: 50.62 },
+            { reading: "xíng", cost: 38.62 },
+            { reading: "héng", cost: 40.62 },
           ],
         },
       ],
@@ -140,7 +140,7 @@ describe("writing JSON", () => {
 
   it("rounds a cost to something worth printing", async () => {
     // The per-word charge is 4.62, so an unrounded cost lands on
-    // 48.620000000000005 as often as not.
+    // 38.620000000000005 as often as not.
     const explained = await json("explain", "银行");
     assertStringNotIncludes(JSON.stringify(explained), "0000000");
   });
@@ -549,7 +549,7 @@ describe("the explain command", () => {
     assertArrayEquals(lines, [
       "银行  yínháng",
       "  yín     locked",
-      "  háng    word    xíng +48.6  héng +50.6",
+      "  háng    word    xíng +38.6  héng +40.6",
     ]);
   });
 

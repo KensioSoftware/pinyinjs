@@ -43,7 +43,7 @@ $ pinyinjs check 银行 yínxíng
 $ pinyinjs explain 银行
 银行  yínháng
   yín     locked
-  háng    word    xíng +24.6  héng +26.6  hàng +27.6
+  háng    word    xíng +14.6  héng +16.6  hàng +17.6
 
 $ pinyinjs lookup 头发
 头发  tóu fa  n
@@ -111,8 +111,8 @@ and it writes one JSON document per answer instead, the shape `jq` wants:
 
 ```console
 $ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'
-{"text":"Cháng","state":"word","tone":2,"alternatives":[{"reading":"zhǎng","cost":24.62}]}
-{"text":"Dà","state":"word","tone":4,"alternatives":[{"reading":"dài","cost":22.62}]}
+{"text":"Cháng","state":"word","tone":2,"alternatives":[{"reading":"zhǎng","cost":14.62}]}
+{"text":"Dà","state":"word","tone":4,"alternatives":[{"reading":"dài","cost":12.62}]}
 
 $ pinyinjs lookup 垃圾 --json | jq -r .taiwanReading
 lè sè

@@ -10,9 +10,23 @@ import {
   type Lattice,
   type LatticeEdge,
   READING_CHARGE,
-  UNKNOWN_COST,
 } from "./lattice.js";
 import type { ResolvedHints, WordHint } from "./hints.js";
+
+/**
+ * What an edge a hint brought with it costs, in both decodes.
+ *
+ * Zero, because a caller naming a reading is the strongest evidence the decode
+ * has. The other branch of {@link applyHints} says so already by overwriting a
+ * dictionary entry's reading where a hint names the same stretch, and an edge
+ * with no entry behind it has to say the same thing through its cost.
+ *
+ * It was {@link import("./lattice-types.js").UNKNOWN_COST} until
+ * {@link READING_CHARGE} came down, which worked only while one edge beat two
+ * whatever they cost: 玩儿 hinted as `wánr` went back to `wán ér` the moment
+ * frequency could speak.
+ */
+const HINT_COST = 0;
 
 /**
  * The same hints with every position moved along by an offset.
@@ -163,8 +177,8 @@ export function applyHints(lattice: Lattice, hints: ResolvedHints): Lattice {
           to,
           text: spanning.characters.join(""),
           reading: spanning.reading,
-          cost: UNKNOWN_COST,
-          readingCost: UNKNOWN_COST + READING_CHARGE,
+          cost: HINT_COST,
+          readingCost: HINT_COST + READING_CHARGE,
           isProperNoun: false,
           partOfSpeech: "",
           // No dictionary entry backs this one — that is the whole reason it

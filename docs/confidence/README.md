@@ -83,7 +83,7 @@ decoder saying it had very little to go on.
 ```ts
 const pieces = convertPieces(dictionary, "长江大桥");
 pieces[0]?.confidence?.alternatives;
-// [{ reading: [ … zhǎng … ], cost: 24.62, … }]
+// [{ reading: [ … zhǎng … ], cost: 14.62, … }]
 ```
 
 An alternative's `cost` is how much more the cheapest conversion taking it
