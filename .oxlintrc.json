@@ -122,6 +122,7 @@
     "eslint/new-cap": "off",
     "eslint/no-duplicate-imports": "off",
     "eslint/no-shadow": "off",
+    "eslint/one-var": "off",
     "eslint/prefer-named-capture-group": "off",
 
     // A bare `return;` reads as "no value here" and is used deliberately, in
