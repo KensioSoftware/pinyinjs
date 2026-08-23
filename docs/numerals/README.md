@@ -1,8 +1,8 @@
 # Numbers
 
 Reading a number aloud needs no dictionary and no segmentation, just arithmetic
-and about twenty readings, so this is the one part of the package that works
-with nothing loaded.
+and about twenty readings. It is the one part of the package that runs before
+anything is loaded.
 
 ```ts
 import { numeralHanzi, readNumeral } from "@kensio/pinyinjs";
@@ -13,7 +13,7 @@ numeralHanzi(2026, { style: "digits" }); // "二〇二六"
 
 ## The one hard question: counted, or spelled out?
 
-The same digits go both ways, and nothing in the number says which:
+The same digits go both ways, and the number alone leaves the choice open:
 
 ```ts
 numeralHanzi(2026); // "两千零二十六", 2026个, a quantity
@@ -21,13 +21,14 @@ numeralHanzi(2026, { style: "digits" }); // "二〇二六", 2026年, a year
 ```
 
 Only what follows the number decides it, since 年 spells it out and 个 counts
-it, so the style is the caller's to choose and this module will do either. `cardinal`
-is the default because a bare number is more often a quantity than a label.
+it. The style is the caller's to choose, and this module will do either.
+`cardinal` is the default because a bare number is more often a quantity than a
+label.
 
 ## Counting
 
-The awkward parts are 零 and the bare 十, and both are about saying the number
-rather than about arithmetic.
+The awkward parts are 零 and the bare 十. Both are about how the number is said
+aloud.
 
 ```ts
 numeralHanzi(10); // "十", not 一十
@@ -39,18 +40,16 @@ numeralHanzi(20_050); // "两万零五十", the lower group leaves a gap
 numeralHanzi(100_000_005); // "一亿零五"
 ```
 
-Numbers group by 万 rather than by thousands, which is why 12,345 is _one_ 万
-and 2,345 rather than twelve thousand.
+Numbers group by 万 and never by thousands. That is why 12,345 is _one_ 万 plus
+2,345, where English hears twelve thousand.
 
-**两 or 二.** A lone 2 multiplying 千, 万 or 亿 is 两: 2,000 is 两千, 20,000 is
-两万, and 12,000 is 一万两千. 二 stands wherever the 2 is not a multiplier: 12
-is 十二, 20 is 二十, 200 is 二百, and 120,000 is 十二万, where the 二 is the units
-digit of 12.
+**两 or 二.** A lone 2 multiplying 千, 万 or 亿 is 两. 2,000 is 两千, 20,000 is
+两万, and 12,000 is 一万两千. 二 stands everywhere else. 12 is 十二, 20 is 二十,
+200 is 二百, and 120,000 is 十二万, where the 二 is the units digit of 12.
 
-This is genuinely variable rather than a rule, so it is a choice of three.
-现代汉语词典 has 二 before 百 and either before 千/万/亿, and then adds that the
-二 of 三万二千 cannot be 两, so the prescription is `leading` and what people say
-is `always`:
+This varies in real use, and the option is a choice of three. 现代汉语词典 has
+二 before 百 and either before 千/万/亿, and then adds that the 二 of 三万二千
+cannot be 两. That prescription is `leading`, and what people say is `always`:
 
 ```ts
 numeralHanzi(12_000); // "一万两千", always, the default
@@ -58,10 +57,10 @@ numeralHanzi(12_000, { liang: "leading" }); // "一万二千", the 词典's own 
 numeralHanzi(12_000, { liang: "never" }); // "一万二千", and 二千 for 2,000 too
 ```
 
-**A lone 2 in front of what it counts is also 两, and that one is not a
-choice.** 两个西瓜 and 两个人 are what the language has; 二个 is simply wrong.
-Nothing about the number says whether it is counting, so `counts` is the
-caller's to set, exactly as the style is:
+**A lone 2 in front of what it counts is also 两, and that one is fixed.**
+两个西瓜 and 两个人 are what the language has, and 二个 is simply wrong. The
+number alone leaves that open, so `counts` is the caller's to set, exactly as
+the style is:
 
 ```ts
 numeralHanzi(2); // "二", a number counting nothing
@@ -80,7 +79,7 @@ numeralHanzi("007"); // "七", counted, they do not
 numeralHanzi(2019, { style: "digits", zero: "零" }); // "二零一九"
 ```
 
-Pass a **string** when the digits matter as digits: a room number keeps its
+Pass a **string** when the digits matter as digits. A room number keeps its
 leading zeros and a `number` cannot.
 
 ## Reading
@@ -103,8 +102,8 @@ said(-40); // "fù sì shí"
 `yāo` is how 一 is said when digits are read out one at a time, so 110 is
 `yāo yāo líng` and a room number is said the same way, because `yī` and `qī` are
 hard to tell apart down a bad line. It is off by default, because 2019 is
-`èr líng yī jiǔ` with an ordinary `yī`: it belongs to phone numbers rather than
-to digits as such.
+`èr líng yī jiǔ` with an ordinary `yī`. It belongs to phone numbers, and not to
+spelled-out digits in general.
 
 **Readings come back with underlying tones**, exactly as the dictionary's do, so
 一 is `yī` whatever it will be said as. Run [sandhi](../sandhi/) over the result
@@ -118,15 +117,15 @@ applySandhi(readNumeral(100) ?? []); // yì bǎi
 
 **Sandhi belongs to a counted quantity and stops at the decimal point.** 一百 is
 `yìbǎi`, but 110 spelled out is `yāo yāo líng` and never `yì yì líng`, and 3.14
-is `sān diǎn yī sì`: a digit said on its own keeps its citation tone, and
+is `sān diǎn yī sì`. A digit said on its own keeps its citation tone, and
 everything after the point is read digit by digit whatever the style. The
 `pinyinjs number` command does exactly this, and it is what a caller assembling
 an utterance should do too.
 
 ## Percentages and fractions
 
-Both reverse, which is why they are functions rather than something to assemble
-by hand:
+Both reverse, and that is why they are functions instead of something to
+assemble by hand:
 
 ```ts
 percentHanzi(95); // "百分之九十五", "of a hundred parts, ninety-five"
@@ -165,7 +164,7 @@ Three rules decide it, and they are deliberately few:
 | digits before % or ％ | 百分之, reversed | the sign is read, and read first           |
 | anything else         | counted          | what almost every digit in running text is |
 
-**A lone 2 touching the Han after it is counting it, so it is 两.** This is the
+**A lone 2 touching the Han after it is counting it, and reads 两.** This is the
 `counts` above, and the following character is what sets it:
 
 ```ts
@@ -176,10 +175,10 @@ convert(dictionary, "2万人"); // "liǎng wàn rén", as 20,000 is 两万
 ```
 
 The measure words a 2 can count with are an open list, so 两 is the default and
-the exceptions are named: the positions a digit **labels** rather than counts,
-being 月, 日, 号, 楼, 路, 班 and 期, and an ordinal, which the 第 in front of it
-marks. 十 and 百 are excepted for the other reason — 200 是二百 whether the unit
-is written as a digit or as a character.
+the exceptions are named. Those are the positions a digit **labels** instead of
+counting, being 月, 日, 号, 楼, 路, 班 and 期, and an ordinal, which the 第 in
+front of it marks. 十 and 百 are excepted for the other reason. 200 is 二百
+whether the unit is written as a digit or as a character.
 
 ```ts
 convert(dictionary, "2月"); // "èr yuè", February
@@ -188,11 +187,11 @@ convert(dictionary, "第2次"); // "dì èr cì", an ordinal names a position
 convert(dictionary, "12个"); // "shí'èr gè", a 2 inside a larger number
 ```
 
-A number that has been read is a **word**: 25个 is `èrshíwǔ gè`, one word for
-the number and a space before the measure word, which is what 正词法 6.1.5 asks
-for. Digits spelled out are not a word, they are digits, so 1998年 is
-`yī jiǔ jiǔ bā nián`. Sandhi crosses the boundary, so 1个 is `yí gè`: the tone
-the 一 assimilates to is in the next word.
+A number that has been read is a **word**. 25个 is `èrshíwǔ gè`, one word for
+the number and a space before the measure word, and that is what 正词法 6.1.5
+asks for. Digits spelled out stay digits, so 1998年 is `yī jiǔ jiǔ bā nián`.
+Sandhi crosses the boundary, so 1个 is `yí gè`, the tone the 一 assimilates to
+being in the next word.
 
 **A decimal is that word, and then digits.** The counted part is the word it
 would be on its own, and everything from the 点 onwards is read one digit at a
@@ -204,8 +203,8 @@ convert(dictionary, "3.14"); // "sān diǎn yī sì"
 ```
 
 **A digit touching `-`, `/` or their full-width forms is left exactly as
-written.** 3202-5625 is a phone number and COVID-19 is a name; neither is a
-quantity, and the mark between the parts has no reading.
+written.** 3202-5625 is a phone number and COVID-19 is a name. Both are labels,
+and the mark between the parts has no reading.
 
 **A colon is the exception, because a time does have one.**
 
@@ -216,54 +215,54 @@ convert(dictionary, "12:00"); // "shí'èr diǎn", no 零零分 on the hour
 convert(dictionary, "16:9的"); // "16:9de", a ratio, and left alone
 ```
 
-Two digits after the colon and no more, which is what tells a time from a
+Two digits after the colon and no more, and that is what tells a time from a
 ratio. Measured over Tatoeba and zh.wikipedia the shape catches 104 runs and
-every one is a time: none has an hour above 23 or a minute above 59, and the
+every one is a time. None has an hour above 23 or a minute above 59, and the
 four colon runs that are _not_ times, 16:9, 2:1, 0:2 and 0:1, all have a single
-digit after the colon. Scores and proportions are read with 比 and that is not
-attempted here.
+digit after the colon. Scores and proportions are read with 比, which this
+leaves alone.
 
 The 分 is written even where a speaker would drop it, because 六点三十 without
-it is the decimal 6.30 said aloud, since the same 点 does both jobs. The hour, the
-minutes and the two markers are separate words, which is the grouping the same
-time gets when the text writes 6点30分 out in 汉字 to begin with.
+it is the decimal 6.30 said aloud, since the same 点 does both jobs. The hour,
+the minutes and the two markers are separate words, the same grouping the time
+gets when the text writes 6点30分 out in 汉字 to begin with.
 
-### What it does not guess
+### Where it stops guessing
 
-A bare four-digit year with nothing after it, as in `他生于1990。`, is counted
-rather than spelled out. Measured over 88,866 lines, 68% of four-digit runs sit
-directly in front of 年 and those are the ones handled; of the rest, some are
-years in citations and some are quantities like 1500 or 2000人, and nothing in
-the text separates them. Reading a quantity as a year is a reading error rather
-than a spacing one, so the rule stops where the evidence does.
+A bare four-digit run with no 年 after it, as in `他生于1990。`, is counted.
+Measured over 88,866 lines, 68% of four-digit runs sit directly in front of 年
+and those are the ones handled. Of the rest, some are years in citations and
+some are quantities like 1500 or 2000人, and the text gives no way to separate
+them. Reading a quantity as a year is a reading error and not a spacing one, and
+the rule stops where the evidence does.
 
-**Currency symbols are not read, and that is a decision with a number behind
-it.** `$5` and `￥100` appear **9 times in 88,866 lines**. A rule would have to
-choose between 五美元 and 五块钱 on nothing, decide where the symbol goes when
-it is written after the digits, and cover the dozen symbols anybody uses, all
-for a shape that turns up once in ten thousand lines. Left as written, which is what
-the identifier rule already does with it.
+**Currency symbols go unread, and that is a decision with a number behind it.**
+`$5` and `￥100` appear **9 times in 88,866 lines**. A rule would have to choose
+between 五美元 and 五块钱 with no evidence, decide where the symbol goes when it
+is written after the digits, and cover the dozen symbols anybody uses, all for a
+shape that turns up once in ten thousand lines. They are left as written, the
+same treatment the identifier rule already gives them.
 
 Dates beyond 年月日 and phone numbers read as `yāo` are measured out on the same
-grounds: over the same corpus the dashed runs are 55 and about one of them is a
-date, the rest being chemical registry numbers and ISBNs; slashed dates do not
-occur at all, and an eleven-digit phone number never does. 年月日 dates already
-convert correctly with no rule about dates in them, since 三月 is `sān yuè` and
-三十一日 is `sānshíyī rì`.
+grounds. Over the same corpus the dashed runs are 55 and about one of them is a
+date, the rest being chemical registry numbers and ISBNs. Slashed dates never
+occur, and an eleven-digit phone number never appears either. 年月日 dates
+already convert correctly with no rule about dates in them, since 三月 is
+`sān yuè` and 三十一日 is `sānshíyī rì`.
 
 ## How this is measured
 
 CC-CEDICT has 20 headwords with digits in them and reads 17 of those digit runs
-out, which is the only transcription of digit readings any source here carries.
-`pnpm numerals` scores against it: all 17 match, 14 with plain digits and 3 of
-them, 110, 119 and 120, needing `yāo`. Every one of them is spelled out rather than
-counted, which is a finding rather than a coincidence: the cardinal style is
-unattested in that data and had to be tested against worked examples instead.
+out, the only transcription of digit readings any source here carries.
+`pnpm numerals` scores against it. All 17 match, 14 with plain digits and 3 of
+them, 110, 119 and 120, needing `yāo`. Every one of the 17 is spelled out, and
+that is a finding worth stating. The cardinal style is unattested in that data
+and had to be tested against worked examples instead.
 
 The same harness converts those headwords end to end, and there 7 of 17 match.
-The ten that do not are all one thing: a bare number CC-CEDICT reads as a label,
-as in 110, 88, 996 and 95后, where `convert` counts it. Nothing in running text
-separates 我有110个 from 打110, so this is a limit rather than a defect, and the
+The ten that fail are all one thing, a bare number CC-CEDICT reads as a label,
+as in 110, 88, 996 and 95后, where `convert` counts it. Running text gives no
+way to separate 我有110个 from 打110. That is a limit and not a defect, and the
 number is recorded rather than smoothed over.
 
 <!-- card
