@@ -6,6 +6,7 @@
  * characters in the language, so the words they begin and end are numerous and
  * mostly wrong.
  */
+import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import {
   type EdgeContext,
@@ -13,6 +14,7 @@ import {
   tagOf,
   wordEndingAt,
   wordStartingAt,
+  wordsStartingAt,
 } from "./rules.js";
 
 /**
@@ -85,6 +87,95 @@ export const MODAL_DE: EdgeRule = {
     return SUBJECT_TAGS.has(tagOf(context, before)) &&
       GOVERNED_TAGS.test(tagOf(context, after))
       ? "force"
+      : "keep";
+  },
+};
+
+/**
+ * What a potential complement is made of, after the 得 that marks it.
+ *
+ * 算得上, 买得起, 看得住, 说得过去. The complement is a resultative or a
+ * directional, and this is the closed set of the ones that take a 得 in front of
+ * them rather than a verb of their own.
+ *
+ * 了 and 过 are deliberately absent, and for the same reason: both are aspect
+ * markers as well as complements, and the aspect is the commoner by a wide
+ * margin. Over 88,866 lines of Tatoeba and zh.wikipedia, including 了 broke 70
+ * conversions and fixed none — 获得了, 取得了 and 赢得了 all became 获 得 了 —
+ * and 过 broke 赢得过 twice. 吃得了 and 说得过去 are the shapes that gives up.
+ */
+const COMPLEMENTS = new Set(["上", "起", "下", "住"]);
+
+/**
+ * The tag prefix jieba gives a verb, which is what a complement attaches to.
+ */
+const VERB_TAG = "v";
+
+/**
+ * Whether a syllable is `dé`, the reading 得 takes as a verb of its own.
+ */
+function isDe(syllable: Syllable | undefined): boolean {
+  return (
+    syllable?.initial === "d" && syllable.final === "e" && syllable.tone === 2
+  );
+}
+
+/**
+ * Whether a word starting at the complement takes it away from the 得.
+ *
+ * The one thing that separates 算得上一个作家 from 取得上级批准, since both put a
+ * verb, a 得 and a 上 in the same order. 上级 is a word and nothing follows it
+ * that starts another, so the 上 belongs to it; 上道 is also a word, but 道歉
+ * follows and is the better claim on the 道, so the 上 is left to the 得.
+ *
+ * Only multi-character words are asked, because every character is a word of its
+ * own and a test that counted those would answer yes everywhere.
+ */
+function isSwallowed(context: EdgeContext, at: number): boolean {
+  const longer = (from: number): boolean =>
+    wordsStartingAt(context, from).some(
+      (word) => toCharacters(word).length > 1,
+    );
+  return longer(at) && !longer(at + 1);
+}
+
+/**
+ * A verb and a 得 in front of a complement is not a word reading `dé`.
+ *
+ * 他算得上一个作家 came out `suàn dé shàng`, because 算得 is a key jieba counted
+ * and the phrase corpus reads it `suàn dé`. In a potential complement the 得 is
+ * the particle: 算得上, 吃得了, 买得起 and 看得住 are all `de`, and the reading
+ * the key carries is the one 算得 has standing alone, which is not what a
+ * complement leaves it doing.
+ *
+ * Both sides are needed and neither is enough. A verb before the 得 rules out
+ * 只得上山 and 不得下车, where the 得 belongs to an adverb and the character
+ * after it starts a verb phrase of its own; the complement after it rules out
+ * 取得上级批准, where 上 is the first character of 上级 rather than a complement.
+ * That second test is why the complement has to be the whole of the word
+ * starting there.
+ *
+ * Over the 88,866 lines it changes 5 conversions and all 5 are 算得上, which is
+ * the only word of this shape the corpus holds. CPP does not move.
+ */
+export const POTENTIAL_DE: EdgeRule = {
+  name: "potential-de",
+  verdictFor: (context: EdgeContext) => {
+    const { characters, edge } = context;
+    if (
+      edge.to - edge.from !== 2 ||
+      edge.text.at(-1) !== "得" ||
+      edge.reading.length !== 2 ||
+      !isDe(edge.reading[1])
+    ) {
+      return "keep";
+    }
+    if (!tagOf(context, characters[edge.from]).startsWith(VERB_TAG)) {
+      return "keep";
+    }
+    return COMPLEMENTS.has(characters[edge.to] ?? "") &&
+      !isSwallowed(context, edge.to)
+      ? "forbid"
       : "keep";
   },
 };

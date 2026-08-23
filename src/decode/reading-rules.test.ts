@@ -111,6 +111,33 @@ const deDictionary = dictionaryOf([
 ]);
 
 /**
+ * A dictionary of its own for the potential complement.
+ *
+ * 算得 is the shape: a key jieba counted and tagged, read `suàn dé` by the
+ * phrase corpus, standing where the 得 is the particle.
+ */
+const potentialDictionary = dictionaryOf([
+  entry("算", "suàn", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("取", "qǔ", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("只", "zhǐ", { partOfSpeech: "d", frequency: 40_000 }),
+  entry("得", "de", {
+    partOfSpeech: "ud",
+    frequency: 60_000,
+    alternates: [reading("dé"), reading("děi")],
+  }),
+  entry("上", "shàng", { partOfSpeech: "f", frequency: 80_000 }),
+  entry("是", "shì", { partOfSpeech: "v", frequency: 90_000 }),
+  entry("山", "shān", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("级", "jí", { partOfSpeech: "n", frequency: 10_000 }),
+  entry("批准", "pī zhǔn", { partOfSpeech: "v", frequency: 3000 }),
+  entry("上级", "shàng jí", { partOfSpeech: "b", frequency: 2000 }),
+  entry("上山", "shàng shān", { partOfSpeech: "v", frequency: 2000 }),
+  entry("算得", "suàn dé", { partOfSpeech: "v", frequency: 400 }),
+  entry("取得", "qǔ dé", { partOfSpeech: "v", frequency: 9000 }),
+  entry("只得", "zhǐ dé", { partOfSpeech: "v", frequency: 3000 }),
+]);
+
+/**
  * A dictionary of its own for 长, kept apart from the one above.
  *
  * The costs the decode works in are quantised from the frequencies of whatever
@@ -155,6 +182,21 @@ const changDictionary = dictionaryOf([
   entry("在", "zài", { partOfSpeech: "p", frequency: 90_000 }),
   entry("他", "tā", { partOfSpeech: "r", frequency: 90_000 }),
   entry("好", "hǎo", { partOfSpeech: "a", frequency: 70_000 }),
+  // The contexts that need the far side: a comparison, a conjunction, a
+  // measurement and the 量词 an ordinal makes adverbial.
+  entry("一点", "yī diǎn", { partOfSpeech: "m", frequency: 20_000 }),
+  entry("极了", "jí le", { frequency: 2000 }),
+  entry("而", "ér", { partOfSpeech: "c", frequency: 50_000 }),
+  entry("美丽", "měi lì", { partOfSpeech: "a", frequency: 8000 }),
+  entry("三百", "sān bǎi", { partOfSpeech: "m", frequency: 3000 }),
+  entry("公里", "gōng lǐ", { partOfSpeech: "q", frequency: 6000 }),
+  entry("第一次", "dì yī cì", { partOfSpeech: "m", frequency: 9000 }),
+  entry("次", "cì", { partOfSpeech: "q", frequency: 40_000 }),
+  entry("一", "yī", { partOfSpeech: "m", frequency: 90_000 }),
+  entry("一个", "yī gè", { partOfSpeech: "m", frequency: 80_000 }),
+  entry("个", "gè", { partOfSpeech: "q", frequency: 90_000 }),
+  entry("得很", "de hěn", { frequency: 1000 }),
+  entry("胡子", "hú zi", { partOfSpeech: "n", frequency: 3000 }),
   // 越长 exactly as the artifact holds it: a `yuè cháng` reading carrying no
   // part of speech, and the only member of its paradigm — 越高 and 越好 are
   // absent here as they are there.
@@ -335,6 +377,47 @@ describe("的 where it is the structural particle", () => {
   });
 });
 
+describe("得 marking a potential complement", () => {
+  /** How a run of the complement cases reads, word by word. */
+  function readPotential(run: string): readonly string[] {
+    return decodeRun(potentialDictionary, run, READING_RULES).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads the 得 of a potential complement as the particle", () => {
+    assertArrayEquals(readPotential("算得上是"), [
+      "suàn",
+      "de",
+      "shàng",
+      "shì",
+    ]);
+  });
+
+  it("keeps the word where the complement is swallowed by a noun", () => {
+    // 上级 is the object of 取得 rather than a complement, and nothing after it
+    // starts a word of its own.
+    assertArrayEquals(readPotential("取得上级批准"), [
+      "qǔdé",
+      "shàngjí",
+      "pīzhǔn",
+    ]);
+  });
+
+  it("keeps the word where an adverb rather than a verb precedes the 得", () => {
+    assertArrayEquals(readPotential("只得上山"), ["zhǐdé", "shàngshān"]);
+  });
+
+  it("does nothing at all when the rule is not applied", () => {
+    assertArrayEquals(
+      decodeRun(potentialDictionary, "算得上是", []).map((word) =>
+        word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+      ),
+      ["suàndé", "shàng", "shì"],
+    );
+  });
+});
+
 describe("a 量词 the number in front of it counts", () => {
   it("keeps the 量词 out of the word after it", () => {
     assertArrayEquals(words("三个人"), ["三", "个", "人"]);
@@ -432,6 +515,40 @@ describe("长 as an adjective", () => {
     // 他长头发 is a subject and a verb, and the only thing separating it from
     // 有长头发 is what stands in front.
     assertArrayEquals(readChang("他长头发"), ["tā", "zhǎng", "tóufa"]);
+  });
+
+  it("looks past a longer word to the degree adverb inside it", () => {
+    // 得很 is a word and the longest one ending in front of the 长, so the 很
+    // that settles it was hidden: 留得很长 read `zhǎng`.
+    assertArrayEquals(readChang("得很长"), ["dehěn", "cháng"]);
+  });
+
+  it("takes the 量词 inside a longer numeral the same way", () => {
+    assertArrayEquals(readChang("一个长胡子"), ["yīgè", "cháng", "húzi"]);
+  });
+
+  it("keeps the verb where the 量词 is counting an ordinal", () => {
+    // 第一次 is when the growing happened rather than what is counted.
+    assertArrayEquals(readChang("第一次长胡子"), ["dìyīcì", "zhǎng", "húzi"]);
+  });
+
+  it("reads a compared or intensified 长 as cháng", () => {
+    assertArrayEquals(readChang("长一点"), ["cháng", "yīdiǎn"]);
+    assertArrayEquals(readChang("长极了"), ["cháng", "jíle"]);
+  });
+
+  it("reads a 长 conjoined with another adjective as cháng", () => {
+    assertArrayEquals(readChang("长而美丽"), ["cháng", "ér", "měilì"]);
+  });
+
+  it("reads a 长 given a length as cháng", () => {
+    assertArrayEquals(readChang("长三百公里"), ["cháng", "sānbǎi", "gōnglǐ"]);
+  });
+
+  it("keeps the verb where the number counts something else", () => {
+    // 长两个校区 counts campuses, which is not a length. Only a distance or a
+    // stretch of time settles it.
+    assertArrayEquals(readChang("长一个"), ["zhǎng", "yīgè"]);
   });
 
   it("does nothing at all when the rule is not applied", () => {

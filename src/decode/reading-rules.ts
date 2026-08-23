@@ -1,8 +1,8 @@
 import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
-import { MODAL_DE, PARTICLE_DE } from "./de-rule.js";
+import { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 
-export { MODAL_DE, PARTICLE_DE } from "./de-rule.js";
+export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
@@ -145,6 +145,7 @@ export { ADJECTIVAL_CHANG, PLAYING_TAN } from "./polyphone-rules.js";
 export const READING_RULES: readonly EdgeRule[] = [
   MODAL_DE,
   PARTICLE_DE,
+  POTENTIAL_DE,
   TEACHING_JIAO,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,

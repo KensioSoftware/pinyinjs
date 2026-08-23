@@ -6,7 +6,9 @@ export {
   PARTICLE_TAG,
   tagOf,
   wordEndingAt,
+  wordsEndingAt,
   wordStartingAt,
+  wordsStartingAt,
 } from "./edge-context.js";
 
 /**

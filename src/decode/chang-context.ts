@@ -5,10 +5,11 @@
  * These two do not: each names a near side that a verb 长 shares, so each has
  * to check the far side as well.
  */
+import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
 import {
   type EdgeContext,
   tagOf,
-  wordEndingAt,
+  wordsEndingAt,
   wordStartingAt,
 } from "./rules.js";
 
@@ -58,6 +59,29 @@ const MEASURE = "q";
 const NOUN_TAG = "n";
 
 /**
+ * The mark that makes the number after it a position rather than a count.
+ */
+const ORDINAL = "第";
+
+/**
+ * Whether the 量词 in front of a position is counting an ordinal.
+ *
+ * 一个长头发的女生 has its subject spoken for by the 一个, and 第一次长胡子 does
+ * not: 第一次 is when the growing happened rather than what is being counted.
+ * The walk back over the quantity characters is the same one
+ * {@link import("./reading-rules.js").COUNTED_MEASURE} makes, and for the same
+ * reason.
+ */
+function isOrdinalPhrase(context: EdgeContext, at: number): boolean {
+  const { characters } = context;
+  let from = at - 1;
+  while (from > 0 && QUANTITY_CHARACTERS.has(characters[from - 1] ?? "")) {
+    from--;
+  }
+  return characters[from - 1] === ORDINAL;
+}
+
+/**
  * Whether a 长 is an adjective in front of the noun it modifies.
  *
  * 长头发, 长耳朵, 长胡子, 长裙子. The noun after it says nothing on its own,
@@ -65,12 +89,25 @@ const NOUN_TAG = "n";
  * near side has to say the rest. A 量词 or 有 in front of a 长 leaves it nothing
  * to be the verb of: 一个长头发的女生 and 兔子有长耳朵 have their subject
  * already spoken for, and 他长毛了 and 树长叶子 do not.
+ *
+ * A verb in front is **not** enough, though 他留长头发 wears long hair where
+ * 他长头发 grows it. jieba tags 树 a verb and 习惯 a noun, so the tag names
+ * neither set: taking every verb read 树长叶子 as an adjective and 教育长邓演达
+ * with it.
+ *
+ * Every word ending at the position is asked rather than the longest, because
+ * the longest is 一个 where the 量词 is the 个 inside it. See
+ * {@link wordsEndingAt}.
  */
 export function isAttributive(context: EdgeContext): boolean {
   const { edge } = context;
   if (!tagOf(context, wordStartingAt(context, edge.to)).startsWith(NOUN_TAG)) {
     return false;
   }
-  const before = wordEndingAt(context, edge.from);
-  return before === "有" || tagOf(context, before) === MEASURE;
+  if (isOrdinalPhrase(context, edge.from)) {
+    return false;
+  }
+  return wordsEndingAt(context, edge.from).some(
+    (word) => word === "有" || tagOf(context, word) === MEASURE,
+  );
 }

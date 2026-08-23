@@ -381,6 +381,40 @@ describe("the examples in docs/", () => {
         "Tā yǒu cháng tóufa.",
       );
       assertIdentical(convert(dictionary, "树长叶子"), "shù zhǎng yèzi");
+      // The contexts that read the far side alone, and the ordinal that must
+      // not be taken for a determiner.
+      assertIdentical(convert(dictionary, "长一点"), "cháng yìdiǎn");
+      assertIdentical(
+        convert(dictionary, "队伍已经长极了"),
+        "duìwǔ yǐjīng cháng jíle",
+      );
+      assertIdentical(
+        convert(dictionary, "神经棘长而狭窄"),
+        "shénjīng jí cháng ér xiázhǎi",
+      );
+      assertIdentical(
+        convert(dictionary, "那条河长三百公里"),
+        "nà tiáo hé cháng sānbǎi gōnglǐ",
+      );
+      assertIdentical(
+        convert(dictionary, "我看见一个长头发的女生"),
+        "wǒ kànjiàn yí gè cháng tóufa de nǚshēng",
+      );
+      assertIdentical(
+        convert(dictionary, "这是我第一次长胡子"),
+        "zhè shì wǒ dìyīcì zhǎng húzi",
+      );
+    });
+
+    it("reads the 得 of a potential complement as the particle", () => {
+      assertIdentical(
+        convert(dictionary, "他算得上一个作家"),
+        "tā suàn de shàng yí gè zuòjiā",
+      );
+      assertIdentical(
+        convert(dictionary, "取得上级批准"),
+        "qǔdé shàngjí pīzhǔn",
+      );
     });
 
     it("reads 弹 as tán where it is playing", () => {
