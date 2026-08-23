@@ -1045,6 +1045,21 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("writes 蔘 only for the 參 that is ginseng", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "人参", { to: "zh-Hant-HK" }),
+        "人蔘",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "参加", { to: "zh-Hant-HK" }),
+        "參加",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "参差", { to: "zh-Hant-HK" }),
+        "參差",
+      );
+    });
+
     it("reports 面 as the guess in 下面, with 麵 as its rival", () => {
       const { text, choices } = toScriptPieces(
         dictionary,

@@ -131,7 +131,8 @@ if (glyphFailures.length > 0) {
 report(
   `  ${String(glyphTables.canonical.size)} normalisations, ` +
     `${String(glyphTables.hongKong.size)} Hong Kong forms, ` +
-    `${String(glyphTables.excluded.length)} excluded as current`,
+    `${String(glyphTables.excluded.length)} excluded as current, ` +
+    `${String(glyphTables.readingScoped.length)} left to a reading`,
 );
 
 report("merging");

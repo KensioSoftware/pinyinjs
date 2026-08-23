@@ -108,7 +108,7 @@ const HONG_KONG_PAIRS =
   "兌兑叄叁啟啓囪囱媼媪嫻嫺峰峯么幺悅悦慍愠戶户挩捝" +
   "搵揾敓敚敘敍柺枴梲棁榲榅梁樑簷檐檯枱氳氲汙污洩泄" +
   "涗涚溫温溼濕熅煴床牀痺痹著着睪睾稅税縕緼韁繮群羣" +
-  "脫脱膃腽臥卧臺台菸煙蒕蒀參蔘蔥葱蘊藴蛻蜕衛衞裡裏" +
+  "脫脱膃腽臥卧臺台菸煙蒕蒀蔥葱蘊藴蛻蜕衛衞裡裏" +
   "說説轀輼醞醖鉤鈎銳鋭閱閲鯰鮎鰮鰛麵麪顎齶";
 
 /**
@@ -127,26 +127,52 @@ export const CANONICAL_FORMS = readPairs(CANONICAL_PAIRS);
 export const HONG_KONG_FORMS = readPairs(HONG_KONG_PAIRS);
 
 /**
- * The one glyph mapping whose answer depends on how the character is read.
+ * The glyph mappings whose answer depends on how the character is read.
  *
- * Taiwan writes 著 for every sense; Hong Kong splits it, writing 着 for the
- * aspect particle and its relatives and keeping 著 for `zhù`. CC-CEDICT records
- * the same split in its 简体 column — `著 着 [zhe5]` against `著 著 [zhu4]` —
- * which is independent confirmation that the divide is real and where it falls.
+ * A merge one standard makes and the other does not is a difference between
+ * them, and {@link HONG_KONG_FORMS} is that difference read off OpenCC's tables.
+ * The reading is what the tables cannot carry, because a merge is not always
+ * total: 蔘 is a variant of 參 in its `shēn` sense alone, so inverting Taiwan's
+ * 蔘 → 參 into a blanket 參 → 蔘 rewrites 參加, 參考, 參觀 and 參差 as well.
  *
  * OpenCC resolves this with a phrase table. We resolve it with the reading,
  * which is the point of difference this feature exists for, and which
  * generalises to words no phrase table lists.
  *
- * `zhuó` is deliberately absent, and that is not an oversight: CC-CEDICT writes
- * it both ways — `著 着 [zhuo2]` for wearing or applying, `著 著 [zhuo2]` for
- * 執著 — so the reading genuinely does not settle it. It falls through to the
- * default below and is reported as uncertain rather than guessed at silently.
+ * A reading names the form written at that reading, and the two entries here
+ * point opposite ways, which is what {@link isReadingScoped} is for:
+ *
+ * - **著** is Hong Kong's form by default and canonical at one reading. Taiwan
+ *   writes 著 for every sense; Hong Kong splits it, writing 着 for the aspect
+ *   particle and its relatives and keeping 著 for `zhù`. CC-CEDICT records the
+ *   same split in its 简体 column — `著 着 [zhe5]` against `著 著 [zhu4]` — which
+ *   is independent confirmation that the divide is real and where it falls. So
+ *   著 stays in {@link HONG_KONG_FORMS} and this names the exception.
+ * - **參** is canonical by default and Hong Kong's form at one reading. Of the
+ *   four readings CC-CEDICT gives it — `cān`, `cēn`, `shēn`, `sān` — only `shēn`
+ *   is the ginseng that 蔘 writes, and 參加 is far the commonest of the rest. So
+ *   參 is **not** in {@link HONG_KONG_FORMS} and this is the whole of its
+ *   mapping.
+ *
+ * 著's `zhuó` is deliberately absent, and that is not an oversight: CC-CEDICT
+ * writes it both ways — `著 着 [zhuo2]` for wearing or applying, `著 著 [zhuo2]`
+ * for 執著 — so the reading genuinely does not settle it. It falls through to
+ * the default and is reported as uncertain rather than guessed at silently.
+ *
+ * **Two is the whole list**, and that is measured rather than assumed. Of the
+ * 58 mappings, 39 are stated by Hong Kong's own table and 19 are Taiwan merges
+ * read backwards, which is the only direction a partial merge can arrive from.
+ * Of those 19, 著 and 參 are the only two whose Hong Kong form covers fewer
+ * CC-CEDICT readings than the canonical: 著 has five against 着's four, 參 has
+ * four against 蔘's one, and the other 17 cover the same readings or more.
  */
 const READING_SPLITS: ReadonlyMap<
   string,
   ReadonlyMap<string, string>
-> = new Map([["著", new Map([["zhu", "著"]])]]);
+> = new Map([
+  ["著", new Map([["zhu", "著"]])],
+  ["參", new Map([["shen", "蔘"]])],
+]);
 
 /**
  * A reading key ignoring tone and 儿化, which never bear on a glyph choice.
@@ -171,6 +197,26 @@ function readingKey(syllable: Syllable | undefined): string | undefined {
  */
 export function isReadingSensitive(character: string): boolean {
   return READING_SPLITS.has(character);
+}
+
+/**
+ * Whether a character's Hong Kong form applies at one reading rather than all.
+ *
+ * The two shapes {@link READING_SPLITS} holds, told apart by what the split
+ * writes. A split naming the character itself is an exception to a mapping that
+ * otherwise holds, so the flat table keeps it — 著 is 着 in Hong Kong except at
+ * `zhù`. A split naming some other form is the whole of the mapping, so the
+ * flat table must not carry it, or every reading would take the regional form.
+ *
+ * Read by the derivation in `scripts/build-data/glyph-tables.ts`, which would
+ * otherwise fail the build for a mapping OpenCC makes and this file declines.
+ */
+export function isReadingScoped(character: string): boolean {
+  const split = READING_SPLITS.get(character);
+  if (split === undefined) {
+    return false;
+  }
+  return [...split.values()].some((form) => form !== character);
 }
 
 /**

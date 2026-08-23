@@ -103,6 +103,14 @@ describe("script conversion", () => {
       assertIdentical(convert("著作", "zh-Hant-HK"), "著作");
     });
 
+    it("writes 蔘 only for the 參 that is ginseng", () => {
+      assertIdentical(convert("人参", "zh-Hant-HK"), "人蔘");
+      assertIdentical(convert("参加", "zh-Hant-HK"), "參加");
+      assertIdentical(convert("参差", "zh-Hant-HK"), "參差");
+      // Taiwan merges the two, so it writes 參 for both.
+      assertIdentical(convert("人参", "zh-Hant-TW"), "人參");
+    });
+
     it("accepts Hong Kong input and converts it like its Taiwan spelling", () => {
       assertIdentical(convert("羣眾", "zh-Hans"), "群众");
       assertIdentical(convert("麪包", "zh-Hans"), "面包");
