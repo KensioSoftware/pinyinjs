@@ -12,9 +12,8 @@ convertToHtml(dictionary, "行");
 //       data-alternatives="háng héng hàng">xíng</span>
 ```
 
-That is the whole reason to use it rather than styling `convert`'s string: a
-reader can be shown which syllables were settled and which were a guess, which
-a flat string cannot express.
+That is the whole reason to use it. A reader can be shown which syllables were
+settled and which were a guess, and a flat string has nowhere to put that.
 
 ## What it emits
 
@@ -32,20 +31,22 @@ convertToHtml(dictionary, "银行");
 An uncertain syllable also carries `data-alternatives`, the readings it was
 chosen over, space-separated and in the decoder's own order.
 
-Text that was never Han is escaped and emitted as-is, not marked up:
+Text that was never Han is escaped and emitted as it stood, with no markup
+around it:
 
 ```ts
 convertToHtml(dictionary, "3D银行");
 // <span class="py-syllable py-tone-1" lang="zh-Latn-CN-pinyin">sān</span> D <span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span><span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>
 ```
 
-Escaping is not optional and not configurable: anything from the input that is
-not a syllable goes through HTML escaping on the way out.
+Escaping always happens and has no option to turn it off. Anything from the
+input that failed to parse as a syllable goes through HTML escaping on the way
+out.
 
 ## What language it says it is
 
-Every syllable declares itself, because nothing about `yín` on its own says
-what it is:
+Every syllable declares itself, because `yín` on its own could be almost any
+language:
 
 | Conversion        | `lang`              |
 | ----------------- | ------------------- |
@@ -60,19 +61,20 @@ convertToHtml(dictionary, "垃圾", { locale: "zh-TW" });
 A screen reader consults `lang` before deciding how to pronounce what it has
 found, and a browser consults it for hyphenation and font selection. Without
 one, `xíng` inherits whatever the page around it claims to be, which is how
-pinyin ends up read aloud as English. The tag is neither the `zh` of a Chinese
-page nor the `en` of an English one: it is Mandarin in the Latin alphabet, and
-`zh-Latn-…-pinyin` is what BCP 47 has for that. The subtags are all registered,
-and the `pinyin` variant's own prefix in the IANA registry is `zh-Latn`.
+pinyin ends up read aloud as English. The tag says Mandarin in the Latin
+alphabet. That is what `zh-Latn-…-pinyin` means in BCP 47, and it is why the
+`zh` of a Chinese page and the `en` of an English one are both wrong. The
+subtags are all registered, and the `pinyin` variant's own prefix in the IANA
+registry is `zh-Latn`.
 
 The region follows the reading standard the conversion used, since that is the
-distinction it makes — 垃圾 is `lājī` under `zh-CN` and `lèsè` under `zh-TW`.
-Tone notation does not come into it: `hang2` is pinyin spelt with a tone
-number, not a different romanisation, so it carries the same tag as `háng`.
+distinction it makes (垃圾 is `lājī` under `zh-CN` and `lèsè` under `zh-TW`).
+Tone notation stays out of it. `hang2` is pinyin spelt with a tone number, still
+the same romanisation, and it carries the same tag as `háng`.
 
-Nothing is wrapped around the conversion, so the tag is repeated on every
-syllable. To declare it once instead, turn it off and put the same tag on a
-wrapper of your own, which everything inside inherits:
+The conversion emits no wrapper, and the tag is repeated on every syllable. To
+declare it once instead, turn it off and put the same tag on a wrapper of your
+own, which everything inside inherits:
 
 ```ts
 `<span lang="zh-Latn-CN-pinyin">${convertToHtml(dictionary, "银行", { lang: false })}</span>`;
@@ -80,8 +82,8 @@ wrapper of your own, which everything inside inherits:
 
 ## No styles are included
 
-The package ships no CSS. The class names are the contract; what they look like
-is yours:
+The package ships no CSS. The class names are the contract, and what they look
+like is yours:
 
 ```css
 .py-tone-1 {
@@ -105,8 +107,8 @@ is yours:
 }
 ```
 
-A tooltip on the alternatives costs nothing extra, since they are already in
-the attribute:
+A tooltip on the alternatives needs no extra work, since they are already in the
+attribute:
 
 ```css
 .py-uncertain::after {
@@ -135,9 +137,9 @@ convertToHtml(dictionary, "银行", { lang: false });
 // <span class="py-syllable py-tone-2">yín</span><span class="py-syllable py-tone-2">háng</span>
 ```
 
-With all three off you get one bare `py-syllable` element per syllable, which
-is still worth having if all you want is to letter-space or hyphenate on
-syllable boundaries.
+With all three off you get one bare `py-syllable` element per syllable, still
+worth having if all you want is to letter-space or hyphenate on syllable
+boundaries.
 
 Conversion options work as they do everywhere:
 
@@ -148,8 +150,7 @@ convertToHtml(dictionary, "银行", { notation: "numbers" });
 ## Rendering pieces you already have
 
 `toHtml(pieces, options)` renders a `ConvertedPiece[]` you got from
-`convertPieces`, so you can inspect or filter the conversion before it becomes
-markup:
+`convertPieces`. Inspect or filter the conversion before it becomes markup:
 
 ```ts
 import { convertPieces, toHtml } from "@kensio/pinyinjs";
@@ -182,19 +183,19 @@ convertToAnnotatedHtml(dictionary, "银行");
 >…
 ```
 
-The element is `<ruby>`, which browsers lay out natively — no script, no
+The element is `<ruby>`, which browsers lay out natively, with no script and no
 measuring, and it reflows with the text. `<rp>` holds the parentheses a browser
-without ruby support falls back to, so the reading degrades to `银(yín)` rather
-than vanishing.
+without ruby support falls back to. The reading degrades to `银(yín)` instead of
+vanishing.
 
 Inside the `<rt>` is exactly what `toHtml` would have written, so tone classes,
 `py-uncertain` and `data-alternatives` all work within an annotation.
 
-### A base is not always one character
+### A base can span characters
 
 This is the part that makes annotation harder than it looks, and the reason
-`ConvertedPiece` carries a `source` at all. A reading is not one syllable per
-character:
+`ConvertedPiece` carries a `source` at all. A syllable and a character line up
+only in the ordinary case:
 
 | Text     | Annotated as                          | Because                                                       |
 | -------- | ------------------------------------- | ------------------------------------------------------------- |
@@ -203,15 +204,16 @@ character:
 | 95%      | 95% over `bǎifēnzhījiǔshíwǔ`          | a read number reverses, so no syllable is any one character's |
 | 干干净净 | four bases, the hyphen in the reading | `gāngān-jìngjìng` is one word with a boundary inside it       |
 
-Splitting per character regardless is what produces `玩` over `wán` and `儿` over
-nothing. `source` names the characters a piece reads, or is undefined where the
-piece reads on into the ones before it, and the renderer groups on that.
+Splitting per character regardless is what produces `玩` over `wán` and `儿`
+over an empty reading. `source` names the characters a piece reads, or is
+undefined where the piece reads on into the ones before it, and the renderer
+groups on that.
 
 ### The base is what the author wrote
 
 An annotation puts the source and the reading in two different places, so
 anything belonging to only one of them has to go in the right one. Pinyin
-orthography does not reach the hanzi:
+orthography stops at the reading:
 
 |                                 | In the hanzi                            | In the reading                       |
 | ------------------------------- | --------------------------------------- | ------------------------------------ |
@@ -224,8 +226,9 @@ writes 。, while `convertToHtml` on the same text writes a full stop. Both are
 right about the text they are writing.
 
 Measured over the committed dictionary, 5,283 of 723,147 keys have fewer
-syllables than characters — 4,024 of them 儿化, and the rest words written with
-punctuation, which never reaches the decoder because punctuation ends a Han run.
+syllables than characters. 4,024 of them are 儿化, and the rest are words
+written with punctuation, which never reaches the decoder because punctuation
+ends a Han run.
 
 ### Styling it
 

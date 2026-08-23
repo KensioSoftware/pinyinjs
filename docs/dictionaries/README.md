@@ -1,8 +1,8 @@
 # Dictionaries
 
 A dictionary is the compiled word list conversion runs against. It is a
-fetchable file rather than a JavaScript module, which is what keeps 10 MB of
-data out of your bundle, so loading it is asynchronous.
+fetchable file, so loading one is asynchronous. Keeping it out of the module
+graph keeps 10 MB of data out of your bundle.
 
 ```ts
 import { convert, loadDictionary } from "@kensio/pinyinjs";
@@ -13,17 +13,17 @@ convert(dictionary, "银行"); // "yínháng"
 ```
 
 Load it once and keep it. It is immutable, safe to share across requests, and
-decodes individual entries lazily, so there is nothing to gain from building a
-second one.
+decodes individual entries lazily. Building a second one repeats the work for no
+gain.
 
 ## Sources
 
-`loadDictionary(source, tier)` takes a `DictionarySource`, which is just
-something that can fetch the artifacts by name. Two are provided.
+`loadDictionary(source, tier)` takes a `DictionarySource`, anything that can
+fetch the artifacts by name. Two are provided.
 
 **`fileSource(directory)`** reads from disk, and is the Node one. It lives at
-`@kensio/pinyinjs/node` rather than the package root so that nothing on the
-browser path can reach a Node built-in:
+`@kensio/pinyinjs/node`, away from the package root, so the browser path can
+never reach a Node built-in:
 
 ```ts
 import { fileSource } from "@kensio/pinyinjs/node";
@@ -42,8 +42,8 @@ const dictionary = await loadDictionary(fetchSource("/data"), "standard");
 
 Serve the package's `data/` directory at that URL and leave the artifacts
 uncompressed, letting HTTP `Content-Encoding: br` do the compressing.
-`DecompressionStream` has no brotli, so decompressing in JavaScript is not a
-real alternative.
+`DecompressionStream` has no brotli. The transfer encoding is the only route to
+a brotli-compressed artifact in a browser.
 
 ## Tiers
 
@@ -53,11 +53,11 @@ real alternative.
 | `standard` |  66,970 |            377 KB | the most common words  |
 | `full`     | 461,555 |          2,378 KB | every word             |
 
-`full` is the default, and is what a server should use: 2.4 MB is nothing
-there, and the extra words are exactly what stops a rare name being read
+`full` is the default, and is what a server should use. 2.4 MB costs a server
+little, and the extra words are exactly what stops a rare name being read
 character by character.
 
-In a browser the tiers are nested, so you can start converting before the whole
+In a browser the tiers are nested. You can start converting before the whole
 thing has arrived:
 
 ```ts
@@ -68,9 +68,9 @@ dictionary = await loadDictionary(fetchSource("/data"), "full");
 render(convert(dictionary, text)); // same text, better readings
 ```
 
-`core` is single characters only, so it cannot do word-based disambiguation at
-all. Everything falls back on character priors, and both the readings and the
-spacing suffer:
+`core` is single characters only. Word-based disambiguation is out of reach,
+everything falls back on character priors, and both the readings and the spacing
+suffer:
 
 ```ts
 // core
@@ -84,13 +84,13 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 
 It is for the case where 70 KB is the budget and any pinyin beats none.
 
-The entry counts above are dictionary entries. `dictionary.size` counts keys,
-which is a larger number, because 繁體 spellings are keys in their own right:
-16,976 for `core`, 97,998 for `standard`, 723,147 for `full`.
+The entry counts above are dictionary entries. `dictionary.size` counts keys, a
+larger number, because 繁體 spellings are keys in their own right. That is
+16,976 for `core`, 97,998 for `standard`, and 723,147 for `full`.
 
 ## Querying directly
 
-The dictionary is useful on its own, not only as an argument to `convert`.
+The dictionary answers questions on its own, and `convert` is only one caller.
 
 ```ts
 const entry = dictionary.lookup("头发");
@@ -105,9 +105,10 @@ dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
 dictionary.size; // 723147, keys in the full tier, not entries
 ```
 
-Both scripts are keys in the same dictionary, so nothing is converted before a
-lookup. See [scripts and locales](../scripts-and-locales/) for why that matters
-more than it sounds like it should.
+Both scripts are keys in the same dictionary. A 繁體 word is found directly,
+with no conversion step before the lookup. See
+[scripts and locales](../scripts-and-locales/) for why that matters more than it
+sounds like it should.
 
 ### WordEntry
 
@@ -120,12 +121,12 @@ more than it sounds like it should.
 | `isProperNoun`  | `boolean`     | drives capitalisation                                             |
 | `cost`          | `number`      | decoding cost, quantised from corpus frequency; lower is likelier |
 
-`lookup` returns `undefined` for a word it does not have. `partOfSpeech` is
-empty far more often than you might expect: only the jieba-sourced third of the
+`lookup` returns `undefined` for a word the dictionary lacks. `partOfSpeech` is
+empty far more often than you might expect. Only the jieba-sourced third of the
 dictionary carries a tag at all.
 
 `readingsOf(character)` returns every reading the dictionary knows for a single
-character, likeliest first, as reading arrays rather than strings:
+character, likeliest first, as reading arrays:
 
 ```ts
 import { writeSyllable } from "@kensio/pinyinjs";
@@ -146,7 +147,7 @@ by the same binary search as a lookup, with no second index beside it.
 
 The keys are sorted and numbered, and three methods take that number rather than
 a word. They are the seam a second index over the same dictionary is built
-through — [candidates](../candidates/) derives one from them:
+through, and [candidates](../candidates/) derives one from them:
 
 ```ts
 dictionary.wordAt(0); // the first key in code-unit order
@@ -154,12 +155,12 @@ dictionary.frequencyAt(0); // its frequency bucket, 0 rarest to 15
 dictionary.readingsInOrder().readingAt(0); // "yin2 hang2", at the string level
 ```
 
-`readingsInOrder` hands back a cursor rather than an array, because the array is
-39 MB on the full tier. What the cursor holds instead is the character defaults
-that a derived reading is assembled from — 83.25% of the full tier's keys store
-no reading of their own — so build what needs it, use it, and let it go.
-Nothing along that path constructs a `Syllable`, which is what makes a pass over
-every key affordable.
+`readingsInOrder` hands back a cursor, because the array it would replace is 39
+MB on the full tier. The cursor holds the character defaults that a derived
+reading is assembled from (83.25% of the full tier's keys store no reading of
+their own). Build what needs it, use it, and let it go. No `Syllable` is
+constructed anywhere along that path, and that is what makes a pass over every
+key affordable.
 
 ## What it costs in memory
 
@@ -195,7 +196,7 @@ The compiled dictionaries are committed to the repository, so what ships is
 exactly what was tested. Because CC-CEDICT is CC BY-SA 4.0, the artifacts in
 `data/` are share-alike even though the code is Apache-2.0.
 
-The build fails rather than warns: no artifact is written unless 儿化 is
+The build fails where it could warn. No artifact is written unless 儿化 is
 repaired both ways, 一 and 不 sandhi is normalised out of the stored readings,
 every syllable is one the inventory knows, and every tier reads back exactly as
 it was built.

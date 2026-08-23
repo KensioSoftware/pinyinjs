@@ -11,9 +11,9 @@ toScript(dictionary, tables, "我们后来发现了头发问题", { to: "zh-Hant
 // "我們後來發現了頭髮問題"
 ```
 
-The tables are a separate file from the dictionary, so nothing that only
-converts hanzi to pinyin pays for them. See [dictionaries](../dictionaries/) for
-what a `source` is.
+The tables are a separate file from the dictionary. Code that only converts
+hanzi to pinyin never loads them. See [dictionaries](../dictionaries/) for what
+a `source` is.
 
 ## Why a pinyin package converts scripts better
 
@@ -25,9 +25,9 @@ toScript(dictionary, tables, "头发", { to: "zh-Hant" }); // "頭髮"
 toScript(dictionary, tables, "出发", { to: "zh-Hant" }); // "出發"
 ```
 
-发 is 發 or 髮, and nothing about the character says which. 头发 is `tóufà` and
-出发 is `chūfā`, and _that_ says which. The same evidence splits 干 three ways
-and 只 two:
+发 is 發 or 髮, and the character on its own leaves the choice open. 头发 is
+`tóufà` and 出发 is `chūfā`, and _that_ says which. The same evidence splits 干
+three ways and 只 two:
 
 | Text   | Reading    | 繁體   |
 | ------ | ---------- | ------ |
@@ -37,14 +37,14 @@ and 只 two:
 | 一只猫 | `yìzhīmāo` | 一隻貓 |
 | 只有   | `zhǐyǒu`   | 只有   |
 
-Other converters work from phrase tables alone, so they are right about the
-words on the list and guessing past it. Because this reads the text first, the
+Other converters work from phrase tables alone. They are right about the words
+on the list and guessing past it. Because this reads the text first, the
 evidence generalises to words no list holds.
 
 ## Both directions need it
 
-繁→简 looks deterministic and is not. Seventy common characters map more than
-one way, and the reading separates them:
+繁→简 looks deterministic and only looks it. Seventy common characters map more
+than one way, and the reading separates them:
 
 ```ts
 toScript(dictionary, tables, "乾燥", { to: "zh-Hans" }); // "干燥"
@@ -57,7 +57,7 @@ toScript(dictionary, tables, "乾隆", { to: "zh-Hans" }); // "乾隆"
 
 Both write 繁體 and disagree about the standard form of 58 characters. Taiwan
 follows 教育部標準字體, Hong Kong 常用字字形表. Same characters, same meanings,
-**same readings** — a glyph choice never changes how anything is pronounced.
+**same readings**. A glyph choice never changes how anything is pronounced.
 
 ```ts
 toScript(dictionary, tables, "面包", { to: "zh-Hant-TW" }); // "麵包"
@@ -70,20 +70,20 @@ toScript(dictionary, tables, "面包", { to: "zh-Hant-HK" }); // "麪包"
 | 里面 | 裡面         | 裏面         |
 | 卫生 | 衛生         | 衞生         |
 
-A bare `zh-Hant` writes Taiwan. There is no region-free 繁體 to fall back on:
-converting character by character from the usual baseline yields 爲, 衆, 峯, 羣,
+A bare `zh-Hant` writes Taiwan. There is no region-free 繁體 to fall back on.
+Converting character by character from the usual baseline yields 爲, 衆, 峯, 羣,
 裏, 麪, which _are_ the Hong Kong forms. Declining to choose means choosing Hong
-Kong silently, so a region is always applied and always named.
+Kong silently, and a region is therefore always applied and always named.
 
-One of the 58 needs the reading, which is the argument again in miniature.
-Taiwan writes 著 for every sense; Hong Kong splits it:
+One of the 58 needs the reading, the argument again in miniature. Taiwan writes
+著 for every sense. Hong Kong splits it:
 
 ```ts
 toScript(dictionary, tables, "看着", { to: "zh-Hant-HK" }); // "看着"
 toScript(dictionary, tables, "著作", { to: "zh-Hant-HK" }); // "著作"
 ```
 
-看著 is `kànzhe` and takes 着; 著作 is `zhùzuò` and keeps 著.
+看著 is `kànzhe` and takes 着. 著作 is `zhùzuò` and keeps 著.
 
 ## What it was unsure about
 
@@ -112,10 +112,10 @@ Four kinds of evidence, strongest first:
 | `reading`  | rival forms existed and the syllable picked between them     |
 | `default`  | rival forms existed and nothing separated them — **a guess** |
 
-`isUncertainChoice` is `default` alone. A character settled by its reading is
-not a guess: that evidence is the reason this converts more accurately than an
-orthographic converter can, and reporting it as doubt would throw the claim
-away.
+`isUncertainChoice` is `default` alone. A character settled by its reading
+counts as settled. That evidence is the reason this converts more accurately
+than an orthographic converter can, and reporting it as doubt would throw the
+claim away.
 
 ```ts
 const { choices } = toScriptPieces(dictionary, tables, "头发", {
@@ -131,7 +131,7 @@ Over the gold corpus, 97.7% of characters are `locked` and 1.5% are guesses.
 
 The script of the text is detected unless you name it, and that matters more
 than it sounds. Plenty of characters are current in **both** scripts, so running
-繁體 through the 简→繁 tables would rewrite them: 准 is 简体 for 準 and a 繁體
+繁體 through the 简→繁 tables would rewrite them. 准 is 简体 for 準 and a 繁體
 character in its own right, and 准將 would come back 準將.
 
 ```ts
@@ -139,9 +139,9 @@ toScript(dictionary, tables, "准將", { to: "zh-Hant" }); // "准將", unchange
 toScript(dictionary, tables, "群众", { to: "zh-Hant", from: "Hans" }); // "群眾"
 ```
 
-Pass `from` when the text is short enough that detection has nothing to go on.
-A run of characters both scripts share settles nothing, and the conversion then
-assumes the text needs converting.
+Pass `from` when the text is short enough that detection has nothing to go on. A
+run of characters both scripts share leaves detection with no evidence, and the
+conversion then assumes the text needs converting.
 
 ## This is orthography, not translation
 
@@ -151,14 +151,14 @@ toScript(dictionary, tables, "软件", { to: "zh-Hant" }); // "軟件"
 
 Not 軟體. 軟體 and 软件 are different **words** for the same thing, the way
 "lorry" and "truck" are, and swapping one for the other is translation. Other
-tools fold a vocabulary substitution list into script conversion; this does not.
-pinyinjs is not a translator.
+tools fold a vocabulary substitution list into script conversion. This one
+converts the script and leaves the vocabulary alone.
 
 ## Accuracy
 
 繁→简 is near-deterministic, so 简→繁→简 has to be the identity for essentially
-every word — which makes it a test needing no hand-labelling at all. `pnpm
-accuracy` runs it over every key in the dictionary:
+every word. That makes it a test needing no hand-labelling at all.
+`pnpm accuracy` runs it over every key in the dictionary:
 
 | Trip           | words in use | every key |
 | -------------- | -----------: | --------: |
@@ -166,8 +166,8 @@ accuracy` runs it over every key in the dictionary:
 | 繁→简→繁       |        98.9% |     99.8% |
 | 繁TW→繁HK→繁TW |        99.7% |     99.6% |
 
-繁→简→繁 is lossy **by design** and is reported rather than targeted: 卻 and 却
-both simplify to 却, and only one of them can come back.
+繁→简→繁 is lossy **by design**, and the figure is reported without being
+targeted. 卻 and 却 both simplify to 却, and only one of them can come back.
 
 ## At the command line
 
