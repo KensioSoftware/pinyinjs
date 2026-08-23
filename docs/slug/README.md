@@ -8,9 +8,8 @@ import { slug } from "@kensio/pinyinjs";
 slug(dictionary, "我想学中文。"); // "wo3-xiang3-xue2-zhong1wen2"
 ```
 
-The reason to ask a dictionary for this rather than run a general slugifier over
-`convert`'s output is everything a slugifier working on a finished string cannot
-recover.
+A general slugifier run over `convert`'s output loses things a dictionary can
+keep.
 
 | Text | This         | A slugifier over the characters |
 | ---- | ------------ | ------------------------------- |
@@ -20,16 +19,16 @@ recover.
 
 Three separate things are going on there, and each of them needs the decode:
 
-- **The word is read as a word.** 行 alone is `xíng`; only 银行 around it makes
-  it `háng`. See [converting](../converting/).
+- **The word is read as a word.** 行 alone is `xíng`, and only 银行 around it
+  makes it `háng`. See [converting](../converting/).
 - **The word boundaries are the decoder's.** The hyphens fall between words
   because GB/T 16159 grouping put them there, so 中文 stays one word and
   北京市银行 becomes `bei3jing1-shi4-yin2hang2`. See
   [orthography](../orthography/).
 - **The syllable boundaries survive.** 西安 is `xī'ān`, and the 隔音符号 is the
-  only thing keeping it from reading as 先 `xiān`. A toneless slug turns it
-  into a separator rather than dropping it, so 西安交通大学 is
-  `xi-an-jiaotong-daxue` and not `xianjiaotongdaxue`.
+  only thing keeping it from reading as 先 `xiān`. A toneless slug turns it into
+  a separator, and 西安交通大学 comes out `xi-an-jiaotong-daxue` and not
+  `xianjiaotongdaxue`.
 
 ## Tones, and why they are on
 
@@ -39,10 +38,10 @@ slug(dictionary, "重庆火锅", { tones: "none" }); // "chongqing-huoguo"
 ```
 
 Tones are written by default because dropping them collides. There are roughly
-400 toneless syllables against 1300 toned ones, so a toneless slug runs 树, 书
-and 输 together as `shu`.
+400 toneless syllables against 1300 toned ones. A toneless slug runs 树, 书 and
+输 together as `shu`.
 
-They narrow the collisions rather than closing them. True homophones survive:
+They narrow the collisions without closing them. True homophones survive:
 
 ```ts
 slug(dictionary, "权利"); // "quan2li4"
@@ -61,38 +60,37 @@ slug(dictionary, "权力", { hash: true }); // "quan2li4-uta0"
 ```
 
 **The hanzi are hashed, not the pinyin.** Two texts needing a hash to tell them
-apart are, by definition, ones the pinyin already ran together — hashing
-`quan2li4` would give both the same suffix and settle nothing. It also means the
-suffix does not move when a later release reads a word differently, so the tail
-of a slug is the stable half of it.
+apart are, by definition, ones the pinyin already ran together. Hashing
+`quan2li4` would give both the same suffix. It also holds the suffix still when
+a later release reads a word differently, and the tail of a slug is the stable
+half of it.
 
-Four base-36 characters is the default, which is 1.7 million values and far more
-than it looks: two texts only collide when their slug _and_ their hash match, so
-the suffix is only ever telling apart the handful of texts that share one slug.
-`hash: 6` asks for more, up to seven — the hash is 32 bits wide, and an eighth
-character would add a place that no value can reach.
+Four base-36 characters is the default, 1.7 million values and far more than it
+looks. Two texts only collide when their slug _and_ their hash match, and the
+suffix is only ever telling apart the handful of texts that share one slug.
+`hash: 6` asks for more, up to seven (the hash is 32 bits wide, and an eighth
+character would add a place no value can reach).
 
-It is written every time rather than only where two slugs collide, because a
-function that cannot see the rest of your corpus cannot know that they did.
+It is written every time, collision or not, because a function that cannot see
+the rest of your corpus cannot know when two slugs met.
 
-## A slug is not unique
+## Uniqueness is yours to enforce
 
-Nothing here makes it unique, and nothing here can. Tones narrow the
-collisions, the hash narrows them much further, and a slug that has to be unique
-still has to be checked against the ones you have already stored.
+Tones narrow the collisions and the hash narrows them much further, and both
+leave a residue. A slug that has to be unique still has to be checked against
+the ones you have already stored.
 
-Nor is a slug stable across releases. The dictionary and the reading rules
-improve, and when they do a slug changes with them — a word that segmented as
-two words last release may segment as one in the next. **Store the slug you
-generated** rather than regenerating it from the title, exactly as you would
-with any other permalink.
+Slugs also move between releases. The dictionary and the reading rules improve,
+and when they do a slug changes with them (a word that segmented as two words
+last release may segment as one in the next). **Store the slug you generated**,
+exactly as you would with any other permalink.
 
-## Everything that is not hanzi
+## Latin, digits and punctuation
 
 Latin passes through, folded to the letters a URL carries without escaping.
-Digits are kept rather than said, because that is how anyone looks the text up.
-Punctuation of either script — and emoji, and marks of any script — becomes a
-boundary between words.
+Digits are kept as digits, because that is how anyone looks the text up.
+Punctuation of either script becomes a boundary between words, and so do emoji
+and marks of any script.
 
 ```ts
 slug(dictionary, "iPhone 15 发布"); // "iphone-15-fa1bu4"
@@ -108,7 +106,7 @@ slug(dictionary, "2024年报告", { numbers: "read" });
 // "er4-ling2-er4-si4-nian2-bao4gao4"
 ```
 
-Where a text has nothing in it to slug — an empty string, or 《》！ — the result
+Where a text has nothing in it to slug (an empty string, or 《》！) the result
 is the empty string, or `fallback` if you gave one.
 
 ```ts
@@ -130,21 +128,21 @@ slug(dictionary, "！？。", { fallback: "untitled" }); // "untitled"
 | `locale`    | `"zh-CN"`    | `"zh-TW"` for 國語 readings                 |
 | `sandhi`    | as `convert` | 一, 不 and optional third-tone sandhi       |
 
-The writing options a conversion takes — `notation`, `capitals`, `apostrophe`,
-`punctuation`, `grouping` — are not among them. A slug settles all of those
-itself, and one that changed nothing would be worse than none.
+The writing options a conversion takes (`notation`, `capitals`, `apostrophe`,
+`punctuation` and `grouping`) are absent here. A slug settles all of those
+itself.
 
-`maxLength` cuts at a word boundary, so a limit lands between words rather than
+`maxLength` cuts at a word boundary, so a limit lands between words and never
 through the middle of one, and the hash is never what gets dropped:
 
 ```ts
 slug(dictionary, "北京市银行", { maxLength: 20 }); // "bei3jing1-shi4"
 ```
 
-## Not only URLs
+## Beyond URLs
 
-The options generalise past URLs, which is most of why they are there. Each of
-these is the same function with a different separator:
+The options generalise past URLs, and that is most of why they are there. Each
+of these is the same function with a different separator:
 
 | Want           | Options                            | 中文         |
 | -------------- | ---------------------------------- | ------------ |
@@ -153,10 +151,10 @@ these is the same function with a different separator:
 | A name in code | `{ separator: "_" }`               | `zhong1wen2` |
 | An anchor id   | `{ tones: "none", hash: 4 }`       | `zhongwen-…` |
 
-A search key is the one worth spelling out: with no separator and no tones,
+A search key is the one worth spelling out. With no separator and no tones,
 someone typing `zhongwen` into a search box matches 中文, and someone typing
-`xian` matches 西安 — which is the right answer there, even though it is the
-wrong one for a URL.
+`xian` matches 西安. That is the right answer for a search box, and the wrong
+one for a URL.
 
 ```ts
 slug(dictionary, "中文", { tones: "none", separator: "" }); // "zhongwen"
@@ -178,9 +176,9 @@ quan2li4-uta0
 
 Every option above is a flag: `--tones`, `--separator`, `--syllables`,
 `--umlaut`, `--hash`, `--hash-length`, `--max-length`, `--fallback`,
-`--read-numbers`, `--locale`, `--third-tone` and `--no-sandhi`.
-`--hash-length` implies `--hash`. As with every command, no arguments reads
-standard input a line at a time, so a file of titles slugs in one go:
+`--read-numbers`, `--locale`, `--third-tone` and `--no-sandhi`. `--hash-length`
+implies `--hash`. As with every command, no arguments reads standard input a
+line at a time. A file of titles slugs in one go:
 
 ```console
 $ cat titles.txt | pinyinjs slug --hash

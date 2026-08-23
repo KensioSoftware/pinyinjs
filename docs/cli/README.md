@@ -46,10 +46,10 @@ $ pinyinjs convert --system wade-giles --notation none 我要去北京。
 Wo yao ch'ü Pei-ching.
 ```
 
-Writes the pinyin and nothing else, so it drops straight into a pipeline.
-`--system` writes it in `bopomofo`, `wade-giles`, `yale`, `gwoyeu` or `ipa`
-instead: the same word grouping with that system's join, which for Wade-Giles
-means a hyphen between the syllables of a word. See
+Writes the pinyin and no more, ready for a pipeline. `--system` writes it in
+`bopomofo`, `wade-giles`, `yale`, `gwoyeu` or `ipa` instead, keeping the same
+word grouping with that system's join. For Wade-Giles that means a hyphen
+between the syllables of a word. See
 [romanisation](../romanization/#hanzi-to-wade-giles-end-to-end).
 
 ### explain
@@ -68,10 +68,10 @@ $ pinyinjs explain 长江大桥
   qiáo    locked
 ```
 
-One line per syllable: the syllable, how settled it was (`locked`, `word` or
-`uncertain`), and the readings it was chosen over with what taking each would
-have cost. [Confidence](../confidence/) explains what the states and the
-numbers mean.
+One line per syllable, holding the syllable, how settled it was (`locked`,
+`word` or `uncertain`), and the readings it was chosen over with what taking
+each would have cost. [Confidence](../confidence/) explains what the states and
+the numbers mean.
 
 ### check
 
@@ -93,13 +93,13 @@ $ pinyinjs check 银行 "yín háng" --require-spacing
 ```
 
 The text, the answer as the conversion writes it, and the score. Then one line
-per syllable: the characters it reads, what was expected, what was typed, the
-verdict, and the word spacing where that went wrong. See
+per syllable, holding the characters it reads, what was expected, what was
+typed, the verdict, and the word spacing where that went wrong. See
 [checking](../checking/) for what the verdicts mean and how much it forgives.
 
 Two arguments, and everything after the first is joined back up, so unquoted
-pinyin works: `pinyinjs check 北京市 běijīng shì`. `--require-tones` and
-`--require-spacing` count those two axes towards the score; every conversion
+pinyin works (`pinyinjs check 北京市 běijīng shì`). `--require-tones` and
+`--require-spacing` count those two axes towards the score, and every conversion
 flag works too.
 
 ### lookup
@@ -126,13 +126,13 @@ $ pinyinjs match --query bjdx 北京大学 我在北京大学学中文 上海大
 上海大学  no match
 ```
 
-Filters texts by a pinyin query typed on a Latin keyboard: `beijing`,
+Filters texts by a pinyin query typed on a Latin keyboard. `beijing`,
 `bei jing`, `bj`, `beij` or `bei3jing1` all find 北京. The matches come first,
-best first, with the matched stretches in brackets and the score beside them;
-every text still gets a line, so a run over a file says what it did with each.
+best first, with the matched stretches in brackets and the score beside them.
+Every text still gets a line, and a run over a file says what it did with each.
 
-The query is a flag rather than the first argument, so that the texts stay
-where every other command has them — which is what lets a list be piped in:
+The query is a flag, and the texts stay where every other command has them. That
+is what lets a list be piped in:
 
 ```console
 $ cat titles.txt | pinyinjs match --query bjdx
@@ -181,9 +181,9 @@ $ pinyinjs number --percent 95
 95          百分之九十五            bǎi fēn zhī jiǔ shí wǔ
 ```
 
-`--digits` spells the number out instead of counting it, which is the
-difference between 2026年 and 2026个; `--yao` reads 一 as `yāo`, as a phone
-number does; `--no-liang` writes 二千 rather than 两千. Needs no dictionary
+`--digits` spells the number out instead of counting it, the difference between
+2026年 and 2026个. `--yao` reads 一 as `yāo`, as a phone number does.
+`--no-liang` writes 二千 where the default writes 两千. Needs no dictionary
 either. See [numbers](../numerals/).
 
 ### transcribe
@@ -202,14 +202,13 @@ chu¹        zhū       ㄓㄨ          chu¹        jū        ju        ʈʂu�
 The columns are pinyin, bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh and IPA.
 Four rows because Wade-Giles `chu` with its marks dropped is four different
 syllables. `--from` takes `pinyin`, `wade-giles`, `bopomofo`, `yale`, `gwoyeu`
-or `ipa`, and defaults to working it out: bopomofo has a script of its own, and
+or `ipa`, and defaults to working it out. Bopomofo has a script of its own, and
 everything else is read as pinyin. Needs no dictionary. See
 [romanisation](../romanization/).
 
-It is `transcribe` rather than `romanize` because half of what it writes are
-not romanisations, since bopomofo has a script of its own and IPA is a
-transcription rather than a spelling, and because the input is pinyin, which is
-a romanisation already.
+It is `transcribe` and not `romanize`, because half of what it writes are
+transcriptions. Bopomofo has a script of its own and IPA writes sounds. The
+input is a romanisation already.
 
 ### html
 
@@ -237,20 +236,20 @@ $ pinyinjs script 頭髮
 头发
 ```
 
-`--to` takes `zh-Hans` (the default), `zh-Hant`, `zh-Hant-TW` or `zh-Hant-HK`;
-a bare `zh-Hant` writes Taiwan. The script of the input is detected, and
+`--to` takes `zh-Hans` (the default), `zh-Hant`, `zh-Hant-TW` or `zh-Hant-HK`. A
+bare `zh-Hant` writes Taiwan. The script of the input is detected, and
 `--from-script Hans` or `Hant` settles it for text too short to tell.
 
-The lines carry the converted text and nothing else, so it pipes. `--json`
-carries what the conversion was unsure about:
+The lines carry the converted text and no more, ready to pipe. `--json` carries
+what the conversion was unsure about:
 
 ```console
 $ pinyinjs script 下面 --to zh-Hant --json | jq -c .uncertain
 ["面"]
 ```
 
-下面 is a surface or a bowl of noodles, both `xiàmiàn`, and nothing can settle
-it. See [script conversion](../script-conversion/).
+下面 is a surface or a bowl of noodles, both `xiàmiàn`, and no evidence can
+settle it. See [script conversion](../script-conversion/).
 
 ### info
 
@@ -262,8 +261,8 @@ keys       723,147
 syllables  415 attested, 424 spellings in the inventory
 ```
 
-Which dictionary got loaded, from where, and how big it is. Useful when
-`--data` or `--tier` is not doing what you expected.
+Which dictionary got loaded, from where, and how big it is. Useful when `--data`
+or `--tier` behaves oddly.
 
 ## Options
 
@@ -284,12 +283,13 @@ Every conversion option the library takes is a flag on `convert`, `html`,
 
 `convert` also takes `--system`, which writes the conversion in another
 transcription system, and `--greedy`, which decodes with the old longest-match
-baseline instead of the lattice; see [converting](../converting/#the-greedy-baseline).
-`html` also takes `--no-tone-classes`, `--no-uncertain` and `--no-lang`.
-`check` also takes `--require-tones` and `--require-spacing`, which count those
-two axes towards the score. `sandhi` takes `--third-tone` and `--no-sandhi`. `number` takes `--digits`, `--yao`,
-`--no-liang` and `--percent`, plus `--notation` and the sandhi flags.
-`transcribe` takes `--from` and `--notation`.
+baseline instead of the lattice. See
+[converting](../converting/#the-greedy-baseline). `html` also takes
+`--no-tone-classes`, `--no-uncertain` and `--no-lang`. `check` also takes
+`--require-tones` and `--require-spacing`, which count those two axes towards
+the score. `sandhi` takes `--third-tone` and `--no-sandhi`. `number` takes
+`--digits`, `--yao`, `--no-liang` and `--percent`, plus `--notation` and the
+sandhi flags. `transcribe` takes `--from` and `--notation`.
 
 [Options](../options/) documents what each value does.
 
@@ -306,7 +306,7 @@ These work on every command:
 | `-v`, `--version`           | show the version                        |
 
 `syllable`, `sandhi`, `number` and `transcribe` need no dictionary at all and
-start without loading one, so `--data` and `--tier` do nothing on them.
+start without loading one, so `--data` and `--tier` have no effect on them.
 
 ## Colour
 
@@ -323,26 +323,24 @@ and the tiebreak is what a reader has already learned:
 | 4 去声 | `#0044ff` | blue                      |
 | 5 轻声 | `#000000` | the terminal's own colour |
 
-**The fifth tone is uncoloured, and that is MDBG's answer rather than a
-shortcut.** Its fifth colour is `#000000` on a light page and `#ffffff` on a
-dark one, the plain text colour, which in a terminal means writing no escape at
-all. A syllable whose tone was never written is left alone too: MDBG has no
-colour for one, and [an unwritten tone is not the neutral
-tone](../syllables/#tones).
+**MDBG leaves the fifth tone uncoloured, and so does this.** Its fifth colour is
+`#000000` on a light page and `#ffffff` on a dark one, the plain text colour,
+which in a terminal means writing no escape at all. A syllable whose tone was
+never written is left alone too. MDBG has no colour for one, and
+[an unwritten tone differs from the neutral tone](../syllables/#tones).
 
-Colour is on for a terminal and off for a pipe, so a redirected file never
-fills up with escape sequences, and `NO_COLOR` is honoured. `--colour` and
-`--no-colour` force it either way, and `--color` is accepted as a spelling.
-`--json` is never coloured whatever the flags say, since it already carries the
-tone as a number for a caller that will do its own rendering, and neither is
-`html`, which carries `py-tone-1` to `py-tone-5` classes for a stylesheet to
-act on.
+Colour is on for a terminal and off for a pipe. A redirected file never fills up
+with escape sequences, and `NO_COLOR` is honoured. `--colour` and `--no-colour`
+force it either way, and `--color` is accepted as a spelling. `--json` is never
+coloured whatever the flags say, since it already carries the tone as a number
+for a caller that will do its own rendering. `html` goes uncoloured for the same
+reason, carrying `py-tone-1` to `py-tone-5` classes for a stylesheet to act on.
 
-A terminal that reports 256 colours gets the closest match to MDBG's values
-that stays legible on a dark background _and_ a light one, since it cannot say
-which it has. One that reports only the basic sixteen gets the nearest of those,
-which is a visibly worse fit for the second and third tones: there is no amber
-in sixteen colours, and the only yellow contrasts 1.70:1 against white.
+A terminal that reports 256 colours gets the closest match to MDBG's values that
+stays legible on a dark background _and_ a light one, since it cannot say which
+it has. One that reports only the basic sixteen gets the nearest of those, a
+visibly worse fit for the second and third tones. There is no amber in sixteen
+colours, and the only yellow contrasts 1.70:1 against white.
 
 ## Standard input
 
@@ -352,12 +350,12 @@ A command given no arguments reads standard input, one text per line:
 $ cat article.txt | pinyinjs convert
 ```
 
-That is one answer per line in, one line out, so it stays usable on a file of
+That is one answer per line in, one line out, and it stays usable on a file of
 any size.
 
-`check` is the one command that needs two things per answer, so a piped line is
-a tab-separated pair — both halves can have spaces in them, and a tab is the one
-thing neither has:
+`check` is the one command that needs two things per answer. A piped line is a
+tab-separated pair, since both halves can have spaces in them and a tab keeps
+them apart:
 
 ```console
 $ printf '银行\tyínxíng\n北京\tbei3jing3\n' | pinyinjs check
@@ -365,9 +363,9 @@ $ printf '银行\tyínxíng\n北京\tbei3jing3\n' | pinyinjs check
 
 ## JSON output
 
-`convert` writes bare pinyin, which is what a pipeline wants. Everything else
-lays its answer out in columns for a person to read. Add `--json` to any command
-and it writes one JSON document per answer instead:
+`convert` writes bare pinyin, ready for a pipeline. Everything else lays its
+answer out in columns for a person to read. Add `--json` to any command and it
+writes one JSON document per answer instead:
 
 ```console
 $ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'
@@ -380,14 +378,14 @@ lè sè
 $ cat article.txt | pinyinjs convert --json | jq -r .pinyin
 ```
 
-One document per answer rather than one array for the whole run, so the shape
-is the same whether you convert one word or pipe a file through, and a reader
-can process it a line at a time.
+One document per answer, and never one array for the whole run. The shape is the
+same whether you convert one word or pipe a file through, and a reader can
+process it a line at a time.
 
 ## Running it from a checkout
 
 The repository has a `./pinyinjs` script that runs the CLI straight from the
-TypeScript sources, so there is nothing to build first:
+TypeScript sources, with no build step first:
 
 ```bash
 ./pinyinjs convert 你好
