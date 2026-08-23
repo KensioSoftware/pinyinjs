@@ -19,7 +19,8 @@ import { toCharacters } from "../script/characters.js";
 import { hintsWithin, resolveHints } from "./hints.js";
 import { splitRuns, surroundingCharacters } from "./runs.js";
 import type { ConvertedPiece, ConvertOptions, Written } from "./pieces.js";
-import { numeralBefore, surrounding, writeNumbers } from "./numbers.js";
+import { surrounding, writeNumbers } from "./numbers.js";
+import { contextAround } from "./run-context.js";
 import type { Decode } from "./decoders.js";
 import { wordsOf } from "./run-words.js";
 import { writeRun, rewrite } from "./write-run.js";
@@ -78,9 +79,8 @@ export function convertWith(
       hints === undefined
         ? undefined
         : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length);
-    const said = numeralBefore(read[at - 1] ?? []);
     return wordsOf(
-      decode(dictionary, run.text, said, within),
+      decode(dictionary, run.text, contextAround(runs, read, at), within),
       dictionary,
       grouping,
     );

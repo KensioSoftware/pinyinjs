@@ -396,6 +396,16 @@ describe("the examples in docs/", () => {
         convert(dictionary, "那条河长三百公里"),
         "nà tiáo hé cháng sānbǎi gōnglǐ",
       );
+      // The same sentence with the number in digits, which is three runs away
+      // from the 公里 that measures the 长.
+      assertIdentical(
+        convert(dictionary, "那条河长300公里"),
+        "nà tiáo hé cháng sānbǎi gōnglǐ",
+      );
+      assertIdentical(
+        convert(dictionary, "那条河长300公里。"),
+        "Nà tiáo hé cháng sānbǎi gōnglǐ.",
+      );
       assertIdentical(
         convert(dictionary, "我看见一个长头发的女生"),
         "wǒ kànjiàn yí gè cháng tóufa de nǚshēng",

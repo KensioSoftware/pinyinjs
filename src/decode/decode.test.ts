@@ -184,6 +184,51 @@ describe("the Han in front of a run", () => {
   });
 });
 
+/**
+ * The words a run decodes into with context behind it.
+ */
+function beforeHan(run: string, following: string): readonly string[] {
+  return decodeRun(
+    dictionary,
+    run,
+    READING_RULES,
+    "",
+    undefined,
+    following,
+  ).map((word) => word.text);
+}
+
+describe("the Han after a run", () => {
+  it("changes what the run decodes to, and is not reported", () => {
+    // 行长 on its own is one word. Put a 大 behind it and the 长 belongs to
+    // 长大 instead, leaving 行 to itself — and the 大 is the caller's, so it
+    // comes back with neither a word nor a reading of its own.
+    assertArrayEquals(words("行长"), ["行长"]);
+    assertArrayEquals(beforeHan("行长", "大"), ["行", "长"]);
+  });
+
+  it("decodes the run alone where a reading straddles the join", () => {
+    // 玩儿 is `wánr`, one syllable over the 玩 the run supplied and the 儿 the
+    // context did, and no part of it can be handed back on its own.
+    assertArrayEquals(beforeHan("玩", "儿"), ["玩"]);
+  });
+
+  it("is nothing by default, which is every other caller", () => {
+    assertArrayEquals(beforeHan("行长", ""), words("行长"));
+  });
+
+  it("takes both sides at once", () => {
+    // 银 in front takes the 行, 大 behind takes the 长, and the run keeps
+    // neither.
+    assertArrayEquals(
+      decodeRun(dictionary, "行长", READING_RULES, "银", undefined, "大").map(
+        (word) => word.text,
+      ),
+      ["行", "长"],
+    );
+  });
+});
+
 describe("the scored decode", () => {
   it("decodes the same words as the plain decode", () => {
     assertArrayEquals(

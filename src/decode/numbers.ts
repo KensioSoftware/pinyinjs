@@ -52,17 +52,6 @@ export function surrounding(
 }
 
 /**
- * The 汉字 a number in front of a Han run stands for, for that run's decode.
- *
- * Only the last segment of the run before, because only that one touches the
- * Han: the D of 3D银行 comes between them, and a decode of 银行 that saw 三
- * beside it would be reading a text nobody wrote.
- */
-export function numeralBefore(segments: readonly NumeralSegment[]): string {
-  return segments.at(-1)?.hanzi ?? "";
-}
-
-/**
  * Write a stretch that was never Han, reading the numbers in it.
  *
  * Everything that is not a number goes through exactly as written, which is

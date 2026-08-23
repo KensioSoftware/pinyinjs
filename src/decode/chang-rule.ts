@@ -163,8 +163,10 @@ function isGrowthCorrelative(context: EdgeContext): boolean {
  * as it is 不长, and a noun after a 长 is 长知识 as readily as 长头发.
  *
  * Measured over the same 88,866 lines of Tatoeba and zh.wikipedia the other
- * rules were sized against, 260 长 decode as a word of their own and this moves
- * 116 of them to `cháng`. Every conversion the last three contexts changed is
+ * rules were sized against, 379 长 and 長 decode as a word of their own and this
+ * moves 125 of them to `cháng`. Nine of the 125 are 长 the run they end could
+ * not see past until the decode was given the 汉字 behind the digits after it,
+ * as 那条河长300公里 is. Every conversion the last three contexts changed is
  * right: 一个长头发的女生, 一个长毛绒玩具, 没有长胡子的舅舅, 要长一点, 活长点,
  * 已经长极了, 神经棘长而狭窄 and 拉得很长. On CPP's 40 hand-labelled 长 the
  * character stands at 92.50%, against 85.00% with no rule at all.
