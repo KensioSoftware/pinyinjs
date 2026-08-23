@@ -14,13 +14,13 @@ pnpm add @kensio/pinyinjs
 Node 22+, or any browser. The core imports no Node built-ins, and the package is
 ESM only.
 
-The dictionaries ship inside the package, which is what makes it a 4 MB
-download: `data/` is 10 MB of artifacts and the point of the whole thing.
+The dictionaries ship inside the package, and that is what makes it a 4 MB
+download. `data/` is 10 MB of artifacts and the point of the whole thing.
 
 ## Command line
 
-Installing the package installs a `pinyinjs` command, which is the quickest way
-to try any of this.
+Installing the package installs a `pinyinjs` command, the quickest way to try
+any of this.
 
 ```console
 $ pinyinjs convert 我要去北京。
@@ -99,8 +99,7 @@ never coloured. See [the command line](docs/cli/#colour).
 
 ### Calling it from something else
 
-`convert` writes the pinyin and nothing else, so it drops straight into a
-pipeline:
+`convert` writes the pinyin and no more, ready for a pipeline:
 
 ```console
 $ pinyinjs convert 银行
@@ -108,7 +107,7 @@ yínháng
 ```
 
 Everything else has columns for a person to read. Add `--json` to any command
-and it writes one JSON document per answer instead, which is what `jq` wants:
+and it writes one JSON document per answer instead, the shape `jq` wants:
 
 ```console
 $ pinyinjs explain 长江大桥 --json | jq -c '.syllables[] | select(.state != "locked")'
@@ -121,13 +120,13 @@ lè sè
 $ cat article.txt | pinyinjs convert --json | jq -r .pinyin
 ```
 
-One document per answer rather than one array for the whole run, so the shape
-is the same whether you convert one word or pipe a file through.
+One document per answer, and never one array for the whole run. The shape is the
+same whether you convert one word or pipe a file through.
 
 ## Load a dictionary
 
-Converting needs a dictionary, and it is a fetchable file rather than a
-JavaScript module, so loading it is asynchronous.
+Converting needs a dictionary. A dictionary is a fetchable file, so loading one
+is asynchronous.
 
 ```ts
 import { convert, loadDictionary } from "@kensio/pinyinjs";
@@ -149,9 +148,9 @@ convert(dictionary, "长城"); // "Chángchéng"
 ```
 
 Serve the artifacts uncompressed and let HTTP `Content-Encoding: br` compress
-them: `DecompressionStream` has no brotli.
+them. `DecompressionStream` has no brotli.
 
-Load the dictionary once and keep it; it is immutable and safe to share.
+Load the dictionary once and keep it. It is immutable and safe to share.
 
 ### Tiers
 
@@ -161,8 +160,8 @@ Load the dictionary once and keep it; it is immutable and safe to share.
 | `standard` |  66,970 |            377 KB | the most common words  |
 | `full`     | 461,555 |          2,378 KB | every word             |
 
-`full` is the default. The tiers are nested, so a page can load `standard`
-first, convert with it, and reload as `full` arrives.
+`full` is the default. The tiers are nested. A page can load `standard` first,
+convert with it, and reload as `full` arrives.
 
 ## Convert
 
@@ -174,7 +173,7 @@ convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the l
 ```
 
 A reading the dictionary cannot settle on its own is settled by context, with
-typed rules over the lattice rather than tweaks to the output:
+typed rules over the lattice and never a tweak to the output:
 
 ```ts
 convert(dictionary, "我得走了"); // "wǒ děi zǒule", modal 得
@@ -216,9 +215,10 @@ convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 
 ### Spacing, capitals and punctuation
 
-**Capitals.** Proper nouns always; the first word of a sentence only when the
-source is punctuated as one, since that is the only thing separating 学生 looked
-up as a word from 这是我的书。written as a sentence. A comma does not count.
+**Capitals.** Proper nouns always, and the first word of a sentence only when
+the source is punctuated as one, since that is the only thing separating 学生
+looked up as a word from 这是我的书。written as a sentence. A comma leaves the
+next word lower case.
 
 ```ts
 convert(dictionary, "银行"); // "yínháng", not "Yínháng"
@@ -226,9 +226,9 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 convert(dictionary, "你好，世界"); // "nǐ hǎo, shìjiè"
 ```
 
-**Apostrophes.** The 隔音符号 goes before any syllable of a word that starts with
-`a`, `o` or `e` and is not the first. `apostrophe: "standard"` writes it only
-where leaving it out would read as something else.
+**Apostrophes.** The 隔音符号 goes before any syllable of a word that starts
+with `a`, `o` or `e`, unless it is the first. `apostrophe: "standard"` writes it
+only where leaving it out would read as something else.
 
 ```ts
 convert(dictionary, "天安门"); // "Tiān'ānmén"
@@ -239,7 +239,7 @@ convert(dictionary, "女儿"); // "nǚ'ér"
 the space the full-width glyph carried. Brackets and quotation marks are left
 alone. `punctuation: "keep"` leaves everything as it was.
 
-**Word spacing.** 分词连写 is applied to the decoded words: aspect particles
+**Word spacing.** 分词连写 is applied to the decoded words. Aspect particles
 attach to their verb, suffixes to their stem, and the generic half of a place
 name separates and capitalises. A small curated list covers words the standard
 writes in a way no rule reaches.
@@ -256,12 +256,11 @@ convert(dictionary, "黄河"); // "Huáng Hé"
 convert(dictionary, "中国人"); // "Zhōngguórén"
 ```
 
-The list is not a complete 正词法 implementation, so some words it does not
-cover are written differently: 不但 is `búdàn`, 大米 is `dàmǐ`, 青海 is
-`Qīnghǎi`.
+The list falls short of a complete 正词法 implementation, so a word it misses is
+written differently. 不但 is `búdàn`, 大米 is `dàmǐ`, and 青海 is `Qīnghǎi`.
 
-**Reduplication** takes a hyphen rather than a space, since it is one word with
-a boundary inside it.
+**Reduplication** takes a hyphen where a space would go, since it is one word
+with a boundary inside it.
 
 ```ts
 convert(dictionary, "干干净净"); // "gāngān-jìngjìng"
@@ -270,7 +269,7 @@ convert(dictionary, "爸爸妈妈"); // "bàba māma", that shape, but two words
 ```
 
 **A 成语 that can be read as two disyllables** takes the same hyphen, from a
-curated list of 117; the rest are written solid, as the standard writes them.
+curated list of 117. The rest are written solid, as the standard writes them.
 
 ```ts
 convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
@@ -308,7 +307,7 @@ pieces[1]?.confidence?.alternatives.map((found) =>
 ); // ["xíng", "héng", "hàng"]
 ```
 
-A piece with no `syllable` is the text between two of them: a space, or a run
+A piece with no `syllable` is the text between two of them, a space or a run
 that was never Han. `joinPieces(pieces)` gives back exactly what `convert`
 returns.
 
@@ -346,10 +345,10 @@ convertToHtml(dictionary, "行");
 
 One element per syllable, with `py-tone-1` to `py-tone-5` (5 is the neutral
 tone), and `py-uncertain` plus the rejected readings where the decoder was
-guessing. Each one declares itself pinyin — `zh-Latn-TW-pinyin` for a `zh-TW`
-conversion — so that a screen reader does not read it as the language of the
-page around it. Text that is not Han is escaped, not marked up. No styles are
-included, so write your own:
+guessing. Each one declares itself pinyin, as `zh-Latn-TW-pinyin` for a `zh-TW`
+conversion. A screen reader then reads it as pinyin, and not as the language of
+the page around it. Text that was never Han is escaped and left unmarked. No
+styles are included, so write your own:
 
 ```css
 .py-tone-1 {
@@ -365,8 +364,8 @@ and `lang: false`. `toHtml(pieces, options)` renders pieces you already have.
 
 ## Annotated output: hanzi and pinyin together
 
-`convertToHtml` writes the pinyin _instead of_ the hanzi. To keep both — a
-learner's text, a subtitle, a dictionary entry — annotate it instead:
+`convertToHtml` writes the pinyin _instead of_ the hanzi. To keep both, for a
+learner's text, a subtitle or a dictionary entry, annotate it instead:
 
 ```ts
 import { convertToAnnotatedHtml } from "@kensio/pinyinjs";
@@ -376,14 +375,15 @@ convertToAnnotatedHtml(dictionary, "银行");
 //       lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>…
 ```
 
-The markup is `<ruby>`, which browsers lay out natively — the reading sits
-above the characters, and `<rp>` puts it in parentheses where it does not. Each
-`<rt>` holds exactly what `convertToHtml` would have written, so tone colours
-and uncertainty marking work inside an annotation as they do outside one.
+The markup is `<ruby>`, which browsers lay out natively. The reading sits above
+the characters, and `<rp>` puts it in parentheses where a browser lacks ruby
+support. Each `<rt>` holds exactly what `convertToHtml` would have written, so
+tone colours and uncertainty marking work inside an annotation as they do
+outside one.
 
-**A base is not always one character**, and this is where per-character
-annotation goes wrong. 玩儿 is two characters and the one syllable `wánr`, and a
-read number reverses on the way, so both are annotated whole:
+**A base can span characters**, and this is where per-character annotation goes
+wrong. 玩儿 is two characters and the one syllable `wánr`, and a read number
+reverses on the way, so both are annotated whole:
 
 ```ts
 convertToAnnotatedHtml(dictionary, "玩儿"); // one <ruby>, 玩儿 over wánr
@@ -399,13 +399,13 @@ ruby rt {
 ```
 
 `toAnnotatedHtml(pieces, options)` renders pieces you already have, and
-`ConvertedPiece.source` is what makes that possible: the characters each piece
-reads, or undefined where it reads on into the ones before it.
+`ConvertedPiece.source` is what makes that possible, holding the characters each
+piece reads, or undefined where it reads on into the ones before it.
 
 ## Segment
 
 Converting has to find the words before it can read them, because the unit a
-reading belongs to is the word — 行 is `xíng` or `háng` and only 银行 and 行长
+reading belongs to is the word. 行 is `xíng` or `háng` and only 银行 and 行长
 say which. `segment` returns that answer instead of throwing it away.
 
 ```ts
@@ -421,14 +421,14 @@ found[3]?.isProperNoun; // true
 found[3]?.at; // 3, in code points from the start of the text
 ```
 
-Every stretch comes back in order, including the ones that were never Han, so
-the segments rejoin into exactly the text they came from — which is what makes
-it safe to rebuild a document, highlight in place, or index a corpus. Filter on
+Every stretch comes back in order, including the ones that were never Han. The
+segments rejoin into exactly the text they came from. That is what makes it safe
+to rebuild a document, highlight in place, or index a corpus. Filter on
 `isKnown` for the stretches the dictionary recognised.
 
-What it does not apply is 分词连写, the word spacing written pinyin wants: 他看了
-segments as 他 / 看 / 了 and converts as `tā kànle`, because attaching an aspect
-particle to its verb is a fact about writing pinyin rather than about where the
+One thing it leaves alone is 分词连写, the word spacing written pinyin wants.
+他看了 segments as 他 / 看 / 了 and converts as `tā kànle`, because attaching an
+aspect particle to its verb is a fact about writing pinyin, not about where the
 words are.
 
 ## Match a pinyin query
@@ -444,28 +444,32 @@ match(dictionary, "北京大学", "beijing")?.ranges; // [{ at: 0, length: 2 }]
 match(dictionary, "北京大学", "nanjing"); // undefined
 ```
 
-Every way anybody types it: full syllables joined or spaced, `beijing` and
-`bei jing`; initials, `bj`; the two mixed, `beij` and `bjing`; tones as digits
-where they are worth writing, `bei3jing1`; `v` or `u:` for ü; and the r of 儿化
-on the syllable it belongs to, so 玩儿 answers to `wanr`.
+Every way anybody types it is accepted:
 
-**No index is built and none is needed.** The haystack is Chinese, so the query
-is tested as a path over each character's readings rather than the text being
-spelled out in advance — which is why every reading of a polyphone is
-matchable, where a default reading table only ever offers one of them:
+- full syllables joined or spaced, `beijing` and `bei jing`
+- initials, `bj`
+- the two mixed, `beij` and `bjing`
+- tones as digits where they are worth writing, `bei3jing1`
+- `v` or `u:` for ü
+- the r of 儿化 on the syllable it belongs to, so 玩儿 answers to `wanr`
+
+**No index is built and none is needed.** The haystack is Chinese. The query is
+tested as a path over each character's readings, with no text spelled out in
+advance. That is why every reading of a polyphone is matchable, where a default
+reading table only ever offers one of them:
 
 ```ts
 match(dictionary, "银行", "yh")?.score; // 7, and 银行 is yínháng
 match(dictionary, "银行", "yx")?.score; // 5 — a reading 行 has, but not here
 ```
 
-Both match, and the decoder's own reading is what ranks them, along with
-whether the match starts a word. Sort a filtered list by `score`, highest
-first. Ranges rather than a boolean, in code points, so a caller can highlight
-what matched — and there is more than one where the query stepped over
-something with no reading of its own, as 北京·大学 does.
+Both match, and the decoder's own reading is what ranks them, along with whether
+the match starts a word. Sort a filtered list by `score`, highest first. What
+comes back is ranges in code points, so a caller can highlight what matched.
+There is more than one where the query stepped over something with no reading of
+its own, as 北京·大学 does.
 
-The `core` tier is enough, so a page that never loads a word list can still
+The `core` tier is enough, and a page that never loads a word list can still
 filter. See [matching](docs/matching/).
 
 ## Go the other way: pinyin to hanzi
@@ -485,23 +489,23 @@ candidates(index, "yínháng"); // ["銀行", "银行"], narrowed by tone
 homophonesOf(index, "长城"); // ["長城", "長程", "长程", "常程"]
 ```
 
-This is the half of search with no haystack: `match` filters Chinese text you
-already hold, and this answers a query with nothing behind it but the
-dictionary. Pinyin-only lookup, a homophones section on a word page, or a
-browser input method for somebody with no Chinese keyboard.
+This is the half of search with no haystack. `match` filters Chinese text you
+already hold, and this answers a query with only the dictionary behind it.
+Pinyin-only lookup, a homophones section on a word page, or a browser input
+method for somebody with no Chinese keyboard.
 
-**Nothing is downloaded for it.** Shipping a reverse index of the `full` tier
+**Everything is derived in memory.** Shipping a reverse index of the `full` tier
 would add 1,995 KB to a 2,378 KB download and could not be compressed below
-about 1,474 KB, so the client derives it instead — 510 ms and 2.03 MB of heap on
+about 1,474 KB. The client derives it instead, at 510 ms and 2.03 MB of heap on
 `full`, and 4 ms on `core`. `ReverseIndex.building` drives that build a slice at
-a time, and `serialise` hands it out of a worker, so nothing has to hold the
-main thread for it.
+a time, and `serialise` hands it out of a worker. The main thread never has to
+hold it.
 
 Candidates come back likeliest first, because a posting is a dictionary position
 and a position indexes the frequency table. Tones may be written or left off,
 `v` and `u:` reach ü, and the r of 儿化 is optional, so 玩儿 answers to `wanr`
 and to `wan`. Both scripts are dictionary keys, so pass a script preference and
-the conversion tables to keep one writing of a word rather than both. See
+the conversion tables to keep one writing of a word instead of both. See
 [candidates](docs/candidates/).
 
 ## Check what somebody typed
@@ -519,7 +523,7 @@ marked.score; // 0.5
 ```
 
 Each syllable comes back as one of six verdicts, with `source` and `at` naming
-the characters it reads so a mistake can be shown against the text rather than
+the characters it reads so a mistake can be shown against the text and not
 against the answer:
 
 | Verdict    | Means                                          |
@@ -543,17 +547,17 @@ check(dictionary, "海鸥", "hǎiōu").isCorrect; // true, an apostrophe is not 
 check(dictionary, "我的书", "wǒ de shū").isCorrect; // true, pinyin marks no neutral tone
 ```
 
-A guess is only forgiven where the library was guessing: 行 alone is chosen by a
-prior and nothing more, whereas 银行 settles both its syllables, so `yínxíng` is
-a real mistake. See [confidence](docs/confidence/).
+A guess is only forgiven where the library was guessing. 行 alone is chosen by a
+prior alone, whereas 银行 settles both its syllables, so `yínxíng` is a real
+mistake. See [confidence](docs/confidence/).
 
 ### Tones and word spacing
 
 Two axes an exercise may or may not be teaching yet, each reported always and
 each counted only when asked for.
 
-Tones left off are `toneless` rather than `tone`, because `Syllable.tone` knows
-the difference:
+Tones left off report as `toneless` and never as `tone`, because `Syllable.tone`
+knows the difference:
 
 ```ts
 check(dictionary, "北京", "bei jing").isCorrect; // true
@@ -561,7 +565,7 @@ check(dictionary, "北京", "bei jing", { tones: "required" }).isCorrect; // fal
 ```
 
 Word spacing is graded on `spacing`, separately from the syllable's own verdict,
-because it is a separate mistake: `yín háng` reads 银行 perfectly and writes it
+because it is a separate mistake. `yín háng` reads 银行 perfectly and writes it
 as two words.
 
 ```ts
@@ -572,7 +576,7 @@ check(dictionary, "银行", "yín háng", { spacing: "required" }).isCorrect; //
 ```
 
 It is `split` for a word written as two and `joined` for two written as one, and
-it is tolerant in the same spirit as everything else — 分词连写 and the words the
+it is tolerant in the same spirit as everything else. 分词连写 and the words the
 dictionary knows are two conventions this package writes, and a learner may have
 been taught either:
 
@@ -602,8 +606,8 @@ dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
 ```
 
-Both scripts are keys in the same dictionary, so nothing is converted before a
-lookup.
+Both scripts are keys in the same dictionary. A 繁體 word is found directly,
+with no conversion first.
 
 ## Syllables
 
@@ -621,8 +625,8 @@ readSyllable("běi3"); // undefined, one notation at a time
 isSyllable("wánr"); // true, 儿化 is a suffix, not a syllable of its own
 ```
 
-Initials and finals are the _underlying_ forms rather than the spelling, so 就 is
-`j` + `iou` and 军 is `j` + `ün`. Spelling is reconstructed on demand:
+Initials and finals hold the _underlying_ form, the one behind the spelling, so
+就 is `j` + `iou` and 军 is `j` + `ün`. Spelling is reconstructed on demand:
 
 ```ts
 const jiu = { initial: "j", final: "iou", tone: 4 } as const;
@@ -635,8 +639,8 @@ writeSyllable(jiu, "none"); // "jiu"
 Input takes either notation, the `v` and `u:` conventions for ü, and raised tone
 digits. Output is standard diacritics unless asked otherwise.
 
-Parsing answers whether a spelling is _well formed_, not whether Mandarin uses
-it: `shong` parses and is not a real syllable. The attested inventory is
+Parsing answers whether a spelling is _well formed_, and never whether Mandarin
+uses it. `shong` parses and no Mandarin word uses it. The attested inventory is
 separate:
 
 ```ts
@@ -676,14 +680,14 @@ stripToneMarks("hǎo"); // "hao"
 toneFromMarks("hǎo"); // 3
 ```
 
-`Syllable.tone` is `Tone | undefined`, and undefined is not the neutral tone: the
+`Syllable.tone` is `Tone | undefined`, and the two mean different things. The
 `de` in 我的 is neutral (5), whereas the `bei` in a typed `beijing` has no tone
 written at all.
 
 ## Numbers
 
-Reading a number needs no dictionary, just arithmetic and about twenty
-readings, so this works with nothing loaded.
+Reading a number needs no dictionary, just arithmetic and about twenty readings.
+It runs before anything is loaded.
 
 ```ts
 import { numeralHanzi, percentHanzi, readNumeral } from "@kensio/pinyinjs";
@@ -695,8 +699,8 @@ numeralHanzi(2, { counts: true }); // "两", as in 两个西瓜, never 二个
 percentHanzi(95); // "百分之九十五", the order reverses
 ```
 
-The same digits are read two ways and nothing in the number says which, since
-2026年 is spelled out and 2026个 is counted, so the style is the caller's:
+The same digits are read two ways and the number alone leaves the choice open,
+since 2026年 is spelled out and 2026个 is counted. The style is the caller's:
 
 ```ts
 numeralHanzi(2026); // "两千零二十六"
@@ -708,7 +712,7 @@ More in [numbers](docs/numerals/).
 
 ## Bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh and IPA
 
-Also dictionary-free: a romanisation is a mapping over about 420 syllables, so
+Also dictionary-free. A romanisation is a mapping over about 420 syllables, so
 hanzi → Wade-Giles is hanzi → pinyin → Wade-Giles.
 
 ```ts
@@ -731,7 +735,7 @@ writeIpa(jiu); // "tɕiou˥˩"
 ```
 
 Gwoyeu Romatzyh is the odd one, and it needs no tone mark because the tone is
-spelled into the syllable, which is why 陝西 is Shaanxi in English and 山西 is
+spelled into the syllable. That is why 陝西 is Shaanxi in English and 山西 is
 Shanxi:
 
 ```ts
@@ -755,7 +759,7 @@ first candidate recovers 79.05% of them. More in
 ## Sandhi
 
 The dictionary stores underlying tones, and sandhi is applied to the syllable
-array, so it can be switched off and works across word boundaries.
+array. It can be switched off, and it works across word boundaries.
 
 ```ts
 import { applySandhi, readWord } from "@kensio/pinyinjs";
@@ -769,15 +773,15 @@ applySandhi(niHao); // unchanged by default
 applySandhi(niHao, { thirdTone: true }); // ní hǎo
 ```
 
-Third-tone sandhi is off by default: standard orthography writes 你好 as
+Third-tone sandhi is off by default, because standard orthography writes 你好 as
 `nǐ hǎo` even though it is said `ní hǎo`. Turn it on for transcribing speech.
-Its domain is the prosodic foot rather than the syllable string, so 展览馆 is
+Its domain is the prosodic foot and not the syllable string, so 展览馆 is
 `zhánlánguǎn` and 纸老虎 `zhǐláohǔ`, and 老板很好 keeps the 板 that a
 left-to-right scan would lower.
 
 ## Scripts and locales
 
-Three axes, not one. Taiwan writes 繁體 with `zh-TW` readings, but mainland
+Three separate axes. Taiwan writes 繁體 with `zh-TW` readings, but mainland
 editions of classical texts use 繁體 with `zh-CN` readings, and Singapore uses
 简体.
 
@@ -794,7 +798,8 @@ Kong's 繁體 forms are recognised on the way in, so 羣眾 and 麪包 read exac
 ## Simplified and traditional
 
 `toScript` converts between the scripts, and the reading is what makes it
-accurate. Simplification merged distinct characters; the reading un-merges them.
+accurate. Simplification merged distinct characters, and the reading un-merges
+them.
 
 ```ts
 import { loadScriptTables, toScript } from "@kensio/pinyinjs";
@@ -808,12 +813,12 @@ toScript(dictionary, tables, "头发", { to: "zh-Hant" }); // "頭髮", tóufà
 toScript(dictionary, tables, "出发", { to: "zh-Hant" }); // "出發", chūfā
 ```
 
-发 is 發 or 髮 and nothing about the character says which. Every other converter
-works from phrase tables alone, so it is right about the words on the list and
-guessing past it.
+发 is 發 or 髮, and the character on its own leaves the choice open. Every other
+converter works from phrase tables alone. Each is right about the words on the
+list and guessing past it.
 
-It runs both ways — 乾燥 is `gānzào` and simplifies to 干燥, while 乾隆 is
-`Qiánlóng` and stays 乾隆 — and it targets a region, because there is no
+It runs both ways (乾燥 is `gānzào` and simplifies to 干燥, while 乾隆 is
+`Qiánlóng` and stays 乾隆) and it targets a region, because there is no
 region-free 繁體:
 
 ```ts
@@ -821,12 +826,12 @@ toScript(dictionary, tables, "面包", { to: "zh-Hant-TW" }); // "麵包"
 toScript(dictionary, tables, "面包", { to: "zh-Hant-HK" }); // "麪包"
 ```
 
-`toScriptPieces` reports what settled each character, and which were guesses:
-下面 is a surface or a bowl of noodles, both `xiàmiàn`, and it says so rather
-than picking silently. The tables load separately from the dictionary, so
-converting hanzi to pinyin costs nothing for them.
+`toScriptPieces` reports what settled each character, and which were guesses.
+下面 is a surface or a bowl of noodles, both `xiàmiàn`, and it says so instead
+of picking silently. The tables load separately from the dictionary, so
+converting hanzi to pinyin never pays for them.
 
-This is orthography and not translation — 软件 becomes 軟件, never 軟體. See
+This is orthography and not translation. 软件 becomes 軟件, never 軟體. See
 [script conversion](docs/script-conversion/).
 
 ## API
@@ -874,19 +879,19 @@ pnpm polyphones # score them against 20,139 hand-labelled polyphones
 pnpm build:data # rebuild data/ from the upstream sources
 ```
 
-`pnpm check` must pass: oxlint including the type-aware rules, `tsc` with
-`exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, and vitest at 95%
-coverage thresholds.
+`pnpm check` must pass, running oxlint including the type-aware rules, `tsc`
+with `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, and vitest at
+95% coverage thresholds.
 
 Every example in this README is executed by `src/readme.test.ts` against the
 committed dictionary, so the two cannot drift apart. Change them together.
 
 The compiled dictionaries in `data/` are committed, so what ships is exactly
-what was tested. `pnpm build:data` fetches the four sources into `.cache/`
-(~32 MB), merges them, runs the build assertions, and rewrites `data/` and
-`NOTICE`. It fails rather than warns: no artifact is written unless 儿化 is
-repaired both ways, 一 and 不 sandhi is normalised out, every syllable is one
-the inventory knows, and every tier reads back exactly as it was built.
+what was tested. `pnpm build:data` fetches the four sources into `.cache/` (~32
+MB), merges them, runs the build assertions, and rewrites `data/` and `NOTICE`.
+It fails where it could warn. No artifact is written unless 儿化 is repaired
+both ways, 一 and 不 sandhi is normalised out, every syllable is one the
+inventory knows, and every tier reads back exactly as it was built.
 
 ## Data sources
 
@@ -901,7 +906,7 @@ the inventory knows, and every tier reads back exactly as it was built.
 
 ## Licence
 
-`Apache-2.0 AND CC-BY-SA-4.0`, because the package is two things: the code is
+`Apache-2.0 AND CC-BY-SA-4.0`, because the package is two things. The code is
 Apache-2.0, and the compiled dictionaries in `data/` are share-alike, CC-CEDICT
 being CC BY-SA 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE), which is
 generated from the sources the pipeline actually fetched.
