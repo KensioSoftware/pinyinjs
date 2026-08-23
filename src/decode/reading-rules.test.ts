@@ -77,6 +77,8 @@ const dictionary = dictionaryOf([
   entry("宗", "zōng", { frequency: 2000 }),
   entry("宗教", "zōng jiào", { partOfSpeech: "n", frequency: 4000 }),
   entry("来", "lái", { partOfSpeech: "v", frequency: 40_000 }),
+  // A modal in front of a 教 that governs nothing after it.
+  entry("怎么", "zěn me", { partOfSpeech: "r", frequency: 50_000 }),
 ]);
 
 /**
@@ -261,6 +263,12 @@ describe("教 where it is teaching", () => {
 
   it("does nothing at all when the rule is not applied", () => {
     assertArrayEquals(read("我教你", []), ["wǒ", "jiào", "nǐ"]);
+  });
+
+  it("reads it jiāo after a modal, where nothing follows to look at", () => {
+    // 他怎么教: the object is what usually says a 教 is teaching, and here
+    // there is none, so the near side has to.
+    assertArrayEquals(read("他怎么教"), ["tā", "zěnme", "jiāo"]);
   });
 
   it("takes the jiào a two-character reading would carry in", () => {
