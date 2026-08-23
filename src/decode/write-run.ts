@@ -6,11 +6,10 @@
  * here rather than per word.
  */
 import type { Dictionary } from "../dictionary/dictionary.js";
-import { applyGrouping } from "../orthography/grouping.js";
 import type { Locale } from "../script/script.js";
-import { divisionOf } from "./constituents.js";
+import { charactersPerSyllable, groupingOf } from "./sandhi-input.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
-import type { DecodedWord, ScoredWord } from "./word.js";
+import type { ScoredWord } from "./word.js";
 import {
   type ConvertedPiece,
   plainPiece,
@@ -30,22 +29,17 @@ export function writeRun(
   sandhi: SandhiOptions | undefined,
 ): readonly ConvertedPiece[] {
   // Sandhi runs across the whole run rather than within a word, since 不 in one
-  // word assimilates to the tone starting the next. Third-tone sandhi needs to
-  // know where the words are all the same, so the grouping goes with it — and
-  // only when it is asked for, since dividing a word costs lookups.
+  // word assimilates to the tone starting the next, and what it needs beyond
+  // the syllables is in `sandhi-input.ts`.
   const readings = words.map((scored) =>
     readingFor(dictionary, scored.word, locale),
   );
-  const grouping =
-    sandhi?.thirdTone === true
-      ? words.map((scored, index) => {
-          const reading = readings[index] ?? [];
-          return (
-            divisionOf(dictionary, scored.word.text, reading) ?? reading.length
-          );
-        })
-      : undefined;
-  const flattened = applySandhi(readings.flat(), sandhi, grouping);
+  const flattened = applySandhi(
+    readings.flat(),
+    sandhi,
+    groupingOf(dictionary, words, readings, sandhi?.thirdTone === true),
+    charactersPerSyllable(words, readings),
+  );
 
   let at = 0;
   const pieces: ConvertedPiece[] = [];
@@ -84,47 +78,5 @@ export function rewrite(
     /* c8 ignore next -- one part comes back for each part handed over */
     const text = rewritten[at] ?? piece.text;
     return text === piece.text ? piece : { ...piece, text };
-  });
-}
-
-/**
- * The words a Han run decodes to, with 分词连写 applied.
- *
- * Grouping rewrites word boundaries and never the readings behind them, so the
- * syllables — and the confidence beside them — survive it in order.
- */
-export function wordsOf(
-  decoded: readonly ScoredWord[],
-  dictionary: Dictionary,
-  isGrouped: boolean,
-): readonly ScoredWord[] {
-  return isGrouped
-    ? regroup(
-        decoded,
-        applyGrouping(
-          decoded.map((scored) => scored.word),
-          dictionary,
-        ),
-      )
-    : decoded;
-}
-
-/**
- * Redistribute the decode's per-syllable confidence over regrouped words.
- *
- * 分词连写 moves word boundaries — 看 and 了 become 看了 — without touching a
- * reading, so the run's syllables are the same syllables in the same order and
- * are simply cut in different places.
- */
-function regroup(
-  decoded: readonly ScoredWord[],
-  grouped: readonly DecodedWord[],
-): readonly ScoredWord[] {
-  const confidence = decoded.flatMap((scored) => [...scored.confidence]);
-  let at = 0;
-  return grouped.map((word) => {
-    const held = confidence.slice(at, at + word.reading.length);
-    at += word.reading.length;
-    return { word, confidence: held };
   });
 }

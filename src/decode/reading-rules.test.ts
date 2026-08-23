@@ -19,6 +19,7 @@ import {
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
+  PARTICLE_DE,
   PLAYING_TAN,
   READING_RULES,
   TEACHING_JIAO,
@@ -77,6 +78,36 @@ const dictionary = dictionaryOf([
   entry("宗", "zōng", { frequency: 2000 }),
   entry("宗教", "zōng jiào", { partOfSpeech: "n", frequency: 4000 }),
   entry("来", "lái", { partOfSpeech: "v", frequency: 40_000 }),
+  // A modal in front of a 教 that governs nothing after it.
+  entry("怎么", "zěn me", { partOfSpeech: "r", frequency: 50_000 }),
+]);
+
+/**
+ * A dictionary of its own for 的, kept apart for the reason 长's is.
+ *
+ * 的 is the commonest character in the language and its frequency alone
+ * rescales the quantised table, which moves decisions in the 量词 cases that
+ * have nothing to do with it.
+ */
+const deDictionary = dictionaryOf([
+  entry("的", "de", {
+    partOfSpeech: "uj",
+    frequency: 95_000,
+    alternates: [reading("dì"), reading("dí"), reading("dī")],
+  }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("真", "zhēn", { partOfSpeech: "d", frequency: 300 }),
+  entry("名", "míng", { partOfSpeech: "ng", frequency: 8000 }),
+  entry("字", "zì", { partOfSpeech: "n", frequency: 8000 }),
+  entry("名字", "míng zi", { partOfSpeech: "n", frequency: 5000 }),
+  entry("确", "què", { frequency: 4000 }),
+  entry("知", "zhī", { frequency: 6000 }),
+  entry("道", "dào", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("知道", "zhī dào", { partOfSpeech: "v", frequency: 40_000 }),
+  // The pair the rule is about: a reading somebody asserted, carrying no part
+  // of speech, against a word jieba counted and tagged.
+  entry("的真", "dí zhēn"),
+  entry("的确", "dí què", { partOfSpeech: "d", frequency: 4000 }),
 ]);
 
 /**
@@ -115,6 +146,14 @@ const changDictionary = dictionaryOf([
   // 署长, 团长 and 局长.
   entry("署", "shǔ", { partOfSpeech: "ng", frequency: 900 }),
   entry("高", "gāo", { partOfSpeech: "a", frequency: 50_000 }),
+  // The predicative and attributive cases: a 量词, 有, a noun to modify, and a
+  // verb's object for the shape the rule has to leave alone.
+  entry("有", "yǒu", { partOfSpeech: "v", frequency: 80_000 }),
+  entry("位", "wèi", { partOfSpeech: "q", frequency: 20_000 }),
+  entry("头发", "tóu fa", { partOfSpeech: "n", frequency: 3000 }),
+  entry("胡子", "hú zi", { partOfSpeech: "n", frequency: 2000 }),
+  entry("在", "zài", { partOfSpeech: "p", frequency: 90_000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 90_000 }),
   entry("好", "hǎo", { partOfSpeech: "a", frequency: 70_000 }),
   // 越长 exactly as the artifact holds it: a `yuè cháng` reading carrying no
   // part of speech, and the only member of its paradigm — 越高 and 越好 are
@@ -255,11 +294,44 @@ describe("教 where it is teaching", () => {
     assertArrayEquals(read("我教你", []), ["wǒ", "jiào", "nǐ"]);
   });
 
+  it("reads it jiāo after a modal, where nothing follows to look at", () => {
+    // 他怎么教: the object is what usually says a 教 is teaching, and here
+    // there is none, so the near side has to.
+    assertArrayEquals(read("他怎么教"), ["tā", "zěnme", "jiāo"]);
+  });
+
   it("takes the jiào a two-character reading would carry in", () => {
     // 来教 is a pair the dictionary holds with no part of speech, and its
     // `jiào` reached the position from outside the character's own edges.
     assertArrayEquals(read("来教我", [TEACHING_JIAO]), ["lái", "jiāo", "wǒ"]);
     assertArrayEquals(read("来教我", []), ["láijiào", "wǒ"]);
+  });
+});
+
+describe("的 where it is the structural particle", () => {
+  /** How a run of the 的 cases reads, word by word. */
+  function readDe(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(deDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("forbids an untagged word beginning at the particle", () => {
+    assertArrayEquals(readDe("他的真名字"), ["tā", "de", "zhēn", "míngzi"]);
+  });
+
+  it("reads the particle as dí without the rule, which is the bug", () => {
+    // The 的真 edge loses the spacing and wins the reading, which is the whole
+    // shape of the defect: 他的真名字 came out `tā dí zhēn míngzi`.
+    assertArrayEquals(readDe("他的真名字", []), ["tā", "dí", "zhēn", "míngzi"]);
+  });
+
+  it("leaves a word jieba counted and tagged alone", () => {
+    assertArrayEquals(readDe("他的确知道"), ["tā", "díquè", "zhīdào"]);
+  });
+
+  it("says nothing where no modifier stands in front", () => {
+    assertArrayEquals(readDe("的真", [PARTICLE_DE]), ["dí", "zhēn"]);
   });
 });
 
@@ -336,6 +408,30 @@ describe("长 as an adjective", () => {
 
   it("reads the attributive 的 after it the same way", () => {
     assertArrayEquals(readChang("很长的路"), ["hěn", "cháng", "de", "lù"]);
+  });
+
+  it("reads a negated 长 closing its clause as cháng", () => {
+    // 不 is deliberately outside the degree set, so this is the far side of
+    // the context doing the work: nothing follows for a verb to govern.
+    assertArrayEquals(readChang("不长"), ["bù", "cháng"]);
+  });
+
+  it("keeps the negated 长 as the verb where it governs something", () => {
+    assertArrayEquals(readChang("不长在"), ["bù", "zhǎng", "zài"]);
+  });
+
+  it("reads an attributive 长 in front of its noun as cháng", () => {
+    assertArrayEquals(readChang("有长头发"), ["yǒu", "cháng", "tóufa"]);
+  });
+
+  it("takes a 量词 in front of the 长 as readily as 有", () => {
+    assertArrayEquals(readChang("位长胡子"), ["wèi", "cháng", "húzi"]);
+  });
+
+  it("keeps the verb where the noun after it is an object", () => {
+    // 他长头发 is a subject and a verb, and the only thing separating it from
+    // 有长头发 is what stands in front.
+    assertArrayEquals(readChang("他长头发"), ["tā", "zhǎng", "tóufa"]);
   });
 
   it("does nothing at all when the rule is not applied", () => {

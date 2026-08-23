@@ -304,6 +304,29 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "我教英语"), "wǒ jiāo Yīngyǔ");
       assertIdentical(convert(dictionary, "教育"), "jiàoyù");
       assertIdentical(convert(dictionary, "宗教"), "zōngjiào");
+      // The modal in front of it, for the 教 that governs nothing after it.
+      assertIdentical(
+        convert(dictionary, "他怎么教，我都学不会。"),
+        "Tā zěnme jiāo, wǒ dōu xué búhuì.",
+      );
+      assertIdentical(
+        convert(dictionary, "这在学校是不教的"),
+        "zhè zài xuéxiào shì bù jiāo de",
+      );
+      assertIdentical(convert(dictionary, "有教无类"), "yǒujiàowúlèi");
+    });
+
+    it("keeps a word beginning with 的 out of the particle's place", () => {
+      assertIdentical(
+        convert(dictionary, "没有人知道他的真名字"),
+        "méiyǒu rén zhīdào tā de zhēn míngzi",
+      );
+      // The words jieba counted, which the rule leaves alone.
+      assertIdentical(convert(dictionary, "我的确知道"), "wǒ díquè zhīdào");
+      assertIdentical(
+        convert(dictionary, "我要一辆的士"),
+        "wǒ yào yí liàng dī shì",
+      );
     });
 
     it("keeps a counted 量词 out of the word behind it", () => {
@@ -343,6 +366,21 @@ describe("the examples in docs/", () => {
       // is why neither guards the rule.
       assertIdentical(convert(dictionary, "时间太长了"), "shíjiān tài chángle");
       assertIdentical(convert(dictionary, "很长的道路"), "hěn cháng de dàolù");
+      // The two contexts that need both sides, each with the shape it must
+      // not reach beside it.
+      assertIdentical(
+        convert(dictionary, "那座桥不长。"),
+        "Nà zuò qiáo bù cháng.",
+      );
+      assertIdentical(
+        convert(dictionary, "胡子不长在前额上"),
+        "húzi bù zhǎng zài qián'é shàng",
+      );
+      assertIdentical(
+        convert(dictionary, "他有长头发。"),
+        "Tā yǒu cháng tóufa.",
+      );
+      assertIdentical(convert(dictionary, "树长叶子"), "shù zhǎng yèzi");
     });
 
     it("reads 弹 as tán where it is playing", () => {
@@ -539,7 +577,7 @@ describe("the examples in docs/", () => {
           dictionary,
           "\u{90A3}\u{662F}\u{5C0F}\u{674E}\u{7684}\u{4E66}\u{3002}",
         ),
-        "N\u{E0} shi Xi\u{1CE}o L\u{1D0} de sh\u{16B}.",
+        "N\u{E0} sh\u{EC} Xi\u{1CE}o L\u{1D0} de sh\u{16B}.",
       );
       // 大 is deliberately not a prefix: it is also an ordinary adjective, and
       // both of the rule's clear mistakes over the corpus were 大.
@@ -1583,8 +1621,9 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "万一你来"), "wànyī nǐ lái");
       assertIdentical(convert(dictionary, "31日"), "sānshíyī rì");
       assertIdentical(convert(dictionary, "一个"), "yí gè");
-      // And the one it gets wrong, which the page names.
-      assertIdentical(convert(dictionary, "当时一个人"), "dāngshí yī gè rén");
+      // The 汉字 settle it where the spellings could not: 时 is not 十.
+      assertIdentical(convert(dictionary, "当时一个人"), "dāngshí yí gè rén");
+      assertIdentical(convert(dictionary, "那是一条狗"), "nà shì yìtiáo gǒu");
     });
 
     it("flattens 不 before a fourth tone only", () => {
@@ -2254,9 +2293,9 @@ describe("the examples in docs/", () => {
     it("explains 长江大桥 as the page shows", async () => {
       assertArrayEquals(await cli("explain", "长江大桥"), [
         "长江大桥  Cháng Jiāng Dàqiáo",
-        "  Cháng   word    zhǎng +24.6",
+        "  Cháng   word    zhǎng +14.6",
         "  Jiāng   locked",
-        "  Dà      word    dài +22.6",
+        "  Dà      word    dài +12.6",
         "  qiáo    locked",
       ]);
     });

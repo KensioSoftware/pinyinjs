@@ -165,11 +165,14 @@ function applyThirdTone(
  * contextual tone is put back, over the whole syllable array rather than within
  * a word, which is what lets 不 in one word assimilate to a tone in the next.
  *
- * 一 and 不 assimilate to whatever follows them and need nothing but the
- * syllables. Third-tone sandhi is not like that — its domain is the foot rather
- * than the syllable string — so `grouping` says where the words and their parts
- * are. Without one the whole array is taken for a single word, which is what a
- * caller holding nothing but a reading has.
+ * 不 assimilates to whatever follows it and needs nothing but the syllables.
+ * Third-tone sandhi is not like that — its domain is the foot rather than the
+ * syllable string — so `grouping` says where the words and their parts are.
+ * Without one the whole array is taken for a single word, which is what a
+ * caller holding nothing but a reading has. 一 sits between the two: the tone it
+ * takes is settled by the syllables, and whether it takes one at all is a
+ * question about the 汉字, so `characters` carries them where the caller has
+ * them. See {@link isCounting}.
  *
  * Never operates on a string. The old project patched output text with regexes,
  * which is what made its rules order-dependent and untestable.
@@ -178,6 +181,7 @@ export function applySandhi(
   syllables: readonly Syllable[],
   options: SandhiOptions = {},
   grouping?: SandhiGrouping,
+  characters?: readonly (string | undefined)[],
 ): readonly Syllable[] {
   const { yiBu = true, thirdTone = false } = options;
   const applied = thirdTone
@@ -190,7 +194,7 @@ export function applySandhi(
     if (yiBu && isYi(syllable) && syllable.tone === 1) {
       // A 一 that is not counting keeps its citation tone, so it is left
       // exactly as the dictionary stored it.
-      if (isCounting(applied, at)) {
+      if (isCounting(applied, at, characters)) {
         applied[at] = { ...syllable, tone: yiToneBefore(following?.tone) };
       }
       continue;

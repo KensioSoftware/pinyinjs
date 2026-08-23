@@ -49,4 +49,7 @@ export const WORD_READINGS: readonly BuildAssertion[] = [
   reads("重複", "chóng fù", "one of two 繁體 spellings, both keyed"),
   reads("重覆", "chóng fù", "the other, on the same entry"),
   reads("下麵", "xià miàn", "both spellings of a word CC-CEDICT writes twice"),
+  reads("做什么", "zuò shén me", "an uncorroborated key held to 什么"),
+  reads("什么意思", "shén me yì si", "and to 意思, on the neutral tone"),
+  reads("分子结构", "fēn zǐ jié gòu", "but not to a sense 分子 also carries"),
 ];

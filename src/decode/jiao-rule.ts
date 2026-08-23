@@ -34,18 +34,54 @@ export function isJiao(syllable: Syllable | undefined): boolean {
 export const TAUGHT_TAGS = new Set(["r", "n", "nz", "nr", "nt", "ng"]);
 
 /**
+ * The words that can only be governing a verb, whatever comes after them.
+ *
+ * The far side of the context, for the 教 that teaches nothing named:
+ * 他怎么教，我都学不会, 你没能力教, 这在学校是不教的, 有时也会教. A modal or a
+ * negator has to be followed by a verb, so the 教 after one is the verb even
+ * where nothing at all follows it.
+ *
+ * Written out rather than taken from a tag, for the reason the 长 rule gives:
+ * jieba calls 会 `v` along with every other verb and 怎么 `r` along with every
+ * pronoun, so neither tag names this set.
+ */
+const GOVERNING = new Set([
+  "不",
+  "能",
+  "会",
+  "會",
+  "要",
+  "想",
+  "该",
+  "該",
+  "也",
+  "别",
+  "別",
+  "没",
+  "沒",
+  "怎么",
+  "怎麼",
+  "怎样",
+  "怎樣",
+]);
+
+/**
  * Whether the 教 at a position is teaching something to somebody.
  *
  * The object is what says so, which is the same shape the modal 得 rule takes:
  * a 教 with a pronoun, a noun or a name after it is governing it, and a 教 with
  * 了, 过, 着 or 得 after it is a verb whatever follows that. A particle in front
  * of it rules it out, since a verb does not follow one.
+ *
+ * {@link GOVERNING} is the case where nothing follows to look at.
  */
 export function isTeachingAt(context: EdgeContext, at: number): boolean {
-  if (tagOf(context, wordEndingAt(context, at)).startsWith(PARTICLE_TAG)) {
+  const before = wordEndingAt(context, at);
+  if (tagOf(context, before).startsWith(PARTICLE_TAG)) {
     return false;
   }
   return (
+    GOVERNING.has(before ?? "") ||
     ASPECT.has(context.characters[at + 1] ?? "") ||
     TAUGHT_TAGS.has(tagOf(context, wordStartingAt(context, at + 1)))
   );
@@ -70,13 +106,17 @@ export function isTeachingAt(context: EdgeContext, at: number): boolean {
  * one that matters: 任教, 宗教, 主教, 佛教, 传教, 执教, 请教, 家教.
  *
  * Measured over 88,866 lines of Tatoeba and zh.wikipedia, 181 教 decode as a
- * word of their own and every one of them read `jiào`. This moves 158 to
+ * word of their own and every one of them read `jiào`. This moves 162 to
  * `jiāo` and is wrong on three: 统一教创始人, 方法教深思 and 做到了教政分离,
  * where a nominal compound takes an object's shape, the last of them because
  * 做到了 is a word and so the 了 in front is not a particle to look at. Of the
- * 21 it leaves, 8 are right — 诸教中, 教外别传, 董教总, 风教, 教青局 twice, a
- * 教室 reached through a bad split, and a 教 used as a bare noun — and 13 are
+ * 17 it leaves, 8 are right — 诸教中, 教外别传, 董教总, 风教, 教青局 twice, a
+ * 教室 reached through a bad split, and a 教 used as a bare noun — and 9 are
  * misses, where jieba tags the object something this does not name.
+ *
+ * {@link GOVERNING} is four of that 162 and was added later: 能教教我,
+ * 要教一節課, 也會教像拉丁語, 這在學校是不教的. 有 is pointedly outside it,
+ * since 有教无类 is `yǒujiào wúlèi`.
  */
 export const TEACHING_JIAO: EdgeRule = {
   name: "teaching-jiao",

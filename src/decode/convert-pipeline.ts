@@ -21,7 +21,8 @@ import { splitRuns, surroundingCharacters } from "./runs.js";
 import type { ConvertedPiece, ConvertOptions, Written } from "./pieces.js";
 import { numeralBefore, surrounding, writeNumbers } from "./numbers.js";
 import type { Decode } from "./decoders.js";
-import { writeRun, rewrite, wordsOf } from "./write-run.js";
+import { wordsOf } from "./run-words.js";
+import { writeRun, rewrite } from "./write-run.js";
 
 /**
  * Run the pipeline over a text with a given decoder.

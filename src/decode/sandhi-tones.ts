@@ -64,6 +64,44 @@ export const CONTINUES_NUMBER = new Set([...NUMERAL_WORDS, "ling"]);
 export const ORDINAL_PREFIX = "di";
 
 /**
+ * The 汉字 {@link NUMERAL_WORDS} names, for a caller that has them.
+ *
+ * The spellings are ambiguous and the characters are not, which is the whole
+ * point of carrying both. 是 is spelt `shi` and stands in front of a 一 in
+ * 那是一条狗, 这是一个好主意 and several hundred sentences like them, and every
+ * one of them lost its sandhi to a 十 that was never there. 时, 事, 使 and 试 do
+ * the same.
+ *
+ * The 繁體 forms are here because a 繁體 text reaches this pass with 繁體
+ * characters. 拾, 佰 and 仟 are the 大写 banking forms, which appear on cheques
+ * and in contracts and count exactly as their everyday spellings do.
+ */
+export const NUMERAL_CHARACTERS = new Set([
+  "十",
+  "百",
+  "千",
+  "万",
+  "萬",
+  "拾",
+  "佰",
+  "仟",
+]);
+
+/**
+ * The 汉字 {@link CONTINUES_NUMBER} names.
+ */
+export const CONTINUES_NUMBER_CHARACTERS = new Set([
+  ...NUMERAL_CHARACTERS,
+  "零",
+  "〇",
+]);
+
+/**
+ * The ordinal prefix as it is written.
+ */
+export const ORDINAL_CHARACTER = "第";
+
+/**
  * Whether a 一 is counting something, which is the only time it takes sandhi.
  *
  * The rule 一 sandhi is usually stated with — fourth tone flattens it, anything
@@ -76,22 +114,43 @@ export const ORDINAL_PREFIX = "di";
  *   is counting the ten.
  * - **An ordinal.** 第一个 is `dìyī gè`.
  *
- * **Read off the syllables rather than the characters**, because that is all
- * this pass has: `pinyinjs sandhi shíyī gè` never sees a hanzi. So it cannot
- * tell 十 from 时 or 第 from 地, and `docs/sandhi/` carries what that costs —
- * measured, not estimated.
+ * **Answered from the characters wherever the caller has them**, and from the
+ * spellings where it does not. `pinyinjs sandhi shíyī gè` is handed nothing but
+ * pinyin, so there the pass still cannot tell 十 from 时 or 第 from 地 and
+ * `docs/sandhi/` carries what that costs. A conversion knows which 汉字 it read,
+ * and passing them along is what stops 那是一条狗 losing its sandhi to the 是 in
+ * front of the 一.
+ *
+ * The two sides are decided separately, because a run can know one and not the
+ * other: a word whose reading has a different syllable count from its character
+ * count has no character to offer for any one syllable.
  */
 export function isCounting(
   syllables: readonly Syllable[],
   at: number,
+  characters: readonly (string | undefined)[] = [],
 ): boolean {
   const spelt = (index: number): string => {
     const syllable = syllables[index];
     return syllable === undefined ? "" : writeSyllableSpelling(syllable);
   };
-  const before = spelt(at - 1);
-  if (before === ORDINAL_PREFIX) {
+  const before = characters[at - 1];
+  if (
+    before === undefined
+      ? spelt(at - 1) === ORDINAL_PREFIX
+      : before === ORDINAL_CHARACTER
+  ) {
     return false;
   }
-  return !NUMERAL_WORDS.has(before) || CONTINUES_NUMBER.has(spelt(at + 1));
+  if (
+    before === undefined
+      ? !NUMERAL_WORDS.has(spelt(at - 1))
+      : !NUMERAL_CHARACTERS.has(before)
+  ) {
+    return true;
+  }
+  const after = characters[at + 1];
+  return after === undefined
+    ? CONTINUES_NUMBER.has(spelt(at + 1))
+    : CONTINUES_NUMBER_CHARACTERS.has(after);
 }

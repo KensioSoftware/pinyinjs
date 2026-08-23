@@ -271,7 +271,7 @@ Three things it gets wrong, all inherited:
 
 ```ts
 convert(dictionary, "我去把老王找来。"); // "Wǒ qù bǎ Lǎo Wáng zhǎo lái."
-convert(dictionary, "那是小李的书。"); // "Nà shi Xiǎo Lǐ de shū."
+convert(dictionary, "那是小李的书。"); // "Nà shì Xiǎo Lǐ de shū."
 ```
 
 GB/T 16159 writes the 称呼语 in front of a surname apart and with a capital of

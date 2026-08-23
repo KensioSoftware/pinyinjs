@@ -80,6 +80,22 @@ export function cedictReadingsOf(
 }
 
 /**
+ * Ask either index for every reading CC-CEDICT gives a spelling.
+ *
+ * Both scripts, because a word can be listed under one and not the other, and
+ * an empty answer means CC-CEDICT does not hold the spelling at all.
+ */
+export function senseLookup(
+  byWord: ReadonlyMap<string, readonly CedictEntry[]>,
+  byHant: ReadonlyMap<string, readonly CedictEntry[]>,
+): (word: string) => readonly (readonly Syllable[])[] {
+  return (word) => [
+    ...cedictReadingsOf(word, byWord.get(word) ?? []),
+    ...cedictReadingsOf(word, byHant.get(word) ?? []),
+  ];
+}
+
+/**
  * Whether a proposed 國語 reading is really another 普通话 sense of the word.
  *
  * The test that separates a locale shift from a sense selection, which the

@@ -409,7 +409,7 @@ describe("the examples in README.md", () => {
       assertArrayEquals(await cli("explain", "银行"), [
         "银行  yínháng",
         "  yín     locked",
-        "  háng    word    xíng +24.6  héng +26.6  hàng +27.6",
+        "  háng    word    xíng +14.6  héng +16.6  hàng +17.6",
       ]);
     });
 
@@ -460,14 +460,14 @@ describe("the examples in README.md", () => {
             text: "Cháng",
             state: "word",
             tone: 2,
-            alternatives: [{ reading: "zhǎng", cost: 24.62 }],
+            alternatives: [{ reading: "zhǎng", cost: 14.62 }],
           },
           { text: "Jiāng", state: "locked", tone: 1, alternatives: [] },
           {
             text: "Dà",
             state: "word",
             tone: 4,
-            alternatives: [{ reading: "dài", cost: 22.62 }],
+            alternatives: [{ reading: "dài", cost: 12.62 }],
           },
           { text: "qiáo", state: "locked", tone: 2, alternatives: [] },
         ],

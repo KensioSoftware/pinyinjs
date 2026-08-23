@@ -67,7 +67,7 @@ A reading a [rule](../converting/#rules-where-the-cost-model-cannot-reach)
 settled reports as locked too, for the same reason. The rules run over the
 lattice before anything is decoded, and the 得 of 我得走了 has one reading left
 by the time the decode sees it. The flag still means what it says, that the
-decode itself made no choice here. The 1.46% below is measured over positions
+decode itself made no choice here. The 1.50% below is measured over positions
 the data locked, and these fall outside it.
 
 **Backed by a word** means other readings existed, but reaching any of them
@@ -83,7 +83,7 @@ decoder saying it had very little to go on.
 ```ts
 const pieces = convertPieces(dictionary, "长江大桥");
 pieces[0]?.confidence?.alternatives;
-// [{ reading: [ … zhǎng … ], cost: 24.62, … }]
+// [{ reading: [ … zhǎng … ], cost: 14.62, … }]
 ```
 
 An alternative's `cost` is how much more the cheapest conversion taking it
@@ -101,14 +101,22 @@ without breaking a word apart, and a dearer one had to break one.
 That cut is the one worth acting on, and it has been measured. On 20,139
 hand-labelled polyphonic characters:
 
-| State            |  Wrong |
-| ---------------- | -----: |
-| locked           |  1.46% |
-| backed by a word |  4.46% |
-| uncertain        | 27.15% |
+| State            |  Cases |  Wrong |
+| ---------------- | -----: | -----: |
+| locked           |  2,065 |  1.50% |
+| backed by a word | 12,364 |  4.43% |
+| uncertain        |  5,710 | 19.86% |
 
-The decoder's errors sit almost entirely on the syllables it already reports as
-uncertain. That is what makes the flag worth surfacing.
+Two thirds of the decoder's errors sit in the uncertain band, which is 28% of
+the positions. That is what makes the flag worth surfacing.
+
+**What it is not is a graded score.** Almost every uncertain reading is
+uncertain by the same margin, one `ALTERNATE_PENALTY`, because that is all the
+gap between a character's first and second reading ever costs. So 是 is flagged
+wherever no word covers it, and 是 is `shì` nearly every time. Moving the
+threshold anywhere between one unit and the per-word charge changes what is
+flagged by a percentage point. Read the flag as "no word covered this
+character", which is what it measures, and not as a confidence.
 
 ## The unit is a span
 

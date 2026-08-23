@@ -29,7 +29,7 @@ Wǒ yào qù Běijīng.
 $ pinyinjs explain 银行
 银行  yínháng
   yín     locked
-  háng    word    xíng +24.6  héng +26.6  hàng +27.6
+  háng    word    xíng +14.6  héng +16.6  hàng +17.6
 ```
 
 Every option the library takes is a flag, and every command writes JSON with
