@@ -58,6 +58,10 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("一丁不识", "yī dīng bù shí", { hant: "一丁不識" }),
   entry("一不小心", "yī bù xiǎo xīn"),
   entry("大夫", "dài fu"),
+  // 个 settled by what stands in front of it, and the reading that is not it.
+  entry("一个", "yī gè", { hant: "一個" }),
+  entry("那个人", "nà ge rén", { hant: "那個人" }),
+  entry("独自个", "dú zì gě", { hant: "獨自個" }),
   // Every word on the 轻声 sense list, since the assertion covering that table
   // asks after all of them.
   entry("东西", "dōng xi", { hant: "東西" }),
@@ -90,7 +94,8 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("还是", "hái shi", { hant: "還是" }),
   entry("重复", "chóng fù", { hant: "重複", hantVariants: ["重覆"] }),
   entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
-  // The keys step 9 holds to the words inside them, and the one it must not.
+  // The keys the constituent repair holds to the words inside them, and the
+  // one it must not.
   entry("做什么", "zuò shén me", { hant: "做什麼" }),
   entry("什么意思", "shén me yì si", { hant: "什麼意思" }),
   entry("分子结构", "fēn zǐ jié gòu", { hant: "分子結構" }),

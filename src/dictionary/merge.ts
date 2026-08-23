@@ -9,6 +9,7 @@ import { composeLocaleDeltas } from "./locale.js";
 import { indexCedict, senseLookup } from "./cedict-senses.js";
 import { buildCharacterDefaults } from "./character-defaults.js";
 import { repairConstituentReadings } from "./constituent-repair.js";
+import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
 import type { MergeResult, MergeSources, WordSources } from "./merge-types.js";
 
@@ -52,12 +53,17 @@ export function mergeSources(sources: MergeSources): MergeResult {
     wordSources,
   );
 
+  // ── 个 given one tone per position ─────────────────────────
+  // Before the repair below, which reads a phrase's constituents off these same
+  // entries: settling first is what lets 那个人 be held to a settled 那个.
+  const measured = settleMeasureTones(entries);
+
   // ── Phrase entries held to the words inside them ───────────
   // Before the locale pass, which asks whether a compound reads a constituent
   // the way that constituent's own entry reads it. A phrase entry repaired here
   // answers yes where it used to answer no.
   const held = repairConstituentReadings(
-    entries,
+    measured.entries,
     senseLookup(cedictByWord, cedictByHant),
   );
 
@@ -73,6 +79,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     stats: {
       ...counts,
       reducedNeutrals,
+      settledMeasureTones: measured.settled,
       repairedConstituents: held.repaired,
       composedTaiwanReadings: localised.composed,
       rejected: rejected.size,
