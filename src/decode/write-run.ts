@@ -7,6 +7,7 @@
  */
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { applyGrouping } from "../orthography/grouping.js";
+import { toCharacters } from "../script/characters.js";
 import type { Locale } from "../script/script.js";
 import { divisionOf } from "./constituents.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
@@ -45,7 +46,20 @@ export function writeRun(
           );
         })
       : undefined;
-  const flattened = applySandhi(readings.flat(), sandhi, grouping);
+  // One 汉字 per syllable where a word offers that, so 一 sandhi can ask what
+  // stands in front of the 一 rather than guessing from a toneless spelling. A
+  // word whose reading is a different length from its text — 玩儿 as `wánr` —
+  // has no character to give any one of its syllables.
+  const characters = words.flatMap(
+    (scored, index): readonly (string | undefined)[] => {
+      const reading = readings[index] ?? [];
+      const held = toCharacters(scored.word.text);
+      return held.length === reading.length
+        ? held
+        : Array.from<string | undefined>({ length: reading.length });
+    },
+  );
+  const flattened = applySandhi(readings.flat(), sandhi, grouping, characters);
 
   let at = 0;
   const pieces: ConvertedPiece[] = [];

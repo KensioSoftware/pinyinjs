@@ -1583,8 +1583,9 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "万一你来"), "wànyī nǐ lái");
       assertIdentical(convert(dictionary, "31日"), "sānshíyī rì");
       assertIdentical(convert(dictionary, "一个"), "yí gè");
-      // And the one it gets wrong, which the page names.
-      assertIdentical(convert(dictionary, "当时一个人"), "dāngshí yī gè rén");
+      // The 汉字 settle it where the spellings could not: 时 is not 十.
+      assertIdentical(convert(dictionary, "当时一个人"), "dāngshí yí gè rén");
+      assertIdentical(convert(dictionary, "那是一条狗"), "nà shì yìtiáo gǒu");
     });
 
     it("flattens 不 before a fourth tone only", () => {

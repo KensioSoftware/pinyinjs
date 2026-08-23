@@ -55,28 +55,39 @@ convert(dictionary, "第一次"); // "dìyīcì", ordinal
 convert(dictionary, "万一你来"); // "wànyī nǐ lái"
 convert(dictionary, "31日"); // "sānshíyī rì", the same through the digits
 convert(dictionary, "一个"); // "yí gè", still counting, so still assimilates
+convert(dictionary, "当时一个人"); // "dāngshí yí gè rén", 时 is not 十
+convert(dictionary, "那是一条狗"); // "nà shì yìtiáo gǒu", nor is 是
 ```
 
 The signal is a numeral word before the 一 with no numeral after it. That is
 what leaves 一百一十's middle 一 alone. 十 follows it, and it is counting the
 ten.
 
-**The pass reads syllables and never characters**, because that is all it has.
-`pinyinjs sandhi shíyī gè` is given no hanzi at all. So it cannot tell 十 from
-时 or 第 from 地, and that costs something measurable. Over 88,866 lines of
-Tatoeba and zh.wikipedia:
+**A conversion answers this from the 汉字, and bare pinyin from the spellings.**
+`pinyinjs sandhi shíyī gè` is given no hanzi at all, so there the pass still
+cannot tell 十 from 时 or 第 from 地. `convert` knows which characters it read
+and says so, which matters more than it sounds: 是 is spelt `shi`, it stands in
+front of a great many 一, and every one of those used to lose its sandhi to a 十
+that was never there.
 
-|                             |       |
-| --------------------------- | ----: |
-| 一 conversions changed      |   561 |
-| put right                   |   520 |
-| broken (当时一个, 兄弟一样) |    41 |
-| precision                   | 92.7% |
+Over 88,866 lines of Tatoeba and zh.wikipedia, 14,843 一 reach the pass with
+their citation tone. It assimilates 14,007 of them and leaves 836, which are
+第一, 之一, 星期一, 唯一, 万一 and 二十一世纪. Reading the characters moves
+1,575 一 against the spellings alone, and every one of them is a correction:
 
-亿 is deliberately left out of the numeral set, and that was measured. No 一 in
-that text ends a number in 亿, while 意, 议, 义 and 議 all read `yì`, all
-precede a 一 that really is counting, and would all have lost their sandhi for
-it. That is 11 conversions broken and none gained.
+|                                         |       |
+| --------------------------------------- | ----: |
+| 一 after 是 (是一个, 那是一样)          | 1,338 |
+| after 前, 试, 晚, 释, 始, 时, 弟        |   231 |
+| a real 十 shedding a wrong assimilation |     6 |
+| broken                                  |     0 |
+
+亿 is deliberately left out of the numeral set, and that was measured against
+the spellings. No 一 in that text ends a number in 亿, while 意, 议, 义 and 議
+all read `yì`, all precede a 一 that really is counting, and would all have lost
+their sandhi for it. That is 11 conversions broken and none gained. The
+character set carries no such risk and holds 十, 百, 千, 万 with their 繁體 and
+大写 spellings.
 
 Turn both off with `sandhi: { yiBu: false }`, or `--no-sandhi` at the command
 line.
@@ -145,7 +156,7 @@ The pass runs over the whole syllable array at once. A sandhi trigger works
 across a boundary the decoder put in. 不 followed by a fourth tone in the next
 word still flattens.
 
-一 and 不 assimilate to whatever follows and need only the syllables. Third-tone
+不 assimilates to whatever follows and needs only the syllables. Third-tone
 sandhi needs to know where the words are, so `convert` passes the grouping the
 decoder found. Calling `applySandhi` directly with only a reading takes the
 whole of it for one word, which is all a bare reading says. Pass a
@@ -164,8 +175,10 @@ on whitespace to get one, since that is the only boundary written pinyin has.
 
 ## Options
 
-`applySandhi(syllables, options?, grouping?)` takes the same object as the
-`sandhi` field of [`ConvertOptions`](../options/#sandhi):
+`applySandhi(syllables, options?, grouping?, characters?)` takes the same object
+as the `sandhi` field of [`ConvertOptions`](../options/#sandhi). `characters`
+holds one 汉字 per syllable, or `undefined` for a syllable no single character
+answers for, and is how 一 sandhi is told what it is reading:
 
 | Field       | Default | Does                         |
 | ----------- | ------- | ---------------------------- |

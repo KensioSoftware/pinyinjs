@@ -6,11 +6,7 @@
  * one, and forcing the edges they name.
  */
 import type { Syllable } from "../syllable/syllable.js";
-import {
-  type Lattice,
-  type LatticeEdge,
-  READING_CHARGE,
-} from "./lattice.js";
+import { type Lattice, type LatticeEdge, READING_CHARGE } from "./lattice.js";
 import type { ResolvedHints, WordHint } from "./hints.js";
 
 /**
