@@ -2,10 +2,16 @@
  * Walking the word list, and gathering what each word came to.
  */
 import { byCodeUnit } from "./artifact-format.js";
+import type { Syllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
 import { composeLocaleDeltas } from "./locale.js";
-import { indexCedict, isSpeltTraditionally } from "./cedict-senses.js";
+import {
+  cedictReadingsOf,
+  indexCedict,
+  isSpeltTraditionally,
+} from "./cedict-senses.js";
 import { buildCharacterDefaults } from "./character-defaults.js";
+import { repairConstituentReadings } from "./constituent-repair.js";
 import { mergeWord } from "./merge-word.js";
 import {
   addTally,
@@ -76,11 +82,21 @@ export function mergeSources(sources: MergeSources): MergeResult {
     }
   }
 
+  // ── Phrase entries held to the words inside them ───────────
+  // Before the locale pass, which asks whether a compound reads a constituent
+  // the way that constituent's own entry reads it. A phrase entry repaired here
+  // answers yes where it used to answer no.
+  const sensesOf = (word: string): readonly (readonly Syllable[])[] => [
+    ...cedictReadingsOf(word, cedictByWord.get(word) ?? []),
+    ...cedictReadingsOf(word, cedictByHant.get(word) ?? []),
+  ];
+  const held = repairConstituentReadings(entries, sensesOf);
+
   // ── zh-TW deltas the sources marked only on a constituent ──
   // Last, because it segments each compound against the finished entries: the
   // readings, both scripts' keys and the frequencies all have to be settled
   // before a compound can be asked what it is made of.
-  const localised = composeLocaleDeltas(entries);
+  const localised = composeLocaleDeltas(held.entries);
 
   return {
     entries: localised.entries,
@@ -88,6 +104,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     stats: {
       ...counts,
       reducedNeutrals,
+      repairedConstituents: held.repaired,
       composedTaiwanReadings: localised.composed,
       rejected: rejected.size,
     },

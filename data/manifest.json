@@ -21,20 +21,20 @@
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9113585,
-      "compressedBytes": 2396367
+      "bytes": 9140884,
+      "compressedBytes": 2401549
     }
   },
   "script": {
     "file": "script.map",
     "toTraditional": 5944,
     "toSimplified": 6117,
-    "traditionalWords": 2327,
+    "traditionalWords": 2390,
     "simplifiedWords": 849,
     "hansOnly": 5785,
     "hantOnly": 5497,
-    "bytes": 291502,
-    "compressedBytes": 100003
+    "bytes": 292980,
+    "compressedBytes": 100301
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",

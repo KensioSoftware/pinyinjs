@@ -44,6 +44,11 @@ export interface MergeStats {
   readonly scriptPairs: number;
   /** Entries a source writes more than one 繁體 spelling of. */
   readonly variantSpellings: number;
+  /**
+   * Phrase entries read as a corroborated word inside them reads them — see
+   * {@link import("./constituent-repair.js").repairConstituentReadings}.
+   */
+  readonly repairedConstituents: number;
   /** Entries carrying a zh-TW reading delta a source stated. */
   readonly taiwanReadings: number;
   /** Compounds given a zh-TW delta composed from their constituents. */
@@ -90,8 +95,9 @@ export interface WordSources {
  * What one word contributed to the build's counts.
  *
  * The per-word view of {@link MergeStats}, minus the counts no single word can
- * move: `reducedNeutrals` and `composedTaiwanReadings` are settled by passes
- * over the whole dictionary, and `rejected` is counted by the caller.
+ * move: `reducedNeutrals`, `repairedConstituents` and `composedTaiwanReadings`
+ * are settled by passes over the whole dictionary, and `rejected` is counted by
+ * the caller.
  */
 export interface WordTally {
   readonly neutralToneCorrections: number;
