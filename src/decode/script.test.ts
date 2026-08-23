@@ -12,6 +12,7 @@ import { describe, it } from "vitest";
 
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary, loadScriptTables } from "../dictionary/source.js";
+import { detectScript } from "../script/script.js";
 import {
   isUncertainChoice,
   type ScriptTarget,
@@ -30,6 +31,47 @@ const tables = await loadScriptTables(source);
 function convert(text: string, to: ScriptTarget): string {
   return toScript(dictionary, tables, text, { to });
 }
+
+describe("the shipped script-only sets", () => {
+  /** What the committed tables say a text is written in. */
+  function detect(text: string): string | undefined {
+    return detectScript(text, tables.hansOnly, tables.hantOnly);
+  }
+
+  it("holds the 繁體 characters a stray headword used to disqualify", () => {
+    for (const character of ["幾", "衛", "卻", "徵", "襪"]) {
+      assertTrue(tables.hantOnly.has(character));
+      assertFalse(tables.hansOnly.has(character));
+    }
+  });
+
+  it("holds the variant forms normalisation folds away before counting", () => {
+    for (const character of ["裏", "衞", "麪", "羣"]) {
+      assertTrue(tables.hantOnly.has(character));
+    }
+  });
+
+  it("leaves a character both scripts write in neither set", () => {
+    // 著 is 简体 for zhù and 繁體 for that and the aspect particle, 干 is the
+    // 简体 of 幹 and a 繁體 character of its own, and 里 and 台 are both.
+    for (const character of ["著", "干", "里", "台"]) {
+      assertFalse(tables.hansOnly.has(character));
+      assertFalse(tables.hantOnly.has(character));
+    }
+  });
+
+  it("settles a sentence from the characters in it", () => {
+    assertIdentical(detect("幾乎所有的工作都完成了。"), "Hant");
+    assertIdentical(detect("哪裏"), "Hant");
+    assertIdentical(detect("軍人所失去的自由太多了。"), "Hant");
+    assertIdentical(detect("几乎所有的工作都完成了。"), "Hans");
+  });
+
+  it("leaves script-neutral text undecided", () => {
+    assertIdentical(detect("看著你"), undefined);
+    assertIdentical(detect("你好"), undefined);
+  });
+});
 
 describe("script conversion", () => {
   describe("简 → 繁, the ambiguous direction", () => {

@@ -31,10 +31,10 @@
     "toSimplified": 6117,
     "traditionalWords": 2390,
     "simplifiedWords": 849,
-    "hansOnly": 5785,
-    "hantOnly": 5497,
-    "bytes": 292980,
-    "compressedBytes": 100301
+    "hansOnly": 5818,
+    "hantOnly": 5566,
+    "bytes": 293592,
+    "compressedBytes": 100572
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
