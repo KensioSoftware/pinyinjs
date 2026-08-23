@@ -92,10 +92,19 @@ convert(dictionary, "教育"); // "jiàoyù", and 宗教 is `zōngjiào`
 The compounds carry their own reading and are right already. What is left is the
 教 standing as a word of its own, and that one is the verb. The object is what
 says so, whether a pronoun, a noun or a name after it, or an aspect particle,
-since only a verb takes 了, 过 or 得. Over 88,866 lines 181 教 decode as a word
-of their own and every one read `jiào`. This moves 158 and is wrong on three,
-where a nominal compound takes an object's shape, in 统一教创始人, 方法教深思
-and 做到了教政分离.
+since only a verb takes 了, 过 or 得. A modal or a negator in front of it says
+the same thing from the other side, and reaches the 教 that governs nothing at
+all:
+
+```ts
+convert(dictionary, "他怎么教，我都学不会。"); // "Tā zěnme jiāo, wǒ dōu xué búhuì."
+convert(dictionary, "这在学校是不教的"); // "zhè zài xuéxiào shì bù jiāo de"
+```
+
+Over 88,866 lines 181 教 decode as a word of their own and every one read
+`jiào`. This moves 162 and is wrong on three, where a nominal compound takes an
+object's shape, in 统一教创始人, 方法教深思 and 做到了教政分离. 有 is left out
+of the modal set, since 有教无类 is `yǒujiào wúlèi`.
 
 The third rule keeps 儿 from standing on its own where the dictionary says it
 should not:
@@ -153,17 +162,33 @@ say about the character alone (Unihan counts `zhǎng(1879)` against
 was the adjective, which no word covers and no part of the cost model could
 prefer.
 
-Only the left side of the context carries information, as with 得. A growing 长
-is a verb and no 很, 太, 最 or 多 modifies one, whereas what follows an
-adjectival 长 is a noun, a particle or the end of the sentence, and that is what
-follows half the verbs too. 得, 着 and the 越…越 correlative are guarded, since
-真长得很快 and 越长越高 are reachable from both sides. 了 and 的 need no guard,
-because after an adverb they are the sentence particle and the attributive,
-which makes 时间太长了 and 很长的道路 both `cháng`.
+A degree adverb settles it from the left alone, as with 得. A growing 长 is a
+verb and no 很, 太, 最 or 多 modifies one, whereas what follows an adjectival 长
+is a noun, a particle or the end of the sentence, and that is what follows half
+the verbs too. 得, 着 and the 越…越 correlative are guarded, since 真长得很快 and
+越长越高 are reachable from both sides. 了 and 的 need no guard, because after an
+adverb they are the sentence particle and the attributive, which makes 时间太长了
+and 很长的道路 both `cháng`.
 
-Over 88,866 lines, 260 长 decode as a word of their own and this moves 75 to
-`cháng`, all 75 correctly. On CPP's 40 hand-labelled 长 the character goes
-85.00% to 87.50%. The shapes left are the ones no adverb marks, in 长约8分,
+Two more contexts need both sides:
+
+```ts
+convert(dictionary, "那座桥不长。"); // "Nà zuò qiáo bù cháng."
+convert(dictionary, "胡子不长在前额上"); // "húzi bù zhǎng zài qián'é shàng"
+convert(dictionary, "他有长头发。"); // "Tā yǒu cháng tóufa."
+convert(dictionary, "树长叶子"); // "shù zhǎng yèzi"
+```
+
+不 and 还 scope a verb as readily as a quality, so neither is a degree adverb,
+and a noun after a 长 is 长知识 as readily as 长头发. What separates the pairs is
+the far side. A growing 长 governs something and an adjectival one has nothing
+left to say, so a scoped 长 that closes its clause is the adjective; and a 量词
+or 有 in front of a 长 leaves it nothing to be the verb of, since the subject is
+already spoken for.
+
+Over 88,866 lines, 260 长 decode as a word of their own and this moves 83 to
+`cháng`, all 83 correctly. On CPP's 40 hand-labelled 长 the character goes
+85.00% to 90.00%. The shapes left are the ones nothing marks, in 长约8分,
 干流长175公里 and 存续期长而明显.
 
 The same rule pushes the other way on 越长越X, where growing is what the
@@ -233,9 +258,29 @@ reading spanning two characters carries its own 弹 in. 我的爱好是开车和
 read `dàn` off 和弹, a pair held with no part of speech. A tagged word ending in
 弹 is left alone, and that is every one that matters.
 
-Rules are exported (`READING_RULES`, `MODAL_DE`, `TEACHING_JIAO`,
-`ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`,
-`applyEdgeRules`) and
+The seventh keeps a word beginning with 的 from starting where the structural
+particle does:
+
+```ts
+convert(dictionary, "没有人知道他的真名字"); // "méiyǒu rén zhīdào tā de zhēn míngzi"
+convert(dictionary, "我的确知道"); // "wǒ díquè zhīdào", a word jieba counted
+convert(dictionary, "我要一辆的士"); // "wǒ yào yí liàng dī shì"
+```
+
+的 attaches to the modifier in front of it and the head follows, so a key
+spanning that 的 and the head's first character is describing another sentence.
+的真, 的卡, 的筆 and 的這 are all keys, and none of them is a word. Only an
+untagged key is taken off the lattice, which is the same line the 教 rule draws:
+的确, 的士 and 的哥 are words jieba counted, and each of them can genuinely
+begin where this fires.
+
+Over 88,866 lines it forbids edges in 40 runs and every one is a correction.
+Half of them correct the spacing as much as the reading, since 你說的對 was one
+word, `deduì`.
+
+Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
+`TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`,
+`PLAYING_TAN`, `applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 

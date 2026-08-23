@@ -19,6 +19,7 @@ import {
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
   MODAL_DE,
+  PARTICLE_DE,
   PLAYING_TAN,
   READING_RULES,
   TEACHING_JIAO,
@@ -79,6 +80,34 @@ const dictionary = dictionaryOf([
   entry("来", "lái", { partOfSpeech: "v", frequency: 40_000 }),
   // A modal in front of a 教 that governs nothing after it.
   entry("怎么", "zěn me", { partOfSpeech: "r", frequency: 50_000 }),
+]);
+
+/**
+ * A dictionary of its own for 的, kept apart for the reason 长's is.
+ *
+ * 的 is the commonest character in the language and its frequency alone
+ * rescales the quantised table, which moves decisions in the 量词 cases that
+ * have nothing to do with it.
+ */
+const deDictionary = dictionaryOf([
+  entry("的", "de", {
+    partOfSpeech: "uj",
+    frequency: 95_000,
+    alternates: [reading("dì"), reading("dí"), reading("dī")],
+  }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("真", "zhēn", { partOfSpeech: "d", frequency: 300 }),
+  entry("名", "míng", { partOfSpeech: "ng", frequency: 8000 }),
+  entry("字", "zì", { partOfSpeech: "n", frequency: 8000 }),
+  entry("名字", "míng zi", { partOfSpeech: "n", frequency: 5000 }),
+  entry("确", "què", { frequency: 4000 }),
+  entry("知", "zhī", { frequency: 6000 }),
+  entry("道", "dào", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("知道", "zhī dào", { partOfSpeech: "v", frequency: 40_000 }),
+  // The pair the rule is about: a reading somebody asserted, carrying no part
+  // of speech, against a word jieba counted and tagged.
+  entry("的真", "dí zhēn"),
+  entry("的确", "dí què", { partOfSpeech: "d", frequency: 4000 }),
 ]);
 
 /**
@@ -276,6 +305,33 @@ describe("教 where it is teaching", () => {
     // `jiào` reached the position from outside the character's own edges.
     assertArrayEquals(read("来教我", [TEACHING_JIAO]), ["lái", "jiāo", "wǒ"]);
     assertArrayEquals(read("来教我", []), ["láijiào", "wǒ"]);
+  });
+});
+
+describe("的 where it is the structural particle", () => {
+  /** How a run of the 的 cases reads, word by word. */
+  function readDe(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(deDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("forbids an untagged word beginning at the particle", () => {
+    assertArrayEquals(readDe("他的真名字"), ["tā", "de", "zhēn", "míngzi"]);
+  });
+
+  it("reads the particle as dí without the rule, which is the bug", () => {
+    // The 的真 edge loses the spacing and wins the reading, which is the whole
+    // shape of the defect: 他的真名字 came out `tā dí zhēn míngzi`.
+    assertArrayEquals(readDe("他的真名字", []), ["tā", "dí", "zhēn", "míngzi"]);
+  });
+
+  it("leaves a word jieba counted and tagged alone", () => {
+    assertArrayEquals(readDe("他的确知道"), ["tā", "díquè", "zhīdào"]);
+  });
+
+  it("says nothing where no modifier stands in front", () => {
+    assertArrayEquals(readDe("的真", [PARTICLE_DE]), ["dí", "zhēn"]);
   });
 });
 

@@ -1,90 +1,16 @@
 import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
+import { MODAL_DE, PARTICLE_DE } from "./de-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 
+export { MODAL_DE, PARTICLE_DE } from "./de-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 import { toCharacters } from "../script/characters.js";
-import type { Syllable } from "../syllable/syllable.js";
 import {
   type EdgeContext,
   type EdgeRule,
   tagOf,
   wordEndingAt,
-  wordStartingAt,
 } from "./rules.js";
-
-/**
- * Whether a syllable is `děi`, the modal reading of 得.
- *
- * Compared structurally rather than by spelling it out, since a syllable is
- * stored as its parts and writing one back is the formatting stage's job.
- */
-function isDei(syllable: Syllable | undefined): boolean {
-  return (
-    syllable?.initial === "d" && syllable.final === "ei" && syllable.tone === 3
-  );
-}
-
-/**
- * What stands in front of a modal 得: a subject, an adverb, or a time word.
- *
- * 我得走, 你就得去, 我今天得走. The particle 得 cannot follow any of these,
- * because it attaches to the predicate it modifies — which is exactly what
- * makes this the discriminating side of the context.
- */
-const SUBJECT_TAGS = new Set(["r", "d", "t"]);
-
-/**
- * What follows a modal 得: the verb phrase it governs.
- *
- * Prepositions and adverbs are in because 我得在八月, 我得先走 and 我得快点 are
- * all modal, and what follows the 得 in each is the front of a verb phrase
- * rather than a verb.
- */
-const GOVERNED_TAGS = /^(?:v|p|d|a)/u;
-
-/**
- * 得 read as `děi` where it is a modal rather than a particle.
- *
- * One character, three readings, and the dictionary can only carry a default:
- * 得 is stored `de` — the structural particle, which is far the commonest — with
- * `dé` and `děi` as alternates. Nothing in the cost model can prefer an
- * alternate at a position no word covers, so 我得走了 came out `wǒ de zǒule`
- * and every other modal 得 with it. This is the case ROADMAP.md was waiting for
- * before building stage 4: neither harness could see it, since the gold corpus
- * had only 觉得 and CPP's 40 得 cases are labelled `dé` or `de` and never `děi`.
- *
- * The context is what separates the three, and only one side of it carries
- * information. The particle 得 always follows the verb or adjective it attaches
- * to (说得好, 跑得快, 累得要命), so a 得 with a *pronoun, adverb or time word*
- * in front of it is not that particle. Requiring a verb phrase after it as well
- * keeps 得了感冒 and 得了奖 — `dé`, and a real reading of the same character —
- * out of it.
- *
- * Conditioning on what precedes rather than on what follows was measured, not
- * assumed: "the word before is not a verb" fires 309 times over 88,866 lines of
- * Tatoeba and zh.wikipedia and is wrong about four times in five, because
- * jieba tags 下 as `f`, 学 as `n` and 飞 as nothing at all, and 雨下得很大 is a
- * particle whatever the tag says. Naming the small closed set of things that
- * can precede a modal is the same rule from the other side, and over the same
- * text it fires 126 times and is right 122: the four misses are literary 得
- * read `dé` after an adverb — 未必得喜悦, 暂得于己, 仅得约, 未得迁还家乡 —
- * which nothing short of semantics separates from 必须得承认.
- */
-export const MODAL_DE: EdgeRule = {
-  name: "modal-de",
-  verdictFor: (context: EdgeContext) => {
-    const { edge } = context;
-    if (edge.text !== "得" || !isDei(edge.reading[0])) {
-      return "keep";
-    }
-    const before = wordEndingAt(context, edge.from);
-    const after = wordStartingAt(context, edge.to);
-    return SUBJECT_TAGS.has(tagOf(context, before)) &&
-      GOVERNED_TAGS.test(tagOf(context, after))
-      ? "force"
-      : "keep";
-  },
-};
 
 /**
  * 儿 does not stand on its own where the dictionary attests the 儿化.
@@ -218,6 +144,7 @@ export { ADJECTIVAL_CHANG, PLAYING_TAN } from "./polyphone-rules.js";
  */
 export const READING_RULES: readonly EdgeRule[] = [
   MODAL_DE,
+  PARTICLE_DE,
   TEACHING_JIAO,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,

@@ -304,6 +304,29 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "我教英语"), "wǒ jiāo Yīngyǔ");
       assertIdentical(convert(dictionary, "教育"), "jiàoyù");
       assertIdentical(convert(dictionary, "宗教"), "zōngjiào");
+      // The modal in front of it, for the 教 that governs nothing after it.
+      assertIdentical(
+        convert(dictionary, "他怎么教，我都学不会。"),
+        "Tā zěnme jiāo, wǒ dōu xué búhuì.",
+      );
+      assertIdentical(
+        convert(dictionary, "这在学校是不教的"),
+        "zhè zài xuéxiào shì bù jiāo de",
+      );
+      assertIdentical(convert(dictionary, "有教无类"), "yǒujiàowúlèi");
+    });
+
+    it("keeps a word beginning with 的 out of the particle's place", () => {
+      assertIdentical(
+        convert(dictionary, "没有人知道他的真名字"),
+        "méiyǒu rén zhīdào tā de zhēn míngzi",
+      );
+      // The words jieba counted, which the rule leaves alone.
+      assertIdentical(convert(dictionary, "我的确知道"), "wǒ díquè zhīdào");
+      assertIdentical(
+        convert(dictionary, "我要一辆的士"),
+        "wǒ yào yí liàng dī shì",
+      );
     });
 
     it("keeps a counted 量词 out of the word behind it", () => {
@@ -343,6 +366,21 @@ describe("the examples in docs/", () => {
       // is why neither guards the rule.
       assertIdentical(convert(dictionary, "时间太长了"), "shíjiān tài chángle");
       assertIdentical(convert(dictionary, "很长的道路"), "hěn cháng de dàolù");
+      // The two contexts that need both sides, each with the shape it must
+      // not reach beside it.
+      assertIdentical(
+        convert(dictionary, "那座桥不长。"),
+        "Nà zuò qiáo bù cháng.",
+      );
+      assertIdentical(
+        convert(dictionary, "胡子不长在前额上"),
+        "húzi bù zhǎng zài qián'é shàng",
+      );
+      assertIdentical(
+        convert(dictionary, "他有长头发。"),
+        "Tā yǒu cháng tóufa.",
+      );
+      assertIdentical(convert(dictionary, "树长叶子"), "shù zhǎng yèzi");
     });
 
     it("reads 弹 as tán where it is playing", () => {
