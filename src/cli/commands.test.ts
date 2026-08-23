@@ -527,15 +527,17 @@ describe("the script command", () => {
 
   it("reports the evidence per character in JSON", async () => {
     // 银 comes out uncertain against this miniature fixture, where two entries
-    // are the whole of the evidence. Against the shipped tables it is locked;
-    // what is asserted here is the shape, not the verdict.
+    // are the whole of the evidence and one of them leaves 银 as it stands.
+    // Against the shipped tables it is locked; what is asserted here is the
+    // shape, not the verdict. A guess always names what it was choosing
+    // between, which is why 银 is written out beside it.
     const written = await json("script", "银行", "--to", "zh-Hant");
     assertObjectEquals(written, {
       text: "银行",
       script: "銀行",
       to: "zh-Hant",
       characters: [
-        { from: "银", to: "銀", evidence: "default" },
+        { from: "银", to: "銀", evidence: "default", alternatives: ["银"] },
         { from: "行", to: "行", evidence: "locked" },
       ],
       uncertain: ["银"],

@@ -7,7 +7,8 @@ import { decodeRun } from "./decode.js";
 import { READING_RULES } from "./reading-rules.js";
 import { splitRuns } from "./runs.js";
 
-import { applyRegion, convertWord, targetOf } from "./script-words.js";
+import { applyRegion } from "./script-region.js";
+import { convertWord, targetOf } from "./script-words.js";
 import type {
   ScriptChoice,
   ScriptConversion,

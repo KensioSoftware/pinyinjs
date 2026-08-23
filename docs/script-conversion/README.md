@@ -133,6 +133,24 @@ Four kinds of evidence, strongest first:
 | `reading`  | rival forms existed and the syllable picked between them     |
 | `default`  | rival forms existed and nothing separated them — **a guess** |
 
+`alternatives` is empty exactly when the evidence is `locked`, so reading one of
+the two tells you the other. The character's own form counts as a rival, which
+is what makes 万 a guess: it is 萬 counting and 万 in the surname 万俟.
+
+```ts
+const { choices } = toScriptPieces(dictionary, tables, "一万人", {
+  to: "zh-Hant",
+});
+
+choices[1]?.evidence; // "default"
+choices[1]?.alternatives; // ["万"]
+```
+
+The forms are written in the target's own orthography, so a Hong Kong
+conversion offers 麪 where a Taiwan one offers 麵. A region can also settle what
+the script left open: 台 and 臺 are two characters in Taiwan and one in Hong
+Kong, so 台北 converts to 台北 with nothing guessed at.
+
 `isUncertainChoice` is `default` alone. A character settled by its reading
 counts as settled. That evidence is the reason this converts more accurately
 than an orthographic converter can, and reporting it as doubt would throw the
@@ -146,7 +164,8 @@ const { choices } = toScriptPieces(dictionary, tables, "头发", {
 choices.map((choice) => choice.evidence); // ["locked", "reading"]
 ```
 
-Over the gold corpus, 97.7% of characters are `locked` and 1.5% are guesses.
+Over the gold corpus, 98.0% of characters are `locked` and 1.2% are guesses,
+which is what `pnpm accuracy` reports.
 
 ## Detecting the input
 
