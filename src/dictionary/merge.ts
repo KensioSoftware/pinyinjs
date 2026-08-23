@@ -1,25 +1,16 @@
 /**
- * Walking the word list, and gathering what each word came to.
+ * The order the merge does its work in.
+ *
+ * Which spellings get an entry and how each one is settled is `merge-walk.ts`.
+ * What is here is the sequence: the indexes and character defaults everything
+ * else reads, the walk, and the two passes that run over the finished entries.
  */
-import { byCodeUnit } from "./artifact-format.js";
-import type { Syllable } from "../syllable/syllable.js";
-import type { DictionaryEntry } from "./entry.js";
 import { composeLocaleDeltas } from "./locale.js";
-import {
-  cedictReadingsOf,
-  indexCedict,
-  isSpeltTraditionally,
-} from "./cedict-senses.js";
+import { indexCedict, senseLookup } from "./cedict-senses.js";
 import { buildCharacterDefaults } from "./character-defaults.js";
 import { repairConstituentReadings } from "./constituent-repair.js";
-import { mergeWord } from "./merge-word.js";
-import {
-  addTally,
-  type MergeResult,
-  type MergeSources,
-  NO_TALLY,
-  type WordSources,
-} from "./merge-types.js";
+import { mergeWords, wordList } from "./merge-walk.js";
+import type { MergeResult, MergeSources, WordSources } from "./merge-types.js";
 
 export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
 
@@ -29,8 +20,8 @@ export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
  * The order of operations is the one MERGE.md sets out, and it is not
  * arbitrary — each step depends on the one before. Spelling, tones, sandhi and
  * validation happen in {@link import("./reading.js").readAlignedReading} as each source is read;
- * {@link mergeWord} then settles one word at a time, and this walks the words
- * and gathers what each of them came to.
+ * {@link mergeWords} then settles one word at a time, and the passes after it
+ * see every entry at once.
  */
 export function mergeSources(sources: MergeSources): MergeResult {
   const { phrase, cedict } = sources;
@@ -47,14 +38,6 @@ export function mergeSources(sources: MergeSources): MergeResult {
     cedictByHant,
   );
 
-  const words = new Set<string>([
-    ...defaults.keys(),
-    ...[...phrase.keys()].filter(
-      (word) => !isSpeltTraditionally(word, cedictByWord, cedictByHant),
-    ),
-    ...cedictByWord.keys(),
-  ]);
-
   const wordSources: WordSources = {
     cedictByWord,
     cedictByHant,
@@ -64,33 +47,19 @@ export function mergeSources(sources: MergeSources): MergeResult {
     traditional,
     defaults,
   };
-
-  const entries: DictionaryEntry[] = [];
-  const rejected = new Map<string, readonly string[]>();
-  let counts = NO_TALLY;
-
-  for (const word of [...words].toSorted(byCodeUnit)) {
-    const merged = mergeWord(word, wordSources);
-    counts = addTally(counts, merged.tally);
-    if (merged.rejected !== undefined) {
-      rejected.set(word, merged.rejected);
-      continue;
-    }
-    /* c8 ignore next 3 -- a word is either rejected or gives an entry */
-    if (merged.entry !== undefined) {
-      entries.push(merged.entry);
-    }
-  }
+  const { entries, rejected, counts } = mergeWords(
+    wordList(phrase, defaults, cedictByWord, cedictByHant),
+    wordSources,
+  );
 
   // ── Phrase entries held to the words inside them ───────────
   // Before the locale pass, which asks whether a compound reads a constituent
   // the way that constituent's own entry reads it. A phrase entry repaired here
   // answers yes where it used to answer no.
-  const sensesOf = (word: string): readonly (readonly Syllable[])[] => [
-    ...cedictReadingsOf(word, cedictByWord.get(word) ?? []),
-    ...cedictReadingsOf(word, cedictByHant.get(word) ?? []),
-  ];
-  const held = repairConstituentReadings(entries, sensesOf);
+  const held = repairConstituentReadings(
+    entries,
+    senseLookup(cedictByWord, cedictByHant),
+  );
 
   // ── zh-TW deltas the sources marked only on a constituent ──
   // Last, because it segments each compound against the finished entries: the
