@@ -115,6 +115,14 @@ const changDictionary = dictionaryOf([
   // 署长, 团长 and 局长.
   entry("署", "shǔ", { partOfSpeech: "ng", frequency: 900 }),
   entry("高", "gāo", { partOfSpeech: "a", frequency: 50_000 }),
+  // The predicative and attributive cases: a 量词, 有, a noun to modify, and a
+  // verb's object for the shape the rule has to leave alone.
+  entry("有", "yǒu", { partOfSpeech: "v", frequency: 80_000 }),
+  entry("位", "wèi", { partOfSpeech: "q", frequency: 20_000 }),
+  entry("头发", "tóu fa", { partOfSpeech: "n", frequency: 3000 }),
+  entry("胡子", "hú zi", { partOfSpeech: "n", frequency: 2000 }),
+  entry("在", "zài", { partOfSpeech: "p", frequency: 90_000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 90_000 }),
   entry("好", "hǎo", { partOfSpeech: "a", frequency: 70_000 }),
   // 越长 exactly as the artifact holds it: a `yuè cháng` reading carrying no
   // part of speech, and the only member of its paradigm — 越高 and 越好 are
@@ -336,6 +344,30 @@ describe("长 as an adjective", () => {
 
   it("reads the attributive 的 after it the same way", () => {
     assertArrayEquals(readChang("很长的路"), ["hěn", "cháng", "de", "lù"]);
+  });
+
+  it("reads a negated 长 closing its clause as cháng", () => {
+    // 不 is deliberately outside the degree set, so this is the far side of
+    // the context doing the work: nothing follows for a verb to govern.
+    assertArrayEquals(readChang("不长"), ["bù", "cháng"]);
+  });
+
+  it("keeps the negated 长 as the verb where it governs something", () => {
+    assertArrayEquals(readChang("不长在"), ["bù", "zhǎng", "zài"]);
+  });
+
+  it("reads an attributive 长 in front of its noun as cháng", () => {
+    assertArrayEquals(readChang("有长头发"), ["yǒu", "cháng", "tóufa"]);
+  });
+
+  it("takes a 量词 in front of the 长 as readily as 有", () => {
+    assertArrayEquals(readChang("位长胡子"), ["wèi", "cháng", "húzi"]);
+  });
+
+  it("keeps the verb where the noun after it is an object", () => {
+    // 他长头发 is a subject and a verb, and the only thing separating it from
+    // 有长头发 is what stands in front.
+    assertArrayEquals(readChang("他长头发"), ["tā", "zhǎng", "tóufa"]);
   });
 
   it("does nothing at all when the rule is not applied", () => {
