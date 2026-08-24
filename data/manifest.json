@@ -25,6 +25,13 @@
       "compressedBytes": 2401627
     }
   },
+  "counts": {
+    "file": "full.counts",
+    "tier": "full",
+    "keys": 723147,
+    "bytes": 765397,
+    "compressedBytes": 249032
+  },
   "script": {
     "file": "script.map",
     "toTraditional": 5944,
