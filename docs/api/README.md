@@ -210,6 +210,7 @@ See [dictionaries](../dictionaries/).
 | `tierFiles`                                                   | which files a tier needs                               |
 | `Dictionary`                                                  | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
 | `dictionary.wordAt / frequencyAt / readingsInOrder`           | the same by position, for a second index over it       |
+| `loadWordCounts`, `WordCounts`, `COUNTS_FILE`                 | raw corpus counts for `full`, for ranking words        |
 | `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier`  | the tiers                                              |
 | `WordEntry`, `DictionaryReadings`, `DictionarySource`, `Tier` | types                                                  |
 
@@ -217,7 +218,7 @@ The build pipeline is exported as well, since the artifacts are reproducible
 from the sources: `buildArtifact`, `readArtifact`, `encodeReading`,
 `decodeReading`, `findRoundTripFailure`, `mergeSources`, `checkBuild`,
 `BUILD_ASSERTIONS`, `BuiltDictionary`, `KeyIndex`, `FrequencyTable`,
-`FREQUENCY_BUCKETS`, `TraditionalTable`, `pairScripts`, `attachErhua`,
+`FREQUENCY_BUCKETS`, `buildWordCounts`, `TraditionalTable`, `pairScripts`, `attachErhua`,
 `withErhua`, `isErFinal`, `NON_ERHUA_ER_WORDS`, `readDictionaryReading`,
 `readAlignedReading`, `isSameReading`, `isSameSyllable`, `OVERRIDE_READINGS`,
 `READING_OVERRIDES`, `readOverrideReading`, with the types

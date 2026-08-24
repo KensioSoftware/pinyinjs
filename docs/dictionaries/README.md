@@ -162,6 +162,53 @@ their own). Build what needs it, use it, and let it go. No `Syllable` is
 constructed anywhere along that path, and that is what makes a pass over every
 key affordable.
 
+## Ranking words by frequency
+
+`cost` and `frequencyAt` are quantised to 16 buckets, which is all the decoder
+ever acts on when it weighs one candidate word against another. Ranking a word
+list against itself wants more than that. Rank the 120,858 CC-CEDICT headwords
+the full tier holds by `cost` and 5,934 of them land on the value at rank
+10,000, so a top-10,000 cut of that list is settled inside a band the buckets
+put in one place.
+
+`full.counts` holds the corpus count each of those buckets was quantised from,
+one per key of the full tier and in the same positions. It is a file of its own
+(243 KB brotli), read by `loadWordCounts` and by nothing on the conversion path:
+
+```ts
+import { loadDictionary, loadWordCounts } from "@kensio/pinyinjs";
+import { fileSource } from "@kensio/pinyinjs/node";
+
+const source = fileSource("node_modules/@kensio/pinyinjs/data");
+const dictionary = await loadDictionary(source, "full");
+const counts = await loadWordCounts(source);
+
+const corpusCount = new Map<string, number>();
+for (let at = 0; at < dictionary.size; at++) {
+  corpusCount.set(dictionary.wordAt(at), counts.countOf(at));
+}
+
+words.toSorted(
+  (left, right) => (corpusCount.get(right) ?? 0) - (corpusCount.get(left) ?? 0),
+);
+```
+
+The sweep is what pairs the two. Counts are positional, and `wordAt` is what
+turns a position into a word. Made this way, the cut at 10,000 lands in a tie 16
+words wide.
+
+Counts exist for `full` alone. A ranking over part of the vocabulary answers a
+different question, and a caller ranking words has the whole list in hand. Check
+`counts.size` against `dictionary.size` before pairing them, since a smaller
+tier numbers its keys differently and every position would name another word.
+
+A count of zero means the corpus is silent about that key, which two thirds of
+the full tier's keys are. jieba supplies the counts, and jieba is a segmenter.
+Its weights are tuned to make segmentation come out right, and how often a
+reader meets a word is a separate measurement (a corpus list such as SUBTLEX-CH
+or BCC would be one). These counts rank common vocabulary well and say very
+little about the long tail.
+
 ## What it costs in memory
 
 The index is a sorted, newline-joined string plus a `Uint32Array` of offsets,

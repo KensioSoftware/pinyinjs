@@ -7,7 +7,7 @@
  * has to say which of them the key means.
  */
 import type { DictionaryEntry } from "./entry.js";
-import { traditionalForms } from "./artifact-format.js";
+import { byCodeUnit, traditionalForms } from "./artifact-format.js";
 
 /**
  * Let one entry claim each of its 繁體 spellings, where nothing outranks it.
@@ -62,4 +62,17 @@ export function claimKeys(
   }
 
   return claimed;
+}
+
+/**
+ * The claimed keys in the order the artifact writes them.
+ *
+ * Sorted once, so that each of the files built from these keys is written from
+ * the entry it belongs to rather than from a second search for it, and so that
+ * they agree about which position holds which word.
+ */
+export function orderedClaims(
+  claimed: ReadonlyMap<string, DictionaryEntry>,
+): readonly (readonly [string, DictionaryEntry])[] {
+  return [...claimed].toSorted(([left], [right]) => byCodeUnit(left, right));
 }

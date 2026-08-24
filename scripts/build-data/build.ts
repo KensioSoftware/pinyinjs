@@ -10,7 +10,9 @@ import {
 import { checkBuild } from "../../src/dictionary/assertions.js";
 import { mergeSources } from "../../src/dictionary/merge.js";
 import { buildScriptTables } from "../../src/dictionary/script-tables.js";
-import { SCRIPT_FILE } from "../../src/dictionary/source.js";
+import { KeyIndex } from "../../src/dictionary/key-index.js";
+import { buildWordCounts } from "../../src/dictionary/word-counts.js";
+import { COUNTS_FILE, SCRIPT_FILE } from "../../src/dictionary/source.js";
 import { selectTier, TIERS } from "../../src/dictionary/tiers.js";
 import { writeScriptTables } from "../../src/script/conversion.js";
 import { parseCedict } from "../../src/sources/cedict.js";
@@ -217,6 +219,7 @@ const compiled = TIERS.map((tier) => {
 
   return {
     tier,
+    entries,
     artifact,
     manifest: {
       entries: entries.length,
@@ -272,6 +275,41 @@ if (contradictions.length > 0) {
 }
 report(`  ${String(authority.size)} keys, no tier disagrees`);
 
+// ── Raw corpus counts, for a caller that ranks words ────────
+//
+// The quantised table every tier ships is 16 buckets, which is all the decoder
+// compares and far too coarse to cut a word list at an arbitrary N. See
+// docs/dictionaries/ and src/dictionary/word-counts.ts.
+report("building raw corpus counts");
+const wordCounts = buildWordCounts(complete.entries);
+const countBytes = wordCounts.serialise();
+
+// A count is only meaningful at the position the key index gives it, and the
+// two are built from the same entries by separate passes. Checking that they
+// agree is what stops a later change to either one shifting every word's count
+// by a key without anything noticing.
+const countedKeys = KeyIndex.from(complete.artifact.keys).size;
+if (wordCounts.size !== countedKeys) {
+  throw new Error(
+    `the counts describe ${String(wordCounts.size)} keys where full has ` +
+      `${String(countedKeys)}; no artifact written`,
+  );
+}
+
+const countsCompressed = compressedSize(countBytes);
+let unattested = 0;
+for (let at = 0; at < wordCounts.size; at++) {
+  if (wordCounts.countOf(at) === 0) {
+    unattested++;
+  }
+}
+report(
+  `  ${String(wordCounts.size)} keys, ${String(unattested)} attested nowhere`,
+);
+report(
+  `  ${kilobytes(countBytes.length)}  ${kilobytes(countsCompressed)} brotli`,
+);
+
 const manifest: Record<string, TierManifest> = Object.fromEntries(
   compiled.map(({ tier, manifest: entry }) => [tier, entry]),
 );
@@ -279,6 +317,13 @@ const manifest: Record<string, TierManifest> = Object.fromEntries(
 const manifestJson = JSON.stringify(
   {
     tiers: manifest,
+    counts: {
+      file: COUNTS_FILE,
+      tier: "full",
+      keys: wordCounts.size,
+      bytes: countBytes.length,
+      compressedBytes: countsCompressed,
+    },
     script: {
       file: SCRIPT_FILE,
       toTraditional: scriptTables.toTraditional.size,
@@ -373,6 +418,7 @@ const written = compiled.flatMap(({ artifact, manifest: files }) => [
   writeFile(path.join(DATA_DIR, files.frequencies), artifact.frequencies),
 ]);
 written.push(
+  writeFile(path.join(DATA_DIR, COUNTS_FILE), countBytes),
   writeFile(path.join(DATA_DIR, SCRIPT_FILE), scriptMap),
   writeFile(path.join(DATA_DIR, "manifest.json"), `${manifestJson}\n`),
   writeFile(path.join(ROOT, "NOTICE"), notice),

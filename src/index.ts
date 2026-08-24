@@ -37,6 +37,8 @@ export {
   FrequencyTable,
 } from "./dictionary/frequency-table.js";
 
+export { buildWordCounts, WordCounts } from "./dictionary/word-counts.js";
+
 export { KeyIndex } from "./dictionary/key-index.js";
 export type { KeyLookup } from "./dictionary/key-index.js";
 
@@ -67,10 +69,12 @@ export { Dictionary } from "./dictionary/dictionary.js";
 export type { DictionaryReadings, WordEntry } from "./dictionary/dictionary.js";
 
 export {
+  COUNTS_FILE,
   fetchSource,
   loadArtifact,
   loadDictionary,
   loadScriptTables,
+  loadWordCounts,
   SCRIPT_FILE,
   tierFiles,
 } from "./dictionary/source.js";

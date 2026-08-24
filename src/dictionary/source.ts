@@ -2,6 +2,7 @@ import { readScriptTables, type ScriptTables } from "../script/conversion.js";
 import type { DictionaryArtifact } from "./artifact.js";
 import { Dictionary } from "./dictionary.js";
 import type { Tier } from "./tiers.js";
+import { WordCounts } from "./word-counts.js";
 
 /**
  * Where a dictionary's files are read from.
@@ -90,6 +91,33 @@ export async function loadDictionary(
   tier: Tier,
 ): Promise<Dictionary> {
   return Dictionary.from(await loadArtifact(source, tier));
+}
+
+/**
+ * The file the raw corpus counts live in.
+ *
+ * `full` alone, and outside the tiers rather than one per tier: a caller
+ * ranking words wants the whole vocabulary ordered, and a ranking over part of
+ * it answers a different question.
+ */
+export const COUNTS_FILE = "full.counts";
+
+/**
+ * Load the raw corpus counts for the `full` tier.
+ *
+ * Separate from the dictionary for the same reason {@link loadScriptTables} is.
+ * Nothing on the decoding path reads counts, and the quantised frequencies the
+ * decoder does read already ship inside every tier. This file is 243 KB brotli
+ * against `full.freq`'s 148 KB, and only a caller that asks for it pays.
+ *
+ * The counts are positional over the `full` tier's keys, so pair them with a
+ * `full` {@link Dictionary} and nothing else. {@link WordCounts.size} and
+ * {@link Dictionary.size} agree where the two match.
+ */
+export async function loadWordCounts(
+  source: DictionarySource,
+): Promise<WordCounts> {
+  return WordCounts.from(await source.bytes(COUNTS_FILE));
 }
 
 /**

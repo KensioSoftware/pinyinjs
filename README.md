@@ -14,8 +14,8 @@ pnpm add @kensio/pinyinjs
 Node 22+, or any browser. The core imports no Node built-ins, and the package is
 ESM only.
 
-The dictionaries ship inside the package, and that is what makes it a 4 MB
-download. `data/` is 10 MB of artifacts and the point of the whole thing.
+The dictionaries ship inside the package, and that is what makes it a 4.7 MB
+download. `data/` is 11 MB of artifacts and the point of the whole thing.
 
 ## Command line
 
