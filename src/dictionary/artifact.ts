@@ -15,11 +15,10 @@ export {
 import type { DictionaryEntry } from "./entry.js";
 import { FrequencyTable } from "./frequency-table.js";
 import { KeyIndex } from "./key-index.js";
-import { claimKeys } from "./artifact-claims.js";
+import { claimKeys, orderedClaims } from "./artifact-claims.js";
 import {
   ALTERNATE,
   BOUNDARY_SEPARATOR,
-  byCodeUnit,
   COLUMN,
   type DictionaryArtifact,
   encodeReading,
@@ -106,11 +105,7 @@ export function buildArtifact(
 ): DictionaryArtifact {
   const claimed = claimKeys(entries);
   const defaults = characterDefaults(claimed);
-  // Sorted here rather than looked up per key, so that each line is written
-  // from the entry it belongs to rather than from a second search for it.
-  const ordered = [...claimed].toSorted(([left], [right]) =>
-    byCodeUnit(left, right),
-  );
+  const ordered = orderedClaims(claimed);
   const index = KeyIndex.from(ordered.map(([key]) => key).join(LINE));
 
   const lines: string[] = [];

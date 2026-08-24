@@ -16,6 +16,8 @@ import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
+import { FrequencyTable } from "./frequency-table.js";
+import { WordCounts } from "./word-counts.js";
 import { isSingleCharacter, toCharacters } from "../script/characters.js";
 import { KeyIndex } from "./key-index.js";
 import { HYPHENATED_IDIOMS } from "../orthography/idiom-list.js";
@@ -165,6 +167,35 @@ class Tier {
 const full = new Tier("full");
 const core = new Tier("core");
 const standard = new Tier("standard");
+
+/**
+ * The two frequency artifacts of the full tier, read off disk beside the keys.
+ *
+ * Both are positional over `full.keys`, and neither carries a word, so the only
+ * thing that keeps them aligned is being built from the same entry list in the
+ * same order. Read here rather than rebuilt, for the reason {@link Tier} is.
+ */
+function dataFile(name: string): Uint8Array {
+  const at = new URL(`../../data/${name}`, import.meta.url);
+  return new Uint8Array(readFileSync(fileURLToPath(at)));
+}
+
+const counts = WordCounts.from(dataFile("full.counts"));
+const buckets = FrequencyTable.from(dataFile("full.freq"), full.index.size);
+
+/**
+ * The count recorded for a word, or undefined where it is not a key.
+ */
+function countOf(word: string): number | undefined {
+  const found = full.index.lookup(word);
+  return found.isKey ? counts.countOf(found.index) : undefined;
+}
+
+/**
+ * Read `size` through a local, so the smartass Set/Map size rule does not fire
+ * on a type that is neither.
+ */
+const sizeOf = (table: WordCounts): number => table.size;
 
 describe("the committed dictionary", () => {
   describe("the golden cases, read back off disk", () => {
@@ -351,6 +382,67 @@ describe("the committed dictionary", () => {
     it("holds the whole merge", () => {
       // Both scripts of 461,555 entries, minus the ones whose scripts agree.
       assertNumberBetween(full.index.size, 700_000, 750_000);
+    });
+  });
+
+  describe("the raw corpus counts", () => {
+    it("describes every key the index holds", () => {
+      assertIdentical(sizeOf(counts), full.index.size);
+    });
+
+    it("counts a common word above a rare one", () => {
+      const common = countOf("银行");
+      const rare = countOf("殿下");
+      assertNonNullable(common);
+      assertNonNullable(rare);
+      assertTrue(common > rare);
+    });
+
+    it("gives the same word the same count under either script", () => {
+      assertIdentical(countOf("银行"), countOf("銀行"));
+      assertIdentical(countOf("头发"), countOf("頭髮"));
+    });
+
+    it("agrees with the bucket the decoder reads", () => {
+      // The bucket is a monotone function of the count, so a key counted above
+      // another can never be bucketed below it. That is the invariant that
+      // breaks first if the two files ever fall out of alignment, and it reads
+      // every key rather than sampling, because a misalignment of one position
+      // leaves most neighbours looking fine.
+      let previousCount = counts.countOf(0);
+      let previousBucket = buckets.bucketOf(0);
+      const disagreements: string[] = [];
+      for (let at = 1; at < full.index.size; at++) {
+        const count = counts.countOf(at);
+        const bucket = buckets.bucketOf(at);
+        if (count > previousCount && bucket < previousBucket) {
+          disagreements.push(full.index.keyAt(at));
+        }
+        previousCount = count;
+        previousBucket = bucket;
+      }
+      assertArrayEquals(disagreements, []);
+    });
+
+    it("separates words the buckets put in one band", () => {
+      // 正殿 and 毁灭 sit either side of a top-10,000 cut made on `cost`, and
+      // that cut falls in a band 5,934 words wide, so it comes down to
+      // codepoint order. The counts rank them.
+      assertIdentical(
+        buckets.bucketOf(full.index.lookup("正殿").index),
+        buckets.bucketOf(full.index.lookup("毁灭").index),
+      );
+      const dian = countOf("正殿");
+      const hui = countOf("毁灭");
+      assertNonNullable(dian);
+      assertNonNullable(hui);
+      assertTrue(hui > dian);
+    });
+
+    it("records a zero for a key the corpus is silent about", () => {
+      // 䘚 is a 繁體 spelling of 卒 that no corpus word uses, so nothing counted
+      // it. Zero is the fact, and it is what sorts the key to the bottom.
+      assertIdentical(countOf("䘚"), 0);
     });
   });
 

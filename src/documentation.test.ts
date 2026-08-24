@@ -39,7 +39,11 @@ import {
   readNumeral,
 } from "./numerals/numerals.js";
 import { fileSource } from "./dictionary/node-source.js";
-import { loadDictionary, loadScriptTables } from "./dictionary/source.js";
+import {
+  loadDictionary,
+  loadScriptTables,
+  loadWordCounts,
+} from "./dictionary/source.js";
 import {
   convertToAnnotatedHtml,
   convertToHtml,
@@ -1597,6 +1601,29 @@ describe("the examples in docs/", () => {
     it("returns undefined for a word it does not have", () => {
       assertUndefined(dictionary.lookup("蛋糕店铺子"));
       assertFalse(dictionary.hasPrefix("蛋糕店"));
+    });
+
+    it("ranks words on the counts the page sweeps them out with", async () => {
+      const counts = await loadWordCounts(fileSource(dataDirectory));
+      // `WordCounts.size` is a plain number getter on a type that is neither a
+      // Map nor a Set, so the rule's size assertions do not apply to it.
+      assertIdentical(counts.size, dictionary.size);
+
+      const corpusCount = new Map<string, number>();
+      for (let at = 0; at < dictionary.size; at++) {
+        corpusCount.set(dictionary.wordAt(at), counts.countOf(at));
+      }
+
+      // 正殿 and 毁灭 share a bucket, which is what the page opens on, and the
+      // counts behind that bucket order them.
+      assertArrayEquals(
+        ["毁灭", "正殿"].toSorted(
+          (left, right) =>
+            (corpusCount.get(right) ?? 0) - (corpusCount.get(left) ?? 0),
+        ),
+        ["毁灭", "正殿"],
+      );
+      assertIdentical(corpusCount.get("䘚"), 0);
     });
 
     it("reads 银行 on standard and full but not on core", async () => {
