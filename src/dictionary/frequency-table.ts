@@ -17,19 +17,49 @@ const MAX_BUCKET = FREQUENCY_BUCKETS - 1;
  * A bucket is `log f` on a scale where the most frequent word in the corpus
  * reaches {@link MAX_BUCKET}, so bucket *b* stands for `log f = b · L / 15`
  * where `L = log(1 + f_max)`. The decoder wants `−log P = log N − log f`, which
- * on that same scale is `15 · log N / L − b` — so the constant term is
- * `15 · (log N / L − 1)` rather than the 1 that was here before.
+ * on that same scale is `15 · log N / L − b`, so the constant term is
+ * `15 · (log N / L − 1)` rather than the 1 that was here before. That
+ * arithmetic is {@link derivedWordCharge}, and the build holds this constant to
+ * it, since a constant in `src/` is the one thing a corpus refresh cannot
+ * bring with it.
  *
- * The shipped corpus makes that concrete: 60,101,967 counts over 349,046
- * entries with a maximum of 883,634, giving `log N = 17.91`, `L = 13.69` and a
- * charge of 4.62. Only the *ratio* of the two logarithms matters, and it moves
- * slowly — doubling every count in the corpus shifts it by 0.05.
+ * **`N` is jieba's corpus**, which is where every count in the dictionary comes
+ * from. As the build parses it, 60,101,964 occurrences over 349,045 words with
+ * 了 the busiest at 883,634, giving `log N = 17.91`, `L = 13.69` and a charge
+ * of 4.62. Only the *ratio* of the two logarithms matters, and it moves slowly.
+ * Doubling every count in the corpus shifts it by 0.05.
+ *
+ * **Summing `full.counts` gives 82,372,768, and that is not `N`.** The artifact
+ * attributes one corpus to more keys than jieba has words. A 繁體 spelling
+ * claims its 简体 entry's count, and `traditional-carry.ts` lends a count to a
+ * 繁體 character holding an entry of its own. 银行 and 銀行 are one word met
+ * once and two keys counted twice, and 20,447,271 of that total sits on keys
+ * jieba does not list at all.
  *
  * The value is load-bearing. At the old charge of 1 the lattice decoder read
  * 还给 as 还 + 给 and 还是 as 还 + 是, because two common characters summed to
- * less than one uncommon word; at the derived charge both stay whole.
+ * less than one uncommon word. At the derived charge both stay whole.
+ *
+ * **Its exact value inside a unit is not.** Buckets are integers, so a path
+ * carrying *k* words more than its rival turns on where `k · charge` falls
+ * between two of them. 4.62 and 4.97 agree at `k` of 1 and 2 and first differ
+ * at 3. Converted at 4.97, 63 of the 139,682 Han runs in 88,866 lines of
+ * Tatoeba and zh.wikipedia come out differently, and every one of the 63
+ * decodes into as many words as it did before. They are exact ties in the
+ * bucket sum, re-broken by the order the floats happened to be added in.
  */
-const WORD_CHARGE = 4.62;
+export const WORD_CHARGE = 4.62;
+
+/**
+ * The charge a corpus derives, for the build to hold {@link WORD_CHARGE} to.
+ *
+ * `total` is the corpus, counted once. `highest` is the largest count in it,
+ * which is what {@link FrequencyTable.build} scales the buckets by, so the two
+ * have to be read off the same corpus for the result to mean anything.
+ */
+export function derivedWordCharge(total: number, highest: number): number {
+  return MAX_BUCKET * (Math.log(total) / Math.log1p(highest) - 1);
+}
 
 /**
  * Quantised word frequencies, packed two to a byte.

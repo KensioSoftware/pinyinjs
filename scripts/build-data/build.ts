@@ -8,6 +8,10 @@ import {
   readingsByKey,
 } from "../../src/dictionary/artifact.js";
 import { checkBuild } from "../../src/dictionary/assertions.js";
+import {
+  derivedWordCharge,
+  WORD_CHARGE,
+} from "../../src/dictionary/frequency-table.js";
 import { mergeSources } from "../../src/dictionary/merge.js";
 import { buildScriptTables } from "../../src/dictionary/script-tables.js";
 import { KeyIndex } from "../../src/dictionary/key-index.js";
@@ -229,6 +233,54 @@ const compiled = TIERS.map((tier) => {
     } satisfies TierManifest,
   };
 });
+
+// ── The per-word charge, against the corpus it comes from ───
+//
+// `WORD_CHARGE` is `15 · (log N / L − 1)` and lives in src/ as a number, so
+// nothing but this would notice jieba publishing a bigger corpus under it. It
+// is `N` counted once, which is jieba's own total and not the sum of the
+// counts the artifact ships: a 繁體 key carries its 简体 word's count, so
+// adding the file up counts the same corpus several times over.
+report("checking the per-word charge against the corpus");
+let corpus = 0;
+for (const listed of sources.jieba.values()) {
+  corpus += listed.frequency;
+}
+const scales = compiled.map(({ tier, entries }) => {
+  let highest = 0;
+  for (const entry of entries) {
+    if (entry.frequency > highest) {
+      highest = entry.frequency;
+    }
+  }
+  return { tier, highest };
+});
+// One charge is shipped and every tier's buckets are scaled by its own busiest
+// word, so the constant is only right for all three while the three agree on
+// which word that is. 了 is in `core`, and that is why they do.
+const [scale] = scales;
+const rescaled = scales.filter(({ highest }) => highest !== scale?.highest);
+if (scale === undefined || rescaled.length > 0) {
+  throw new Error(
+    `the tiers quantise on different maxima (${scales
+      .map(({ tier, highest }) => `${tier} ${String(highest)}`)
+      .join(", ")}), so one charge cannot serve them; no artifact written`,
+  );
+}
+const derived = derivedWordCharge(corpus, scale.highest);
+// Held to the two decimals the constant states, which is far tighter than the
+// decoder can act on and is the point: the constant claims to be this number.
+if (Math.abs(derived - WORD_CHARGE) > 0.005) {
+  throw new Error(
+    `the corpus derives a per-word charge of ${derived.toFixed(4)} where ` +
+      `WORD_CHARGE is ${String(WORD_CHARGE)}; update it in ` +
+      `src/dictionary/frequency-table.ts`,
+  );
+}
+report(
+  `  ${String(corpus)} occurrences, busiest ${String(scale.highest)}, ` +
+    `charge ${derived.toFixed(4)} against ${String(WORD_CHARGE)}`,
+);
 
 // ── No tier may contradict `full` on a key they share ───────
 //

@@ -5,7 +5,12 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { FREQUENCY_BUCKETS, FrequencyTable } from "./frequency-table.js";
+import {
+  derivedWordCharge,
+  FREQUENCY_BUCKETS,
+  FrequencyTable,
+  WORD_CHARGE,
+} from "./frequency-table.js";
 
 /**
  * Read `length` through a local, so the smartass array-length rule does not
@@ -118,6 +123,34 @@ describe("FrequencyTable", () => {
       const table = FrequencyTable.build([1, 1_000_000]);
       assertTrue(table.costOf(99) >= table.costOf(0));
       assertTrue(table.costOf(99) > table.costOf(1));
+    });
+
+    it("derives the shipped charge from jieba's corpus", () => {
+      // The corpus every count in the dictionary is taken from, as the build
+      // parses it: 60,101,964 occurrences with 了 the busiest at 883,634.
+      assertNumberBetween(
+        derivedWordCharge(60_101_964, 883_634),
+        WORD_CHARGE - 0.005,
+        WORD_CHARGE + 0.005,
+      );
+    });
+
+    it("is not derived from the counts the artifact ships", () => {
+      // Summing full.counts gives 82,372,768, because a 繁體 key carries its
+      // 简体 word's count and the same corpus is counted again under it. The
+      // build checks the constant against jieba's total for that reason.
+      assertTrue(derivedWordCharge(82_372_768, 883_634) > WORD_CHARGE + 0.3);
+    });
+
+    it("grows with the corpus and falls as its busiest word grows", () => {
+      assertTrue(
+        derivedWordCharge(120_000_000, 883_634) >
+          derivedWordCharge(60_000_000, 883_634),
+      );
+      assertTrue(
+        derivedWordCharge(60_000_000, 1_800_000) <
+          derivedWordCharge(60_000_000, 883_634),
+      );
     });
 
     it("charges enough per word to keep 还给 from splitting", () => {
