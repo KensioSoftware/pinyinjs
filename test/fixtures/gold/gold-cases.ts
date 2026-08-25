@@ -214,6 +214,13 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "學生", pinyin: "xuésheng", script: "Hant", tags: ["traditional", "neutral-tone"] },
   { hanzi: "長城", pinyin: "Chángchéng", script: "Hant", tags: ["traditional", "proper-noun"] },
 
+  // ── A rule reaching 繁體, which needs a tag to reach it by ──
+  // jieba counted 听, 读 and 买 and not 聽, 讀 or 買, so the tag every rule
+  // decides on arrives only under one script unless it is carried across.
+  { hanzi: "我聽過這首歌。", pinyin: "Wǒ tīngguo zhè shǒu gē.", script: "Hant", tags: ["traditional", "sentence", "rule-override", "neutral-tone"] },
+  { hanzi: "我得買點新衣服了。", pinyin: "Wǒ děi mǎi diǎn xīn yīfu le.", script: "Hant", tags: ["traditional", "sentence", "rule-override", "polyphone"] },
+  { hanzi: "他錯了", pinyin: "tā cuòle", script: "Hant", tags: ["traditional", "orthography", "particle"] },
+
   // ── The simplification merges: traditional disambiguates ───
   { hanzi: "頭髮", pinyin: "tóufa", script: "Hant", tags: ["traditional", "merge"] },
   { hanzi: "發現", pinyin: "fāxiàn", script: "Hant", tags: ["traditional", "merge"] },

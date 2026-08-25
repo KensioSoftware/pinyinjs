@@ -123,7 +123,9 @@ sounds like it should.
 
 `lookup` returns `undefined` for a word the dictionary lacks. `partOfSpeech` is
 empty far more often than you might expect. Only the jieba-sourced third of the
-dictionary carries a tag at all.
+dictionary carries a tag at all, and a 繁體 spelling takes the tag of the 简体
+word it pairs with, since jieba counted one script and not the other. See
+[the tags are thinner too](../scripts-and-locales/#the-tags-are-thinner-too-and-they-are-carried-across).
 
 `readingsOf(character)` returns every reading the dictionary knows for a single
 character, likeliest first, as reading arrays:

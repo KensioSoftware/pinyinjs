@@ -1898,6 +1898,21 @@ describe("the examples in docs/", () => {
       assertIdentical(written(first.reading), written(second.reading));
     });
 
+    it("reads a rule's sentence the same way in either script", () => {
+      // The tag every rule decides on is jieba's, and jieba counted 听 and not
+      // 聽, so the 繁體 spelling takes the tag its 简体 word carries.
+      assertIdentical(
+        convert(dictionary, "我听过这首歌"),
+        "wǒ tīngguo zhè shǒu gē",
+      );
+      assertIdentical(
+        convert(dictionary, "我聽過這首歌"),
+        "wǒ tīngguo zhè shǒu gē",
+      );
+      assertIdentical(dictionary.lookup("聽")?.partOfSpeech, "v");
+      assertIdentical(convert(dictionary, "他錯了"), "tā cuòle");
+    });
+
     // The page's point is what a *missing* key costs, so the assertion is on
     // the reading the character-by-character fallback would give: 重 alone is
     // `zhòng`, and only the entry says this word takes `chóng`.
