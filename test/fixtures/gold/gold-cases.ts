@@ -97,6 +97,11 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
   { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
 
+  // ── 过: the experiential marker is toneless ────────────────
+  { hanzi: "他去过法国。", pinyin: "Tā qùguo Fǎguó.", script: "Hans", tags: ["polyphone", "rule-override", "neutral-tone", "sentence"] },
+  { hanzi: "我见过他", pinyin: "wǒ jiànguo tā", script: "Hans", tags: ["polyphone", "rule-override", "neutral-tone"] },
+  { hanzi: "经过", pinyin: "jīngguò", script: "Hans", tags: ["polyphone"] },
+
   // ── 长: cháng is measured, zhǎng grows and leads ───────────
   { hanzi: "这篇文章不太长。", pinyin: "Zhè piān wénzhāng bú tài cháng.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
   { hanzi: "要多长时间", pinyin: "yào duō cháng shíjiān", script: "Hans", tags: ["polyphone", "rule-override"] },

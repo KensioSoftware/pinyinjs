@@ -1,8 +1,10 @@
 import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
 import { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+import { EXPERIENTIAL_GUO } from "./guo-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+export { EXPERIENTIAL_GUO } from "./guo-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
@@ -151,4 +153,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   COUNTED_MEASURE,
   ADJECTIVAL_CHANG,
   PLAYING_TAN,
+  EXPERIENTIAL_GUO,
 ];
