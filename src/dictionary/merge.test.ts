@@ -890,6 +890,20 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.carriedTags, 1);
     });
 
+    it("gives the 繁體 spelling the count jieba only counted 简体", () => {
+      const { byWord, result } = merge({
+        unihanReadings: new Map([
+          ["听", unihan(["tīng"])],
+          ["聽", unihan(["tīng"])],
+        ]),
+        cedict: [cedictEntry("聽", "听", "ting1")],
+        jieba: new Map([["听", { frequency: 20_435, partOfSpeech: "v" }]]),
+      });
+      assertIdentical(byWord.get("听")?.frequency, 20_435);
+      assertIdentical(byWord.get("聽")?.frequency, 20_435);
+      assertIdentical(result.stats.carriedCounts, 1);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

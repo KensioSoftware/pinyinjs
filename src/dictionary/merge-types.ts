@@ -66,9 +66,11 @@ export interface MergeStats {
   readonly nameBoundaries: number;
   /**
    * 繁體 spellings given the part of speech their 简体 word carries. See
-   * {@link import("./traditional-tags.js").carryTagsToTraditional}.
+   * {@link import("./traditional-carry.js").carryToTraditional}.
    */
   readonly carriedTags: number;
+  /** 繁體 spellings given the corpus count their 简体 word carries. */
+  readonly carriedCounts: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
 }

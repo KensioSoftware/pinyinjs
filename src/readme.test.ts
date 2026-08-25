@@ -637,12 +637,14 @@ describe("the examples in README.md", () => {
       "answers the four queries the section shows",
       () => {
         const index = reverseIndex();
+        // 時 ranks beside 时 because the merge carries the count across the
+        // scripts. Before it did, 時 looked all but unattested.
         assertArrayEquals(candidates(index, "shi", { limit: 5 }), [
           "是",
           "时",
+          "時",
           "事",
           "使",
-          "市",
         ]);
         assertArrayEquals(candidates(index, "yinhang"), [
           "銀行",

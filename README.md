@@ -499,7 +499,7 @@ import { candidates, homophonesOf, ReverseIndex } from "@kensio/pinyinjs";
 
 const index = ReverseIndex.of(dictionary);
 
-candidates(index, "shi", { limit: 5 }); // ["是", "时", "事", "使", "市"]
+candidates(index, "shi", { limit: 5 }); // ["是", "时", "時", "事", "使"]
 candidates(index, "yinhang"); // ["銀行", "银行", "引吭", "引航", "印航"]
 candidates(index, "yínháng"); // ["銀行", "银行"], narrowed by tone
 homophonesOf(index, "长城"); // ["長城", "長程", "长程", "常程"]

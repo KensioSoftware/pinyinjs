@@ -158,3 +158,26 @@ export function alignedReadings(
   const characters = toCharacters(entry.hans).length;
   return entry.readings.cn.length === characters ? entry.readings.cn : [];
 }
+
+/**
+ * Just the 简→繁 character table, for a caller that needs the pairing and not
+ * the rest of the artifact.
+ *
+ * The word exception lists and the detection sets are the expensive half of
+ * `buildScriptTables` and answer different questions. What is left is one
+ * pass over the entries and the aggregate it makes, which is the only thing
+ * that can say which of a character's several 繁體 forms is the one people
+ * write. CC-CEDICT holds `旹 时` as an old variant of 時, so 时's own entry can
+ * name 旹 as its 繁體 form while every word 时 appears in says 時.
+ */
+export function traditionalCharacterTable(
+  entries: readonly DictionaryEntry[],
+): ReadonlyMap<string, CharacterConversion> {
+  const counts = new Map<string, ByReading>();
+  for (const entry of entries) {
+    for (const { hans, hant, key } of pairingsOf(entry)) {
+      tally(counts, hans, hant, key, 1);
+    }
+  }
+  return tableOf(counts);
+}

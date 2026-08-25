@@ -223,41 +223,59 @@ readings differ, that is deterministic. For the other 736 the readings are
 identical, so a wrong pick cannot change the pronunciation. It only affects
 whether a traditional user's text matches that key.
 
-### The tags are thinner too, and they are carried across
+### The tags and the counts are thinner too, and both are carried across
 
-jieba supplies the part-of-speech tag on an entry, and jieba's dictionary was
-counted over a 简体 corpus. 听 is `v` and 聽 arrives with nothing at all, while
-说, 来, 问 and 学 are tagged and 說, 來, 問 and 學 come back `zg`, which is what
-jieba writes for a character it counted and did not classify.
+jieba supplies both the part-of-speech tag and the corpus count on an entry, and
+jieba's dictionary was counted over a 简体 corpus. 听 is tagged `v` and counted
+20,435 times. 聽 is tagged nothing and counted nowhere, and 說, 來, 問 and 學
+come back `zg`, which is what jieba writes for a character it counted and did
+not classify.
 
-Every rule that asks what the word beside it is decides on that tag, so all of
-them were silent over 繁體 text. The same sentence read two different ways
-depending on which script it was written in:
+Every rule that asks what the word beside it is decides on the tag, and every
+path the decoder weighs is priced on the count. A 繁體 sentence was therefore
+read by rules that could not see it and priced by a model that had never met
+it:
 
 ```ts
 convert(dictionary, "我听过这首歌"); // "wǒ tīngguo zhè shǒu gē"
 convert(dictionary, "我聽過這首歌"); // "wǒ tīng guò zhè shǒu gē", before this
+convert(dictionary, "我见过他"); // "wǒ jiànguo tā"
+convert(dictionary, "我見過他"); // "wǒjiàn guo tā", before this
 ```
 
-The merge closes it with the pairing the entries already carry. An entry names
-the 繁體 spelling of its own word. The entry keyed on that spelling is therefore
-the same word written the other way, and a part of speech is a fact about the
-word. 1,962 spellings take a tag that way.
+Both fields are carried across. 1,857 characters take a tag and 2,318 take a
+count. Neither overwrites what a source stated. A character jieba classified
+keeps its tag, and one jieba counted more often than its 简体 form keeps its
+count. `nr`, `ns`, `nt` and `nz` stay where they are, because those travel with
+`isProperNoun`, and CC-CEDICT's capitalisation can veto that.
 
-Only a spelling with none of its own takes one, which leaves everything jieba
-classified untouched. `nr`, `ns`, `nt` and `nz` stay where they are, because
-those travel with `isProperNoun`, and CC-CEDICT's capitalisation can veto that.
+**The pairing is the aggregate one, not the entry's own 繁體 form.** A single
+character's 繁體 form is whichever CC-CEDICT sense matched its reading, and that
+can be an oddity. CC-CEDICT holds 旹 as an old variant of 時, so 时's entry can
+name 旹 while every word 时 appears in says 時. The character table counts words,
+so 時 wins it thousands to one and takes the count 时 was seen with.
 
-Measured over Tatoeba's 48,919 繁體 runs, the two scripts now write the same
-pinyin for 85.08% of them, against 82.18% before. Counting only the syllables
-and ignoring where the spaces fall, 95.08% against 94.69%. Most of what moved is
-spacing rather than reading. 了, 過 and 們 attach to the word in front of them
-only where that word is tagged, so 他錯了 was `tā cuò le` and is now `tā cuòle`.
+Measured over Tatoeba's 48,919 繁體 runs, each converted and then converted
+again through its 简体 spelling:
 
-**The frequency is keyed on 简体 in the same way and is not carried.** 见 costs
-7.62 and 見 costs 19.62, which decodes a 繁體 sentence against a cost model that
-has never seen its characters. That is what leaves 我見過他 as `wǒjiàn guo tā`
-where 我见过他 is `wǒ jiànguo tā`. See issue #155.
+| The two scripts             | before | tags   | and counts |
+| --------------------------- | ------ | ------ | ---------- |
+| write the same pinyin       | 82.18% | 85.08% | 90.01%     |
+| differ over a word boundary | 14.05% | 10.39% | 6.05%      |
+| differ over a syllable      | 3.19%  | 3.16%  | 2.32%      |
+| differ over a capital       | 0.58%  | 1.36%  | 1.62%      |
+
+**No 简体 conversion moves.** The buckets are scaled from the largest count in
+the corpus, and a carried count can equal that count but never exceed it, so
+every 简体 bucket is what it was. Over the 88,866 lines of Tatoeba and
+zh.wikipedia the counts change 3,508 conversions and all 3,508 are in a 繁體
+run.
+
+The capital is the third field jieba keys on 简体 and the one still to do. 麥 is
+not a proper noun and 麦 is, so 麥可 comes out `mài kě` where 麦可 is `Mài kě`.
+It cuts the other way as often, jieba tagging 连 and 云 surnames where 連 and 雲
+carry nothing. That is not a carry to make without looking first. See issue
+#157.
 
 ## detectScript
 
