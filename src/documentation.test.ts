@@ -1913,6 +1913,24 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "他錯了"), "tā cuòle");
     });
 
+    it("prices a 繁體 sentence like the 简体 one it pairs with", () => {
+      // The count is jieba's too, and jieba counted 见 and not 見, so a pair
+      // nothing counted used to be the cheaper path in 繁體.
+      assertIdentical(convert(dictionary, "我见过他"), "wǒ jiànguo tā");
+      assertIdentical(convert(dictionary, "我見過他"), "wǒ jiànguo tā");
+    });
+
+    it("pairs a character on the aggregate rather than on its own entry", () => {
+      // CC-CEDICT holds 旹 as an old variant of 時, so 时's own entry can name
+      // 旹 as its 繁體 form. Every word 时 appears in says 時.
+      const traditional = dictionary.lookup("時");
+      const variant = dictionary.lookup("旹");
+      assertNonNullable(traditional);
+      assertNonNullable(variant);
+      assertIdentical(traditional.cost, dictionary.lookup("时")?.cost);
+      assertTrue(variant.cost > traditional.cost);
+    });
+
     // The page's point is what a *missing* key costs, so the assertion is on
     // the reading the character-by-character fallback would give: 重 alone is
     // `zhòng`, and only the entry says this word takes `chóng`.

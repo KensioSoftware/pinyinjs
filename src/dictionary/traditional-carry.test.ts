@@ -3,7 +3,7 @@ import { describe, it } from "vitest";
 
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
-import { carryTagsToTraditional, isTagged } from "./traditional-tags.js";
+import { carryToTraditional, isTagged } from "./traditional-carry.js";
 
 /**
  * A reading, for entries whose reading these tests do not care about.
@@ -39,8 +39,22 @@ function entry(
 function tagsAfter(
   entries: readonly DictionaryEntry[],
 ): ReadonlyMap<string, string> {
-  const { entries: tagged } = carryTagsToTraditional(entries);
-  return new Map(tagged.map((one) => [one.hans, one.partOfSpeech]));
+  const { entries: carried } = carryToTraditional(entries);
+  return new Map(
+    carried.map((one: DictionaryEntry) => [one.hans, one.partOfSpeech]),
+  );
+}
+
+/**
+ * The count each spelling carries after the pass.
+ */
+function countsAfter(
+  entries: readonly DictionaryEntry[],
+): ReadonlyMap<string, number> {
+  const { entries: carried } = carryToTraditional(entries);
+  return new Map(
+    carried.map((one: DictionaryEntry) => [one.hans, one.frequency]),
+  );
 }
 
 describe("reading a tag", () => {
@@ -103,13 +117,77 @@ describe("carrying a tag to the 繁體 spelling", () => {
   });
 
   it("counts what it carried", () => {
-    const { carried } = carryTagsToTraditional([
+    const { carriedTags } = carryToTraditional([
       entry("听", "聽", "v"),
-      entry("聽", "聽", ""),
+      entry("聽", "聽", "", 0),
       entry("读", "讀", "v"),
-      entry("讀", "讀", "zg"),
+      entry("讀", "讀", "zg", 0),
       entry("看", "看", "v"),
     ]);
-    assertIdentical(carried, 2);
+    assertIdentical(carriedTags, 2);
+  });
+
+  it("lends a tag from a rarer word where the commoner one has none", () => {
+    const tags = tagsAfter([
+      entry("甲", "後", "", 9000),
+      entry("厚", "後", "a", 200),
+      entry("後", "後", "", 0),
+    ]);
+    assertIdentical(tags.get("後"), "a");
+  });
+});
+
+describe("carrying a count to the 繁體 spelling", () => {
+  it("gives an uncounted spelling the count its 简体 word carries", () => {
+    const counts = countsAfter([
+      entry("听", "聽", "v", 20_435),
+      entry("聽", "聽", "", 0),
+    ]);
+    assertIdentical(counts.get("聽"), 20_435);
+  });
+
+  it("takes the larger of the two, not the lender's outright", () => {
+    // A 繁體 spelling jieba counted at all was counted incidentally in a
+    // corpus written the other way.
+    const counts = countsAfter([
+      entry("过", "過", "ug", 40_000),
+      entry("過", "過", "zg", 300),
+    ]);
+    assertIdentical(counts.get("過"), 40_000);
+  });
+
+  it("leaves a spelling counted more often than its 简体 word alone", () => {
+    const counts = countsAfter([
+      entry("台", "臺", "n", 100),
+      entry("臺", "臺", "n", 900),
+    ]);
+    assertIdentical(counts.get("臺"), 900);
+  });
+
+  it("leaves the 简体 word alone, which is where the count came from", () => {
+    const counts = countsAfter([
+      entry("听", "聽", "v", 20_435),
+      entry("聽", "聽", "", 0),
+    ]);
+    assertIdentical(counts.get("听"), 20_435);
+  });
+
+  it("lends nothing where the 简体 word was counted nowhere either", () => {
+    const counts = countsAfter([
+      entry("讀", "讀", "", 0),
+      entry("读", "讀", "", 0),
+    ]);
+    assertIdentical(counts.get("讀"), 0);
+  });
+
+  it("counts what it carried", () => {
+    const { carriedCounts } = carryToTraditional([
+      entry("听", "聽", "v", 20_435),
+      entry("聽", "聽", "", 0),
+      entry("过", "過", "ug", 40_000),
+      entry("過", "過", "zg", 300),
+      entry("看", "看", "v", 900),
+    ]);
+    assertIdentical(carriedCounts, 2);
   });
 });

@@ -221,6 +221,14 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "我得買點新衣服了。", pinyin: "Wǒ děi mǎi diǎn xīn yīfu le.", script: "Hant", tags: ["traditional", "sentence", "rule-override", "polyphone"] },
   { hanzi: "他錯了", pinyin: "tā cuòle", script: "Hant", tags: ["traditional", "orthography", "particle"] },
 
+  // ── A 繁體 sentence priced like the 简体 one it pairs with ──
+  // jieba counted 见, 会 and 过 and not 見, 會 or 過, so a 繁體 run was decoded
+  // against costs that made a pair nothing counted cheaper than its own
+  // characters. 我見過他 came out `Wǒjiàn guo tā.` and 都會 stayed whole.
+  { hanzi: "我見過他。", pinyin: "Wǒ jiànguo tā.", script: "Hant", tags: ["traditional", "sentence", "segmentation", "neutral-tone"] },
+  { hanzi: "他們都會來。", pinyin: "Tāmen dōu huì lái.", script: "Hant", tags: ["traditional", "sentence", "segmentation"] },
+  { hanzi: "生活卻過得不快樂", pinyin: "shēnghuó què guò de bú kuàilè", script: "Hant", tags: ["traditional", "segmentation", "particle"] },
+
   // ── The simplification merges: traditional disambiguates ───
   { hanzi: "頭髮", pinyin: "tóufa", script: "Hant", tags: ["traditional", "merge"] },
   { hanzi: "發現", pinyin: "fāxiàn", script: "Hant", tags: ["traditional", "merge"] },

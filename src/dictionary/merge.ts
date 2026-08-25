@@ -11,7 +11,7 @@ import { buildCharacterDefaults } from "./character-defaults.js";
 import { repairConstituentReadings } from "./constituent-repair.js";
 import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
-import { carryTagsToTraditional } from "./traditional-tags.js";
+import { carryToTraditional } from "./traditional-carry.js";
 import type { MergeResult, MergeSources, WordSources } from "./merge-types.js";
 
 export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
@@ -74,13 +74,13 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // before a compound can be asked what it is made of.
   const localised = composeLocaleDeltas(held.entries);
 
-  // ── 繁體 spellings given their 简体 word's tag ──────────────
+  // ── 繁體 spellings given their 简体 word's tag and count ────
   // Last, and over the finished key set, because the pairing it reads is the
   // 繁體 form each entry names and every pass above can still change one.
-  const tagged = carryTagsToTraditional(localised.entries);
+  const carried = carryToTraditional(localised.entries);
 
   return {
-    entries: tagged.entries,
+    entries: carried.entries,
     rejected,
     stats: {
       ...counts,
@@ -88,7 +88,8 @@ export function mergeSources(sources: MergeSources): MergeResult {
       settledMeasureTones: measured.settled,
       repairedConstituents: held.repaired,
       composedTaiwanReadings: localised.composed,
-      carriedTags: tagged.carried,
+      carriedTags: carried.carriedTags,
+      carriedCounts: carried.carriedCounts,
       rejected: rejected.size,
     },
   };

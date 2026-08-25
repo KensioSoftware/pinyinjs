@@ -123,9 +123,9 @@ sounds like it should.
 
 `lookup` returns `undefined` for a word the dictionary lacks. `partOfSpeech` is
 empty far more often than you might expect. Only the jieba-sourced third of the
-dictionary carries a tag at all, and a 繁體 spelling takes the tag of the 简体
-word it pairs with, since jieba counted one script and not the other. See
-[the tags are thinner too](../scripts-and-locales/#the-tags-are-thinner-too-and-they-are-carried-across).
+dictionary carries a tag at all, and a 繁體 character takes the tag of the 简体
+character it pairs with, since jieba counted one script and not the other. See
+[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
 
 `readingsOf(character)` returns every reading the dictionary knows for a single
 character, likeliest first, as reading arrays:
@@ -205,7 +205,12 @@ different question, and a caller ranking words has the whole list in hand. Check
 tier numbers its keys differently and every position would name another word.
 
 A count of zero means the corpus is silent about that key, which two thirds of
-the full tier's keys are. jieba supplies the counts, and jieba is a segmenter.
+the full tier's keys are. A 繁體 character carries the count of the 简体
+character it pairs with, since the corpus was written in one script and the two
+are the same character. 時 reads 103,735 because 时 does. See
+[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
+
+jieba supplies the counts, and jieba is a segmenter.
 Its weights are tuned to make segmentation come out right, and how often a
 reader meets a word is a separate measurement (a corpus list such as SUBTLEX-CH
 or BCC would be one). These counts rank common vocabulary well and say very
