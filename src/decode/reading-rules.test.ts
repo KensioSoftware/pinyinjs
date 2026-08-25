@@ -18,6 +18,7 @@ import {
   ADJECTIVAL_CHANG,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
+  EXPERIENTIAL_GUO,
   MODAL_DE,
   PARTICLE_DE,
   PLAYING_TAN,
@@ -243,6 +244,38 @@ const tanDictionary = dictionaryOf([
     frequency: 4000,
     alternates: [reading("tán")],
   }),
+]);
+
+/**
+ * A dictionary of its own for 过, kept apart for the reason 长's is.
+ *
+ * 过 is stored the way the real dictionary stores it, with the toneless marker
+ * and 过 the pot as alternates of the verb, and with the three shapes that
+ * decide the rule around it. 见过 is a pair carrying no part of speech, 走过 is
+ * a word jieba counted, and 睡过头 is a word of three characters.
+ */
+const guoDictionary = dictionaryOf([
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("不", "bù", { partOfSpeech: "d", frequency: 70_000 }),
+  entry("过", "guò", {
+    hant: "過",
+    partOfSpeech: "ug",
+    frequency: 60_000,
+    alternates: [reading("guo"), reading("guō")],
+  }),
+  entry("去", "qù", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("见", "jiàn", { partOfSpeech: "v", frequency: 30_000 }),
+  entry("走", "zǒu", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("睡", "shuì", { partOfSpeech: "v", frequency: 8000 }),
+  entry("头", "tóu", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("前", "qián", { partOfSpeech: "f", frequency: 30_000 }),
+  // A time word with the verb inside it, which is what hides a 去 from the
+  // longest match.
+  entry("前去", "qián qù", { partOfSpeech: "t", frequency: 900 }),
+  // A reading somebody recorded, against a word anybody counted.
+  entry("见过", "jiàn guò", { frequency: 3000 }),
+  entry("走过", "zǒu guò", { partOfSpeech: "v", frequency: 3000 }),
+  entry("睡过头", "shuì guò tóu", { partOfSpeech: "v", frequency: 400 }),
 ]);
 
 /**
@@ -653,5 +686,64 @@ describe("弹 where it is playing", () => {
 
   it("settles the reading and not the spacing", () => {
     assertArrayLength(decodeRun(tanDictionary, "弹吉他", [PLAYING_TAN]), 2);
+  });
+});
+
+describe("过 where it marks experiential aspect", () => {
+  /** How a run of the 过 cases reads, word by word. */
+  function readGuo(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(guoDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads 过 toneless after a verb", () => {
+    assertArrayEquals(readGuo("我去过"), ["wǒ", "qù", "guo"]);
+  });
+
+  it("keeps guò where the word in front is not a verb", () => {
+    // 不过 is an adverb and a 过, and neither of them takes aspect.
+    assertArrayEquals(readGuo("不过"), ["bù", "guò"]);
+  });
+
+  it("sees a verb a longer word has swallowed", () => {
+    // 前去 is a time word and the 去 inside it is the verb, which is why every
+    // word ending at the position is asked rather than the longest.
+    assertArrayEquals(readGuo("前去过"), ["qiánqù", "guo"]);
+  });
+
+  it("takes the guò a pair would carry in", () => {
+    // 见过 is a pair the dictionary holds with no part of speech, and its `guò`
+    // reached the position from outside the character's own edges.
+    assertArrayEquals(readGuo("我见过", [EXPERIENTIAL_GUO]), [
+      "wǒ",
+      "jiàn",
+      "guo",
+    ]);
+    assertArrayEquals(readGuo("我见过", []), ["wǒ", "jiànguò"]);
+  });
+
+  it("leaves the reading a tagged word carries alone", () => {
+    assertArrayEquals(readGuo("走过"), ["zǒuguò"]);
+  });
+
+  it("leaves a word of three characters whole", () => {
+    // 睡过头 is a word in its own right, where 见过 is a recorded reading.
+    assertArrayEquals(readGuo("睡过头"), ["shuìguòtóu"]);
+  });
+
+  it("reads the 繁體 character the same way", () => {
+    assertArrayEquals(readGuo("我去過"), ["wǒ", "qù", "guo"]);
+  });
+
+  it("does nothing at all when the rule is not applied", () => {
+    assertArrayEquals(readGuo("我去过", []), ["wǒ", "qù", "guò"]);
+  });
+
+  it("settles the reading and not the spacing", () => {
+    assertArrayLength(
+      decodeRun(guoDictionary, "我去过", [EXPERIENTIAL_GUO]),
+      3,
+    );
   });
 });

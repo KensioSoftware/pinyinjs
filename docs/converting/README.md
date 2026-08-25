@@ -318,9 +318,41 @@ where 上 is the front of 上级. 了 and 过 are left out of the complement set
 because both are aspect markers too, and 获得了 and 赢得过 are far commoner than
 吃得了 and 说得过去.
 
+The ninth reads 过 toneless where it marks experiential aspect:
+
+```ts
+convert(dictionary, "他去过法国。"); // "Tā qùguo Fǎguó."
+convert(dictionary, "我吃过饭了。"); // "Wǒ chīguo fàn le."
+convert(dictionary, "他经过我家"); // "tā jīngguò wǒjiā", the word
+```
+
+The marker is toneless and the dictionary leads with `guò`, so every 去过, 见过
+and 听说过 came out fourth tone. Aspect attaches to a verb and to nothing else.
+A 过 with a verbal word ending immediately in front of it is the marker. What
+follows says nothing either way, an object, a 了 and the end of the sentence all
+standing behind the marker as readily as behind the verb 过.
+
+Forcing the single-character edge falls short on its own, for the reason the 教
+rule gives. 我从没见过风车 read `guò` off 见过 and 你已經吃過飯了 off 吃過飯. A
+pair carrying no part of speech is taken off the lattice with it. A key of three
+characters is a word in its own right and keeps its 过. That leaves 睡过头,
+过马路 and 反应过度 alone.
+
+Over 88,866 lines, 1,437 过 and 過 decode as a word of their own and every one of
+them reads `guò`. This moves 1,002 and 29 more that no boundary had split out.
+The condition was sized before the rule was written, and it is right on 939 of
+the 998 it holds for. The 59 misses are a directional or resultative complement
+(他游过了河, 他们转过身), 过 as a verb behind a modal (你要過聖誕節了嗎), 过
+meaning to exceed (期望过高), and one noun.
+
+Tightening it was measured and rejected. A written-out set of the verbs that take
+a crossing 过 would carry the rule from 94% right to 96%, at the cost of
+我在这个泳池里游过泳 and of every 跑过马拉松 these 88,866 lines do not happen to
+hold.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`,
 `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`,
-`PLAYING_TAN`, `applyEdgeRules`) and
+`PLAYING_TAN`, `EXPERIENTIAL_GUO`, `applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 

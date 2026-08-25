@@ -300,6 +300,12 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "他得到了"), "tā dédàole");
     });
 
+    it("reads 过 toneless where it marks aspect and guò where it does not", () => {
+      assertIdentical(convert(dictionary, "他去过法国。"), "Tā qùguo Fǎguó.");
+      assertIdentical(convert(dictionary, "我吃过饭了。"), "Wǒ chīguo fàn le.");
+      assertIdentical(convert(dictionary, "他经过我家"), "tā jīngguò wǒjiā");
+    });
+
     it("reads 教 as jiāo where it teaches and jiào where it does not", () => {
       assertIdentical(
         convert(dictionary, "他在北京大学教了三年书。"),
