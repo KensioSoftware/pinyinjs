@@ -911,7 +911,12 @@ describe("merging the sources", () => {
           ["麥", unihan(["mài"])],
         ]),
         cedict: [cedictEntry("麥", "麦", "Mai4", { isProperNoun: true })],
-        jieba: new Map([["麦", { frequency: 900, partOfSpeech: "nr" }]]),
+        // 麦克 is what makes 麦 a name character rather than a character jieba
+        // happened to tag `nr`. See name-mass.ts.
+        jieba: new Map([
+          ["麦", { frequency: 900, partOfSpeech: "nr" }],
+          ["麦克", { frequency: 9000, partOfSpeech: "nr" }],
+        ]),
       });
       assertTrue(byWord.get("麦")?.isProperNoun ?? false);
       assertTrue(byWord.get("麥")?.isProperNoun ?? false);
@@ -972,7 +977,60 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.nameBoundaries, 0);
     });
 
+    it("keeps a bare character that heads names more than words", () => {
+      const { byWord } = merge({
+        phrase: new Map([["李", ["lǐ"]]]),
+        cedict: [
+          cedictEntry("李", "李", "Li3", { isProperNoun: true }),
+          cedictEntry("李", "李", "li3"),
+        ],
+        jieba: new Map([
+          ["李", { frequency: 9566, partOfSpeech: "nr" }],
+          ["李自成", { frequency: 40_346, partOfSpeech: "nr" }],
+          ["李子", { frequency: 9787, partOfSpeech: "n" }],
+        ]),
+      });
+      assertTrue(byWord.get("李")?.isProperNoun ?? false);
+    });
+
+    it("demotes a bare character that heads words more than names", () => {
+      // 连 is a surname and 连续, 连接 and 连忙 besides, which is the case one
+      // capitalised CC-CEDICT sense cannot tell from 李's. 他连再见也不说 came
+      // out `tā Lián zàijiàn yě bù shuō`.
+      const { byWord, result } = merge({
+        phrase: new Map([["连", ["lián"]]]),
+        cedict: [
+          cedictEntry("連", "连", "Lian2", { isProperNoun: true }),
+          cedictEntry("連", "连", "lian2"),
+        ],
+        jieba: new Map([
+          ["连", { frequency: 23_315, partOfSpeech: "nr" }],
+          ["连中三元", { frequency: 2102, partOfSpeech: "nr" }],
+          ["连续", { frequency: 23_042, partOfSpeech: "v" }],
+        ]),
+      });
+      assertFalse(byWord.get("连")?.isProperNoun ?? true);
+      assertIdentical(result.stats.properNounVetoes, 1);
+    });
+
+    it("weighs a bare character's own count against the names it heads", () => {
+      // 帅 heads more names than words and is met as `shuài` far more often
+      // than as either. 他很帅 came out `tā hěn Shuài`.
+      const { byWord } = merge({
+        phrase: new Map([["帅", ["shuài"]]]),
+        cedict: [cedictEntry("帥", "帅", "Shuai4", { isProperNoun: true })],
+        jieba: new Map([
+          ["帅", { frequency: 795, partOfSpeech: "nr" }],
+          ["帅化民", { frequency: 155, partOfSpeech: "nr" }],
+          ["帅气", { frequency: 86, partOfSpeech: "a" }],
+        ]),
+      });
+      assertFalse(byWord.get("帅")?.isProperNoun ?? true);
+    });
+
     it("keeps jieba's verdict where CC-CEDICT has nothing to say", () => {
+      // 襄阳 heads no word in jieba's list and is a place all the same. The
+      // mass is only read for a bare character.
       const { byWord } = merge({
         phrase: new Map([["襄阳", ["xiāng", "yáng"]]]),
         jieba: new Map([["襄阳", { frequency: 13_196, partOfSpeech: "ns" }]]),

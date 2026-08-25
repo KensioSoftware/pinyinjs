@@ -11,6 +11,7 @@ import { buildCharacterDefaults } from "./character-defaults.js";
 import { repairConstituentReadings } from "./constituent-repair.js";
 import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
+import { countNameMass } from "./name-mass.js";
 import { carryToTraditional } from "./traditional-carry.js";
 import type { MergeResult, MergeSources, WordSources } from "./merge-types.js";
 
@@ -45,6 +46,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     cedictByHant,
     phrase,
     jieba: sources.jieba,
+    nameMass: countNameMass(sources.jieba),
     unihanReadings: sources.unihanReadings,
     traditional,
     defaults,

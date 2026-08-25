@@ -168,6 +168,28 @@ tags (`nr` person, `ns` place, `nt` organisation, `nz` other) and demoted again
 where CC-CEDICT writes the headword's pinyin in lower case. There is no name
 rule of any kind, no surname list, and no test on what follows a surname.
 
+A bare character has a third condition to meet. jieba tags 王, 连 and 云 `nr`,
+and CC-CEDICT capitalises a sense of each. Both of those are facts about the
+surname and say nothing about the character standing on its own. 王 is the king
+too, 连 is "even" and 云 is a cloud. Neither source can tell those apart, and jieba's
+word list can, because a character heads words there and every word carries a
+corpus count and a tag of its own. 李 heads 40,346 occurrences of names against
+9,787 of ordinary words, where 连 heads 2,102 against the 23,042 of 连续, 连接
+and 连忙. The character's own count is counted with the words, which is what
+settles 帅 (155 of names against 86 of words, and 795 occurrences alone).
+
+```ts
+convert(dictionary, "他连再见也不说"); // "tā lián zàijiàn yě bù shuō"
+convert(dictionary, "这周我一直在工作"); // "zhè zhōu wǒ yìzhí zài gōngzuò"
+convert(dictionary, "他很帅"); // "tā hěn shuài"
+```
+
+243 of the 511 single-character keys keep the flag, and over 88,866 lines of
+corpus the condition takes a capital off 1,678 runs and adds none. A character
+that heads names and is a common word besides still survives it. 福 heads 10,255
+occurrences of names against 579, so 清心的人有福了 is `qīngxīn de rén yǒu Fú
+le`.
+
 `Lǐ Huá` falls out of the dictionary being consulted a character at a time. The
 dictionary has no entry for 李华. It decodes as two single-character words, and
 李 and 华 each carry the flag on their own. 李 is tagged `nr`, and 华 is tagged
