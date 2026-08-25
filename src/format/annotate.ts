@@ -4,7 +4,7 @@
  * The pinyin sits above the characters rather than beside them, so the pieces
  * are regrouped against the text they annotate.
  */
-import { escape, type HtmlOptions, toHtml, writePiece } from "./html.js";
+import { escape, type HtmlOptions, toHtml, writePieces } from "./html.js";
 import { type ConvertedPiece, convertPieces } from "../decode/convert.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
 
@@ -120,10 +120,10 @@ function writeAnnotation(annotation: Annotation, options: HtmlOptions): string {
     // characters — but {@link toAnnotatedHtml} takes pieces from the caller,
     // and there is no base to hang an annotation on, so it is written as the
     // plain markup it would have got from {@link toHtml}.
-    return pieces.map((piece) => writePiece(piece, options)).join("");
+    return writePieces(pieces, options);
   }
 
-  const reading = pieces.map((piece) => writePiece(piece, options)).join("");
+  const reading = writePieces(pieces, options);
   // The tag goes on the <ruby> rather than around the base, and the syllables
   // inside the <rt> override it with their own. `<rb>` would be the obvious
   // place for it and is not an element any more: the WHATWG parser drops it,

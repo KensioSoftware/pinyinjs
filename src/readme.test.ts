@@ -20,6 +20,7 @@ import { convert, convertPieces, joinPieces } from "./decode/convert.js";
 import { check } from "./grade/check.js";
 import { type CliEnvironment, runCli } from "./cli/run.js";
 import { convertToAnnotatedHtml, convertToHtml } from "./format/html.js";
+import { BOPOMOFO } from "./transcription/systems.js";
 import { toScript } from "./decode/script.js";
 import { applySandhi } from "./decode/sandhi.js";
 import { segment } from "./decode/segment.js";
@@ -556,6 +557,15 @@ describe("the examples in README.md", () => {
         '<ruby lang="zh">银<rp>(</rp><rt>' +
           '<span class="py-syllable py-tone-2" ' +
           'lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>',
+      );
+    });
+
+    it("annotates 银 in bopomofo exactly as the section shows", () => {
+      assertIdentical(
+        convertToAnnotatedHtml(dictionary, "银", { transcription: BOPOMOFO }),
+        '<ruby lang="zh">银<rp>(</rp><rt>' +
+          '<span class="py-syllable py-tone-2" ' +
+          'lang="zh-Bopo-CN">ㄧㄣˊ</span></rt><rp>)</rp></ruby>',
       );
     });
 

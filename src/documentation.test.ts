@@ -47,8 +47,17 @@ import {
 import {
   convertToAnnotatedHtml,
   convertToHtml,
+  type HtmlOptions,
   toHtml,
 } from "./format/html.js";
+import {
+  BOPOMOFO,
+  GWOYEU,
+  IPA,
+  type TranscriptionSystem,
+  WADE_GILES,
+  YALE,
+} from "./transcription/systems.js";
 import {
   isUncertainChoice,
   toScript,
@@ -976,6 +985,76 @@ describe("the examples in docs/", () => {
       assertArrayLength(doubled.match(/<ruby/gu) ?? [], 4);
       assertStringIncludes(doubled, ">gān</span>-</rt>");
       assertStringNotIncludes(doubled, "</ruby>-<ruby");
+    });
+
+    it("writes the reading in the system the page names", () => {
+      assertIdentical(
+        convertToAnnotatedHtml(dictionary, "银行", { transcription: BOPOMOFO }),
+        '<ruby lang="zh">银<rp>(</rp><rt>' +
+          '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span>' +
+          "</rt><rp>)</rp></ruby>" +
+          '<ruby lang="zh">行<rp>(</rp><rt>' +
+          '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄏㄤˊ</span>' +
+          "</rt><rp>)</rp></ruby>",
+      );
+      assertStringIncludes(
+        convertToHtml(dictionary, "北京", { transcription: WADE_GILES }),
+        ">Pei³</span>-<span",
+      );
+    });
+
+    it("tags each system the way the page tabulates", () => {
+      const tags: readonly [TranscriptionSystem, string, string][] = [
+        [BOPOMOFO, "zh-Bopo-CN", "zh-Bopo-TW"],
+        [WADE_GILES, "zh-Latn-CN-wadegile", "zh-Latn-TW-wadegile"],
+        [YALE, "zh-Latn-CN", "zh-Latn-TW"],
+        [GWOYEU, "zh-Latn-CN", "zh-Latn-TW"],
+        [IPA, "zh-Latn-CN-fonipa", "zh-Latn-TW-fonipa"],
+      ];
+      for (const [system, mainland, taiwan] of tags) {
+        assertStringIncludes(
+          convertToHtml(dictionary, "银行", { transcription: system }),
+          `lang="${mainland}"`,
+        );
+        assertStringIncludes(
+          convertToHtml(dictionary, "银行", {
+            transcription: system,
+            locale: "zh-TW",
+          }),
+          `lang="${taiwan}"`,
+        );
+      }
+    });
+
+    it("spaces a read number as bopomofo spaces a word, in one <rt>", () => {
+      const number = convertToAnnotatedHtml(dictionary, "95%", {
+        transcription: BOPOMOFO,
+        lang: false,
+        toneClasses: false,
+      });
+      assertArrayLength(number.match(/<ruby/gu) ?? [], 1);
+      assertIdentical(
+        number.replaceAll(/<\/?span[^>]*>/gu, ""),
+        "<ruby>95%<rp>(</rp><rt>ㄅㄞˇ ㄈㄣ ㄓ ㄐㄧㄡˇ ㄕˊ ㄨˇ</rt><rp>)</rp></ruby>",
+      );
+    });
+
+    it("drops a mark pinyin writes that the system has no use for", () => {
+      const written = (options: HtmlOptions): string =>
+        convertToHtml(dictionary, "干干净净", {
+          ...options,
+          lang: false,
+          toneClasses: false,
+        }).replaceAll(/<\/?span[^>]*>/gu, "");
+      assertIdentical(written({}), "gāngān-jìngjìng");
+      assertIdentical(
+        written({ transcription: WADE_GILES }),
+        "kan¹-kan¹-ching⁴-ching⁴",
+      );
+      assertIdentical(
+        written({ transcription: BOPOMOFO }),
+        "ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ",
+      );
     });
 
     it("emits the elements and classes the page documents", () => {

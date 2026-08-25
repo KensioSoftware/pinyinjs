@@ -17,7 +17,13 @@ export const HTML: Command = {
   name: "html",
   summary: "hanzi to pinyin as HTML, one element per syllable",
   argument: "[text...]",
-  flags: [...CONVERT_FLAGS, "no-tone-classes", "no-uncertain", "no-lang"],
+  flags: [
+    ...CONVERT_FLAGS,
+    "no-tone-classes",
+    "no-uncertain",
+    "no-lang",
+    "system",
+  ],
   needsDictionary: true,
   run: (input) => {
     const options = htmlOptions(input.flags);
@@ -36,9 +42,15 @@ export const HTML: Command = {
  */
 export const ANNOTATE: Command = {
   name: "annotate",
-  summary: "hanzi with its pinyin above, as ruby HTML",
+  summary: "hanzi with its reading above, as ruby HTML",
   argument: "[text...]",
-  flags: [...CONVERT_FLAGS, "no-tone-classes", "no-uncertain", "no-lang"],
+  flags: [
+    ...CONVERT_FLAGS,
+    "no-tone-classes",
+    "no-uncertain",
+    "no-lang",
+    "system",
+  ],
   needsDictionary: true,
   run: (input) => {
     const options = htmlOptions(input.flags);

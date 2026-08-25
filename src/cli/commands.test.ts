@@ -223,6 +223,20 @@ describe("the html command", () => {
       '<span class="py-syllable py-tone-2" lang="zh-Latn-TW-pinyin">yín</span>',
     ]);
   });
+
+  it("writes the reading in the system it was asked for", async () => {
+    assertArrayEquals(await cli("html", "--system", "bopomofo", "银"), [
+      '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span>',
+    ]);
+  });
+
+  it("annotates in that system too, the hanzi being the same either way", async () => {
+    assertArrayEquals(await cli("annotate", "--system", "bopomofo", "银"), [
+      '<ruby lang="zh">银<rp>(</rp><rt>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span>' +
+        "</rt><rp>)</rp></ruby>",
+    ]);
+  });
 });
 
 describe("the segment command", () => {

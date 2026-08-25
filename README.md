@@ -69,7 +69,7 @@ běijīng     běijīng   ㄅㄟˇ ㄐㄧㄥ     pei³-ching¹ běijīng   beeij
 | ------------ | --------------------------------------------------- |
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
-| `annotate`   | hanzi with its pinyin above, as ruby HTML           |
+| `annotate`   | hanzi with its reading above, as ruby HTML          |
 | `segment`    | split text into words                               |
 | `match`      | filter text by a pinyin query, best first           |
 | `check`      | mark typed pinyin against the text                  |
@@ -397,6 +397,22 @@ ruby rt {
   font-size: 0.5em;
 }
 ```
+
+**The reading does not have to be pinyin.** `transcription` writes it in
+bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh or the IPA, which is what a page
+offering a reader 注音符號 over the characters needs:
+
+```ts
+import { convertToAnnotatedHtml, BOPOMOFO } from "@kensio/pinyinjs";
+
+convertToAnnotatedHtml(dictionary, "银", { transcription: BOPOMOFO });
+// <ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2"
+//       lang="zh-Bopo-CN">ㄧㄣˊ</span></rt><rp>)</rp></ruby>
+```
+
+The tone class does not move, since the tone belongs to the syllable rather than
+to the spelling, so one CSS rule colours a second tone in either. The `lang`
+follows the system. More in [HTML output](docs/html/).
 
 `toAnnotatedHtml(pieces, options)` renders pieces you already have, and
 `ConvertedPiece.source` is what makes that possible, holding the characters each

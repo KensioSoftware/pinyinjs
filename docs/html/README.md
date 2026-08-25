@@ -118,13 +118,14 @@ attribute:
 
 ## Options
 
-Takes every [conversion option](../options/), plus three of its own:
+Takes every [conversion option](../options/), plus four of its own:
 
-| Option          | Default | Does                                                      |
-| --------------- | ------- | --------------------------------------------------------- |
-| `toneClasses`   | `true`  | `false` leaves off `py-tone-*`                            |
-| `markUncertain` | `true`  | `false` leaves off `py-uncertain` and `data-alternatives` |
-| `lang`          | `true`  | `false` leaves off `lang`                                 |
+| Option          | Default  | Does                                                      |
+| --------------- | -------- | --------------------------------------------------------- |
+| `toneClasses`   | `true`   | `false` leaves off `py-tone-*`                            |
+| `markUncertain` | `true`   | `false` leaves off `py-uncertain` and `data-alternatives` |
+| `lang`          | `true`   | `false` leaves off `lang`                                 |
+| `transcription` | (pinyin) | writes the reading in another system                      |
 
 ```ts
 convertToHtml(dictionary, "银行", { toneClasses: false });
@@ -146,6 +147,81 @@ Conversion options work as they do everywhere:
 ```ts
 convertToHtml(dictionary, "银行", { notation: "numbers" });
 ```
+
+## Another system in place of the pinyin
+
+`transcription` writes the reading in bopomofo, Wade-Giles, Yale, Gwoyeu
+Romatzyh or the IPA. It works the same in an annotation, which is what a page
+offering a reader 注音符號 over the characters needs:
+
+```ts
+import { convertToAnnotatedHtml, BOPOMOFO } from "@kensio/pinyinjs";
+
+convertToAnnotatedHtml(dictionary, "银行", { transcription: BOPOMOFO });
+```
+
+```html
+<ruby lang="zh"
+  >银<rp>(</rp
+  ><rt><span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span></rt
+  ><rp>)</rp></ruby
+>…
+```
+
+Nothing else about the markup changes. The tone class is still `py-tone-2`,
+because the tone is the syllable's and not the spelling's, so a page colours a
+second tone in bopomofo with the rule that already colours it in pinyin.
+`py-uncertain` and `data-alternatives` are unmoved for the same reason.
+
+### The word grouping is shared and only the join changes
+
+The same division [romanisation](../romanization/#the-word-segmentation-is-shared-and-only-the-join-changes)
+makes. What a word is belongs to the language, and how a word's syllables are
+run together belongs to the system, so the join goes _between_ the syllable
+elements and each of them keeps a class and a tag of its own:
+
+```ts
+convertToHtml(dictionary, "北京", { transcription: WADE_GILES });
+// <span …>Pei³</span>-<span …>ching¹</span>
+```
+
+That is why a base spanning several characters still gets one element per
+syllable. 95% is `ㄅㄞˇ ㄈㄣ ㄓ ㄐㄧㄡˇ ㄕˊ ㄨˇ` over three characters, spaced as
+bopomofo spaces a word, inside a single `<rt>`.
+
+A mark pinyin writes and the system does not is dropped rather than carried
+across. 干干净净 is `gāngān-jìngjìng`, and the hyphen is GB/T 16159's way of
+marking a boundary inside one word. Wade-Giles hyphenates every syllable and
+writes `kan¹-kan¹-ching⁴-ching⁴` regardless. Bopomofo has no hyphen at all and
+writes `ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ`.
+
+### What the reading says it is
+
+The `lang` on the reading follows the system, since `zh-Latn-CN-pinyin` is
+false of a script:
+
+| System          | `zh-CN`               | `zh-TW`               |
+| --------------- | --------------------- | --------------------- |
+| pinyin          | `zh-Latn-CN-pinyin`   | `zh-Latn-TW-pinyin`   |
+| bopomofo        | `zh-Bopo-CN`          | `zh-Bopo-TW`          |
+| Wade-Giles      | `zh-Latn-CN-wadegile` | `zh-Latn-TW-wadegile` |
+| Yale            | `zh-Latn-CN`          | `zh-Latn-TW`          |
+| Gwoyeu Romatzyh | `zh-Latn-CN`          | `zh-Latn-TW`          |
+| IPA             | `zh-Latn-CN-fonipa`   | `zh-Latn-TW-fonipa`   |
+
+Every one of them carries the region, because the distinction it marks belongs
+to the reading. 垃圾 is `lājī` under `zh-CN` and `lèsè` under `zh-TW`, and it is
+two different words in bopomofo for the same reason.
+
+Yale and Gwoyeu Romatzyh name themselves nowhere. The IANA registry has a
+variant subtag for pinyin, for Wade-Giles and for the IPA, and none for either
+of those two, so both go out saying only that they are Mandarin in the Latin
+alphabet. A private-use subtag would say more and mean less, since nothing
+reading the tag would know it.
+
+`BOPOMOFO`, `WADE_GILES`, `YALE`, `GWOYEU` and `IPA` are exported, along with
+`TRANSCRIPTION_SYSTEMS` and `transcriptionSystemNamed`. A caller with a system
+of its own can pass any `TranscriptionSystem`.
 
 ## Rendering pieces you already have
 
@@ -266,8 +342,13 @@ $ pinyinjs annotate 银行
 <ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span></rt><rp>)</rp></ruby>…
 ```
 
-`--no-tone-classes`, `--no-uncertain` and `--no-lang` are the three options
-above, and both commands take them.
+```console
+$ pinyinjs annotate --system bopomofo 银
+<ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span></rt><rp>)</rp></ruby>
+```
+
+`--no-tone-classes`, `--no-uncertain`, `--no-lang` and `--system` are the four
+options above, and both commands take them.
 
 <!-- card
 ```ts

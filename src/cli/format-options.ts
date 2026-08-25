@@ -17,7 +17,9 @@ import {
   SLUG_SYLLABLES,
   SLUG_TONES,
   SLUG_UMLAUTS,
+  transcriptionSystem as systemFlag,
 } from "./flag-values.js";
+import { systemNamed } from "./systems.js";
 
 export {
   colourDepth,
@@ -63,14 +65,20 @@ export function slugOptions(flags: Flags): SlugOptions {
 }
 
 /**
- * The same, plus the three flags that only mean anything in HTML.
+ * The same, plus the four flags that only mean anything in HTML.
+ *
+ * `--system` is one of them here as well as on `convert`, and it means the same
+ * thing: write the reading in that system rather than in pinyin. A name no
+ * system answers to leaves the option off, which is the pinyin default.
  */
 export function htmlOptions(flags: Flags): HtmlOptions {
+  const system = systemNamed(systemFlag(flags));
   return {
     ...convertOptions(flags),
     ...(flags["no-tone-classes"] === true && { toneClasses: false }),
     ...(flags["no-uncertain"] === true && { markUncertain: false }),
     ...(flags["no-lang"] === true && { lang: false }),
+    ...(system !== undefined && { transcription: system }),
   };
 }
 
