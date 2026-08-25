@@ -874,6 +874,22 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.properNounVetoes, 1);
     });
 
+    it("gives the 繁體 spelling the tag jieba only counted 简体", () => {
+      // jieba's corpus is 简体, so 听 is `v` and 聽 arrives with nothing. Every
+      // rule that asks what the word beside it is decides on that tag.
+      const { byWord, result } = merge({
+        unihanReadings: new Map([
+          ["听", unihan(["tīng"])],
+          ["聽", unihan(["tīng"])],
+        ]),
+        cedict: [cedictEntry("聽", "听", "ting1")],
+        jieba: new Map([["听", { frequency: 20_000, partOfSpeech: "v" }]]),
+      });
+      assertIdentical(byWord.get("听")?.partOfSpeech, "v");
+      assertIdentical(byWord.get("聽")?.partOfSpeech, "v");
+      assertIdentical(result.stats.carriedTags, 1);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

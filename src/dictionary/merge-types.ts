@@ -64,6 +64,11 @@ export interface MergeStats {
   readonly properNounVetoes: number;
   /** Entries whose parts CC-CEDICT's capitalisation divides. */
   readonly nameBoundaries: number;
+  /**
+   * 繁體 spellings given the part of speech their 简体 word carries. See
+   * {@link import("./traditional-tags.js").carryTagsToTraditional}.
+   */
+  readonly carriedTags: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
 }
