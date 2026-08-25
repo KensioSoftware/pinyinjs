@@ -75,7 +75,7 @@ suffer:
 ```ts
 // core
 convert(dictionary, "银行"); // "yín xíng"
-convert(dictionary, "我要去北京。"); // "Wǒ yào qù běi Jīng."
+convert(dictionary, "我要去北京。"); // "Wǒ yào qù běi jīng."
 
 // standard or full
 convert(dictionary, "银行"); // "yínháng"

@@ -727,6 +727,25 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "上海"), "Shànghǎi");
     });
 
+    it("leaves a bare character that heads more words than names alone", () => {
+      assertIdentical(
+        convert(dictionary, "他连再见也不说"),
+        "tā lián zàijiàn yě bù shuō",
+      );
+      assertIdentical(
+        convert(dictionary, "这周我一直在工作"),
+        "zhè zhōu wǒ yìzhí zài gōngzuò",
+      );
+      assertIdentical(convert(dictionary, "他很帅"), "tā hěn shuài");
+
+      // What the condition does not reach, and the page says so: 福 heads
+      // names far more often than words and is a common word all the same.
+      assertIdentical(
+        convert(dictionary, "清心的人有福了"),
+        "qīngxīn de rén yǒu Fú le",
+      );
+    });
+
     // The page used to say `Lǐ Huá` came from a surname list, and this example
     // passed anyway — for a different reason than the prose gave. So the
     // mechanism is asserted rather than only the output: 李华 is no entry, both
@@ -1720,7 +1739,7 @@ describe("the examples in docs/", () => {
       // rule's Map and Set assertions do not apply to it.
       assertIdentical(core.size, 16_976);
       assertIdentical(convert(core, "银行"), "yín xíng");
-      assertIdentical(convert(core, "我要去北京。"), "Wǒ yào qù běi Jīng.");
+      assertIdentical(convert(core, "我要去北京。"), "Wǒ yào qù běi jīng.");
 
       const standard = await loadDictionary(
         fileSource(dataDirectory),

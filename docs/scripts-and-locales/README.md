@@ -247,7 +247,7 @@ convert(dictionary, "退休後"); // "tuìxiū Hòu", before this
 ```
 
 All three are carried across. 2,068 characters take a tag, 2,318 take a count
-and 103 take the proper-noun bit. Neither the tag nor the count overwrites what
+and 53 take the proper-noun bit. Neither the tag nor the count overwrites what
 a source stated. A character jieba classified keeps its tag, and one jieba
 counted more often than its 简体 form keeps its count. The bit is taken
 whichever way it points, since demoting matters as much as promoting. 後 arrived
@@ -259,15 +259,15 @@ can be an oddity. CC-CEDICT holds 旹 as an old variant of 時, so 时's entry c
 name 旹 while every word 时 appears in says 時. The character table counts words,
 so 時 wins it thousands to one and takes the count 时 was seen with.
 
-Measured over Tatoeba's 48,919 繁體 runs, each converted and then converted
+Measured over Tatoeba's 48,959 繁體 runs, each converted and then converted
 again through its 简体 spelling:
 
-| The two scripts             | before | tags   | counts | and capitals |
-| --------------------------- | ------ | ------ | ------ | ------------ |
-| write the same pinyin       | 82.18% | 85.08% | 90.01% | 91.56%       |
-| differ over a word boundary | 14.05% | 10.39% | 6.05%  | 6.05%        |
-| differ over a syllable      | 3.19%  | 3.16%  | 2.32%  | 2.32%        |
-| differ over a capital       | 0.58%  | 1.36%  | 1.62%  | 0.06%        |
+| The two scripts             | before | tags   | counts | capitals | and name mass |
+| --------------------------- | ------ | ------ | ------ | -------- | ------------- |
+| write the same pinyin       | 82.18% | 85.08% | 90.01% | 91.56%   | 91.62%        |
+| differ over a word boundary | 14.05% | 10.39% | 6.05%  | 6.05%    | 6.05%         |
+| differ over a syllable      | 3.19%  | 3.16%  | 2.32%  | 2.32%    | 2.32%         |
+| differ over a capital       | 0.58%  | 1.36%  | 1.62%  | 0.06%    | 0.00%         |
 
 **No 简体 conversion moves.** The buckets are scaled from the largest count in
 the corpus, and a carried count can equal that count but never exceed it, so
@@ -275,12 +275,12 @@ every 简体 bucket is what it was. Over the 88,866 lines of Tatoeba and
 zh.wikipedia the counts change 3,508 conversions and all 3,508 are in a 繁體
 run.
 
-The bit is carried whether or not the 简体 answer is right. jieba calls 连 a
-surname and 連 now agrees, where before the two differed and one of them happened
-to be correct. The two scripts saying one thing is what this is for. How good
-that one thing is for a bare character is a separate question, and requiring
-every CC-CEDICT sense to be capitalised rather than one was measured and turned
-down, since it drops 李, 王 and 陳 along with 连. See issue #159.
+The bit is carried whether or not the 简体 answer is right, and what the 简体
+answer is for a bare character is a question of its own. jieba called 连 a
+surname, 連 was made to agree, and the two of them were wrong together. Both are
+lower case now, from the names each character heads in jieba's word list. That
+is the last column above, and [capitals](../orthography/#capitals) is where it
+is set out.
 
 ## detectScript
 

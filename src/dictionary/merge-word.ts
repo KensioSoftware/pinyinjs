@@ -27,6 +27,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     cedictByHant,
     phrase,
     jieba,
+    nameMass,
     unihanReadings,
     traditional,
     defaults,
@@ -88,6 +89,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     cedictEntries,
     senses,
     reading,
+    nameMass,
   );
 
   // ── Polyphone priors, for single characters only ──────────

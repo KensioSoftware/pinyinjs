@@ -6,10 +6,11 @@
  * 城市, 阿姨, 智能卡 and 花生仁 are all tagged nr or nz, and the decoder
  * capitalises straight off this bit.
  */
-import { characterCount } from "../script/characters.js";
+import { characterCount, isSingleCharacter } from "../script/characters.js";
 import { type CedictEntry, nameBoundariesOf } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { leadsNames, type NameMassTable } from "./name-mass.js";
 
 /**
  * What the sources between them say about a word's name-hood.
@@ -34,6 +35,12 @@ export interface ProperNoun {
  * The boundary is only looked for where the word survived the veto and reads
  * one syllable per character: 儿化 reads two characters as one syllable and
  * could not be cut by a count of characters.
+ *
+ * **A single character has to lead names as well**, which neither source can
+ * say on its own and jieba's word list can. See
+ * {@link import("./name-mass.js").leadsNames}. 411 characters carried the bit
+ * on one capitalised sense, and 他连再见也不说 came out `tā Lián zàijiàn yě bù
+ * shuō`.
  */
 export function properNounOf(
   word: string,
@@ -41,13 +48,18 @@ export function properNounOf(
   cedictEntries: readonly CedictEntry[],
   senses: readonly CedictEntry[],
   reading: readonly Syllable[],
+  nameMass: NameMassTable,
 ): ProperNoun {
   const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
-  const isProperNoun =
+  const proposed =
     jiebaEntry === undefined
       ? cedictEntries.some((entry) => entry.isProperNoun)
       : isProperNounTag(partOfSpeech) &&
         (senses.length === 0 || senses.some((entry) => entry.isProperNoun));
+  const isProperNoun =
+    proposed &&
+    (!isSingleCharacter(word) ||
+      leadsNames(nameMass, word, jiebaEntry?.frequency ?? 0));
   const isAligned = characterCount(word) === reading.length;
   const boundaries =
     isProperNoun && isAligned
