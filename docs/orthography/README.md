@@ -182,11 +182,15 @@ flag at all, and the surname loses its capital:
 convert(dictionary, "李华"); // "Lǐ Huá"
 convert(dictionary, "钱华"); // "qián Huá", 钱 is not flagged
 convert(dictionary, "孙华"); // "sūn Huá"
-convert(dictionary, "李華"); // "Lǐ huá", 華 is not flagged where 华 is
+convert(dictionary, "錢華"); // "qián Huá", the same gap in 繁體
 ```
 
 A surname list would capitalise all four of those. The last three coming out
 this way is what says there is none.
+
+The flag is the same under either script. It comes from jieba, jieba counted
+简体, and a 繁體 character takes the answer its 简体 character reached. See
+[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
 
 Inheriting jieba's tags means inheriting its mistakes in the other direction
 too. 无缝钢管 is tagged `nz` and converts as `Wúfènggāngguǎn`, with a capital it

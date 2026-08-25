@@ -229,6 +229,13 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "他們都會來。", pinyin: "Tāmen dōu huì lái.", script: "Hant", tags: ["traditional", "sentence", "segmentation"] },
   { hanzi: "生活卻過得不快樂", pinyin: "shēnghuó què guò de bú kuàilè", script: "Hant", tags: ["traditional", "segmentation", "particle"] },
 
+  // ── A 繁體 capital settled the way its 简体 one is ──────────
+  // The proper-noun flag is jieba's and jieba counted 简体, so 華 carried no
+  // flag where 华 did and 後 carried one where 后 did not. 李華 came out
+  // `Lǐ huá` and 退休後 came out `tuìxiū Hòu`.
+  { hanzi: "李華", pinyin: "Lǐ Huá", script: "Hant", tags: ["traditional", "proper-noun", "personal-name"] },
+  { hanzi: "退休後", pinyin: "tuìxiū hòu", script: "Hant", tags: ["traditional", "proper-noun"] },
+
   // ── The simplification merges: traditional disambiguates ───
   { hanzi: "頭髮", pinyin: "tóufa", script: "Hant", tags: ["traditional", "merge"] },
   { hanzi: "發現", pinyin: "fāxiàn", script: "Hant", tags: ["traditional", "merge"] },

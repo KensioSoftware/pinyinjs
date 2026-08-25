@@ -904,6 +904,20 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.carriedCounts, 1);
     });
 
+    it("gives the 繁體 spelling the proper-noun bit its 简体 word reached", () => {
+      const { byWord, result } = merge({
+        unihanReadings: new Map([
+          ["麦", unihan(["mài"])],
+          ["麥", unihan(["mài"])],
+        ]),
+        cedict: [cedictEntry("麥", "麦", "Mai4", { isProperNoun: true })],
+        jieba: new Map([["麦", { frequency: 900, partOfSpeech: "nr" }]]),
+      });
+      assertTrue(byWord.get("麦")?.isProperNoun ?? false);
+      assertTrue(byWord.get("麥")?.isProperNoun ?? false);
+      assertIdentical(result.stats.carriedCapitals, 1);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

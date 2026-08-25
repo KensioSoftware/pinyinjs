@@ -741,17 +741,20 @@ describe("the examples in docs/", () => {
       }
       assertIdentical(convert(dictionary, "李华"), "Lǐ Huá");
 
-      // 钱 and 孙 are surnames the dictionary does not flag, and 華 is the 繁體
-      // 华 without the flag its 简体 spelling carries. All three stay lower
-      // case, which no surname list would allow.
-      for (const character of ["钱", "孙", "華"]) {
+      // 钱 and 孙 are surnames the dictionary does not flag, under either
+      // script. Both stay lower case, which no surname list would allow.
+      for (const character of ["钱", "孙", "錢", "孫"]) {
         const entry = dictionary.lookup(character);
         assertNonNullable(entry);
         assertFalse(entry.isProperNoun);
       }
       assertIdentical(convert(dictionary, "钱华"), "qián Huá");
       assertIdentical(convert(dictionary, "孙华"), "sūn Huá");
-      assertIdentical(convert(dictionary, "李華"), "Lǐ huá");
+      assertIdentical(convert(dictionary, "錢華"), "qián Huá");
+
+      // The flag reads the same under either script, since a 繁體 character
+      // takes the answer its 简体 character reached.
+      assertIdentical(convert(dictionary, "李華"), "Lǐ Huá");
     });
 
     it("handles 儿 three different ways", () => {
