@@ -6,6 +6,7 @@ import {
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { writeWadeGilesWord } from "../transcription/wade-giles.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { capitalised, isCapitalised, isPinyinMark } from "./transcribed.js";
 
 /**
  * How a system writes a run of syllables that are one word.
@@ -35,27 +36,6 @@ export type WriteWord = (syllables: readonly Syllable[]) => string;
  */
 export interface TranscriptionOptions {
   readonly capitals?: boolean;
-}
-
-/**
- * Whether a piece was written with a capital.
- *
- * Read off the text the conversion produced rather than recomputed, because
- * capitalisation is settled by {@link convertPieces} against the whole sentence
- * — a proper noun, or the first word after a full stop — and none of that
- * survives in a bare {@link Syllable}.
- */
-function isCapitalised(text: string): boolean {
-  const first = /\p{L}/u.exec(text)?.[0];
-  return first !== undefined && first !== first.toLowerCase();
-}
-
-/**
- * Put a capital back on a transcribed word.
- */
-function capitalised(text: string): string {
-  // Not global: only the first letter of the word takes the capital.
-  return text.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 }
 
 /**
@@ -109,6 +89,12 @@ export function toTranscription(
 
   for (const piece of pieces) {
     if (piece.syllable === undefined) {
+      // A mark pinyin writes and this system does not is dropped rather than
+      // ending the word, so the system's own join covers it. See
+      // {@link isPinyinMark}.
+      if (isPinyinMark(piece)) {
+        continue;
+      }
       flush();
       written.push(piece.text);
       continue;

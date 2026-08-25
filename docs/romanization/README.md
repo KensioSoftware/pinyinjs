@@ -638,6 +638,10 @@ $ pinyinjs convert --system bopomofo 我要去北京大学。
 ㄨㄛˇ ㄧㄠˋ ㄑㄩˋ ㄅㄟˇ ㄐㄧㄥ ㄉㄚˋ ㄒㄩㄝˊ.
 ```
 
+The same conversion goes out as markup with the reading above the characters,
+which is what a page offering a reader 注音符號 needs. See
+[another system in place of the pinyin](../html/#another-system-in-place-of-the-pinyin).
+
 ### The word segmentation is shared and only the join changes
 
 This is the question the roadmap left open, and it comes apart into two.

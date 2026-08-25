@@ -263,6 +263,20 @@ export {
 } from "./transcription/ipa.js";
 export type { IpaOptions } from "./transcription/ipa.js";
 
+export {
+  BOPOMOFO,
+  GWOYEU,
+  IPA,
+  TRANSCRIPTION_SYSTEMS,
+  transcriptionSystemNamed,
+  WADE_GILES,
+  YALE,
+} from "./transcription/systems.js";
+export type {
+  TranscriptionSystem,
+  TranscriptionSystemName,
+} from "./transcription/systems.js";
+
 export { segment } from "./decode/segment.js";
 export type { Segment } from "./decode/segment.js";
 

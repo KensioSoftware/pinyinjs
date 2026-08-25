@@ -7,6 +7,15 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import type { ConvertedPiece } from "../decode/convert.js";
+import { readSyllable } from "../syllable/syllable.js";
+import {
+  BOPOMOFO,
+  GWOYEU,
+  IPA,
+  WADE_GILES,
+  YALE,
+} from "../transcription/systems.js";
 import {
   convertToAnnotatedHtml,
   convertToHtml,
@@ -282,5 +291,153 @@ describe("annotating hanzi with its reading", () => {
 
   it("annotates nothing at all as nothing at all", () => {
     assertIdentical(annotated(""), "");
+  });
+});
+
+/**
+ * One syllable of a hand-built conversion, reading a character of its own.
+ */
+function readingPiece(text: string): ConvertedPiece {
+  return {
+    text,
+    syllable: readSyllable(text),
+    source: "干",
+    confidence: undefined,
+  };
+}
+
+describe("writing the reading in another system", () => {
+  it("writes the system's spelling in place of the pinyin", () => {
+    assertIdentical(
+      html("银行", { transcription: BOPOMOFO }),
+      '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span>' +
+        ' <span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄏㄤˊ</span>',
+    );
+  });
+
+  it("joins the syllables of a word the way the system does", () => {
+    // The join is the whole of the difference between the five at this level,
+    // and it goes between the spans so that each syllable keeps an element of
+    // its own to carry a tone class on.
+    assertStringIncludes(
+      html("银行", { transcription: WADE_GILES }),
+      "</span>-<span",
+    );
+    assertStringIncludes(
+      html("银行", { transcription: BOPOMOFO }),
+      "</span> <span",
+    );
+    assertStringIncludes(html("银行", { transcription: YALE }), "</span><span");
+  });
+
+  it("declares the script and the variant the system is registered under", () => {
+    assertStringIncludes(
+      html("银行", { transcription: BOPOMOFO }),
+      'lang="zh-Bopo-CN"',
+    );
+    assertStringIncludes(
+      html("银行", { transcription: WADE_GILES }),
+      'lang="zh-Latn-CN-wadegile"',
+    );
+    assertStringIncludes(
+      html("银行", { transcription: IPA }),
+      'lang="zh-Latn-CN-fonipa"',
+    );
+  });
+
+  it("says only zh-Latn where the registry names no variant", () => {
+    // Yale and Gwoyeu Romatzyh have no registered variant, so the tag says
+    // Mandarin in the Latin alphabet and stops there.
+    assertStringIncludes(
+      html("银行", { transcription: YALE }),
+      'lang="zh-Latn-CN"',
+    );
+    assertStringIncludes(
+      html("银行", { transcription: GWOYEU }),
+      'lang="zh-Latn-CN"',
+    );
+  });
+
+  it("carries the reading standard into the tag as pinyin does", () => {
+    assertStringIncludes(
+      html("垃圾", { transcription: BOPOMOFO, locale: "zh-TW" }),
+      'lang="zh-Bopo-TW"',
+    );
+  });
+
+  it("keeps the tone classes, which the reading still has", () => {
+    assertStringIncludes(
+      html("银行", { transcription: BOPOMOFO }),
+      'class="py-syllable py-tone-2"',
+    );
+  });
+
+  it("leaves the tone off where the system can write it separately", () => {
+    assertStringIncludes(
+      html("银行", { transcription: WADE_GILES, notation: "none" }),
+      ">yin</span>",
+    );
+    // Bopomofo marks the tone with a symbol of the script, so there is nothing
+    // to leave off and the flag is ignored rather than approximated.
+    assertStringIncludes(
+      html("银行", { transcription: BOPOMOFO, notation: "none" }),
+      ">ㄧㄣˊ</span>",
+    );
+  });
+
+  it("puts the system's join where pinyin wrote a mark of its own", () => {
+    // 干干净净 is `gāngān-jìngjìng`, one word with a boundary inside it. The
+    // hyphen is pinyin's, and every other system joins a word its own way.
+    const pieces: readonly ConvertedPiece[] = [
+      readingPiece("gān"),
+      readingPiece("gān"),
+      {
+        text: "-",
+        syllable: undefined,
+        source: undefined,
+        confidence: undefined,
+      },
+      readingPiece("jìng"),
+      readingPiece("jìng"),
+    ];
+    const written = (options: HtmlOptions): string =>
+      toHtml(pieces, options).replaceAll(/<\/?span[^>]*>/gu, "");
+    assertIdentical(written({}), "gāngān-jìngjìng");
+    assertIdentical(
+      written({ transcription: BOPOMOFO }),
+      "ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ",
+    );
+    assertIdentical(
+      written({ transcription: WADE_GILES }),
+      "kan¹-kan¹-ching⁴-ching⁴",
+    );
+  });
+
+  it("annotates the hanzi with the system's reading above it", () => {
+    assertIdentical(
+      annotated("银行", { transcription: BOPOMOFO }),
+      '<ruby lang="zh">银<rp>(</rp><rt>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span>' +
+        "</rt><rp>)</rp></ruby>" +
+        '<ruby lang="zh">行<rp>(</rp><rt>' +
+        '<span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄏㄤˊ</span>' +
+        "</rt><rp>)</rp></ruby>",
+    );
+  });
+
+  it("keeps a span for every syllable of a base that spans characters", () => {
+    // 95% is six syllables over one base, and each of them keeps its own
+    // element and its own tone class inside the one <rt>.
+    const rt = annotated("95%", { transcription: BOPOMOFO });
+    assertIdentical(rt.match(/<span/gu)?.length, 6);
+    assertStringIncludes(rt, "</span> <span");
+    assertIdentical(rt.match(/<ruby/gu)?.length, 1);
+  });
+
+  it("leaves the base alone, which is hanzi in any system", () => {
+    assertStringIncludes(
+      annotated("银行", { transcription: IPA }),
+      '<ruby lang="zh">银',
+    );
   });
 });

@@ -115,8 +115,11 @@ See [romanisation](../romanization/).
 | `writeIpa`, `writeIpaWord`, `writeIpaSymbols`        | IPA, with or without the tone letters    |
 | `readIpa`                                            | IPA → every syllable it can be           |
 | `convertToWadeGiles`, `toTranscription`              | hanzi → a system, end to end             |
+| `BOPOMOFO`, `WADE_GILES`, `YALE`, `GWOYEU`, `IPA`    | one system, as a table entry             |
+| `TRANSCRIPTION_SYSTEMS`, `transcriptionSystemNamed`  | all five, and one by name                |
 | `BopomofoOptions`, `WadeGilesOptions`, `YaleOptions` | types                                    |
 | `IpaOptions`, `WriteWord`                            | types                                    |
+| `TranscriptionSystem`, `TranscriptionSystemName`     | types                                    |
 
 The syllable tables live in `src/transcription/`. Bopomofo has a script of its
 own and IPA writes sounds, so half of them are transcriptions and only half are

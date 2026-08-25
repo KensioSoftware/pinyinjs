@@ -14,7 +14,7 @@ Wǒ yào qù Běijīng.
 | ------------ | --------------------------------------------------- |
 | `convert`    | hanzi to pinyin                                     |
 | `html`       | the same, as HTML                                   |
-| `annotate`   | hanzi with its pinyin above, as ruby HTML           |
+| `annotate`   | hanzi with its reading above, as ruby HTML          |
 | `segment`    | split text into words                               |
 | `match`      | filter text by a pinyin query, best first           |
 | `check`      | mark typed pinyin against the text                  |
@@ -217,6 +217,14 @@ $ pinyinjs html 行
 <span class="py-syllable py-tone-2 py-uncertain" lang="zh-Latn-CN-pinyin" data-alternatives="háng héng hàng">xíng</span>
 ```
 
+`html` and `annotate` both take `--system`, which writes the reading in
+bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh or the IPA instead of pinyin:
+
+```console
+$ pinyinjs annotate --system bopomofo 银
+<ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span></rt><rp>)</rp></ruby>
+```
+
 See [HTML output](../html/).
 
 ### script
@@ -284,8 +292,8 @@ Every conversion option the library takes is a flag on `convert`, `html`,
 `convert` also takes `--system`, which writes the conversion in another
 transcription system, and `--greedy`, which decodes with the old longest-match
 baseline instead of the lattice. See
-[converting](../converting/#the-greedy-baseline). `html` also takes
-`--no-tone-classes`, `--no-uncertain` and `--no-lang`. `check` also takes
+[converting](../converting/#the-greedy-baseline). `html` and `annotate` also
+take `--no-tone-classes`, `--no-uncertain`, `--no-lang` and `--system`. `check` also takes
 `--require-tones` and `--require-spacing`, which count those two axes towards
 the score. `sandhi` takes `--third-tone` and `--no-sandhi`. `number` takes
 `--digits`, `--yao`, `--no-liang` and `--percent`, plus `--notation` and the

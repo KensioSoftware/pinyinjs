@@ -15,6 +15,8 @@ import { writeIpaWord } from "../transcription/ipa.js";
 import { writeWadeGilesWord } from "../transcription/wade-giles.js";
 import { readWadeGilesWord } from "../transcription/wade-giles.js";
 import { writeSyllable } from "../syllable/syllable.js";
+import { TRANSCRIPTION_SYSTEMS } from "../transcription/systems.js";
+import { toHtml } from "./html.js";
 import { convertToWadeGiles, toTranscription } from "./transcription.js";
 
 const dataDirectory = fileURLToPath(new URL("../../data", import.meta.url));
@@ -37,6 +39,50 @@ describe("writing a conversion in another system", () => {
   it("writes the tone as a raised digit unless asked not to", () => {
     assertIdentical(convertToWadeGiles(dictionary, "北京"), "Pei³-ching¹");
     assertIdentical(plain("北京"), "Pei-ching");
+  });
+
+  it("does not write a mark of pinyin's that the system has its own join for", () => {
+    // 干干净净 is `gāngān-jìngjìng`, one orthographic word with a boundary
+    // inside it. Wade-Giles hyphenates every syllable of a word and writes the
+    // same string; bopomofo has no hyphen and would otherwise be given one.
+    const pieces = convertPieces(dictionary, "干干净净");
+    assertIdentical(
+      toTranscription(pieces, (syllables) => writeWadeGilesWord(syllables)),
+      "kan¹-kan¹-ching⁴-ching⁴",
+    );
+    assertIdentical(
+      toTranscription(pieces, writeBopomofoWord, { capitals: false }),
+      "ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ",
+    );
+  });
+
+  it("writes what the markup path writes, with the markup taken off", () => {
+    // The two paths decide the same three things — the word grouping, the
+    // join and the capitals — and this is what keeps them from drifting.
+    const texts = [
+      "银行",
+      "我要去北京。",
+      "玩儿",
+      "95%",
+      "干干净净",
+      "hello 银行",
+    ];
+    for (const system of TRANSCRIPTION_SYSTEMS) {
+      for (const text of texts) {
+        const pieces = convertPieces(dictionary, text);
+        assertIdentical(
+          toHtml(pieces, {
+            transcription: system,
+            lang: false,
+            toneClasses: false,
+          }).replaceAll(/<\/?span[^>]*>/gu, ""),
+          toTranscription(pieces, (syllables) => system.word(syllables, true), {
+            capitals: system.capitals,
+          }),
+          `${system.name} ${text}`,
+        );
+      }
+    }
   });
 
   it("does not write the 隔音符号, which would be a different mark", () => {

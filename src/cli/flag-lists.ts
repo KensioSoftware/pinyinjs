@@ -18,6 +18,7 @@ import type { CapitalStyle } from "../orthography/capitals.js";
 import type { PunctuationStyle } from "../orthography/punctuation.js";
 import type { Locale } from "../script/script.js";
 import type { ToneNotation } from "../syllable/syllable.js";
+import type { TranscriptionSystemName } from "../transcription/systems.js";
 import type { FlagName, Flags } from "./flags.js";
 import { UsageError } from "./usage-error.js";
 
@@ -95,14 +96,7 @@ export const TIERS: readonly Tier[] = ["core", "standard", "full"];
  * `chi` is a well-formed spelling in both pinyin and Wade-Giles and means
  * different syllables in each.
  */
-export type TranscriptionSource =
-  | "auto"
-  | "pinyin"
-  | "wade-giles"
-  | "bopomofo"
-  | "yale"
-  | "gwoyeu"
-  | "ipa";
+export type TranscriptionSource = "auto" | "pinyin" | TranscriptionSystemName;
 
 export const SOURCES: readonly TranscriptionSource[] = [
   "auto",
