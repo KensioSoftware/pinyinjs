@@ -90,6 +90,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
       composedTaiwanReadings: localised.composed,
       carriedTags: carried.carriedTags,
       carriedCounts: carried.carriedCounts,
+      carriedCapitals: carried.carriedCapitals,
       rejected: rejected.size,
     },
   };

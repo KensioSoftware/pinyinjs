@@ -22,6 +22,7 @@ function entry(
   hant: string,
   partOfSpeech: string,
   frequency = 1000,
+  isProperNoun = false,
 ): DictionaryEntry {
   return {
     hans,
@@ -29,8 +30,20 @@ function entry(
     readings: { cn: reading("jiàn") },
     frequency,
     partOfSpeech,
-    isProperNoun: false,
+    isProperNoun,
   };
+}
+
+/**
+ * Whether each spelling is a proper noun after the pass.
+ */
+function namesAfter(
+  entries: readonly DictionaryEntry[],
+): ReadonlyMap<string, boolean> {
+  const { entries: carried } = carryToTraditional(entries);
+  return new Map(
+    carried.map((one: DictionaryEntry) => [one.hans, one.isProperNoun]),
+  );
 }
 
 /**
@@ -96,15 +109,12 @@ describe("carrying a tag to the 繁體 spelling", () => {
     assertIdentical(tags.get("讀"), "");
   });
 
-  it("keeps a proper noun's tag where it is", () => {
-    // The tag travels with `isProperNoun`, which `properNounOf` settles from
-    // jieba and CC-CEDICT together and can veto. Carrying one without the
-    // other would leave an entry claiming a name it also denies.
+  it("lends a proper noun's tag now that the bit goes with it", () => {
     const tags = tagsAfter([
-      entry("汤姆", "湯姆", "nr"),
-      entry("湯姆", "湯姆", ""),
+      entry("麦", "麥", "nr", 1000, true),
+      entry("麥", "麥", "", 0),
     ]);
-    assertIdentical(tags.get("湯姆"), "");
+    assertIdentical(tags.get("麥"), "nr");
   });
 
   it("lends from the commoner word where two name one spelling", () => {
@@ -189,5 +199,43 @@ describe("carrying a count to the 繁體 spelling", () => {
       entry("看", "看", "v", 900),
     ]);
     assertIdentical(carriedCounts, 2);
+  });
+});
+
+describe("carrying the proper-noun bit to the 繁體 spelling", () => {
+  it("gives a spelling the answer its 简体 character reached", () => {
+    const names = namesAfter([
+      entry("麦", "麥", "nr", 1000, true),
+      entry("麥", "麥", "", 0, false),
+    ]);
+    assertIdentical(names.get("麥"), true);
+  });
+
+  it("takes the bit away as readily as it gives it", () => {
+    // 后 is a locative and 後 arrived tagged `nr` with nothing under its own
+    // spelling to challenge it.
+    const names = namesAfter([
+      entry("后", "後", "f", 9000, false),
+      entry("後", "後", "nr", 400, true),
+    ]);
+    assertIdentical(names.get("後"), false);
+  });
+
+  it("leaves the 简体 character alone, which is where the answer came from", () => {
+    const names = namesAfter([
+      entry("麦", "麥", "nr", 1000, true),
+      entry("麥", "麥", "", 0, false),
+    ]);
+    assertIdentical(names.get("麦"), true);
+  });
+
+  it("counts only the spellings whose answer changed", () => {
+    const { carriedCapitals } = carryToTraditional([
+      entry("麦", "麥", "nr", 1000, true),
+      entry("麥", "麥", "", 0, false),
+      entry("听", "聽", "v", 20_435, false),
+      entry("聽", "聽", "", 0, false),
+    ]);
+    assertIdentical(carriedCapitals, 1);
   });
 });

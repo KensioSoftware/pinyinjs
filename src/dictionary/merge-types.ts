@@ -71,6 +71,8 @@ export interface MergeStats {
   readonly carriedTags: number;
   /** 繁體 spellings given the corpus count their 简体 word carries. */
   readonly carriedCounts: number;
+  /** 繁體 spellings given the proper-noun bit their 简体 word carries. */
+  readonly carriedCapitals: number;
   /** Words dropped because no source gave a usable reading. */
   readonly rejected: number;
 }

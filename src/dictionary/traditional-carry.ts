@@ -1,19 +1,22 @@
 /**
  * What a 繁體 spelling takes from the 简体 word it pairs with.
  *
- * jieba's dictionary was counted over a 简体 corpus, so both of the fields it
- * supplies arrive on one script and not the other. 听 is tagged `v` and counted
- * 20,435 times; 聽 is tagged nothing and counted nowhere. Every rule that asks
- * what the word beside it is decides on the tag, and every path the decoder
- * weighs is priced on the count, so 繁體 text was read by rules that could not
- * see it and priced by a model that had never met it.
+ * jieba's dictionary was counted over a 简体 corpus, and all three of the fields
+ * it settles arrive on one script and not the other. 听 is tagged `v` and
+ * counted 20,435 times. 聽 is tagged nothing, counted nowhere, and 麥 is not a
+ * name where 麦 is one. Every rule that asks what the word beside it is decides
+ * on the tag, every path the decoder weighs is priced on the count, and the
+ * capital comes straight off the proper-noun bit, so 繁體 text was read by
+ * rules that could not see it, priced by a model that had never met it and
+ * capitalised by a different answer from the one 简体 got.
  *
- * Both travel over the pairing the entries already hold. An entry names the
- * 繁體 spelling of its own word. The entry keyed on that spelling is therefore
- * the same word written the other way, and how a word is classed and how often
- * it is met are facts about the word rather than about the spelling.
- * `corpus-mass.ts` makes the same move for the polyphone priors, where a vote
- * cast for a 简体 word is cast again for whichever 繁體 form the reading picks.
+ * All three travel over the pairing the entries already hold. An entry names
+ * the 繁體 spelling of its own word. The entry keyed on that spelling is
+ * therefore the same word written the other way, and how a word is classed, how
+ * often it is met and whether it is a name are facts about the word rather than
+ * about the spelling. `corpus-mass.ts` makes the same move for the polyphone
+ * priors, where a vote cast for a 简体 word is cast again for whichever 繁體
+ * form the reading picks.
  *
  * A 繁體 spelling that is not a headword of its own needs none of this, because
  * `artifact-claims.ts` lets its 简体 entry claim the key outright and the key
@@ -24,7 +27,6 @@
 import { convertCharacter } from "../script/conversion.js";
 import type { CharacterConversion } from "../script/conversion.js";
 import { isSingleCharacter } from "../script/characters.js";
-import { isProperNounTag } from "../sources/jieba.js";
 import type { DictionaryEntry } from "./entry.js";
 import { traditionalCharacterTable } from "./script-pairings.js";
 
@@ -57,6 +59,7 @@ export interface CarriedEntries {
   readonly entries: readonly DictionaryEntry[];
   readonly carriedTags: number;
   readonly carriedCounts: number;
+  readonly carriedCapitals: number;
 }
 
 /**
@@ -113,18 +116,16 @@ function lendersByTraditional(
  * Whether an entry has a tag worth lending.
  */
 function canLendTag(entry: DictionaryEntry): boolean {
-  return isTagged(entry.partOfSpeech) && !isProperNounTag(entry.partOfSpeech);
+  return isTagged(entry.partOfSpeech);
 }
 
 /**
  * The tag a spelling ends up with, and whether it took one.
  *
- * A proper noun lends nothing. Its tag travels with
- * {@link DictionaryEntry.isProperNoun}, which `properNounOf` settles from jieba
- * **and** CC-CEDICT's capitalisation and which can veto what the tag proposes.
- * Carrying the tag alone would leave an entry claiming a place name that the
- * same entry denies is a proper noun, so `nr`, `ns`, `nt` and `nz` stay where
- * they are.
+ * `nr`, `ns`, `nt` and `nz` are lent along with the rest now that
+ * {@link properFor} carries the bit they go with. Lending the tag without it
+ * would have left a spelling claiming a place name the same entry denies is a
+ * proper noun, which is why they were held back until the bit travelled.
  */
 function tagFor(
   entry: DictionaryEntry,
@@ -169,6 +170,30 @@ function countFor(
 }
 
 /**
+ * Whether a spelling is a name, and whether that is a change.
+ *
+ * The bit is what survived `properNounOf`, so it is the answer both sources
+ * reached together rather than jieba's proposal, and it is taken whichever way
+ * it points. Demoting matters as much as promoting. 后 is a locative and 後
+ * arrived tagged `nr` with nothing under its own spelling to challenge it, so
+ * 退休後 came out `tuìxiū Hòu` where 退休后 came out `tuìxiū hòu`.
+ *
+ * This carries the 简体 answer whether or not that answer is right. jieba calls
+ * 连 a surname and 連 now agrees, where before the two differed and one of them
+ * happened to be correct. The two scripts saying one thing is what this is for.
+ * How good that one thing is for a bare character is #159.
+ */
+function properFor(
+  entry: DictionaryEntry,
+  lender: DictionaryEntry | undefined,
+): boolean | undefined {
+  if (lender === undefined || lender.isProperNoun === entry.isProperNoun) {
+    return undefined;
+  }
+  return lender.isProperNoun;
+}
+
+/**
  * Give every 繁體 headword the tag and the count its 简体 word carries.
  *
  * Neither overwrites something the source stated. A spelling jieba classified
@@ -187,11 +212,18 @@ export function carryToTraditional(
   );
   let carriedTags = 0;
   let carriedCounts = 0;
+  let carriedCapitals = 0;
 
   const carried = entries.map((entry) => {
-    const partOfSpeech = tagFor(entry, tagLenders.get(entry.hans));
+    const tagLender = tagLenders.get(entry.hans);
+    const partOfSpeech = tagFor(entry, tagLender);
     const frequency = countFor(entry, countLenders.get(entry.hans));
-    if (partOfSpeech === undefined && frequency === undefined) {
+    const isProperNoun = properFor(entry, tagLender);
+    if (
+      partOfSpeech === undefined &&
+      frequency === undefined &&
+      isProperNoun === undefined
+    ) {
       return entry;
     }
     if (partOfSpeech !== undefined) {
@@ -200,12 +232,16 @@ export function carryToTraditional(
     if (frequency !== undefined) {
       carriedCounts += 1;
     }
+    if (isProperNoun !== undefined) {
+      carriedCapitals += 1;
+    }
     return {
       ...entry,
       ...(partOfSpeech !== undefined && { partOfSpeech }),
       ...(frequency !== undefined && { frequency }),
+      ...(isProperNoun !== undefined && { isProperNoun }),
     };
   });
 
-  return { entries: carried, carriedTags, carriedCounts };
+  return { entries: carried, carriedTags, carriedCounts, carriedCapitals };
 }
