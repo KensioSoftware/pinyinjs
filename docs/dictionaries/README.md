@@ -210,6 +210,15 @@ character it pairs with, since the corpus was written in one script and the two
 are the same character. 時 reads 103,735 because 时 does. See
 [the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
 
+`frequencyAt` and `full.counts` disagree over one class of key. A proper noun
+the corpus never counted is bucketed as though jieba had counted it 3, the
+default jieba itself gives a word it lists and cannot count. A name is missing
+from that list far more often than it is rare, and 脸书 counted 0 used to cost
+the decoder more than 脸 and 书 together. It is counted 0 and bucketed 2, and
+10,676 of the full tier's keys are in the same position. Rank on the counts
+where the question is how often a word is met, and on the buckets where it is
+what the decoder will do with it.
+
 jieba supplies the counts, and jieba is a segmenter.
 Its weights are tuned to make segmentation come out right, and how often a
 reader meets a word is a separate measurement (a corpus list such as SUBTLEX-CH

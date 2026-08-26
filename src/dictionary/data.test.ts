@@ -16,7 +16,8 @@ import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
-import { FrequencyTable } from "./frequency-table.js";
+import { COLUMN, PROPER_NOUN_FLAG } from "./artifact-format.js";
+import { countForQuantising, FrequencyTable } from "./frequency-table.js";
 import { WordCounts } from "./word-counts.js";
 import { isSingleCharacter, toCharacters } from "../script/characters.js";
 import { KeyIndex } from "./key-index.js";
@@ -109,6 +110,19 @@ class Tier {
     const line = this.#lines[at] ?? "";
     const end = line.indexOf("\t");
     return end === -1 ? line : line.slice(0, end);
+  }
+
+  /**
+   * Whether the key at a position is flagged a proper noun.
+   *
+   * Read off the line the way {@link Tier.storedReadingAt} reads the reading,
+   * since a sweep over every key cannot afford a lookup each time.
+   */
+  isNameAt(at: number): boolean {
+    return (
+      (this.#lines[at] ?? "").split(COLUMN)[3]?.startsWith(PROPER_NOUN_FLAG) ===
+      true
+    );
   }
 
   /**
@@ -403,17 +417,36 @@ describe("the committed dictionary", () => {
       assertIdentical(countOf("头发"), countOf("頭髮"));
     });
 
+    it("quantises a name the corpus never counted at jieba's default", () => {
+      // 脸书, 推特 and 高雄 are counted nowhere and all three came apart
+      // before the floor. The counts file keeps the zero the corpus reported
+      // and the buckets carry jieba's default for a word it cannot count.
+      for (const name of ["脸书", "推特", "高雄"]) {
+        const found = full.index.lookup(name);
+        assertTrue(found.isKey);
+        assertIdentical(counts.countOf(found.index), 0);
+        assertIdentical(buckets.bucketOf(found.index), 2);
+      }
+    });
+
     it("agrees with the bucket the decoder reads", () => {
-      // The bucket is a monotone function of the count, so a key counted above
-      // another can never be bucketed below it. That is the invariant that
-      // breaks first if the two files ever fall out of alignment, and it reads
-      // every key rather than sampling, because a misalignment of one position
-      // leaves most neighbours looking fine.
-      let previousCount = counts.countOf(0);
+      // The bucket is a monotone function of the count the artifact quantised,
+      // so a key counted above another can never be bucketed below it. That is
+      // the invariant that breaks first if the two files ever fall out of
+      // alignment, and it reads every key rather than sampling, because a
+      // misalignment of one position leaves most neighbours looking fine.
+      //
+      // The count quantised is not always the count recorded. A name the
+      // corpus never counted is quantised at jieba's default for an uncounted
+      // word, where `full.counts` keeps the zero the corpus reported. See
+      // `countForQuantising`.
+      const quantised = (at: number): number =>
+        countForQuantising(counts.countOf(at), full.isNameAt(at));
+      let previousCount = quantised(0);
       let previousBucket = buckets.bucketOf(0);
       const disagreements: string[] = [];
       for (let at = 1; at < full.index.size; at++) {
-        const count = counts.countOf(at);
+        const count = quantised(at);
         const bucket = buckets.bucketOf(at);
         if (count > previousCount && bucket < previousBucket) {
           disagreements.push(full.index.keyAt(at));
