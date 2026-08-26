@@ -65,7 +65,8 @@ import {
 } from "./decode/script.js";
 import { match } from "./search/match.js";
 import { candidates, homophonesOf } from "./search/candidates.js";
-import { ReverseIndex } from "./search/reverse-index.js";
+import { foldReading } from "./search/candidate-query.js";
+import { readingKey, ReverseIndex } from "./search/reverse-index.js";
 import { slug } from "./format/slug.js";
 import { convertToWadeGiles } from "./format/transcription.js";
 import { readBopomofo, writeBopomofo } from "./transcription/bopomofo.js";
@@ -1437,6 +1438,13 @@ describe("the examples in docs/", () => {
       },
       INDEX_TIMEOUT,
     );
+
+    it("folds the four spellings the page folds", () => {
+      assertIdentical(readingKey("yin2 hang2"), "yinhang");
+      assertIdentical(readingKey("rèn shí"), "rènshí");
+      assertIdentical(foldReading("rèn shí"), "renshi");
+      assertIdentical(foldReading("Lǜ'sè"), "luse");
+    });
 
     it(
       "reaches the same index a slice at a time as in one go",

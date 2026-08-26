@@ -43,6 +43,14 @@ export const STEP = 20_000;
  * typist writes, and the query side reaches the key from both directions by
  * searching `wan` and `wanr` alike — see `candidates`.
  *
+ * The reading is expected in the notation the artifact stores. That is
+ * lowercase, tones as digits, and syllables separated by spaces. Anything else
+ * passes through untouched, because only the digits, the spaces and the umlaut
+ * are looked for. A mark keeps its mark and a capital keeps its capital, so
+ * `rèn shí` keys `rènshí` and `Bei3 jing1` keys `Beijing`. Neither is a key any
+ * query reaches. `foldReading` folds a reading written the way a person writes
+ * one.
+ *
  * Nothing here parses a syllable, which is what keeps a pass over every key in
  * the dictionary affordable.
  */

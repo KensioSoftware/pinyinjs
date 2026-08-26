@@ -44,6 +44,15 @@ describe("deriving a reverse index", () => {
     it("keeps the r of 儿化, which is a letter a typist writes", () => {
       assertIdentical(readingKey("wanr2"), "wanr");
     });
+
+    it("leaves a mark or a capital alone, which no stored reading has", () => {
+      assertIdentical(readingKey("rèn shí"), "rènshí");
+      assertIdentical(readingKey("Bei3 jing1"), "Beijing");
+    });
+
+    it("gives a key the index answers to unchanged", () => {
+      assertArrayEquals(words(readingKey("yin2 hang2")), ["銀行", "银行"]);
+    });
   });
 
   describe("the groups", () => {
