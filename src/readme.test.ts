@@ -775,6 +775,10 @@ describe("the examples in README.md", () => {
       assertTrue(dictionary.hasPrefix("银"));
     });
 
+    it("buckets 头发 where the README says it is", () => {
+      assertIdentical(dictionary.frequencyOf("头发"), 9);
+    });
+
     it("gives 行 all four of its readings, likeliest first", () => {
       assertArrayEquals(
         dictionary.readingsOf("行").map((found) => written(found)),
