@@ -19,6 +19,10 @@ export const ANY_READING = "*";
 
 /**
  * A reading key that ignores 儿化, which never bears on which variant is meant.
+ *
+ * Local to the variant table and named for what it keys. The `readingKey` the
+ * package exports is a different function, folding a written reading into the
+ * key the reverse index holds it under.
  */
 export function readingKey(syllable: Syllable | undefined): string {
   if (syllable === undefined) {

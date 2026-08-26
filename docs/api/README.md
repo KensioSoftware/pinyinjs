@@ -165,6 +165,8 @@ See [candidates](../candidates/).
 | `candidates`        | a pinyin query → the hanzi it could be, likeliest first                          |
 | `homophonesOf`      | the words read exactly as this one is                                            |
 | `ReverseIndex`      | the reading → words index: `of`, `building`, `from`, `positionsFor`, `serialise` |
+| `readingKey`        | a stored reading → the key the index holds it under                              |
+| `foldReading`       | pinyin written any way at all → that same key                                    |
 | `CandidateOptions`  | type: `limit` and `script`                                                       |
 | `ScriptPreference`  | type: which script to keep, and the tables that can tell                         |
 | `ReverseIndexBuild` | type: a build being driven a slice at a time                                     |

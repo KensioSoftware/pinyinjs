@@ -289,7 +289,9 @@ export type {
   ScriptPreference,
 } from "./search/candidates.js";
 
-export { ReverseIndex } from "./search/reverse-index.js";
+export { foldReading } from "./search/candidate-query.js";
+
+export { readingKey, ReverseIndex } from "./search/reverse-index.js";
 export type {
   ReverseIndexBuild,
   ReverseIndexData,
