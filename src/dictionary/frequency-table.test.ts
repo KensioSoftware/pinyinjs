@@ -6,9 +6,11 @@ import {
 import { describe, it } from "vitest";
 
 import {
+  countForQuantising,
   derivedWordCharge,
   FREQUENCY_BUCKETS,
   FrequencyTable,
+  UNCOUNTED_NAME,
   WORD_CHARGE,
 } from "./frequency-table.js";
 
@@ -103,6 +105,34 @@ describe("FrequencyTable", () => {
       for (let index = 0; index < frequencies.length; index++) {
         assertIdentical(reloaded.bucketOf(index), original.bucketOf(index));
       }
+    });
+  });
+
+  describe("countForQuantising", () => {
+    it("passes a counted word through untouched", () => {
+      assertIdentical(countForQuantising(269, false), 269);
+      assertIdentical(countForQuantising(269, true), 269);
+    });
+
+    it("gives a name the corpus never counted jieba's default", () => {
+      assertIdentical(countForQuantising(0, true), UNCOUNTED_NAME);
+    });
+
+    it("leaves an ordinary uncounted word at zero", () => {
+      // The floor over every uncounted key lifts two thirds of the dictionary
+      // and joins 從容地, 都會 and 過得. See UNCOUNTED_NAME.
+      assertIdentical(countForQuantising(0, false), 0);
+    });
+
+    it("charges enough less to keep 脸书 from splitting", () => {
+      // Real counts from the shipped corpus: 了 as the most frequent word it
+      // holds, then 脸, 书 and 脸书, which jieba never counted. At a count of
+      // zero 脸书 cost 19.62 against the 18.24 of its characters and the
+      // decoder read Facebook as a face and a book.
+      const counts = [883_634, 10_566, 18_993, countForQuantising(0, true)];
+      const table = FrequencyTable.build(counts);
+      assertIdentical(table.bucketOf(3), 2);
+      assertTrue(table.costOf(3) < table.costOf(1) + table.costOf(2));
     });
   });
 

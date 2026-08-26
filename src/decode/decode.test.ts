@@ -68,6 +68,39 @@ describe("the lattice decoder", () => {
     assertIdentical(decoded[0].partOfSpeech, "ns");
   });
 
+  it("keeps a name the corpus never counted whole", () => {
+    // 脸书 is Facebook, and jieba's word list was drawn before it had a
+    // Chinese name. Counted at zero it cost 19.62 against the 18.24 of 脸 and
+    // 书 together and the decoder read it as a face and a book. See
+    // UNCOUNTED_NAME. 了 anchors the scale as the busiest word in the corpus.
+    const named = dictionaryOf([
+      entry("了", "le", { frequency: 883_634 }),
+      entry("脸", "liǎn", { frequency: 10_566 }),
+      entry("书", "shū", { frequency: 18_993 }),
+      entry("脸书", "liǎn shū", { isProperNoun: true }),
+    ]);
+    assertArrayEquals(
+      decodeRun(named, "脸书").map((word) => word.text),
+      ["脸书"],
+    );
+  });
+
+  it("splits an uncounted word that is not a name", () => {
+    // The same entry without the proper-noun bit. The floor is a claim about
+    // names, and the dictionary's tail of uncounted common nouns keeps the
+    // cost a count of zero earns.
+    const plain = dictionaryOf([
+      entry("了", "le", { frequency: 883_634 }),
+      entry("脸", "liǎn", { frequency: 10_566 }),
+      entry("书", "shū", { frequency: 18_993 }),
+      entry("脸书", "liǎn shū"),
+    ]);
+    assertArrayEquals(
+      decodeRun(plain, "脸书").map((word) => word.text),
+      ["脸", "书"],
+    );
+  });
+
   it("finds a word under its 繁體 key", () => {
     assertArrayEquals(words("銀行"), ["銀行"]);
     assertIdentical(readingOf("銀行"), "yín háng");
