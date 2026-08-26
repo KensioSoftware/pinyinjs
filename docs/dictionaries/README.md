@@ -102,6 +102,7 @@ dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
+dictionary.frequencyOf("头发"); // 9, how common it is, 0 rarest to 15
 dictionary.size; // 723147, keys in the full tier, not entries
 ```
 
@@ -166,12 +167,26 @@ key affordable.
 
 ## Ranking words by frequency
 
-`cost` and `frequencyAt` are quantised to 16 buckets, which is all the decoder
-ever acts on when it weighs one candidate word against another. Ranking a word
-list against itself wants more than that. Rank the 120,858 CC-CEDICT headwords
-the full tier holds by `cost` and 5,934 of them land on the value at rank
-10,000, so a top-10,000 cut of that list is settled inside a band the buckets
-put in one place.
+`frequencyOf` reads a word's bucket off the search `lookup` already runs.
+Ordering a word list by how common each word is costs one lookup a word:
+
+```ts
+dictionary.frequencyOf("银行"); // 10
+dictionary.frequencyOf("殿下"); // 7
+dictionary.frequencyOf("蛋糕店铺子"); // undefined, no such key
+```
+
+A word the dictionary lacks reports `undefined`, the way `lookup` does. Bucket 0
+says something else. The word is a key the corpus never counted, which two
+thirds of the full tier's keys are. `frequencyAt` answers the same question by
+position, for a caller already sweeping the keys.
+
+`cost`, `frequencyAt` and `frequencyOf` are quantised to 16 buckets, which is
+all the decoder ever acts on when it weighs one candidate word against another.
+Ranking a word list against itself wants more than that. Rank the 120,858
+CC-CEDICT headwords the full tier holds by `cost` and 5,934 of them land on the
+value at rank 10,000, so a top-10,000 cut of that list is settled inside a band
+the buckets put in one place.
 
 `full.counts` holds the corpus count each of those buckets was quantised from,
 one per key of the full tier and in the same positions. It is a file of its own

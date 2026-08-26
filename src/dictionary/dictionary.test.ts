@@ -31,6 +31,18 @@ function readingOf(word: string): string | undefined {
 }
 
 /**
+ * Where a word sits in key order, which is what a posting is.
+ */
+function positionOf(word: string): number {
+  for (let at = 0; at < dictionary.size; at++) {
+    if (dictionary.wordAt(at) === word) {
+      return at;
+    }
+  }
+  throw new Error(`${word} is not a key`);
+}
+
+/**
  * A list of readings, written out.
  */
 function written(readings: readonly (readonly Syllable[])[]): string {
@@ -119,6 +131,65 @@ describe("querying a compiled dictionary", () => {
     });
   });
 
+  describe("frequencyOf", () => {
+    it("buckets a common word above a rare one", () => {
+      const common = dictionary.frequencyOf("北京");
+      const rare = dictionary.frequencyOf("玩儿");
+      assertNonNullable(common);
+      assertNonNullable(rare);
+      assertTrue(common > rare);
+    });
+
+    it("agrees with the bucket at the position the word sits at", () => {
+      for (const word of ["银行", "北京", "长大", "玩儿", "垃圾"]) {
+        assertIdentical(
+          dictionary.frequencyOf(word),
+          dictionary.frequencyAt(positionOf(word)),
+        );
+      }
+    });
+
+    it("reports nothing for a word it does not hold", () => {
+      assertUndefined(dictionary.frequencyOf("没有"));
+    });
+
+    it("reports the rarest bucket for a key the corpus never counted", () => {
+      // A key the dictionary holds and the corpus is silent about is bucket 0,
+      // and a word the dictionary lacks is undefined. The two are different
+      // answers.
+      assertIdentical(dictionary.frequencyOf("鸥"), 0);
+    });
+
+    it("gives the same word the same bucket under either script", () => {
+      assertIdentical(
+        dictionary.frequencyOf("银行"),
+        dictionary.frequencyOf("銀行"),
+      );
+      assertIdentical(
+        dictionary.frequencyOf("玩儿"),
+        dictionary.frequencyOf("玩兒"),
+      );
+    });
+
+    it("gives a Hong Kong glyph form its Taiwan counterpart's bucket", () => {
+      // 裏 is not a key of its own — the entry is under Taiwan's 裡 — so an
+      // unnormalised search would land on 裒, which sorts between the two, and
+      // report that entry's bucket.
+      const glyphs = dictionaryOf([
+        entry("裒", "póu"),
+        entry("裡", "lǐ", { frequency: 9000 }),
+      ]);
+      assertIdentical(glyphs.frequencyOf("裏"), glyphs.frequencyOf("裡"));
+      assertTrue(
+        (glyphs.frequencyOf("裏") ?? 0) > (glyphs.frequencyOf("裒") ?? 0),
+      );
+    });
+
+    it("reports nothing on an empty dictionary", () => {
+      assertUndefined(Dictionary.from(buildArtifact([])).frequencyOf("银行"));
+    });
+  });
+
   describe("readingsOf", () => {
     it("gives every reading a character takes, most likely first", () => {
       assertIdentical(
@@ -157,18 +228,6 @@ describe("querying a compiled dictionary", () => {
   });
 
   describe("positions", () => {
-    /**
-     * Where a word sits in key order, which is what a posting is.
-     */
-    function positionOf(word: string): number {
-      for (let at = 0; at < dictionary.size; at++) {
-        if (dictionary.wordAt(at) === word) {
-          return at;
-        }
-      }
-      throw new Error(`${word} is not a key`);
-    }
-
     it("names the word at a position", () => {
       assertIdentical(dictionary.wordAt(positionOf("银行")), "银行");
     });

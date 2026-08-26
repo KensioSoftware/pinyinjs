@@ -207,18 +207,18 @@ See [slugs](../slug/).
 
 See [dictionaries](../dictionaries/).
 
-| Export                                                        | Is                                                     |
-| ------------------------------------------------------------- | ------------------------------------------------------ |
-| `loadDictionary`                                              | build a `Dictionary` from a source and a tier          |
-| `loadArtifact`                                                | the artifact without the `Dictionary` around it        |
-| `fetchSource`                                                 | an HTTP source                                         |
-| `fileSource`                                                  | a filesystem source, from `@kensio/pinyinjs/node`      |
-| `tierFiles`                                                   | which files a tier needs                               |
-| `Dictionary`                                                  | the class: `lookup`, `hasPrefix`, `readingsOf`, `size` |
-| `dictionary.wordAt / frequencyAt / readingsInOrder`           | the same by position, for a second index over it       |
-| `loadWordCounts`, `WordCounts`, `COUNTS_FILE`                 | raw corpus counts for `full`, for ranking words        |
-| `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier`  | the tiers                                              |
-| `WordEntry`, `DictionaryReadings`, `DictionarySource`, `Tier` | types                                                  |
+| Export                                                        | Is                                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `loadDictionary`                                              | build a `Dictionary` from a source and a tier                         |
+| `loadArtifact`                                                | the artifact without the `Dictionary` around it                       |
+| `fetchSource`                                                 | an HTTP source                                                        |
+| `fileSource`                                                  | a filesystem source, from `@kensio/pinyinjs/node`                     |
+| `tierFiles`                                                   | which files a tier needs                                              |
+| `Dictionary`                                                  | the class: `lookup`, `frequencyOf`, `hasPrefix`, `readingsOf`, `size` |
+| `dictionary.wordAt / frequencyAt / readingsInOrder`           | the same by position, for a second index over it                      |
+| `loadWordCounts`, `WordCounts`, `COUNTS_FILE`                 | raw corpus counts for `full`, for ranking words                       |
+| `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier`  | the tiers                                                             |
+| `WordEntry`, `DictionaryReadings`, `DictionarySource`, `Tier` | types                                                                 |
 
 The build pipeline is exported as well, since the artifacts are reproducible
 from the sources: `buildArtifact`, `readArtifact`, `encodeReading`,

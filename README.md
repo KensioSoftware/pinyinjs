@@ -620,6 +620,7 @@ dictionary.lookup("頭髮")?.reading; // the same reading, found under 繁體
 dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重复
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
+dictionary.frequencyOf("头发"); // 9, how common it is, 0 rarest to 15
 ```
 
 Both scripts are keys in the same dictionary. A 繁體 word is found directly,
@@ -869,6 +870,7 @@ This is orthography and not translation. 软件 becomes 軟件, never 軟體. Se
 | `joinPieces(pieces)` / `toHtml(pieces)`              | render pieces                                     |
 | `isUncertain(confidence)`                            | was this syllable a guess?                        |
 | `dictionary.lookup / hasPrefix / readingsOf`         | query the dictionary                              |
+| `dictionary.frequencyOf(word)`                       | how common a word is, 0 rarest to 15              |
 | `readSyllable` / `writeSyllable` / `isSyllable`      | one syllable, no dictionary                       |
 | `splitSyllables` / `readWord`                        | split written pinyin                              |
 | `applySandhi`                                        | 一, 不 and optional third-tone sandhi             |

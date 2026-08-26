@@ -1683,6 +1683,42 @@ describe("the examples in docs/", () => {
       assertTrue(dictionary.frequencyAt(at) > 0);
     });
 
+    it("buckets a word by the word, and agrees with the position", () => {
+      // The page's four `frequencyOf` calls. Checked against `frequencyAt` as
+      // well, since the two answering differently is the failure the method
+      // exists to rule out.
+      assertIdentical(dictionary.frequencyOf("头发"), 9);
+      assertIdentical(dictionary.frequencyOf("银行"), 10);
+      assertIdentical(dictionary.frequencyOf("殿下"), 7);
+      assertUndefined(dictionary.frequencyOf("蛋糕店铺子"));
+      const at = [...Array.from({ length: dictionary.size }).keys()].find(
+        (position) => dictionary.wordAt(position) === "银行",
+      );
+      assertNonNullable(at);
+      assertIdentical(
+        dictionary.frequencyOf("银行"),
+        dictionary.frequencyAt(at),
+      );
+    });
+
+    it("buckets the 繁體 key the way the 简体 one is bucketed", () => {
+      // The counts a 繁體 key carries are the 简体 key's, so the buckets
+      // quantised from them agree too, and a Hong Kong glyph form is
+      // normalised the way `lookup` normalises it.
+      assertIdentical(
+        dictionary.frequencyOf("头发"),
+        dictionary.frequencyOf("頭髮"),
+      );
+      assertIdentical(
+        dictionary.frequencyOf("时"),
+        dictionary.frequencyOf("時"),
+      );
+      assertIdentical(
+        dictionary.frequencyOf("裡面"),
+        dictionary.frequencyOf("裏面"),
+      );
+    });
+
     it("holds the entry fields the page tabulates", () => {
       const entry = dictionary.lookup("垃圾");
       assertNonNullable(entry);

@@ -91,6 +91,24 @@ export class Dictionary {
   }
 
   /**
+   * The frequency bucket of a word under either script, or undefined.
+   *
+   * What {@link Dictionary.frequencyAt} answers by position, answered by the
+   * word itself and off the same search {@link Dictionary.lookup} runs. Ranking
+   * a word list against itself is what asks for it, and reading a bucket
+   * decodes no entry.
+   *
+   * Regional 繁體 glyph forms are normalised the way `lookup` normalises them,
+   * so 裏面 and 裡面 report alike. A word the dictionary lacks reports
+   * undefined. Bucket 0 says something else. The word is a key the corpus
+   * never counted, which two thirds of the full tier's keys are.
+   */
+  frequencyOf(word: string): number | undefined {
+    const found = this.#index.lookup(toCanonicalGlyphs(word));
+    return found.isKey ? this.#frequencies.bucketOf(found.index) : undefined;
+  }
+
+  /**
    * A cursor over every key's reading, in key order.
    */
   readingsInOrder(): DictionaryReadings {
