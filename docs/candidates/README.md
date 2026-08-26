@@ -252,6 +252,23 @@ and writes ü as u. `dictionary.readingsInOrder()` is the cursor the build itsel
 runs on, giving every key's reading at the string level with no `Syllable`
 constructed anywhere.
 
+Two exports produce that key. `readingKey` is the fold the build itself runs,
+over a reading in the notation the artifact stores. `foldReading` is the fold
+over pinyin as anybody writes it, and it is the one to reach for unless the
+input is known to be an artifact line:
+
+```ts
+readingKey("yin2 hang2"); // yinhang
+readingKey("rèn shí"); // rènshí, a key nothing is stored under
+foldReading("rèn shí"); // renshi
+foldReading("Lǜ'sè"); // luse
+```
+
+`foldReading` is useful away from the index too. A search over a corpus of your
+own has to fold both of its sides to one spelling before they can be compared.
+That is the job `readingKey` does here, and `foldReading` does it for pinyin
+that came from anywhere.
+
 ## Where it stops
 
 **Prefix or fuzzy matching.** A reading key is a key. `match` is the tool for a

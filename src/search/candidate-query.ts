@@ -34,8 +34,32 @@ export interface Query {
  * reading says where every syllable ends, so the mark has somewhere to land.
  */
 export function readQuery(query: string): Query {
-  const written = normaliseUmlaut(
-    query.normalize("NFC").toLowerCase(),
-  ).replaceAll(SEPARATORS, "");
-  return { key: readingKey(stripToneMarks(written)), written };
+  return { key: foldReading(query), written: writtenQuery(query) };
+}
+
+/**
+ * Fold pinyin as a person writes it into the key the index holds it under.
+ *
+ * `readingKey` folds the notation the artifact stores, and this folds every
+ * other way the same reading gets written. `Rèn'shí`, `REN4 SHI2` and `renshi`
+ * all key `renshi`. A search whose two sides are spelled differently (a corpus
+ * written in tone marks against a query typed in digits) needs one fold over
+ * both of them.
+ *
+ * The tone goes whether it was written as a mark or as a digit, the case goes,
+ * the separators go, and `v`, `u:` and ü all become u. The 儿化 r stays, as it
+ * does in the index.
+ */
+export function foldReading(text: string): string {
+  return readingKey(stripToneMarks(writtenQuery(text)));
+}
+
+/**
+ * The typed query with everything resolved that is not the tone.
+ */
+function writtenQuery(query: string): string {
+  return normaliseUmlaut(query.normalize("NFC").toLowerCase()).replaceAll(
+    SEPARATORS,
+    "",
+  );
 }
