@@ -13,7 +13,7 @@ export {
   readingsByKey,
 } from "./artifact-read.js";
 import type { DictionaryEntry } from "./entry.js";
-import { FrequencyTable } from "./frequency-table.js";
+import { countForQuantising, FrequencyTable } from "./frequency-table.js";
 import { KeyIndex } from "./key-index.js";
 import { claimKeys, orderedClaims } from "./artifact-claims.js";
 import {
@@ -127,7 +127,7 @@ export function buildArtifact(
           .join(ALTERNATE),
       ]),
     );
-    frequencies.push(entry.frequency);
+    frequencies.push(countForQuantising(entry.frequency, entry.isProperNoun));
   }
 
   return {

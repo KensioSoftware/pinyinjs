@@ -51,6 +51,67 @@ const MAX_BUCKET = FREQUENCY_BUCKETS - 1;
 export const WORD_CHARGE = 4.62;
 
 /**
+ * The count a name the corpus never counted is quantised at.
+ *
+ * A count of zero earns bucket 0, and {@link FrequencyTable.costOf} reads that
+ * as `−log P` with `P` of `1/N`. On jieba's corpus the flat cost it produces is
+ * 19.62, and two mid-frequency characters come to less. 脸书 cost 19.62 where
+ * 脸 and 书 together cost 18.24, and `decodeRun` read Facebook as a face and a
+ * book. 推特, 高雄, 乐高 and 网飞 all went the same way, and 671 of the 5,039
+ * uncounted names of two or three characters came apart when read on their
+ * own. 谷歌 survived on an exact tie.
+ *
+ * **Zero is the wrong count for a name jieba's list never held.** The list has
+ * no frequency floor to be under. It carries 一万一千五百二十颗 on two
+ * occurrences. A word missing from it was left out of the lexicon, and the
+ * corpus was never asked about it. Names are where that bites, since a name
+ * enters the language whenever something is given one. 微软 was counted 1757
+ * times and 脸书 not at all, and only one of the two existed when the list was
+ * drawn. 10,676 of the dictionary's 42,861 names are counted nowhere.
+ *
+ * **3 is jieba's own answer for a word it lists and cannot count.** Its counts
+ * bottom out at 2, and 3 carries 159,318 of 349,045 entries against 40,502 at 2
+ * and 12,679 at 4. Interpolating between the neighbours accounts for about
+ * 22,000 of those, and the other 137,000 carry a default. It is the default a
+ * hand-added entry gets (AT&T, B超 and C++ are all counted 3).
+ *
+ * The value is loose. Bucket 2 runs from 3 to 8, so any count jieba might have
+ * settled on in that range quantises the same way and lands the cost at 17.62.
+ * What the floor buys a name is two buckets against a split.
+ *
+ * **Names only.** The same floor over every uncounted key lifts two thirds of
+ * the dictionary by two buckets and re-tips
+ * {@link import("../decode/lattice-types.js").READING_CHARGE}, which was sized
+ * against bucket 0 at 19.62. Measured that way 從容地 joins, 都會 reads `dūhuì`
+ * and 過得 reads `guò dé`, and the gold harness goes from 3 misses to 6. The
+ * dictionary's tail is where 费耗, 块肉 and 拍张 live, and bucket 0 is what
+ * holds them off.
+ *
+ * 428 of the 671 names now stay whole. The ones left are compounds a split
+ * suits, 中国菜, 日本人, 上海话 and 美国人 among them, and each beats its own
+ * entry by more than two buckets. Over the 88,866 lines of Tatoeba and
+ * zh.wikipedia 86 of 139,682 Han runs move, the gold harness holds at 3 misses
+ * and CPP holds at 91.49%.
+ */
+export const UNCOUNTED_NAME = 3;
+
+/**
+ * The count an entry is quantised at. Its own, unless it is a name the corpus
+ * never counted. See {@link UNCOUNTED_NAME}.
+ *
+ * Applied where the artifact is written and nowhere else, so `full.counts`
+ * keeps the corpus as it was met. The two files disagree by design over these
+ * 10,676 keys, and `data.test.ts` checks their alignment through this
+ * function.
+ */
+export function countForQuantising(
+  frequency: number,
+  isProperNoun: boolean,
+): number {
+  return isProperNoun && frequency <= 0 ? UNCOUNTED_NAME : frequency;
+}
+
+/**
  * The charge a corpus derives, for the build to hold {@link WORD_CHARGE} to.
  *
  * `total` is the corpus, counted once. `highest` is the largest count in it,
@@ -77,6 +138,9 @@ export class FrequencyTable {
    * the word was not attested, which still earns the lowest bucket rather than
    * being excluded — an unattested word in the dictionary is rare, not
    * impossible.
+   *
+   * Counts arrive through {@link countForQuantising}, which is where a name the
+   * corpus never counted is given jieba's own default for one.
    */
   static build(frequencies: readonly number[]): FrequencyTable {
     // Looped rather than `Math.max(0, ...frequencies)`, which passes one

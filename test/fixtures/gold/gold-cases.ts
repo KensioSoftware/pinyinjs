@@ -138,6 +138,15 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "李华", pinyin: "Lǐ Huá", script: "Hans", tags: ["proper-noun", "personal-name"] },
   { hanzi: "黄河", pinyin: "Huáng Hé", script: "Hans", tags: ["proper-noun", "orthography"] },
 
+  // ── Names the corpus never counted ────────────────────────
+  // jieba's word list holds none of these three, and a name written with
+  // common characters used to lose to them. See UNCOUNTED_NAME. 中国菜 is the
+  // control: it carries the same proper-noun bit and the split still suits it.
+  { hanzi: "脸书", pinyin: "Liǎnshū", script: "Hans", tags: ["proper-noun", "organisation"] },
+  { hanzi: "推特", pinyin: "Tuītè", script: "Hans", tags: ["proper-noun", "organisation"] },
+  { hanzi: "高雄", pinyin: "Gāoxióng", script: "Hans", tags: ["proper-noun"] },
+  { hanzi: "中国菜", pinyin: "Zhōngguó cài", script: "Hans", tags: ["proper-noun", "orthography"] },
+
   // ── 姓 and 名 written apart, GB/T 16159 5.1 ────────────────
   // A dictionary entry decodes as one word, so these are a split rather than a
   // join, and the boundary comes from CC-CEDICT's own capitalisation. The
