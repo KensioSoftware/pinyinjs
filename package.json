@@ -1,6 +1,6 @@
 {
   "name": "@kensio/pinyinjs",
-  "version": "1.7.10",
+  "version": "1.7.11",
   "description": "Chinese hanzi to pinyin conversion",
   "repository": "https://github.com/KensioSoftware/pinyinjs",
   "homepage": "https://pinyinjs.dev",
