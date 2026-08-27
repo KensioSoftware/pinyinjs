@@ -9,7 +9,12 @@ import {
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
-import { type CedictEntry, nameBoundariesOf, parseCedict } from "./cedict.js";
+import {
+  type CedictEntry,
+  isStated,
+  nameBoundariesOf,
+  parseCedict,
+} from "./cedict.js";
 
 /**
  * Real lines from CC-CEDICT, kept verbatim so the parser is tested against the
@@ -112,6 +117,49 @@ describe("CC-CEDICT source", () => {
       const entry = entryFor(parseCedict(SAMPLE), "A圈兒");
       assertNonNullable(entry);
       assertTrue(entry.isProperNoun);
+    });
+  });
+
+  describe("whether a sense states a meaning", () => {
+    const senses = parseCedict(
+      [
+        "長壽 长寿 [Chang2 shou4] /see 長壽區|长寿区[Chang2 shou4 Qu1]/",
+        "長壽 长寿 [chang2 shou4] /longevity/long-lived/",
+        "青龍 青龙 [Qing1 long2] /Azure Dragon/see 青龍滿族自治縣|青龙满族自治县[Qing1 long2 Man3 zu2 Zi4 zhi4 xian4]/",
+        "斗六 斗六 [Dou4 liu4] /see also 斗六市[Dou4 liu4 Shi4]/",
+        "里約 里约 [Li3 yue1] /Rio; abbr. for 里約熱內盧|里约热内卢[Li3 yue1 re4 nei4 lu2]/",
+      ].join("\n"),
+    );
+    const sense = (reading: string): CedictEntry | undefined =>
+      senses.find((entry) => entry.readings.join(" ") === reading);
+
+    it("calls a bare cross-reference unstated", () => {
+      const entry = sense("Chang2 shou4");
+      assertNonNullable(entry);
+      assertFalse(isStated(entry));
+    });
+
+    it("calls see also a cross-reference too", () => {
+      const entry = sense("Dou4 liu4");
+      assertNonNullable(entry);
+      assertFalse(isStated(entry));
+    });
+
+    it("states a meaning where any definition gives one", () => {
+      const dragon = sense("Qing1 long2");
+      assertNonNullable(dragon);
+      assertTrue(isStated(dragon));
+
+      const longevity = sense("chang2 shou4");
+      assertNonNullable(longevity);
+      assertTrue(isStated(longevity));
+    });
+
+    it("leaves an abbreviation stated, which a place needs", () => {
+      // 里约 is Rio, and abbreviating a longer name is a meaning of its own.
+      const entry = sense("Li3 yue1");
+      assertNonNullable(entry);
+      assertTrue(isStated(entry));
     });
   });
 

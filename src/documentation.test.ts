@@ -628,6 +628,28 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "周恩来"), "zhōu'ēnlái");
     });
 
+    it("skips a capitalised cross-reference, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "祝你健康长寿。"),
+        "Zhù nǐ jiànkāng chángshòu.",
+      );
+      assertIdentical(
+        convert(dictionary, "长寿区在重庆。"),
+        "Chángshòu Qū zài Chóngqìng.",
+      );
+      assertIdentical(
+        convert(dictionary, "我们的友谊很深。"),
+        "Wǒmen de yǒuyì hěn shēn.",
+      );
+      assertFalse(dictionary.lookup("长寿")?.isProperNoun ?? true);
+      // The flag survives where every sense refers on and there is nothing
+      // else to read.
+      assertTrue(dictionary.lookup("三亚")?.isProperNoun ?? false);
+      assertIdentical(convert(dictionary, "三亚"), "Sānyà");
+      // And the loss the page owns up to: 青山公路 is Castle Peak Road.
+      assertIdentical(convert(dictionary, "青山公路"), "qīngshān gōnglù");
+    });
+
     it("capitalises the 称呼语 in front of a surname", () => {
       assertIdentical(
         convert(

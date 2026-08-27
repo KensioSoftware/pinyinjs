@@ -923,6 +923,61 @@ describe("merging the sources", () => {
       assertIdentical(result.stats.carriedCapitals, 1);
     });
 
+    it("lets a lowercase sense veto a capitalised cross-reference", () => {
+      // 长寿 is longevity, and CC-CEDICT's capitalised sense only refers on to
+      // 长寿区. The capital is the district's.
+      const { byWord, result } = merge({
+        phrase: new Map([["长寿", ["cháng", "shòu"]]]),
+        cedict: [
+          cedictEntry("長壽", "长寿", "Chang2 shou4", {
+            isProperNoun: true,
+            definitions: ["see 長壽區|长寿区[Chang2 shou4 Qu1]"],
+          }),
+          cedictEntry("長壽", "长寿", "chang2 shou4", {
+            definitions: ["longevity", "long-lived"],
+          }),
+        ],
+        jieba: new Map([["长寿", { frequency: 283, partOfSpeech: "ns" }]]),
+      });
+      assertFalse(byWord.get("长寿")?.isProperNoun ?? true);
+      assertIdentical(result.stats.properNounVetoes, 1);
+    });
+
+    it("keeps a capitalised cross-reference where no sense states more", () => {
+      // 三亚 is Sanya and CC-CEDICT writes it as nothing but a reference to
+      // 三亚市. With nothing stated the reference is the only evidence there is.
+      const { byWord } = merge({
+        phrase: new Map([["三亚", ["sān", "yà"]]]),
+        cedict: [
+          cedictEntry("三亞", "三亚", "San1 ya4", {
+            isProperNoun: true,
+            definitions: ["see 三亞市|三亚市[San1 ya4 Shi4]"],
+          }),
+        ],
+        jieba: new Map([["三亚", { frequency: 1300, partOfSpeech: "ns" }]]),
+      });
+      assertTrue(byWord.get("三亚")?.isProperNoun ?? false);
+    });
+
+    it("keeps a proper noun that states a sense beside a lowercase one", () => {
+      // 京都 is Kyoto and also the capital of a country. Both senses say what
+      // they mean, so the capitalised one stands.
+      const { byWord } = merge({
+        phrase: new Map([["京都", ["jīng", "dū"]]]),
+        cedict: [
+          cedictEntry("京都", "京都", "Jing1 du1", {
+            isProperNoun: true,
+            definitions: ["Kyoto (city in Japan)"],
+          }),
+          cedictEntry("京都", "京都", "jing1 du1", {
+            definitions: ["capital (of a country)"],
+          }),
+        ],
+        jieba: new Map([["京都", { frequency: 303, partOfSpeech: "ns" }]]),
+      });
+      assertTrue(byWord.get("京都")?.isProperNoun ?? false);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

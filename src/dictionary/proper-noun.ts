@@ -5,9 +5,18 @@
  * it. The tags on their own are noisy enough to be worth correcting — 沙发,
  * 城市, 阿姨, 智能卡 and 花生仁 are all tagged nr or nz, and the decoder
  * capitalises straight off this bit.
+ *
+ * Only the senses that state a meaning are read for the veto. A capitalised
+ * cross-reference carries the capital of the entry it points at, and reading it
+ * as the word's own put a capital on 长寿, 友谊, 温泉 and 115 other keys. See
+ * {@link statedOf}.
  */
 import { characterCount, isSingleCharacter } from "../script/characters.js";
-import { type CedictEntry, nameBoundariesOf } from "../sources/cedict.js";
+import {
+  type CedictEntry,
+  isStated,
+  nameBoundariesOf,
+} from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { leadsNames, type NameMassTable } from "./name-mass.js";
@@ -53,9 +62,10 @@ export function properNounOf(
   const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
   const proposed =
     jiebaEntry === undefined
-      ? cedictEntries.some((entry) => entry.isProperNoun)
+      ? statedOf(cedictEntries).some((entry) => entry.isProperNoun)
       : isProperNounTag(partOfSpeech) &&
-        (senses.length === 0 || senses.some((entry) => entry.isProperNoun));
+        (senses.length === 0 ||
+          statedOf(senses).some((entry) => entry.isProperNoun));
   const isProperNoun =
     proposed &&
     (!isSingleCharacter(word) ||
@@ -72,4 +82,23 @@ export function properNounOf(
     boundaries,
     isVetoed: isProperNounTag(partOfSpeech) && !isProperNoun,
   };
+}
+
+/**
+ * The senses that state a meaning, falling back to all of them where none does.
+ *
+ * A capital on a bare cross-reference is the capital of the entry it points at,
+ * so 长寿 `/see 長壽區|长寿区/` is no evidence that 长寿 is a place. Reading the
+ * capitals off the stated senses alone demotes it, and 保安, 东北 and 京都 keep
+ * the flag their stated senses earn. See
+ * {@link import("../sources/cedict.js").isStated}.
+ *
+ * The fallback is what keeps a headword whose every sense refers on. 三亚 is
+ * only ever `see 三亞市|三亚市`, and with nothing stated the cross-reference is
+ * all the evidence there is. 2,347 flagged keys are in that position, among
+ * them 七台河, 三门峡 and 上饶.
+ */
+function statedOf(entries: readonly CedictEntry[]): readonly CedictEntry[] {
+  const stated = entries.filter((entry) => isStated(entry));
+  return stated.length > 0 ? stated : entries;
 }
