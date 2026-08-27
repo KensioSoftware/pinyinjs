@@ -3,7 +3,9 @@ import type { Lattice, LatticeEdge } from "./lattice.js";
 
 export {
   ASPECT,
+  endsLongerWord,
   PARTICLE_TAG,
+  startsLongerWord,
   tagOf,
   wordEndingAt,
   wordsEndingAt,
