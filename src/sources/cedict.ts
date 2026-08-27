@@ -174,6 +174,31 @@ function isCapitalised(reading: string): boolean {
 }
 
 /**
+ * A definition that only points at another headword.
+ */
+const CROSS_REFERENCE = /^see(\s+also)?\s/u;
+
+/**
+ * Whether an entry states a meaning of its own, or only points elsewhere.
+ *
+ * CC-CEDICT gives a district, county or city its own headword and cross-refers
+ * the bare name to it. 长寿 is `[Chang2 shou4] /see 長壽區|长寿区/` beside
+ * `[chang2 shou4] /longevity/`, and 长寿区 carries the place. The capital on
+ * the cross-reference belongs to the entry it points at, so a sense written
+ * this way says nothing about how the bare word is usually read. 4,088 entries
+ * are written entirely this way and 3,019 of those are capitalised.
+ *
+ * A sense with any definition of its own is stated, however many
+ * cross-references sit beside it. 青龙 glosses the Azure Dragon and then refers
+ * on to 青龙满族自治县, and the dragon is a proper noun whatever follows it.
+ */
+export function isStated(entry: CedictEntry): boolean {
+  return entry.definitions.some(
+    (definition) => !CROSS_REFERENCE.test(definition),
+  );
+}
+
+/**
  * Where CC-CEDICT's own capitalisation divides a proper noun into its parts.
  *
  * GB/T 16159 5.1 writes the parts of a proper name apart, and CC-CEDICT marks

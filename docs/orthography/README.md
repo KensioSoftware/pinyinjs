@@ -168,6 +168,29 @@ tags (`nr` person, `ns` place, `nt` organisation, `nz` other) and demoted again
 where CC-CEDICT writes the headword's pinyin in lower case. There is no name
 rule of any kind, no surname list, and no test on what follows a surname.
 
+The veto reads the senses that state a meaning and skips the ones that only
+refer on. CC-CEDICT gives a district, county or city its own headword and
+cross-refers the bare name to it, so 长寿 carries
+`[Chang2 shou4] /see 長壽區|长寿区/` beside `[chang2 shou4] /longevity/`. That
+capital belongs to 长寿区, and reading it as 长寿's own put a capital on the
+longevity sense everywhere it appeared.
+
+```ts
+convert(dictionary, "祝你健康长寿。"); // "Zhù nǐ jiànkāng chángshòu."
+convert(dictionary, "长寿区在重庆。"); // "Chángshòu Qū zài Chóngqìng."
+convert(dictionary, "我们的友谊很深。"); // "Wǒmen de yǒuyì hěn shēn."
+```
+
+118 keys lose the flag to this, among them 友谊, 温泉, 白云, 武功, 红旗 and 凤凰.
+Over the 88,866 lines the capitals of 104 distinct runs change, and about two
+thirds of those are corrections. The rest are a bare place name sitting inside a
+longer one the dictionary has no entry for, where 青山公路 in Hong Kong loses its
+capital along with 青山 the green hills.
+
+Where every sense refers on, the cross-reference is all the evidence there is
+and it is taken at its word. 2,347 flagged keys sit there, among them 三亚, 上饶
+and 三门峡.
+
 A bare character has a third condition to meet. jieba tags 王, 连 and 云 `nr`,
 and CC-CEDICT capitalises a sense of each. Both of those are facts about the
 surname and say nothing about the character standing on its own. 王 is the king
