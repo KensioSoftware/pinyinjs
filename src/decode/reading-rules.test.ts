@@ -112,6 +112,36 @@ const deDictionary = dictionaryOf([
 ]);
 
 /**
+ * A dictionary of its own for the taxi 的.
+ *
+ * Both shapes: a key beginning with the 的 and one ending with it, each against
+ * the modifier, particle and head that spell the same characters.
+ */
+const taxiDictionary = dictionaryOf([
+  entry("的", "de", {
+    partOfSpeech: "uj",
+    frequency: 95_000,
+    alternates: [reading("dì"), reading("dí"), reading("dī")],
+  }),
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("哥", "gē", { partOfSpeech: "n", frequency: 3000 }),
+  entry("哥哥", "gē gē", { partOfSpeech: "n", frequency: 9000 }),
+  entry("士", "shì", { partOfSpeech: "n", frequency: 3000 }),
+  entry("打", "dǎ", { partOfSpeech: "v", frequency: 60_000 }),
+  entry("电话", "diàn huà", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("去", "qù", { partOfSpeech: "v", frequency: 60_000 }),
+  entry("面", "miàn", { partOfSpeech: "n", frequency: 30_000 }),
+  entry("上", "shàng", { partOfSpeech: "f", frequency: 70_000 }),
+  entry("上面", "shàng miàn", { partOfSpeech: "f", frequency: 20_000 }),
+  // The taxi vocabulary, as the dictionary carries it: a tagged key jieba
+  // counted and two readings nobody counted.
+  entry("的士", "dī shì", { partOfSpeech: "n", frequency: 9 }),
+  entry("的哥", "dī gē", { partOfSpeech: "n", frequency: 45 }),
+  entry("打的", "dǎ dī"),
+  entry("面的", "miàn dī"),
+]);
+
+/**
  * A dictionary of its own for the potential complement.
  *
  * 算得 is the shape: a key jieba counted and tagged, read `suàn dé` by the
@@ -407,6 +437,43 @@ describe("的 where it is the structural particle", () => {
 
   it("says nothing where no modifier stands in front", () => {
     assertArrayEquals(readDe("的真", [PARTICLE_DE]), ["dí", "zhēn"]);
+  });
+});
+
+describe("的 in the taxi vocabulary", () => {
+  /** How a run of the taxi cases reads, word by word. */
+  function readTaxi(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(taxiDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("keeps the taxi word whole where it stands", () => {
+    assertArrayEquals(readTaxi("的士"), ["dīshì"]);
+    assertArrayEquals(readTaxi("打的去"), ["dǎdī", "qù"]);
+  });
+
+  it("splits the taxi word without the rule, which is the bug", () => {
+    // The reading was right all along and the spacing was not: 的士 costs more
+    // than a 的 and a 士 do together, since 的 sits in the cheapest band there
+    // is.
+    assertArrayEquals(readTaxi("的士", []), ["dī", "shì"]);
+  });
+
+  it("gives the head back where a longer word claims it", () => {
+    assertArrayEquals(readTaxi("我的哥哥"), ["wǒ", "de", "gēgē"]);
+  });
+
+  it("keeps the key where nothing else claims the head", () => {
+    assertArrayEquals(readTaxi("我的哥"), ["wǒ", "dīgē"]);
+  });
+
+  it("gives the 的 back where a head follows it", () => {
+    assertArrayEquals(readTaxi("打的电话"), ["dǎ", "de", "diànhuà"]);
+  });
+
+  it("leaves the character in front of the 的 to the word holding it", () => {
+    assertArrayEquals(readTaxi("上面的"), ["shàngmiàn", "de"]);
   });
 });
 

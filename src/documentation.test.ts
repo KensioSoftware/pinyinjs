@@ -345,8 +345,25 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "我的确知道"), "wǒ díquè zhīdào");
       assertIdentical(
         convert(dictionary, "我要一辆的士"),
-        "wǒ yào yí liàng dī shì",
+        "wǒ yào yí liàng dīshì",
       );
+    });
+
+    it("reads 的 as dī only where the taxi word stands", () => {
+      assertIdentical(
+        convert(dictionary, "打的去旅馆吧。"),
+        "Dǎdī qù lǚguǎn ba.",
+      );
+      assertIdentical(
+        convert(dictionary, "他给谁打的电话？"),
+        "Tā gěi shéi dǎ de diànhuà?",
+      );
+      assertIdentical(
+        convert(dictionary, "我的哥哥们在树下。"),
+        "Wǒ de gēgemen zài shù xià.",
+      );
+      // The character in front of the 的 belongs to the word ending there.
+      assertIdentical(convert(dictionary, "上面的解释"), "shàngmiàn de jiěshì");
     });
 
     it("keeps a counted 量词 out of the word behind it", () => {
