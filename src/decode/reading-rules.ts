@@ -1,9 +1,11 @@
 import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
 import { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+import { TAXI_DI } from "./taxi-rule.js";
 import { EXPERIENTIAL_GUO } from "./guo-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+export { TAXI_DI } from "./taxi-rule.js";
 export { EXPERIENTIAL_GUO } from "./guo-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 import { toCharacters } from "../script/characters.js";
@@ -148,6 +150,7 @@ export const READING_RULES: readonly EdgeRule[] = [
   MODAL_DE,
   PARTICLE_DE,
   POTENTIAL_DE,
+  TAXI_DI,
   TEACHING_JIAO,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,

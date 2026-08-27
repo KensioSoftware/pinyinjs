@@ -1,20 +1,19 @@
 /**
- * The two rules about 得 and 的, which are one character each and three jobs.
+ * The rules about 得 and 的, which are one character each and three jobs.
  *
  * 得 is stored as the structural particle with `dé` and `děi` as alternates,
  * and 的 is stored as the particle full stop. Both are among the commonest
  * characters in the language, so the words they begin and end are numerous and
- * mostly wrong.
+ * mostly wrong. The taxi 的 has a file of its own in `taxi-rule.ts`.
  */
-import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import {
   type EdgeContext,
   type EdgeRule,
+  startsLongerWord,
   tagOf,
   wordEndingAt,
   wordStartingAt,
-  wordsStartingAt,
 } from "./rules.js";
 
 /**
@@ -132,11 +131,7 @@ function isDe(syllable: Syllable | undefined): boolean {
  * own and a test that counted those would answer yes everywhere.
  */
 function isSwallowed(context: EdgeContext, at: number): boolean {
-  const longer = (from: number): boolean =>
-    wordsStartingAt(context, from).some(
-      (word) => toCharacters(word).length > 1,
-    );
-  return longer(at) && !longer(at + 1);
+  return startsLongerWord(context, at) && !startsLongerWord(context, at + 1);
 }
 
 /**
@@ -201,10 +196,10 @@ const MODIFIED_TAGS = /^(?:r|n|a|v|b|z)/u;
  * Only a key **no source has tagged** is forbidden, which is the same line
  * {@link TEACHING_JIAO} draws for a word ending in 教. 的确, 的士 and 的哥 are
  * words jieba counted and tagged, and every one of them can genuinely begin
- * where this fires: 我的确知道, 我要一辆的士, 那个的哥. That leaves 我的哥哥们
- * reading `wǒ dī gēgē men`, since 的哥 is a taxi driver and jieba has counted
- * them. What this does reach is the untagged tail — a reading somebody asserted
- * rather than a word anybody counted — where the 的 is the particle every time.
+ * where this fires: 我的确知道, 我要一辆的士, 那个的哥. What it does reach is
+ * the untagged tail — a reading somebody asserted rather than a word anybody
+ * counted — where the 的 is the particle every time. The tagged taxi keys are
+ * {@link import("./taxi-rule.js").TAXI_DI}'s, which is what settles 我的哥哥们.
  *
  * Measured over the 88,866 lines of Tatoeba and zh.wikipedia it forbids edges
  * in 40 runs: 的筆 13, 的這 11, 的真 6, 的對 4, 的卡 4 and 的歷 once. Every one

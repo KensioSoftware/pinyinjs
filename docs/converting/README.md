@@ -289,7 +289,7 @@ particle does:
 ```ts
 convert(dictionary, "没有人知道他的真名字"); // "méiyǒu rén zhīdào tā de zhēn míngzi"
 convert(dictionary, "我的确知道"); // "wǒ díquè zhīdào", a word jieba counted
-convert(dictionary, "我要一辆的士"); // "wǒ yào yí liàng dī shì"
+convert(dictionary, "我要一辆的士"); // "wǒ yào yí liàng dīshì"
 ```
 
 的 attaches to the modifier in front of it and the head follows, so a key
@@ -350,9 +350,44 @@ a crossing 过 would carry the rule from 94% right to 96%, at the cost of
 我在这个泳池里游过泳 and of every 跑过马拉松 these 88,866 lines do not happen to
 hold.
 
+The tenth reads 的 as `dī` only where the taxi word holding it stands:
+
+```ts
+convert(dictionary, "打的去旅馆吧。"); // "Dǎdī qù lǚguǎn ba."
+convert(dictionary, "他给谁打的电话？"); // "Tā gěi shéi dǎ de diànhuà?"
+convert(dictionary, "我的哥哥们在树下。"); // "Wǒ de gēgemen zài shù xià."
+```
+
+的士, 的哥, 的姐, 打的, 面的 and 摩的 are the six keys carrying a `dī`, and it is
+the only `dī` the dictionary holds. All six also spell a modifier, a particle 的
+and a head, much the commoner reading of the same characters, and the decode had
+it both ways at once. 我的哥哥们 came out `wǒ dī gēgē men` on the strength of
+的哥.
+
+What follows the 的 decides it, and where the key sits around the 的 decides
+which question that is. A key beginning with the 的 offers its own second
+character as the head, and a longer word starting there is the better claim on
+it (哥哥, 姐姐, 士兵). A key ending with the 的 puts the head outside itself,
+where a noun or a pronoun is that head and an adjective or an adverb is the
+complement of a 的 standing in for 得. The character in front of the 的 is asked
+about too, since a longer word ending there owns it. That is what 上面的, 方面的
+and 表面的 are.
+
+Where the word does stand the bare 的 is taken off the lattice under it. That is
+the spacing half of the same claim. 的 sits in the cheapest band the dictionary
+holds. A two-character key spanning one is therefore weighed against a split
+starting several buckets ahead of an ordinary word's, and the rarer keys lost.
+的士 came apart at 16.62 against 16.24 for the split, where 的哥 at 14.62 held.
+
+Over the same 88,866 lines, 21 的 read `dī` and 9 of them were the particle. The
+rule changes 17 runs. Six are readings it corrects, ten are taxi words that were
+split and now hold together, and the last is 用一元硬币来打的, which joins up
+while staying wrong. That one closes a 是⋯的 whose 是 sits in the clause before
+it.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`,
-`TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`,
-`PLAYING_TAN`, `EXPERIENTIAL_GUO`, `applyEdgeRules`) and
+`TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
+`ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 

@@ -4,6 +4,7 @@
  * The lookups every edge rule shares: which word ends here, which starts here,
  * and what part of speech the dictionary gives it.
  */
+import { toCharacters } from "../script/characters.js";
 import type { EdgeContext } from "./rules.js";
 
 /**
@@ -109,6 +110,30 @@ export function tagOf(context: EdgeContext, word: string | undefined): string {
   return word === undefined
     ? ""
     : (context.dictionary.lookup(word)?.partOfSpeech ?? "");
+}
+
+/**
+ * Whether a word of more than one character starts at a position.
+ *
+ * Every character is a word of its own, so a test that counted those would
+ * answer yes everywhere. What a rule asking this wants to know is whether some
+ * longer word has a claim on the character.
+ */
+export function startsLongerWord(context: EdgeContext, at: number): boolean {
+  return wordsStartingAt(context, at).some(
+    (word) => toCharacters(word).length > 1,
+  );
+}
+
+/**
+ * Whether a word of more than one character ends at a position.
+ *
+ * The mirror of {@link startsLongerWord}, and asked for the same reason.
+ */
+export function endsLongerWord(context: EdgeContext, at: number): boolean {
+  return wordsEndingAt(context, at).some(
+    (word) => toCharacters(word).length > 1,
+  );
 }
 
 /**
