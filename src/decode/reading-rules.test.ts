@@ -23,6 +23,7 @@ import {
   PARTICLE_DE,
   PLAYING_TAN,
   READING_RULES,
+  SEPARATED_COMPOUND,
   TEACHING_JIAO,
 } from "./reading-rules.js";
 
@@ -812,5 +813,145 @@ describe("过 where it marks experiential aspect", () => {
       decodeRun(guoDictionary, "我去过", [EXPERIENTIAL_GUO]),
       3,
     );
+  });
+});
+
+/**
+ * A dictionary of its own for the separated compounds, kept apart for the
+ * reason 长's is.
+ *
+ * Every shape the rule turns on: a 离合词 whose tail is the polyphone (请假),
+ * one whose head is (弹琴), an untagged pair behind a verb (瞅空), a pair behind
+ * a numeral (一长), a tail that opens a tagged word (有奇 against 奇怪), and the
+ * untagged pair that carries a reading across two characters (折么).
+ */
+const splitDictionary = dictionaryOf([
+  entry("个", "gè", { partOfSpeech: "q", frequency: 90_000 }),
+  entry("個", "gè", { partOfSpeech: "q", frequency: 90_000 }),
+  // 假, stored `jiǎ` with `jià` as an alternate, as the real dictionary stores
+  // it, and the 离合词 that states the second reading.
+  entry("假", "jiǎ", {
+    partOfSpeech: "n",
+    frequency: 9000,
+    alternates: [reading("jià")],
+  }),
+  entry("请", "qǐng", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("请假", "qǐng jià", { partOfSpeech: "v", frequency: 900 }),
+  // The mirror case, where the polyphone is the head rather than the tail.
+  entry("弹", "dàn", {
+    partOfSpeech: "v",
+    frequency: 4000,
+    alternates: [reading("tán")],
+  }),
+  entry("琴", "qín", { partOfSpeech: "n", frequency: 3000 }),
+  entry("弹琴", "tán qín", { partOfSpeech: "n", frequency: 400 }),
+  // An untagged pair behind a verb: a reading somebody recorded rather than a
+  // word anybody counted, which is what 是个甚么 finds behind it.
+  entry("瞅", "chǒu", { partOfSpeech: "v", frequency: 900 }),
+  entry("空", "kōng", {
+    partOfSpeech: "n",
+    frequency: 9000,
+    alternates: [reading("kòng")],
+  }),
+  entry("瞅空", "chǒu kòng", { frequency: 100 }),
+  // A tagged pair behind a numeral, where the 个 is counting rather than
+  // separating. Tagged, so that it is the verb condition being tested and not
+  // the one above it.
+  entry("一", "yī", { partOfSpeech: "m", frequency: 90_000 }),
+  entry("只", "zhǐ", {
+    partOfSpeech: "n",
+    frequency: 9000,
+    alternates: [reading("zhī")],
+  }),
+  entry("一只", "yī zhī", { partOfSpeech: "m", frequency: 3000 }),
+  // A tail that opens a tagged word of its own, which is 有个奇怪的女人.
+  entry("有", "yǒu", { partOfSpeech: "v", frequency: 80_000 }),
+  entry("奇", "qí", {
+    partOfSpeech: "a",
+    frequency: 5000,
+    alternates: [reading("jī")],
+  }),
+  entry("有奇", "yǒu jī", { partOfSpeech: "v", frequency: 100 }),
+  entry("怪", "guài", { partOfSpeech: "a", frequency: 5000 }),
+  entry("奇怪", "qí guài", { partOfSpeech: "v", frequency: 4000 }),
+  // The pair that carries a reading in from outside the character's own edges,
+  // the way 和弹 does for 弹: 打个折么 read its 折 as `shé` off 折么.
+  entry("打", "dǎ", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("折", "zhé", {
+    partOfSpeech: "v",
+    frequency: 6000,
+    alternates: [reading("shé"), reading("zhē")],
+  }),
+  entry("打折", "dǎ zhé", { partOfSpeech: "v", frequency: 500 }),
+  entry("么", "me", { partOfSpeech: "y", frequency: 30_000 }),
+  entry("折么", "shé mǒ", { frequency: 100 }),
+]);
+
+describe("a 离合词 a 量词 has been pushed into", () => {
+  /** How a run of the separated cases reads, word by word. */
+  function readSplit(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(splitDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("carries the compound's reading over the 量词 to the tail", () => {
+    assertArrayEquals(readSplit("请个假"), ["qǐng", "gè", "jià"]);
+  });
+
+  it("reads the default jiǎ without the rule, which is the bug", () => {
+    assertArrayEquals(readSplit("请个假", []), ["qǐng", "gè", "jiǎ"]);
+  });
+
+  it("carries it to the head as well, where the head is the polyphone", () => {
+    assertArrayEquals(readSplit("弹个琴"), ["tán", "gè", "qín"]);
+    assertArrayEquals(readSplit("弹个琴", []), ["dàn", "gè", "qín"]);
+  });
+
+  it("says nothing about the compound written whole", () => {
+    assertArrayEquals(readSplit("请假"), ["qǐngjià"]);
+  });
+
+  it("declines a pair the dictionary does not tag as a word", () => {
+    // 瞅空 is a reading somebody recorded rather than a word anybody counted,
+    // and admitting those opens the rule to the whole of the phrase tail.
+    assertArrayEquals(readSplit("瞅个空"), ["chǒu", "gè", "kōng"]);
+  });
+
+  it("declines a 个 that is counting the numeral in front of it", () => {
+    // 一个只 has 一只 behind it and no verb, which is the shape that separates
+    // a classifier from an infix.
+    assertArrayEquals(readSplit("一个只"), ["yī", "gè", "zhǐ"]);
+  });
+
+  it("declines where the far half opens a tagged word of its own", () => {
+    // 有个奇怪 has 有奇 behind it, and the 奇 belongs to 奇怪.
+    assertArrayEquals(readSplit("有个奇怪"), ["yǒu", "gè", "qíguài"]);
+  });
+
+  it("takes the reading an untagged pair would carry in", () => {
+    // 折么 is a pair the dictionary holds with no part of speech, and its `shé`
+    // reached 能给我打个折么 from outside the character's own edges.
+    assertArrayEquals(readSplit("打个折么"), ["dǎ", "gè", "zhé", "me"]);
+    assertArrayEquals(readSplit("打个折么", []), ["dǎ", "gè", "shémǒ"]);
+  });
+
+  it("reads the 繁體 classifier the same way", () => {
+    assertArrayEquals(readSplit("请個假"), ["qǐng", "gè", "jià"]);
+  });
+
+  it("settles the reading and not the spacing", () => {
+    assertArrayLength(
+      decodeRun(splitDictionary, "请个假", [SEPARATED_COMPOUND]),
+      3,
+    );
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readSplit("请个假", [SEPARATED_COMPOUND]), [
+      "qǐng",
+      "gè",
+      "jià",
+    ]);
   });
 });

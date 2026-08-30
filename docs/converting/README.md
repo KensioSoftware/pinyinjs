@@ -385,9 +385,49 @@ split and now hold together, and the last is 用一元硬币来打的, which joi
 while staying wrong. That one closes a 是⋯的 whose 是 sits in the clause before
 it.
 
+The eleventh carries a 离合词's reading across a 量词 pushed into the middle of
+it:
+
+```ts
+convert(dictionary, "我想向老师请个假。"); // "Wǒ xiǎng xiàng lǎoshī qǐng gè jià."
+convert(dictionary, "就去睡个觉吧"); // "jiù qù shuì gè jiào ba"
+convert(dictionary, "他会弹个琴"); // "tā huì tán gè qín"
+```
+
+请假 is one word and carries one reading. 请个假 is the same word with a 个
+inside it, and each half falls back on its character's default. 假 went to
+`jiǎ`, 觉 to `jué`, 弹 to `dàn` and 空 to `kōng`, every one of them the reading
+the compound exists to rule out. The dictionary already holds `jià` as an
+alternate of 假 and already states that 请假 is `qǐng jià`. What was missing is
+that the second fact reaches the first across a 个.
+
+Three conditions decide it. The pair either side of the 个 has to be a word the
+dictionary tags (an untagged key is a reading somebody recorded, and 是个甚么
+finds 是甚 among them). The character in front has to be a verb. That is what
+separates 请个假 from 一个只, 两个都 and 八个行, where the 个 counts the numeral
+in front of it. And the far half must stand clear of a tagged word of its own,
+since 有个奇怪的女人 has 有奇 behind it and the 奇 belongs to 奇怪.
+
+Both halves are settled, because either one can be the polyphone. 请个假 and
+睡个觉 misread the character after the 个, 弹个琴 and 教个书 the character before
+it.
+
+个 is the only 量词 in the rule. The dictionary tags 道, 名, 家 and 子 the same
+way, and those spend almost all of their time as ordinary morphemes. Widening to
+the whole tag carries the rule from 3 firings to 109, of which 46 are 知道了 read
+off 知了. 下 and 回 separate a compound readily enough and also head a
+directional complement, where 坐下来 and 生下来 end in a 来 the compound behind
+them says is `lái`. Adding that pair costs 34 wrong firings and gains none.
+
+Over 88,866 lines, 2,018 head-个-tail shapes have a dictionary pair behind them.
+The conditions admit 3 and all 3 are corrections (请个假, 打个折 and 睡個覺). The
+66 they decline are pairs the index happens to hold, where no word was ever
+split in two, and the verb condition alone accounts for 44 of them.
+
 Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`,
 `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
-`ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `applyEdgeRules`) and
+`ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`,
+`applyEdgeRules`) and
 `decodeRun` takes its own list, so an application with its own domain can add to
 them or decode with none.
 

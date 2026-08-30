@@ -67,6 +67,7 @@ lattice: `buildLattice`, `allEdges`, `cutPoints`,
 The rules that run over the lattice are exported with them: `READING_RULES`,
 `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`,
 `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`,
+`SEPARATED_COMPOUND`,
 `applyEdgeRules`,
 `wordEndingAt`, `wordsEndingAt`, `wordStartingAt`, `wordsStartingAt`, `tagOf`, and the types `EdgeRule`, `EdgeContext`,
 `EdgeVerdict`, since `decodeRun` and `decodeRunScored` take their own list and
