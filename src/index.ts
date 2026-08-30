@@ -196,6 +196,7 @@ export {
   PLAYING_TAN,
   POTENTIAL_DE,
   READING_RULES,
+  SEPARATED_COMPOUND,
   TAXI_DI,
   TEACHING_JIAO,
 } from "./decode/reading-rules.js";
