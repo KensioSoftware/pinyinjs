@@ -1,3 +1,4 @@
+import { stripToneMarks } from "../tone/tone-mark.js";
 import { isSeparableStart } from "../syllable/separation.js";
 import { splitSyllables } from "../syllable/split.js";
 
@@ -22,15 +23,22 @@ const APOSTROPHE = "'";
  * apostrophes.
  *
  * Asked of the reader rather than of a rule, by putting the question to the
- * same splitter that parses input: `hǎiōu` comes apart as `hǎi` + `ōu` and so
- * needs nothing, where `Xīān` reads as the single syllable `xian` and does.
+ * same splitter that parses input: `haiou` comes apart as `hai` + `ou` and so
+ * needs nothing, where `Xian` reads as the single syllable `xian` and does.
  * A word the splitter cannot read at all counts as ambiguous.
+ *
+ * Asked of the letters, with the tone marks stripped off first. The splitter
+ * reads a mark as evidence of where a syllable ends, which would answer that
+ * `Xīān` is clear enough and leave 西安 without its 隔音符号. The apostrophe is
+ * there for the letters, and a text that writes no tones at all needs it just
+ * the same.
  */
 function isUnambiguous(syllables: readonly string[]): boolean {
-  const split = splitSyllables(syllables.join(""));
+  const toneless = syllables.map((syllable) => stripToneMarks(syllable));
+  const split = splitSyllables(toneless.join(""));
   return (
-    split?.length === syllables.length &&
-    split.every((read, at) => read === syllables[at])
+    split?.length === toneless.length &&
+    split.every((read, at) => read === toneless[at])
   );
 }
 

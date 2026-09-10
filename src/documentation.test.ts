@@ -928,10 +928,10 @@ describe("the examples in docs/", () => {
     });
 
     it("ignores the spacing and the 隔音符号, but not one that spells 先", () => {
-      for (const typed of ["Xī'ān", "xī ān", "xi1an1"]) {
+      for (const typed of ["Xī'ān", "xī ān", "xi1an1", "Xīān"]) {
         assertTrue(check(dictionary, "西安", typed).isCorrect, typed);
       }
-      assertFalse(check(dictionary, "西安", "Xīān").isCorrect);
+      assertFalse(check(dictionary, "西安", "xiān").isCorrect);
     });
 
     it("counts a missing tone only where the caller asks for tones", () => {
@@ -1900,6 +1900,12 @@ describe("the examples in docs/", () => {
 
     it("splits without breaking a final apart", () => {
       assertArrayEquals(splitSyllables("Zhōngguórén"), ["Zhōng", "guó", "rén"]);
+    });
+
+    it("reads the tone mark as evidence of a boundary, as the page shows", () => {
+      assertArrayEquals(splitSyllables("bùān"), ["bù", "ān"]);
+      assertArrayEquals(splitSyllables("xīan1"), ["xī", "an1"]);
+      assertArrayEquals(splitSyllables("xīa"), ["xīa"]);
     });
 
     it("finds a reading in Latin text that is not pinyin at all", () => {

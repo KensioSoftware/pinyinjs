@@ -155,6 +155,23 @@ Splitting is greedy in a way that respects the finals. `guórén` cannot split a
 `guór` + `én`, because `guór` fails to parse as a syllable. A missing 隔音符号
 is recovered where the split is unambiguous.
 
+### The tone mark says where a syllable ends
+
+A mark sits on one vowel of one syllable, so where it sits is evidence about
+the boundary:
+
+```ts
+splitSyllables("bùān"); // ["bù", "ān"], 不安 without its apostrophe
+splitSyllables("xīan1"); // ["xī", "an1"], 西安 half typed
+splitSyllables("xīa"); // ["xīa"], the mark misplaced on one syllable
+```
+
+A syllable is written with one tone, so a spelling carrying two marks is two
+syllables. A mark in the wrong place costs the same as a syllable boundary,
+which is what keeps `xīa` whole. Reading it as `xī` + `a` buys nothing, and the
+tie goes to the longer piece. `xīan1` is the same reading a point cheaper than
+`xīa` + `n1`, so the mark decides it.
+
 Note that splitting will find _a_ reading of almost any Latin text, since so
 many English letter sequences are also well-formed syllables:
 

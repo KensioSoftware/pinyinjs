@@ -52,6 +52,32 @@ describe("splitting pinyin into syllables", () => {
       assertArrayEquals(splitSyllables("kěài"), ["kě", "ài"]);
     });
 
+    it("reads a tone mark as evidence of where a syllable ends", () => {
+      // 西安 and 不安 half typed, the marked half having landed and the
+      // numbered half not. `xīa` and `bùa` are readable syllables with the mark
+      // a letter early, and the reading that leaves no mark out of place is the
+      // one meant.
+      assertArrayEquals(splitSyllables("xīan1"), ["xī", "an1"]);
+      assertArrayEquals(splitSyllables("bùan1"), ["bù", "an1"]);
+      assertArrayEquals(splitSyllables("bùān"), ["bù", "ān"]);
+    });
+
+    it("gives a syllable one tone, so a second mark is a second syllable", () => {
+      // `dìèr` is 第二 with the apostrophe left out. Read as one syllable it is
+      // d + ie carrying an r, which writes back as `dièr` and loses 第's tone.
+      assertArrayEquals(splitSyllables("dìèr"), ["dì", "èr"]);
+      assertArrayEquals(splitSyllables("qīshíèr"), ["qī", "shí", "èr"]);
+    });
+
+    it("still reads a syllable whose tone mark is in the wrong place", () => {
+      // 虾 written `xīa` is a slip rather than a boundary. Splitting it into
+      // `xī` + `a` costs the same two points, and the tie goes to the longer
+      // piece.
+      assertArrayEquals(splitSyllables("xīa"), ["xīa"]);
+      assertArrayEquals(splitSyllables("bùa"), ["bùa"]);
+      assertArrayEquals(splitSyllables("xīang"), ["xīang"]);
+    });
+
     it("honours a hyphen, as used in 成语 and reduplication", () => {
       assertArrayEquals(splitSyllables("fēngpíng-làngjìng"), [
         "fēng",
@@ -115,6 +141,15 @@ describe("splitting pinyin into syllables", () => {
       assertTrue(word[0].erhua);
       assertIdentical(word[0].final, "uan");
       assertIdentical(word[0].tone, 2);
+    });
+
+    it("keeps a tone on each syllable of a word missing its apostrophe", () => {
+      const word = readWord("dìèr");
+      assertNonNullable(word);
+      assertArrayLength(word, 2);
+      assertIdentical(word[0].tone, 4);
+      assertIdentical(word[1].final, "er");
+      assertIdentical(word[1].tone, 4);
     });
 
     it("returns undefined for text that is not pinyin", () => {
