@@ -84,9 +84,11 @@ check(dictionary, "西安", "xi1an1").isCorrect; // true
 check(dictionary, "海鸥", "hǎiōu").isCorrect; // true, the mark is optional there
 ```
 
-The one exception is the 隔音符号 that does real work. `Xīān` is how `xiān` is
-spelled, and reading it as two syllables is the thing the mark exists to make
-possible. That one is marked wrong, because it says something else.
+The one exception is the 隔音符号 that does real work. `xiān` is 先, and reading
+it as two syllables is the thing the mark exists to make possible. That one is
+marked wrong, because it says something else. Tone marks settle it where they
+can, so `Xīān` passes. Two marks are two syllables, and 西安 is the only thing
+it can be.
 
 **Word spacing.** An axis of its own, because it is a mistake in its own right.
 See [word spacing](#word-spacing) below.

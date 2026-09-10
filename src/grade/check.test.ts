@@ -140,9 +140,12 @@ describe("what a string comparison would get wrong", () => {
   });
 
   it("is not lenient about a 隔音符号 that changes what is spelled", () => {
-    // The one place the mark is not orthography: `Xīān` is how `xiān` is
-    // written, and reading it as two syllables is what 西安's mark is for.
-    assertArrayEquals(verdicts("西安", "Xīān"), ["wrong", "missing"]);
+    // The one place the mark is not orthography: `xiān` is 先, and reading it
+    // as two syllables is what 西安's mark is for.
+    assertArrayEquals(verdicts("西安", "xiān"), ["wrong", "missing"]);
+    // Two tone marks are two syllables, so this one needs no apostrophe to be
+    // read as 西安 and nothing else.
+    assertTrue(passes("西安", "Xīān"));
   });
 });
 

@@ -67,6 +67,17 @@ export function stripToneMarks(text: string): string {
 }
 
 /**
+ * How many tone diacritics a text carries.
+ *
+ * A syllable is written with one tone, so a second mark on a run of letters is
+ * a second syllable inside it: `dìèr` is 第二 with the apostrophe left out
+ * rather than any syllable of the language.
+ */
+export function countToneMarks(text: string): number {
+  return text.normalize("NFD").match(toneDiacriticPattern)?.length ?? 0;
+}
+
+/**
  * How each tone is written raised.
  *
  * Used by pinyin's `superscript` notation and by Wade-Giles, which writes its
