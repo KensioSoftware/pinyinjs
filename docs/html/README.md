@@ -1,8 +1,7 @@
 # HTML output
 
-`convertToHtml` returns the same conversion as `convert`, with one element per
-syllable carrying its tone and, where the decoder was guessing, what it chose
-over.
+`convertToHtml` converts Chinese text to pinyin with one HTML element per
+syllable. Each element can carry a tone class and uncertainty information.
 
 ```ts
 import { convertToHtml } from "@kensio/pinyinjs";
@@ -12,10 +11,12 @@ convertToHtml(dictionary, "行");
 //       data-alternatives="háng héng hàng">xíng</span>
 ```
 
-That is the whole reason to use it. A reader can be shown which syllables were
-settled and which were a guess, and a flat string has nowhere to put that.
+Use the classes to colour tones or show readers where a pronunciation is
+uncertain.
 
-## What it emits
+<a id="what-it-emits"></a>
+
+## Generated markup
 
 ```ts
 convertToHtml(dictionary, "银行");
@@ -28,25 +29,24 @@ convertToHtml(dictionary, "银行");
 | `py-tone-1` … `py-tone-5` | the syllable's tone; 5 is the neutral tone |
 | `py-uncertain`            | a syllable the decoder was guessing at     |
 
-An uncertain syllable also carries `data-alternatives`, the readings it was
-chosen over, space-separated and in the decoder's own order.
+An uncertain syllable has a `data-alternatives` attribute containing the other
+readings, separated by spaces and ordered by the decoder.
 
-Text that was never Han is escaped and emitted as it stood, with no markup
-around it:
+Non-Han text is escaped and emitted without a wrapper:
 
 ```ts
 convertToHtml(dictionary, "3D银行");
 // <span class="py-syllable py-tone-1" lang="zh-Latn-CN-pinyin">sān</span> D <span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">yín</span><span class="py-syllable py-tone-2" lang="zh-Latn-CN-pinyin">háng</span>
 ```
 
-Escaping always happens and has no option to turn it off. Anything from the
-input that failed to parse as a syllable goes through HTML escaping on the way
-out.
+HTML escaping is always enabled, including for input that cannot be parsed as
+a syllable.
 
-## What language it says it is
+<a id="what-language-it-says-it-is"></a>
 
-Every syllable declares itself, because `yín` on its own could be almost any
-language:
+## Language tags
+
+Each syllable has a `lang` attribute:
 
 | Conversion        | `lang`              |
 | ----------------- | ------------------- |
@@ -58,32 +58,25 @@ convertToHtml(dictionary, "垃圾", { locale: "zh-TW" });
 // <span class="py-syllable py-tone-4" lang="zh-Latn-TW-pinyin">lè</span><span class="py-syllable py-tone-4" lang="zh-Latn-TW-pinyin">sè</span>
 ```
 
-A screen reader consults `lang` before deciding how to pronounce what it has
-found, and a browser consults it for hyphenation and font selection. Without
-one, `xíng` inherits whatever the page around it claims to be, which is how
-pinyin ends up read aloud as English. The tag says Mandarin in the Latin
-alphabet. That is what `zh-Latn-…-pinyin` means in BCP 47, and it is why the
-`zh` of a Chinese page and the `en` of an English one are both wrong. The
-subtags are all registered, and the `pinyin` variant's own prefix in the IANA
-registry is `zh-Latn`.
+The tag identifies Mandarin written in pinyin. Screen readers and browsers can
+use it for pronunciation, hyphenation and font selection. `zh-Latn-CN-pinyin`
+uses registered BCP 47 subtags. Without an explicit tag, pinyin would inherit
+the surrounding page’s language.
 
-The region follows the reading standard the conversion used, since that is the
-distinction it makes (垃圾 is `lājī` under `zh-CN` and `lèsè` under `zh-TW`).
-Tone notation stays out of it. `hang2` is pinyin spelt with a tone number, still
-the same romanisation, and it carries the same tag as `háng`.
+The region follows the conversion locale. Tone notation leaves the tag
+unchanged, so `hang2` and `háng` have the same language tag.
 
-The conversion emits no wrapper, and the tag is repeated on every syllable. To
-declare it once instead, turn it off and put the same tag on a wrapper of your
-own, which everything inside inherits:
+To set the language once on a wrapper, disable per-syllable language tags:
 
 ```ts
 `<span lang="zh-Latn-CN-pinyin">${convertToHtml(dictionary, "银行", { lang: false })}</span>`;
 ```
 
-## No styles are included
+<a id="no-styles-are-included"></a>
 
-The package ships no CSS. The class names are the contract, and what they look
-like is yours:
+## Styling
+
+The package includes no CSS. Add styles for the generated classes:
 
 ```css
 .py-tone-1 {
@@ -107,8 +100,7 @@ like is yours:
 }
 ```
 
-A tooltip on the alternatives needs no extra work, since they are already in the
-attribute:
+The alternatives are available to CSS through their attribute:
 
 ```css
 .py-uncertain::after {
@@ -118,7 +110,8 @@ attribute:
 
 ## Options
 
-Takes every [conversion option](../options/), plus four of its own:
+HTML conversion accepts every [conversion option](../options/), plus these
+four options:
 
 | Option          | Default  | Does                                                      |
 | --------------- | -------- | --------------------------------------------------------- |
@@ -138,21 +131,21 @@ convertToHtml(dictionary, "银行", { lang: false });
 // <span class="py-syllable py-tone-2">yín</span><span class="py-syllable py-tone-2">háng</span>
 ```
 
-With all three off you get one bare `py-syllable` element per syllable, still
-worth having if all you want is to letter-space or hyphenate on syllable
-boundaries.
+Turning off the three boolean options leaves a bare `py-syllable` element for
+each syllable. You can still style syllable boundaries.
 
-Conversion options work as they do everywhere:
+For example, conversion options can change the tone notation:
 
 ```ts
 convertToHtml(dictionary, "银行", { notation: "numbers" });
 ```
 
-## Another system in place of the pinyin
+<a id="another-system-in-place-of-the-pinyin"></a>
 
-`transcription` writes the reading in bopomofo, Wade-Giles, Yale, Gwoyeu
-Romatzyh or the IPA. It works the same in an annotation, which is what a page
-offering a reader 注音符號 over the characters needs:
+## Other transcription systems
+
+Set `transcription` to write bopomofo, Wade-Giles, Yale, Gwoyeu Romatzyh or IPA.
+The option also works with annotated HTML:
 
 ```ts
 import { convertToAnnotatedHtml, BOPOMOFO } from "@kensio/pinyinjs";
@@ -168,37 +161,32 @@ convertToAnnotatedHtml(dictionary, "银行", { transcription: BOPOMOFO });
 >…
 ```
 
-Nothing else about the markup changes. The tone class is still `py-tone-2`,
-because the tone is the syllable's and not the spelling's, so a page colours a
-second tone in bopomofo with the rule that already colours it in pinyin.
-`py-uncertain` and `data-alternatives` are unmoved for the same reason.
+Tone and uncertainty classes remain the same across systems. `data-alternatives`
+contains the alternatives in the selected system.
 
-### The word grouping is shared and only the join changes
+<a id="the-word-grouping-is-shared-and-only-the-join-changes"></a>
 
-The same division [romanisation](../romanization/#the-word-segmentation-is-shared-and-only-the-join-changes)
-makes. What a word is belongs to the language, and how a word's syllables are
-run together belongs to the system, so the join goes _between_ the syllable
-elements and each of them keeps a class and a tag of its own:
+### Word grouping and syllable separators
+
+All systems use the same [word grouping](../romanization/#the-word-segmentation-is-shared-and-only-the-join-changes).
+Each system supplies its own separator between syllable elements:
 
 ```ts
 convertToHtml(dictionary, "北京", { transcription: WADE_GILES });
 // <span …>Pei³</span>-<span …>ching¹</span>
 ```
 
-That is why a base spanning several characters still gets one element per
-syllable. 95% is `ㄅㄞˇ ㄈㄣ ㄓ ㄐㄧㄡˇ ㄕˊ ㄨˇ` over three characters, spaced as
-bopomofo spaces a word, inside a single `<rt>`.
+A source span can contain several syllables. For example, 95% has six bopomofo
+syllables inside one `<rt>`, with a space between each pair.
 
-A mark pinyin writes and the system does not is dropped rather than carried
-across. 干干净净 is `gāngān-jìngjìng`, and the hyphen is GB/T 16159's way of
-marking a boundary inside one word. Wade-Giles hyphenates every syllable and
-writes `kan¹-kan¹-ching⁴-ching⁴` regardless. Bopomofo has no hyphen at all and
-writes `ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ`.
+Separators follow the selected system. 干干净净 is `gāngān-jìngjìng` in pinyin,
+`kan¹-kan¹-ching⁴-ching⁴` in Wade-Giles and `ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ` in bopomofo.
 
-### What the reading says it is
+<a id="what-the-reading-says-it-is"></a>
 
-The `lang` on the reading follows the system, since `zh-Latn-CN-pinyin` is
-false of a script:
+### Language tags by system
+
+The reading’s `lang` attribute follows the selected system:
 
 | System          | `zh-CN`               | `zh-TW`               |
 | --------------- | --------------------- | --------------------- |
@@ -209,15 +197,11 @@ false of a script:
 | Gwoyeu Romatzyh | `zh-Latn-CN`          | `zh-Latn-TW`          |
 | IPA             | `zh-Latn-CN-fonipa`   | `zh-Latn-TW-fonipa`   |
 
-Every one of them carries the region, because the distinction it marks belongs
-to the reading. 垃圾 is `lājī` under `zh-CN` and `lèsè` under `zh-TW`, and it is
-two different words in bopomofo for the same reason.
+Every tag includes the conversion region. This records which reading standard
+was used, including differences such as 垃圾 under `zh-CN` and `zh-TW`.
 
-Yale and Gwoyeu Romatzyh name themselves nowhere. The IANA registry has a
-variant subtag for pinyin, for Wade-Giles and for the IPA, and none for either
-of those two, so both go out saying only that they are Mandarin in the Latin
-alphabet. A private-use subtag would say more and mean less, since nothing
-reading the tag would know it.
+Yale and Gwoyeu Romatzyh have no registered IANA variant subtag. Their tags
+identify Mandarin in the Latin alphabet and the region.
 
 `BOPOMOFO`, `WADE_GILES`, `YALE`, `GWOYEU` and `IPA` are exported, along with
 `TRANSCRIPTION_SYSTEMS` and `transcriptionSystemNamed`. A caller with a system
@@ -225,8 +209,8 @@ of its own can pass any `TranscriptionSystem`.
 
 ## Rendering pieces you already have
 
-`toHtml(pieces, options)` renders a `ConvertedPiece[]` you got from
-`convertPieces`. Inspect or filter the conversion before it becomes markup:
+Use `toHtml(pieces, options)` to render a `ConvertedPiece[]` after inspecting or
+filtering it:
 
 ```ts
 import { convertPieces, toHtml } from "@kensio/pinyinjs";
@@ -235,14 +219,14 @@ const pieces = convertPieces(dictionary, "长江大桥");
 toHtml(pieces);
 ```
 
-`convertToHtml(dictionary, text, options)` is exactly
-`toHtml(convertPieces(dictionary, text, options), options)`, so use whichever
-end you need. See [confidence](../confidence/) for what is on a piece.
+`convertToHtml(dictionary, text, options)` composes `convertPieces` and
+`toHtml`. See [confidence](../confidence/) for the fields on each piece.
 
-## Annotation: keeping the hanzi
+<a id="annotation-keeping-the-hanzi"></a>
 
-Everything above writes the pinyin _instead of_ the hanzi. `convertToAnnotatedHtml`
-writes both, with the reading above the characters:
+## Annotating hanzi
+
+`convertToAnnotatedHtml` keeps the hanzi and places the reading above them:
 
 ```ts
 import { convertToAnnotatedHtml } from "@kensio/pinyinjs";
@@ -259,19 +243,17 @@ convertToAnnotatedHtml(dictionary, "银行");
 >…
 ```
 
-The element is `<ruby>`, which browsers lay out natively, with no script and no
-measuring, and it reflows with the text. `<rp>` holds the parentheses a browser
-without ruby support falls back to. The reading degrades to `银(yín)` instead of
-vanishing.
+Browsers lay out `<ruby>` annotations without JavaScript. `<rp>` supplies
+fallback parentheses for browsers without ruby support, producing `银(yín)`.
 
-Inside the `<rt>` is exactly what `toHtml` would have written, so tone classes,
-`py-uncertain` and `data-alternatives` all work within an annotation.
+The `<rt>` contains the same syllable markup as `toHtml`, including tone
+classes, `py-uncertain` and `data-alternatives`.
 
-### A base can span characters
+<a id="a-base-can-span-characters"></a>
 
-This is the part that makes annotation harder than it looks, and the reason
-`ConvertedPiece` carries a `source` at all. A syllable and a character line up
-only in the ordinary case:
+### Aligning characters and syllables
+
+A character and a syllable do not always correspond one to one:
 
 | Text     | Annotated as                          | Because                                                       |
 | -------- | ------------------------------------- | ------------------------------------------------------------- |
@@ -280,16 +262,16 @@ only in the ordinary case:
 | 95%      | 95% over `bǎifēnzhījiǔshíwǔ`          | a read number reverses, so no syllable is any one character's |
 | 干干净净 | four bases, the hyphen in the reading | `gāngān-jìngjìng` is one word with a boundary inside it       |
 
-Splitting per character regardless is what produces `玩` over `wán` and `儿`
-over an empty reading. `source` names the characters a piece reads, or is
-undefined where the piece reads on into the ones before it, and the renderer
-groups on that.
+The renderer groups pieces by `source`. A piece with an undefined `source`
+continues the preceding source span. For example, 玩儿 gets one annotation
+over both characters.
 
-### The base is what the author wrote
+<a id="the-base-is-what-the-author-wrote"></a>
 
-An annotation puts the source and the reading in two different places, so
-anything belonging to only one of them has to go in the right one. Pinyin
-orthography stops at the reading:
+### Preserving the source text
+
+An annotation preserves the original text in its base. Pinyin formatting applies
+only to the reading:
 
 |                                 | In the hanzi                            | In the reading                       |
 | ------------------------------- | --------------------------------------- | ------------------------------------ |
@@ -297,18 +279,17 @@ orthography stops at the reading:
 | the hyphen of `gāngān-jìngjìng` | no — 干干净净 has no hyphen             | yes, beside the syllables it divides |
 | 。 rewritten as a full stop     | no — the mark the author typed          | yes, as the conversion writes it     |
 
-So `convertToAnnotatedHtml(dictionary, "银行。")` annotates 银 and 行 and then
-writes 。, while `convertToHtml` on the same text writes a full stop. Both are
-right about the text they are writing.
+For example, `convertToAnnotatedHtml(dictionary, "银行。")` preserves 。 after
+the annotated characters. `convertToHtml` writes a Latin full stop.
 
-Measured over the committed dictionary, 5,283 of 723,147 keys have fewer
-syllables than characters. 4,024 of them are 儿化, and the rest are words
-written with punctuation, which never reaches the decoder because punctuation
-ends a Han run.
+The dictionary contains entries with fewer syllables than characters, mostly
+erhua words. Source spans preserve their alignment.
 
-### Styling it
+<a id="styling-it"></a>
 
-Ruby needs no CSS to work, but the default `<rt>` is small:
+### Styling annotations
+
+Ruby works without CSS. To enlarge the default reading:
 
 ```css
 ruby rt {
@@ -318,7 +299,7 @@ ruby rt {
 }
 ```
 
-Tone colours go on the syllables inside the `<rt>`, exactly as elsewhere:
+Apply tone colours to the syllables inside `<rt>`:
 
 ```css
 ruby rt .py-tone-1 {
@@ -328,9 +309,9 @@ ruby rt .py-tone-1 {
 
 ### Rendering annotated pieces
 
-`toAnnotatedHtml(pieces, options)` is the piece-level entry point, and
-`convertToAnnotatedHtml(dictionary, text, options)` is
-`toAnnotatedHtml(convertPieces(dictionary, text, options), options)`.
+Use `toAnnotatedHtml(pieces, options)` to render existing pieces.
+`convertToAnnotatedHtml(dictionary, text, options)` composes `convertPieces`
+and `toAnnotatedHtml`.
 
 ## At the command line
 
@@ -347,8 +328,8 @@ $ pinyinjs annotate --system bopomofo 银
 <ruby lang="zh">银<rp>(</rp><rt><span class="py-syllable py-tone-2" lang="zh-Bopo-CN">ㄧㄣˊ</span></rt><rp>)</rp></ruby>
 ```
 
-`--no-tone-classes`, `--no-uncertain`, `--no-lang` and `--system` are the four
-options above, and both commands take them.
+Both commands accept `--no-tone-classes`, `--no-uncertain`, `--no-lang` and
+`--system`.
 
 <!-- card
 ```ts

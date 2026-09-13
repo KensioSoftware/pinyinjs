@@ -1,8 +1,6 @@
 # Getting started
 
-Install the package, load a dictionary, convert some hanzi. This page goes from
-an empty project to a working conversion in Node and in the browser, and points
-at the guide for each thing it touches on the way.
+Set up PinyinJS to convert Chinese characters (hanzi) to pinyin in Node.js or a browser.
 
 ## Install
 
@@ -10,13 +8,9 @@ at the guide for each thing it touches on the way.
 pnpm add @kensio/pinyinjs
 ```
 
-Node 22+, or any browser. The package is ESM only, and the core imports no Node
-built-ins. The one Node-specific entry point is `@kensio/pinyinjs/node`, and the
-browser path never reaches it.
+PinyinJS requires Node.js 22 or later, or a browser with ES modules. The package is ESM only. Import browser-compatible functions from `@kensio/pinyinjs` and Node.js file access from `@kensio/pinyinjs/node`.
 
-It is a 4 MB download, because `data/` is 10 MB of compiled dictionaries and
-they are the point of the whole thing. At runtime you load one tier of it (see
-[tiers](#pick-a-tier) below).
+The package includes compiled dictionaries in `data/`. At runtime, load the [tier](#pick-a-tier) your application needs.
 
 ## Try it without writing any code
 
@@ -32,16 +26,13 @@ $ pinyinjs explain 银行
   háng    word    xíng +14.6  héng +16.6  hàng +17.6
 ```
 
-Every option the library takes is a flag, and every command writes JSON with
-`--json`. See [the command line](../cli/).
+The CLI exposes library options as flags and supports JSON output with `--json`. See [the command line](../cli/) for the commands and their options.
 
 ## Load a dictionary
 
-Converting needs a dictionary. A dictionary is a fetchable file, so loading one
-is asynchronous. Keeping it out of the module graph also keeps it out of your
-bundle.
+Chinese-to-pinyin conversion requires a dictionary. Dictionary data is stored separately from the JavaScript bundle and loaded asynchronously.
 
-In Node, read it off disk:
+In Node.js, load the data from disk:
 
 ```ts
 import { convert, loadDictionary } from "@kensio/pinyinjs";
@@ -62,12 +53,9 @@ const dictionary = await loadDictionary(fetchSource("/data"), "standard");
 convert(dictionary, "长城"); // "Chángchéng"
 ```
 
-Serve the artifacts uncompressed and let HTTP `Content-Encoding: br` do the
-compressing. `DecompressionStream` has no brotli. The transfer encoding is the
-only route to a brotli-compressed artifact in a browser.
+Serve the dictionary files over HTTP. Your server can compress responses with Brotli and set `Content-Encoding: br`. The browser then decompresses them before PinyinJS reads them.
 
-Load the dictionary once and keep it. It is immutable, safe to share, and
-decodes entries lazily. Building a second one repeats the work for no gain.
+Load a dictionary once and reuse it. Dictionaries are immutable and safe to share across requests. Entries are decoded when first accessed.
 
 ## Pick a tier
 
@@ -77,9 +65,7 @@ decodes entries lazily. Building a second one repeats the work for no gain.
 | `standard` |  66,970 |            377 KB | the most common words  |
 | `full`     | 461,555 |          2,378 KB | every word             |
 
-`full` is the default and is what you want on a server. The tiers are nested. A
-page can load `standard`, start converting, and swap in `full` when it arrives.
-More in [dictionaries](../dictionaries/).
+`full` is the default tier and provides the most complete word coverage. In a browser, you can start with `standard` and replace it with `full` after the larger tier loads. Each tier includes the entries in the smaller tiers. See [dictionaries](../dictionaries/) for loading and memory usage.
 
 ## Convert something
 
@@ -90,26 +76,24 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
-行 has two readings. `银行` is `yínháng` and `行长` is `hángzhǎng`, and only the
-surrounding word says which. A lookup table has nowhere to put that. The
-package decodes whole words. See [converting](../converting/).
+A Chinese character can have several readings. PinyinJS uses the surrounding word to choose one. For example, 行 is `háng` in both `银行` (`yínháng`) and `行长` (`hángzhǎng`). See [converting](../converting/) for how readings are selected.
 
-Options are a third argument:
+Pass conversion options as the third argument:
 
 ```ts
 convert(dictionary, "银行", { notation: "numbers" }); // "yin2hang2"
 convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 ```
 
-Every one of them is in [options](../options/).
+See [options](../options/) for all settings and their defaults.
 
 ## Where to go next
 
-- [Converting](../converting/): hanzi in, pinyin out, and how the decoder decides
-- [Orthography](../orthography/): why the spaces and capitals fall where they do
-- [Confidence](../confidence/): which syllables it was unsure about
-- [HTML output](../html/): marked-up output for a web page
-- [Syllables](../syllables/): pinyin without any hanzi at all
+- [Converting](../converting/) explains how Chinese text is converted to pinyin.
+- [Orthography](../orthography/) covers word spacing and spelling rules.
+- [Confidence](../confidence/) explains how to identify uncertain readings.
+- [HTML output](../html/) covers pinyin markup for web pages.
+- [Syllables](../syllables/) covers parsing and formatting written pinyin.
 
 <!-- card
 ```ts

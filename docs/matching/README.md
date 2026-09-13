@@ -1,6 +1,6 @@
 # Matching
 
-`match` filters Chinese text by a pinyin query typed on a Latin keyboard.
+`match` searches Chinese text using pinyin or initials and returns the matching character ranges.
 
 ```ts
 import { match } from "@kensio/pinyinjs";
@@ -9,11 +9,11 @@ match(dictionary, "北京大学", "bjdx")?.ranges; // [{ at: 0, length: 4 }]
 match(dictionary, "北京大学", "nanjing"); // undefined
 ```
 
-This is the search box every Chinese site has and no Latin keyboard can type
-into. Somebody looking for 北京大学 writes `bjdx`, `beijing`, `beijingdx` or
-`bei jing da xue`, and all four should find it while `nanjing` misses.
+For example, 北京大学 matches `bjdx`, `beijing`, `beijingdx` and `bei jing da xue`.
 
-## What a query may write
+<a id="what-a-query-may-write"></a>
+
+## Query syntax
 
 | Form            | Written                    |
 | --------------- | -------------------------- |
@@ -24,73 +24,50 @@ into. Somebody looking for 北京大学 writes `bjdx`, `beijing`, `beijingdx` or
 | tones as digits | `bei3jing1`                |
 | ü as typed      | `lvse` or `lu:se` for 绿色 |
 
-Anything the query starts a syllable with counts while it is being typed. A box
-filtering on every keystroke keeps matching. `b`, `be` and `bei` all match 北京,
-and 京 joins the highlight at `beij`.
+The final syllable in a query can be incomplete. `b`, `be` and `bei` all match 北京. With `beij`, the match also includes 京. This supports filtering while the user types.
 
-An apostrophe, a hyphen or a space is a syllable boundary, and that is what a
-typist means by writing one. 县 is `xian` and 西安 is `xi an`. A query that
-writes the boundary rules the other one out:
+Apostrophes, hyphens and spaces specify syllable boundaries. For example, 县 is `xian` and 西安 is `xi an`. An explicit boundary distinguishes them:
 
 ```ts
 match(dictionary, "县城", "xian")?.ranges; // [{ at: 0, length: 1 }]
 match(dictionary, "县城", "xi an"); // undefined
 ```
 
-A tone written as a **digit** is honoured, so `bei3` matches 北 where `bei1`
-misses. A tone written as a **mark** is dropped, because honouring it would mean
-knowing where the syllable it sits inside ends, and a query is exactly the text
-where that is still open. `bei` may still become `beijing`.
+Tone digits constrain the match. `bei3` matches 北, but `bei1` does not. Tone marks are ignored because the final syllable may still be incomplete. For example, `bei` may become `beijing`.
 
-## No index, and none needed
+<a id="no-index-and-none-needed"></a>
 
-The haystack is Chinese, and no pinyin is spelled out in advance to search over.
-Each character is asked what it can be read as, and the query is tested as a
-path over those readings, one character at a time. No index is built and none is
-stored, and the dictionary that converts hanzi to pinyin is the one that does
-it.
+## Character readings
 
-**Every reading a character has is matchable.** That is where this differs from
-matching against a table of default readings, as the incumbents do.
+Pass the Chinese text directly to `match`. It checks the query against each character's dictionary readings. You can reuse the dictionary loaded for conversion without building a separate pinyin index.
+
+`match` accepts every dictionary reading of a character:
 
 ```ts
 match(dictionary, "银行", "yh")?.score; // 7 — 银行 is yínháng
 match(dictionary, "银行", "yx")?.score; // 5 — a reading 行 has, but not here
 ```
 
-Both find it, and both are allowed, because a reader who thinks of 行 as `xíng`
-has the character right. The one that reads the way the text actually reads
-scores higher. 长江 answers to `cj` above `zj`, and 重庆 to `cq` above `zq`, for
-the same reason.
+Both queries match 行, but the reading supported by the surrounding text receives a higher score. Similarly, 长江 ranks `cj` above `zj`, and 重庆 ranks `cq` above `zq`.
 
-The 國語 reading counts too, so 垃圾 is found by `lese` as well as by `laji`,
-and the 普通话 reading still ranks first in text a `zh-CN` decode reads as
-`lājī`. Somebody typing what they say has not typed it wrongly.
+Taiwan Mandarin readings also match. 垃圾 matches both `lese` and `laji`. When a `zh-CN` conversion reads the text as `lājī`, that reading ranks first.
 
 ## 儿化
 
-The r of 儿化 belongs to the syllable in front of it, and never to a syllable of
-its own (玩儿 is `wánr`, one syllable over two characters). That is how it is
-typed, and that is how it is matched:
+In 儿化 (erhua), the r-suffix belongs to the preceding syllable. For example, 玩儿 is `wánr`, one syllable covering two characters:
 
 ```ts
 match(dictionary, "玩儿", "wanr")?.ranges; // [{ at: 0, length: 2 }]
 match(dictionary, "一点儿", "yidianr")?.ranges; // [{ at: 0, length: 3 }]
 ```
 
-Both characters are marked, because the one syllable is how both of them are
-read. The characters as themselves still match, with `wane` and `we` writing 玩
-`wán` and 儿 `ér`, and they rank below it, since only one of the two reads the
-way the text reads.
+The match includes both characters. Separate-character queries such as `wane` and `we` also match 玩 `wán` and 儿 `ér`, but rank below the contextual reading.
 
-The r is offered wherever an 儿 follows, and not only where the dictionary
-attests the 儿化, because the query is what says which was meant. 女儿 is
-`nǚ'ér` and not `nǚr`, and `nvr` still finds it, below `nver`, which is how it
-is actually said.
+An r-suffix query is accepted whenever 儿 follows a character, including words with a separate 儿 syllable. For example, 女儿 is read `nǚ'ér`. Both `nver` and `nvr` find it, with `nver` ranked higher.
 
 ## Ranking
 
-`score` is a number to sort by, highest first. It weighs three things:
+Sort by `score` in descending order. It combines three factors:
 
 | Worth | For                                                        |
 | ----- | ---------------------------------------------------------- |
@@ -98,10 +75,7 @@ is actually said.
 | 2     | starting where a word starts                               |
 | 1     | starting at the beginning of the text, decaying with depth |
 
-The first is the share of the matched characters whose settled reading accounts
-for what the query wrote. A match half of which reads correctly is worth 2. The
-second is what puts 大学生活 above 北京大学 for `dx`, where both hold the word
-and only one of them starts with it.
+The first factor measures how many matched characters agree with the contextual reading. A match with agreement on half its characters contributes 2 points. The other factors reward word boundaries and positions near the start of the text.
 
 ```ts
 const query = "dx";
@@ -112,35 +86,29 @@ const query = "dx";
   .map((one) => one.text); // ["大学生活", "上海大学"]
 ```
 
-Scores are comparable within one query and not across queries. What they order
-is a list of results, and none of them is a probability. Two matches worth the
-same keep the earlier one.
+Compare scores only within the same query. They are ranking values, not probabilities. If two matches have the same score, the earlier match is kept.
 
-## What comes back is ranges
+<a id="what-comes-back-is-ranges"></a>
 
-A match comes back as the stretches it covers, in code points from the start of
-the text. A caller can mark them:
+## Matching ranges
+
+The result contains character ranges measured in Unicode code points from the start of the text. Use them to highlight matches:
 
 ```ts
 const found = match(dictionary, "我在北京大学学中文", "bjdx");
 found?.ranges; // [{ at: 2, length: 4 }]
 ```
 
-There is more than one range where the query stepped over something with no
-reading of its own (a separator inside a name, a space, a bracket):
+A match has multiple ranges when it skips characters with no reading, such as a separator, space or bracket:
 
 ```ts
 match(dictionary, "北京·大学", "bjdx")?.ranges;
 // [{ at: 0, length: 2 }, { at: 3, length: 2 }]
 ```
 
-What comes back is what was matched, and not what was spanned. The `·` stays
-outside the highlight. A character the dictionary **can** read is never stepped
-over, and a query that skips one has failed to match around it.
+In this example, `·` is outside the highlighted ranges. Characters with dictionary readings must match the query and cannot be skipped.
 
-Positions count code points, not UTF-16 units, exactly as `segment` does. A
-character outside the basic plane counts as the one character it is, and a
-highlight never lands in the middle of one.
+Positions use Unicode code points, as in `segment`. A supplementary character occupies one position. Convert the input with `Array.from` before slicing by these positions.
 
 ## The core tier is enough
 
@@ -152,20 +120,15 @@ const core = await loadDictionary(fileSource(directory), "core");
 match(core, "北京大学", "bjdx")?.ranges; // [{ at: 0, length: 4 }]
 ```
 
-70 KB, and a page that never loads a word list can still filter. What a bigger
-tier buys is the ranking. The reading in context comes from the decoder, and the
-decoder knows more words on `standard` and `full`.
+The `core` tier supports matching with a download of about 70 KB. The larger `standard` and `full` tiers provide more word context for ranking results.
 
-## Where it stops
+<a id="where-it-stops"></a>
 
-**Guess at a typo.** A part-syllable counts at the end of the query, where it is
-something still being typed, and not in the middle of it. `bejing` is a mistake
-rather than an abbreviation, and a search box makes a poor place to decide which
-mistake it was.
+## Limitations
 
-**Match Latin text in the haystack.** The query is pinyin and the haystack is
-Chinese. Matching `iphone` against `iPhone 15 发布` is a substring search, which
-every language already has.
+Matching requires correct spelling, with an incomplete syllable allowed only at the end of a query. For example, `bejing` fails to match `beijing`.
+
+Matching searches Chinese readings only. Use a separate substring search to match Latin text, such as `iphone` in `iPhone 15 发布`.
 
 ## At the command line
 
@@ -176,10 +139,7 @@ $ pinyinjs match --query bjdx 北京大学 我在北京大学学中文 上海大
 上海大学  no match
 ```
 
-The matches come first, best first, and every text still gets a line. Given no
-arguments it reads standard input. A file of titles is filtered with
-`cat titles.txt | pinyinjs match --query bjdx`. `--json` gives one document per
-text, with `ranges` and `score` on the ones that matched.
+Results are ordered with matches first and the highest scores first. Each input text gets a line. With no positional arguments, the command reads standard input. For example, `cat titles.txt | pinyinjs match --query bjdx` searches a file of titles. `--json` includes `ranges` and `score` for matching texts.
 
 ## Uses
 
