@@ -8,17 +8,39 @@ import { type Syllable, writeSyllableSpelling } from "../syllable/syllable.js";
 import { NEUTRAL_TONE, type Tone } from "../tone/tone.js";
 
 /**
- * Whether a syllable is 一, which is the only thing spelled `yi` that sandhis.
+ * The 汉字 一.
  */
-export function isYi(syllable: Syllable): boolean {
-  return syllable.initial === "" && syllable.final === "i";
+export const YI_CHARACTER = "一";
+
+/**
+ * The 汉字 不.
+ */
+export const BU_CHARACTER = "不";
+
+/**
+ * Whether a syllable is 一.
+ *
+ * **Answered from the 汉字 where the caller has one**, and from the spelling
+ * where it does not, the way {@link isCounting} is. The spelling is not the
+ * morpheme and never was: 医, 依, 衣 and 伊 are all `yī` and none of them
+ * changes tone for what follows it. This rule is a fact about one character.
+ */
+export function isYi(syllable: Syllable, character?: string): boolean {
+  return character === undefined
+    ? syllable.initial === "" && syllable.final === "i"
+    : character === YI_CHARACTER;
 }
 
 /**
  * Whether a syllable is 不.
+ *
+ * Read from the 汉字 or the spelling on the same terms as {@link isYi}, and for
+ * the same reason: 部, 布, 步 and 埠 are all `bù` and none of them flattens.
  */
-export function isBu(syllable: Syllable): boolean {
-  return syllable.initial === "b" && syllable.final === "u";
+export function isBu(syllable: Syllable, character?: string): boolean {
+  return character === undefined
+    ? syllable.initial === "b" && syllable.final === "u"
+    : character === BU_CHARACTER;
 }
 
 /**

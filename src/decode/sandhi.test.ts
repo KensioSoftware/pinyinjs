@@ -1,6 +1,7 @@
 import { assertArrayEquals } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import { toCharacters } from "../script/characters.js";
 import {
   readSyllable,
   type Syllable,
@@ -37,6 +38,25 @@ function sandhied(
   return applySandhi(reading(text), options, grouping).map((syllable) =>
     writeSyllable(syllable),
   );
+}
+
+/**
+ * Apply sandhi to a reading whose 汉字 the caller knows, the way `convert` does.
+ *
+ * The characters are written as one string, one per syllable, and the words as
+ * the syllable counts a {@link SandhiGrouping} holds.
+ */
+function converted(
+  text: string,
+  hanzi: string,
+  grouping?: SandhiGrouping,
+): readonly string[] {
+  return applySandhi(
+    reading(text),
+    undefined,
+    grouping,
+    toCharacters(hanzi),
+  ).map((syllable) => writeSyllable(syllable));
 }
 
 /**
@@ -122,6 +142,69 @@ describe("tone sandhi", () => {
     it("does not touch another syllable spelled yi", () => {
       assertArrayEquals(sandhied("yí dòng"), ["yí", "dòng"]);
     });
+
+    it("leaves a first-tone yi that is not 一 alone", () => {
+      // The rule is about one character, not about a spelling. 医, 依, 衣 and
+      // 伊 are all `yī` and none of them retones for what follows it.
+      assertArrayEquals(converted("yī shēng", "医生"), ["yī", "shēng"]);
+      assertArrayEquals(converted("yī yuàn", "医院"), ["yī", "yuàn"]);
+      assertArrayEquals(converted("yī rán", "依然"), ["yī", "rán"]);
+      assertArrayEquals(converted("yī kào", "依靠"), ["yī", "kào"]);
+      // The real 一 still assimilates beside them.
+      assertArrayEquals(converted("yī gè", "一个"), ["yí", "gè"]);
+      assertArrayEquals(converted("yī tiān", "一天"), ["yì", "tiān"]);
+    });
+
+    it("cannot tell 一 from 医 without the characters, and says so", () => {
+      // What bare pinyin costs: `pinyinjs sandhi yīshēng` is handed a spelling
+      // and nothing else, and the spelling is not the morpheme.
+      assertArrayEquals(sandhied("yī shēng"), ["yì", "shēng"]);
+    });
+
+    it("keeps a 一 that closes a longer word", () => {
+      // 唯一 is `wéiyī` in front of anything: its 一 counts nothing, because
+      // what follows it is outside the word. 之一, 统一 and 星期一 likewise.
+      assertArrayEquals(converted("wéi yī bàn fǎ", "唯一办法", [2, 2]), [
+        "wéi",
+        "yī",
+        "bàn",
+        "fǎ",
+      ]);
+      assertArrayEquals(converted("tǒng yī zhōng guó", "统一中国", [2, 2]), [
+        "tǒng",
+        "yī",
+        "zhōng",
+        "guó",
+      ]);
+      assertArrayEquals(converted("xīng qī yī qù", "星期一去", [3, 1]), [
+        "xīng",
+        "qī",
+        "yī",
+        "qù",
+      ]);
+    });
+
+    it("still assimilates where the 一 is a word of its own", () => {
+      // Which is the whole difference: 一 counting 个 is one word leaning on
+      // the next, where the 一 of 唯一 is the tail of the word it is in.
+      assertArrayEquals(converted("yī gè", "一个", [1, 1]), ["yí", "gè"]);
+      assertArrayEquals(converted("mǎi yī gè", "买一个", [1, 1, 1]), [
+        "mǎi",
+        "yí",
+        "gè",
+      ]);
+    });
+
+    it("reads no word ends out of a grouping that does not fit", () => {
+      // Same judgement third-tone sandhi makes: a grouping that does not
+      // account for exactly these syllables is describing some other text.
+      assertArrayEquals(converted("wéi yī bàn fǎ", "唯一办法", [2]), [
+        "wéi",
+        "yí",
+        "bàn",
+        "fǎ",
+      ]);
+    });
   });
 
   describe("不", () => {
@@ -137,6 +220,30 @@ describe("tone sandhi", () => {
 
     it("stays fourth tone at the end", () => {
       assertArrayEquals(sandhied("hǎo bù"), ["hǎo", "bù"]);
+    });
+
+    it("leaves a fourth-tone bu that is not 不 alone", () => {
+      // 部, 布, 步 and 埠 are all `bù` and none of them flattens, inside a word
+      // or across the boundary after one.
+      assertArrayEquals(converted("bù duì", "部队"), ["bù", "duì"]);
+      assertArrayEquals(converted("bù fèn", "部分"), ["bù", "fèn"]);
+      assertArrayEquals(converted("quán bù shì", "全部是"), [
+        "quán",
+        "bù",
+        "shì",
+      ]);
+      // The real 不 still flattens beside them.
+      assertArrayEquals(converted("bù shì", "不是"), ["bú", "shì"]);
+    });
+
+    it("keeps assimilating at the end of a word, unlike 一", () => {
+      // What 不 negates is regularly in the next word, so a word-final 不 is
+      // still facing the tone it assimilates to.
+      assertArrayEquals(converted("jué bù huì", "决不会", [2, 1]), [
+        "jué",
+        "bú",
+        "huì",
+      ]);
     });
 
     it("assimilates across a word boundary", () => {

@@ -1,11 +1,11 @@
 /**
  * What the sandhi pass needs from a decoded run, beyond the syllables.
  *
- * Two questions sandhi cannot answer from a reading alone. Third-tone sandhi
- * applies inside a prosodic foot, so it has to be told where the words and
- * their parts are. 一 sandhi asks what stands in front of the 一, and the answer
- * is a character rather than a spelling. Both are things the decode knows and
- * the syllable array does not.
+ * Two questions sandhi cannot answer from a reading alone. Where the words and
+ * their parts are, which third-tone sandhi needs for the prosodic foot it
+ * applies inside and 一 needs for the word ends. And which 汉字 each syllable
+ * reads, which is what says a `yī` is 一 rather than 医 and what stands in front
+ * of it. Both are things the decode knows and the syllable array does not.
  */
 import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
@@ -15,22 +15,26 @@ import type { SandhiGrouping } from "./sandhi.js";
 import type { ScoredWord } from "./word.js";
 
 /**
- * Where the words and their constituents fall, for third-tone sandhi.
+ * Where the words and their constituents fall.
  *
- * Undefined unless third-tone sandhi was asked for, since dividing a word costs
- * dictionary lookups and nothing else reads the answer.
+ * One entry per word always, because 一 sandhi reads the word ends: a 一 that
+ * closes a longer word is not counting the word after it, so 唯一 stays `wéiyī`
+ * in front of anything.
+ *
+ * Where a word *divides* is only worked out for third-tone sandhi, which is the
+ * only pass that reads it and costs a dictionary lookup per word to answer.
  */
 export function groupingOf(
   dictionary: Dictionary,
   words: readonly ScoredWord[],
   readings: readonly (readonly Syllable[])[],
   isThirdTone: boolean,
-): SandhiGrouping | undefined {
-  if (!isThirdTone) {
-    return undefined;
-  }
+): SandhiGrouping {
   return words.map((scored, index) => {
     const reading = readings[index] ?? [];
+    if (!isThirdTone) {
+      return reading.length;
+    }
     return divisionOf(dictionary, scored.word.text, reading) ?? reading.length;
   });
 }
@@ -41,6 +45,7 @@ export function groupingOf(
  * A word whose reading is a different length from its text — 玩儿 as `wánr` —
  * has no character to give any one of its syllables, so its syllables get none
  * and the pass falls back to their spellings. See
+ * {@link import("./sandhi-tones.js").isYi} and
  * {@link import("./sandhi-tones.js").isCounting}.
  */
 export function charactersPerSyllable(
