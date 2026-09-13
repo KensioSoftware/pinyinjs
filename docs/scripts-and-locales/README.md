@@ -1,29 +1,30 @@
 # Scripts and locales
 
-Script and locale are two separate axes. Which characters are written and how
-they are read vary independently, and collapsing them into a single
-"traditional" flag would be wrong.
+Script determines which characters are written. Locale determines which
+pronunciation standard is used. Configure them independently.
 
 | Axis   | Values            | What differs                 |
 | ------ | ----------------- | ---------------------------- |
 | Script | `Hans` / `Hant`   | which characters are written |
 | Locale | `zh-CN` / `zh-TW` | how they are read            |
 
-Taiwan writes 繁體 with `zh-TW` readings, but mainland editions of classical
-texts use 繁體 with `zh-CN` readings, and Singapore uses 简体. All four
-combinations are real.
+For example, traditional characters can be read with Taiwan (`zh-TW`) or
+mainland (`zh-CN`) pronunciations. Simplified characters also support either
+locale.
 
-## In practice
+<a id="in-practice"></a>
 
-Only the locale is an option to pass:
+## Choosing a locale
+
+Pass `locale` to select the reading standard:
 
 ```ts
 convert(dictionary, "垃圾"); // "lājī"
 convert(dictionary, "垃圾", { locale: "zh-TW" }); // "lèsè"
 ```
 
-Script needs no option at all, because both scripts are keys in the same
-dictionary:
+Both simplified and traditional spellings are dictionary keys. Pinyin conversion
+accepts either without a script option:
 
 ```ts
 convert(dictionary, "银行"); // "yínháng"
@@ -32,14 +33,14 @@ convert(dictionary, "重複"); // "chóngfù"
 convert(dictionary, "重覆"); // "chóngfù", the other 繁體 spelling of the same word
 ```
 
-A lookup happens directly, with no conversion first. There is no "detect the
-script, then normalise" step to get wrong.
+Lookups use the original characters directly.
 
-## Why 繁體 is a first-class key
+<a id="why-繁體-is-a-first-class-key"></a>
 
-The obvious implementation is to convert traditional input to simplified and
-then look it up. **That destroys information**, because simplification merged
-distinct characters:
+## Preserving traditional distinctions
+
+Simplification merged some characters that have different pronunciations.
+Keeping traditional keys preserves those distinctions:
 
 ```
 髮 (fà, hair)  ┐
@@ -51,54 +52,46 @@ distinct characters:
 万 (mò)   ┘
 ```
 
-Measured against CC-CEDICT's single-character entries, **806 simplified
-characters merge more than one traditional character, and for 70 of them the
-readings differ.** Those 70 are unambiguous in traditional and polyphonic in
-simplified, and they include some of the most frequent characters in the
-language, among them 了, 万, 仇, 卒, 参, 宿, 价, 似, 乘 and 脉.
+In the CC-CEDICT single-character entries used here, 806 simplified characters
+correspond to multiple traditional characters. The readings differ for 70 of
+them.
 
-The consequence is worth stating plainly:
+For these merged characters, traditional input preserves pronunciation
+information that simplified input lacks:
 
 > **Traditional Chinese converts more accurately than simplified**, because
 > simplification created ambiguity that does not exist in the traditional
 > script.
 
-Anything routing `Hant` through `Hans` throws away the one advantage traditional
-input has, and that is why this package keys both.
+The dictionary keys both scripts to retain this information.
 
-## One word, more than one 繁體 spelling
+<a id="one-word-more-than-one-繁體-spelling"></a>
 
-A 简体 word can have more than one current 繁體 spelling, and both are the same
-word with the same reading. 重复 is written 重複 and 重覆. 下面 is 下面 or 下麵
-depending on whether it is a surface or a bowl of noodles, and both read
-`xià miàn`.
+## Multiple traditional spellings
 
-Storing a single traditional form per entry keys one and silently drops the
-other, the same loss this whole design exists to prevent. A spelling the
-dictionary lacks is read character by character, which for 重覆 would give
-`zhòng fù`, the wrong word, because 重 on its own is `zhòng` and only the entry
-says this one is `chóng`. Every attested spelling is keyed instead, which costs
-205 extra keys in the full tier.
+A word can have several traditional spellings. 重复 appears as 重複 and 重覆.
+下面 and 下麵 have different meanings but the same reading, `xià miàn`.
+
+The dictionary includes each attested spelling as a key. This lets 重覆 use
+the word reading `chóng fù` instead of the individual character readings
+`zhòng fù`.
 
 ```ts
 dictionary.lookup("重複")?.reading; // found
 dictionary.lookup("重覆")?.reading; // also found, same entry
 ```
 
-Only spellings a source actually writes out _for that word_ are kept. Expanding
-every character to its variant set and keying every combination would add
-229,482 keys, almost all of them spellings nobody writes, such as 方麵 for 方面
-and 公裡 for 公里. The reading disambiguates a character in the word it was read
-in, and not everywhere that character appears. 头发 is `tóu fà` so its 发 is 髮,
-and 出发 is left untouched.
+Only spellings attested for the word are added. Combining all character variants
+would create incorrect forms such as 方麵 for 方面 and 公裡 for 公里.
 
-## The locale delta
+<a id="the-locale-delta"></a>
 
-Only about 490 items read differently between 普通话 and 國語, so `zh-TW` is
-stored as a delta over `zh-CN` instead of a second dictionary. The locale axis
-costs almost nothing.
+## Taiwan readings
 
-Where an entry has one, it is on the entry:
+The dictionary stores Taiwan pronunciations only where they differ from the
+mainland reading. Both locales share one dictionary.
+
+An entry’s `taiwanReading` contains this alternative:
 
 ```ts
 const entry = dictionary.lookup("垃圾");
@@ -106,44 +99,39 @@ entry?.reading; // lā jī
 entry?.taiwanReading; // lè sè
 ```
 
-`taiwanReading` is absent where the readings agree, the overwhelming majority of
-entries.
+`taiwanReading` is absent when the readings agree.
 
-Two sources feed it. CC-CEDICT's inline `Taiwan pr.` annotations give 335
-readings and Unihan's dual `kMandarin` values give 35, with a further 101
-composed from a compound's constituents.
+The readings come from CC-CEDICT’s `Taiwan pr.` annotations and Unihan’s dual
+`kMandarin` values. Some compound readings are derived from their constituent
+words.
 
-### A delta is a locale shift
+<a id="a-delta-is-a-locale-shift"></a>
 
-Both sources write the two the same way and mean different things. CC-CEDICT
-hangs `Taiwan pr.` on one _sense_ of a headword, and Unihan's second `kMandarin`
-value is as often that headword's second reading as it is a Taiwan one:
+### Distinguishing a locale change from another sense
+
+A source can list an alternative sense in the same way it lists a Taiwan
+pronunciation:
 
 ```
 地  kMandarin  de dì        地 [de5] /-ly; structural particle/
                             地 [di4] /earth; ground; field/
 ```
 
-Read as a locale shift, that says 國語 turns the adverbial particle into `dì`,
-and it does no such thing, with 4,240 entries ending in that particle. The test
-that separates the two is whether the offered reading is one the word already
-has in 普通话. CC-CEDICT lists 地[di4] itself, so `dì` is a sense. No source
-lists 和 as `hàn`, 期 as `qí` or 垃 as `lè`, so those are the real thing. 71
-characters and 3 words fail that test, 都, 着, 应, 差, 称, 斗, 舍, 薄 and 万
-among them, and the delta is dropped for all of them. The senses of a 繁體
-headword are filed under whichever 简体 form each one simplifies to, so that 沈
-is `chén` under 沉 and 誰 `shéi` under 谁, and both scripts are searched.
+The build rejects a proposed Taiwan reading if the word already has that
+reading in 普通话. For example, 地 has a `dì` sense in both locales. It must
+not replace the particle `de` under `zh-TW`. Both scripts are
+checked when looking for existing senses.
 
-A note is also only read off a sense that matches the reading the entry settled
-on. `Taiwan pr. [zhuo2]` sits on 著's chess-move sense, which reads `zhāo`.
-Reaching across for it gave the aspect particle 着 a 國語 reading of `zhuó`, and
-15 more characters and a word one just as unrelated.
+A Taiwan note must also belong to the sense selected for the entry. For
+example, 著’s `zhuó` note on its chess-move sense must not change the aspect
+particle 着.
 
-### Where the note sits matters
+<a id="where-the-note-sits-matters"></a>
 
-The sense test above catches a note offering a reading the word has some other
-way. It cannot catch one that offers a reading the word only has in a sense it
-never carries alone. CC-CEDICT states the difference by where the note sits:
+### Character-level notes
+
+For a single-character entry, the build also checks where the note appears
+within the definition:
 
 ```
 髮 发 [fa4] /hair/Taiwan pr. [fa3]/                    ← its own definition: the entry
@@ -153,38 +141,28 @@ never carries alone. CC-CEDICT states the difference by where the note sits:
            (Taiwan pr. [zong4]) retainer; attendant/…
 ```
 
-教育部's dictionary agrees with CC-CEDICT about which senses of 從 are `zòng`,
-those being 侍從, 從兄弟 and 從犯, all of them bound forms. 跟隨, 依順, 參與 and
-the preposition are `cóng` in Taipei exactly as in Beijing. The delta was read
-off the whole headword, so `我從北京來` came out as `wǒ zòng Běijīng lái`.
+For example, 從 is `zòng` in bound forms such as 侍從 and 從犯. Its common
+uses, including the preposition in 我從北京來, remain `cóng` in Taiwan.
 
-A character's entry is what every occurrence no longer word covers falls back
-to. It has to carry the reading that survives out of context, the one the entry
-leads with. A note on a later sense is dropped, and that is 14 characters. They
-are 從, 會 (`huǐ`, only 一會兒), 勞 (`lào`, only 慰勞), 燥 (`sào`, only 肉燥),
-行 (`xìng`, only 品行), and 勝, 匹, 多, 抵, 枕, 比, 玩, 署, 聽. The compounds
-themselves keep theirs, so 肉燥麵 is still `ròusào miàn`.
+A character entry supplies the fallback reading outside recognised words.
+Taiwan notes on later senses are therefore excluded from that fallback.
+Compounds keep their own readings, so 肉燥麵 still uses `ròusào miàn`.
 
-Only a character is tested this way. A multi-character headword is reached only
-where that exact word is written, and the four that carry a note inside a sense
-are 相親, 載具, 高挑 and 樂色. Only 相親 has senses that differ, its dominant
-one being the matchmaking meeting that really is `xiàngqīn`.
+This position check applies only to single-character entries. A multi-character
+entry is used when its full spelling matches the input.
 
-### A compound inherits its constituents' delta
+<a id="a-compound-inherits-its-constituents-delta"></a>
 
-A source marks the delta on whichever headword it happened to list. CC-CEDICT
-marks 垃圾 and 垃圾桶 and no other compound, and the decoder prefers the longest
-word it finds, so 垃圾分類 was decoded whole and 垃圾's delta was never
-consulted:
+### Compound readings
+
+A compound can inherit a Taiwan reading from a constituent word. For example,
+垃圾分類 needs the Taiwan reading of 垃圾 even when decoded as one entry:
 
 ```ts
 convert(dictionary, "垃圾分類", { locale: "zh-TW" }); // was "lājīfēnlèi"
 ```
 
-Patching entries one at a time cannot keep up, since the compounds are
-open-class and the marked words are a closed list. The build composes the delta
-instead, and 104 compounds get one. Three conditions have to hold, and each
-rules out a way the inference goes wrong:
+The build derives compound readings when these three conditions hold:
 
 | Condition                                   | What it rules out                                   |
 | ------------------------------------------- | --------------------------------------------------- |
@@ -192,50 +170,37 @@ rules out a way the inference goes wrong:
 | The compound reads it as its own entry does | 渾身解數 is `jiě shù`; the marked 解數 is `xiè shù` |
 | The constituent is a word, not a character  | see below                                           |
 
-**Single characters never contribute.** A character's delta reaches every
-compound that character appears in, and the ones that survive the test above are
-still not all locale-wide. 會 carries `huǐ`, which would turn 三合會 into
-`sānhéhuǐ`. Measured on the full dictionary, letting characters contribute
-composes 3,743 entries against the 101 that words compose.
+Single-character readings are excluded from this inference because a character’s
+locale difference may apply only to certain senses.
 
-The cost of that decision is real and worth stating. 星期 stays `xīngqī` under
-`zh-TW` where 教育部's dictionary gives `xīngqí`, and so does every other
-compound whose only locale difference is carried by a character. Closing that
-needs a per-character judgement the sources do not contain.
+This leaves a known gap. 星期 remains `xīngqī` under `zh-TW`, although the
+Taiwan Ministry of Education dictionary gives `xīngqí`. A difference recorded
+only on a character does not propagate into compounds.
 
-What survives all three conditions is a homograph, two words spelled and read
-alike in 普通话, of which only one shifts. 相親 is `xiāngqīn` when it means
-"mutually close" and `xiàngqīn` in Taiwan when it means a matchmaking meeting,
-so 相親相愛 is excluded by name in `src/dictionary/locale.ts`. Three exclusions
-against 104 compounds is the measured ratio.
+Some homographs require explicit exclusions in `src/dictionary/locale.ts`.
+For example, 相親’s matchmaking reading must not propagate into 相親相愛.
 
-## Coverage is thinner in 繁體
+<a id="coverage-is-thinner-in-繁體"></a>
 
-The phrase corpus that supplies the bulk of the word readings is
-simplified-only. Every traditional probe (銀行, 長城, 中國, 發現, 頭髮, 重複) is
-absent while every simplified equivalent is present. CC-CEDICT is the only
-source giving paired readings at scale, at 124,758 entries against 411,958.
+## Traditional dictionary coverage
 
-The pipeline closes some of that gap by deriving traditional forms for
-simplified-only entries, using the stored reading to resolve the ambiguity. 头发
-`tóu fà` means its 发 must be 髮, giving 頭髮. For the 70 merge characters whose
-readings differ, that is deterministic. For the other 736 the readings are
-identical, so a wrong pick cannot change the pronunciation. It only affects
-whether a traditional user's text matches that key.
+The phrase corpus contains simplified spellings only. CC-CEDICT supplies paired
+simplified and traditional forms for a smaller set of words.
 
-### The tags and the counts are thinner too, and all three are carried across
+The build derives additional traditional keys using each entry’s reading.
+For example, `tóu fà` selects 髮 in 頭髮. When alternative characters share a
+reading, pronunciation cannot resolve the spelling. That ambiguity affects
+whether a traditional input matches the derived key.
 
-jieba settles three fields on an entry, and jieba's dictionary was counted over
-a 简体 corpus. 听 is tagged `v` and counted 20,435 times. 聽 is tagged nothing
-and counted nowhere, 說, 來, 問 and 學 come back `zg`, which is what jieba writes
-for a character it counted and did not classify, and 麥 is not a name where 麦
-is one.
+<a id="the-tags-and-the-counts-are-thinner-too-and-all-three-are-carried-across"></a>
 
-Every rule that asks what the word beside it is decides on the tag, every path
-the decoder weighs is priced on the count, and the capital comes straight off
-the proper-noun bit. A 繁體 sentence was therefore read by rules that could not
-see it, priced by a model that had never met it, and capitalised by a different
-answer from the one 简体 got:
+### Tags, frequency and names
+
+jieba’s part-of-speech tags, frequency counts and name classifications mainly
+come from simplified text. Traditional entries can lack those fields or have
+less useful values.
+
+Those fields affect context rules, decoder costs and capitalisation:
 
 ```ts
 convert(dictionary, "我听过这首歌"); // "wǒ tīngguo zhè shǒu gē"
@@ -246,21 +211,17 @@ convert(dictionary, "退休后"); // "tuìxiū hòu"
 convert(dictionary, "退休後"); // "tuìxiū Hòu", before this
 ```
 
-All three are carried across. 2,068 characters take a tag, 2,318 take a count
-and 53 take the proper-noun bit. Neither the tag nor the count overwrites what
-a source stated. A character jieba classified keeps its tag, and one jieba
-counted more often than its 简体 form keeps its count. The bit is taken
-whichever way it points, since demoting matters as much as promoting. 後 arrived
-tagged `nr` with nothing under its own spelling to challenge it.
+The build transfers missing tags and higher frequency counts from the paired
+simplified character. It also copies the proper-noun classification, including
+when that removes an incorrect name flag.
 
-**The pairing is the aggregate one, not the entry's own 繁體 form.** A single
-character's 繁體 form is whichever CC-CEDICT sense matched its reading, and that
-can be an oddity. CC-CEDICT holds 旹 as an old variant of 時, so 时's entry can
-name 旹 while every word 时 appears in says 時. The character table counts words,
-so 時 wins it thousands to one and takes the count 时 was seen with.
+Character pairs are selected from aggregate word evidence. This avoids using a
+rare variant listed on one character entry when common words consistently use
+another form. For example, 時 receives 时’s frequency count even if a source
+entry names the old variant 旹.
 
-Measured over Tatoeba's 48,959 繁體 runs, each converted and then converted
-again through its 简体 spelling:
+The effect was measured over 48,959 traditional Tatoeba runs, comparing direct
+conversion with conversion through simplified spelling:
 
 | The two scripts             | before | tags   | counts | capitals | and name mass |
 | --------------------------- | ------ | ------ | ------ | -------- | ------------- |
@@ -269,27 +230,19 @@ again through its 简体 spelling:
 | differ over a syllable      | 3.19%  | 3.16%  | 2.32%  | 2.32%    | 2.32%         |
 | differ over a capital       | 0.58%  | 1.36%  | 1.62%  | 0.06%    | 0.00%         |
 
-**No 简体 conversion moves.** The buckets are scaled from the largest count in
-the corpus, and a carried count can equal that count but never exceed it, so
-every 简体 bucket is what it was. Over the 88,866 lines of Tatoeba and
-zh.wikipedia the counts change 3,508 conversions and all 3,508 are in a 繁體
-run.
+Transferred counts cannot exceed the largest original count. The frequency
+buckets for simplified entries remain unchanged. In the measured 88,866-line
+corpus, all 3,508 changed conversions were in traditional runs.
 
-The bit is carried whether or not the 简体 answer is right, and what the 简体
-answer is for a bare character is a question of its own. jieba called 连 a
-surname, 連 was made to agree, and the two of them were wrong together. Both are
-lower case now, from the names each character heads in jieba's word list. That
-is the last column above, and [capitals](../orthography/#capitals) is where it
-is set out.
+Copying a name flag also copies any error in that flag. The
+[capitalisation rules](../orthography/#capitals) separately check surname
+evidence from the names in jieba’s word list.
 
 ## detectScript
 
-`detectScript(text, hansOnly, hantOnly)` is exported, and it is a low-level
-helper that sits outside the conversion path, since you have to supply the
-variant sets. It returns `undefined` for script-neutral text, the common case.
-Most characters are unchanged by simplification, so a sentence containing none
-of the changed ones reads identically either way. Treat `undefined` as "either"
-rather than as a failure.
+`detectScript(text, hansOnly, hantOnly)` is a low-level helper that requires
+sets of characters specific to each script. It returns `undefined` when the
+text is script-neutral. Treat that result as “either script”.
 
 ```ts
 const { hansOnly, hantOnly } = await loadScriptTables(source);
@@ -297,22 +250,17 @@ detectScript("幾乎所有的工作都完成了。", hansOnly, hantOnly); // "Ha
 detectScript("看著你", hansOnly, hantOnly); // undefined
 ```
 
-The sets come out of the build at 5,818 characters and 5,566. A character both
-scripts write is in neither, and that is the answer rather than a gap: 著 is
-written in 简体 for `zhù` (专著, 显著) and in 繁體 for that and for the aspect
-particle, so 看著你 could be either. 干, 台 and 里 are out for the same reason.
+The sets exclude characters used in both scripts. For example, 著 appears in
+simplified 专著 and 显著 as well as traditional text. It cannot identify a
+script by itself. 干, 台 and 里 are also shared.
 
-Every syllable of the sets is counted from the dictionary's own paired
-headwords, so a character belongs to a script when enough words in that script
-are written with it. "Enough" is a floor of ten words or a twentieth of what the
-other script has, whichever is easier to meet. Both halves earn their place: the
-floor is what keeps a stray unsimplified headword from claiming a character, and
-幾 was out of the 繁體 set on the strength of two such headwords against 297 that
-went the other way. The share is what keeps a rare character in, since 齶 is
-written in two 繁體 words and no 简体 one and two is all the evidence there is.
+The sets are derived from paired dictionary headwords. A character belongs to
+a script when it appears in at least ten words or at least one twentieth of
+its count in the other script. This admits rare characters while filtering
+isolated inconsistent spellings.
 
-You do not need any of this to convert. That is the point of keying both
-scripts.
+Pinyin conversion looks up both scripts directly and does not require
+`detectScript`.
 
 <!-- card
 ```ts

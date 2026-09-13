@@ -1,8 +1,6 @@
 # Syllables
 
-The syllable layer needs no dictionary and no network. It parses written
-pinyin, writes it back in any notation, splits a run of it into syllables, and
-answers whether a spelling is well formed.
+Use the syllable functions to parse, validate and format written pinyin without loading a dictionary.
 
 ```ts
 import { isSyllable, readSyllable, writeSyllable } from "@kensio/pinyinjs";
@@ -14,26 +12,20 @@ readSyllable("hello"); // undefined
 readSyllable("běi3"); // undefined, one notation at a time
 ```
 
-This is the half of the package that leaves hanzi out entirely. If you are
-building a pinyin input field, checking a learner's typing, or converting
-between tone notations, none of the dictionary machinery is involved.
+These functions are useful for pinyin input fields, learner exercises and conversion between tone notations.
 
 ## Underlying forms
 
-`initial` and `final` hold the _underlying_ form, the one behind the spelling.
-就 is `j` + `iou` and 军 is `j` + `ün`:
+`initial` and `final` store the underlying syllable components. For example, 就 contains `j` + `iou`, while 军 contains `j` + `ün`:
 
 ```ts
 readSyllable("jūn"); // { initial: "j", final: "ün", tone: 1 }
 readSyllable("jun1"); // the same
 ```
 
-The spelling rules that turn `iou` into `iu` after an initial, or drop the
-umlaut from `ün` after `j`, are applied when writing. A syllable therefore
-compares equal to itself however it was typed, and that is the whole reason for
-doing it this way.
+Formatting applies the spelling rules. It contracts `iou` to `iu` after an initial and removes the umlaut from `ün` after `j`. Different accepted spellings therefore produce the same underlying syllable.
 
-Spelling is put back on demand:
+Choose a notation when formatting the syllable:
 
 ```ts
 const jiu = { initial: "j", final: "iou", tone: 4 } as const;
@@ -51,9 +43,11 @@ import { writeSyllableSpelling } from "@kensio/pinyinjs";
 writeSyllableSpelling({ initial: "j", final: "ün", tone: 1 }); // "jun"
 ```
 
-## What input is accepted
+<a id="what-input-is-accepted"></a>
 
-Either notation, the `v` and `u:` conventions for ü, and raised tone digits:
+## Accepted input
+
+Input can use tone marks, tone digits, superscript digits, or `v` and `u:` for ü:
 
 ```ts
 readSyllable("lü4"); // { initial: "l", final: "ü", tone: 4 }
@@ -61,10 +55,9 @@ readSyllable("lv4"); // the same
 readSyllable("lu:4"); // the same
 ```
 
-One notation at a time. `běi3` is undefined, because a syllable carries one tone
-and that spelling states two.
+A syllable must use one tone notation. Mixed notation such as `běi3` returns `undefined`.
 
-`normaliseUmlaut` does the `v`/`u:` rewrite on its own if you need it earlier:
+`normaliseUmlaut` converts the `v` and `u:` conventions separately:
 
 ```ts
 import { normaliseUmlaut } from "@kensio/pinyinjs";
@@ -72,18 +65,18 @@ import { normaliseUmlaut } from "@kensio/pinyinjs";
 normaliseUmlaut("lv"); // "lü"
 ```
 
-## Well formed and attested are different questions
+<a id="well-formed-and-attested-are-different-questions"></a>
 
-Parsing answers whether a spelling _could_ be a Mandarin syllable. Whether
-Mandarin uses it is a separate question:
+## Parsing and validation
+
+A successful parse means the spelling has a valid initial and final. Use an inventory check to determine whether Mandarin uses that combination:
 
 ```ts
 readSyllable("shong"); // { initial: "sh", final: "ong", tone: undefined }
 isSyllable("shong"); // true
 ```
 
-`shong` is a perfectly formed initial plus final that no Mandarin word uses. The
-attested inventory is a separate export:
+For example, `shong` can be parsed but is absent from the standard Mandarin inventory:
 
 ```ts
 import { ATTESTED_SYLLABLES, DICTIONARY_SYLLABLES } from "@kensio/pinyinjs";
@@ -93,7 +86,7 @@ DICTIONARY_SYLLABLES.has("zhuang"); // true
 ATTESTED_SYLLABLES.length; // 415
 ```
 
-There are three of these, at three different sizes:
+Choose the inventory appropriate to your input:
 
 | Export                 | Size | Is                                                     |
 | ---------------------- | ---: | ------------------------------------------------------ |
@@ -101,18 +94,13 @@ There are three of these, at three different sizes:
 | `RARE_SYLLABLES`       |    9 | spellings the dictionary uses that the inventory omits |
 | `DICTIONARY_SYLLABLES` |  424 | the two together, what the build validates against     |
 
-The nine rare ones are `bong`, `cei`, `din`, `eng`, `fiao`, `lo`, `rua`, `sei`
-and `tei`. They are interjections, dialect readings and onomatopoeia that appear
-in the source dictionaries but not in any textbook's table. Validate learner
-input against `ATTESTED_SYLLABLES`, and dictionary data against
-`DICTIONARY_SYLLABLES`.
+The dictionary inventory additionally includes nine rare syllables, `bong`, `cei`, `din`, `eng`, `fiao`, `lo`, `rua`, `sei` and `tei`. They occur in dialect readings, interjections and onomatopoeia. Use `ATTESTED_SYLLABLES` for learner input and `DICTIONARY_SYLLABLES` when validating dictionary data.
 
-## Which tones a syllable is written in
+<a id="which-tones-a-syllable-is-written-in"></a>
 
-All three of those are toneless, and a toneless inventory is only half of "is
-this a syllable of Mandarin?". 咯 is written `lo` and never `ló`, because that
-syllable is a sentence-final particle and is only ever neutral. 半 is written
-`bàn` and never `bán`, because that one has no second tone.
+## Valid tone combinations
+
+The syllable inventories omit tone. Some syllables use only a subset of the five tones. For example, `lo` occurs only in neutral tone, while `bàn` occurs but `bán` does not.
 
 ```ts
 import { isAttestedTone, readSyllable, SYLLABLE_TONES } from "@kensio/pinyinjs";
@@ -123,17 +111,9 @@ isAttestedTone(readSyllable("ló")); // false
 isAttestedTone(readSyllable("lo")); // true, no tone claims nothing
 ```
 
-424 syllables in five tones would be 2,120 combinations, and only **1,708 of
-them are ever written**. A fifth of that grid is empty. The table is extracted
-from the merged dictionary, and a build assertion holds it to what the
-dictionary uses. A source refresh cannot quietly add a reading outside it.
+The dictionary contains 1,708 of the 2,120 possible combinations of 424 syllables and five tones. A build assertion keeps the exported tone inventory consistent with those readings.
 
-It is what lets the
-[romanisation readers](../romanization/#the-tone-narrows-the-list) settle an
-ambiguous spelling on the tone that was written. Wade-Giles `lo²` can only be 羅
-luó. A syllable outside the inventory passes without judgement, since
-`isAttestedTone` answers which tones a syllable takes and leaves the inventory
-itself to the sets above.
+[Romanisation readers](../romanization/#the-tone-narrows-the-list) use this inventory to narrow ambiguous spellings. For example, Wade-Giles `lo²` can only represent 羅, `luó`. `isAttestedTone` accepts syllables outside its inventory without judging them. Use the inventory sets separately when validating the syllable itself.
 
 `INITIALS` has 21 entries and `FINALS` has 41, with `isInitial`, `isFinal` and
 `isPalatalInitial` beside them.
@@ -151,14 +131,13 @@ splitSyllables("hǎiōu"); // ["hǎi", "ōu"], missing apostrophe, read anyway
 readWord("yínháng"); // the same, parsed into Syllable objects
 ```
 
-Splitting is greedy in a way that respects the finals. `guórén` cannot split as
-`guór` + `én`, because `guór` fails to parse as a syllable. A missing 隔音符号
-is recovered where the split is unambiguous.
+Splitting uses valid syllable forms to choose boundaries. For example, `guórén` cannot become `guór` + `én` because `guór` is invalid. A missing apostrophe can be recovered when the boundary is unambiguous.
 
-### The tone mark says where a syllable ends
+<a id="the-tone-mark-says-where-a-syllable-ends"></a>
 
-A mark sits on one vowel of one syllable, so where it sits is evidence about
-the boundary:
+### Using tone marks to find boundaries
+
+Tone marks provide additional boundary information:
 
 ```ts
 splitSyllables("bùān"); // ["bù", "ān"], 不安 without its apostrophe
@@ -166,22 +145,16 @@ splitSyllables("xīan1"); // ["xī", "an1"], 西安 half typed
 splitSyllables("xīa"); // ["xīa"], the mark misplaced on one syllable
 ```
 
-A syllable is written with one tone, so a spelling carrying two marks is two
-syllables. A mark in the wrong place costs the same as a syllable boundary,
-which is what keeps `xīa` whole. Reading it as `xī` + `a` buys nothing, and the
-tie goes to the longer piece. `xīan1` is the same reading a point cheaper than
-`xīa` + `n1`, so the mark decides it.
+Two tone marks cannot belong to one syllable. A misplaced mark and a syllable boundary have equal cost, and ties favour the longer syllable. This keeps `xīa` together. For `xīan1`, the tone information makes the complete reading cheaper than `xīa` + `n1`.
 
-Note that splitting will find _a_ reading of almost any Latin text, since so
-many English letter sequences are also well-formed syllables:
+Many Latin letter sequences can be parsed as pinyin, including English words:
 
 ```ts
 readWord("nonsense");
 // [{ initial: "n", final: "o" }, { initial: "", final: "n" }, … ]
 ```
 
-If you need to know whether something is really pinyin, check the pieces against
-`ATTESTED_SYLLABLES`. `readWord` returning `undefined` will not tell you.
+Validate the parsed pieces against `ATTESTED_SYLLABLES` when checking a pinyin input field. A successful `readWord` call alone does not establish that the input is pinyin.
 
 ## Tones
 
@@ -202,23 +175,16 @@ toneFromMarks("hǎo"); // 3
 toneFromMarks("hao"); // undefined
 ```
 
-`applyToneMark` puts the mark on the right vowel for you, and the rule takes
-some stating. The standard places it on `a`, failing that on `o` or `e`, failing
-that on the last remaining vowel, and it is that last clause which puts the mark
-on the `u` of `iu` and the `i` of `ui`. Any mark already present is replaced,
-and text with no vowel to carry one comes back unchanged.
+`applyToneMark` places the mark on `a`, otherwise on `o` or `e`, otherwise on the last vowel. This puts the mark on `u` in `iu` and on `i` in `ui`. It replaces an existing mark and leaves text without a vowel unchanged.
 
 ### undefined and the neutral tone
 
-`Syllable.tone` is `Tone | undefined`, and the two mean different things:
+`Syllable.tone` distinguishes an explicit neutral tone from an unspecified tone:
 
-- **`5` (`NEUTRAL_TONE`)** says this syllable is toneless, and that is a fact
-  about the word. The `de` in 我的.
-- **`undefined`** says no tone was written. The `bei` in a typed `beijing`, where
-  the writer simply did not say.
+- `5` (`NEUTRAL_TONE`) means the syllable has neutral tone, as in the particle `de` in 我的.
+- `undefined` means the input did not specify a tone, as in `bei` in `beijing`.
 
-`toneFromMarks("hao")` gives `undefined` for the same reason. An unmarked
-syllable in running text has made no claim about its tone.
+For example, `toneFromMarks("hao")` returns `undefined` because the spelling contains no tone mark.
 
 ## From the command line
 
@@ -229,8 +195,7 @@ nǐhǎo  nǐ hǎo
   hǎo       h + ao, tone 3        hǎo  hao3  hao³
 ```
 
-`syllable` and `sandhi` are the two commands that need no dictionary. They start
-without loading one.
+The `syllable` and `sandhi` commands run without loading a dictionary.
 
 <!-- card
 ```ts

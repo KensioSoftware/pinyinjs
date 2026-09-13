@@ -1,7 +1,6 @@
 # Sandhi
 
-Tone sandhi is applied to the syllable array. It can be switched off, it works
-across word boundaries, and the spelling cannot confuse it.
+Tone sandhi changes a syllable's tone according to its context. PinyinJS applies it to parsed syllables, including changes across word boundaries.
 
 ```ts
 import { applySandhi, readWord } from "@kensio/pinyinjs";
@@ -15,15 +14,13 @@ applySandhi(niHao); // unchanged by default
 applySandhi(niHao, { thirdTone: true }); // ní hǎo
 ```
 
-The dictionary stores _underlying_ tones, since the source data has sandhi baked
-in and the build normalises it out. That is what makes any of this optional. A
-package that stored 不 as `bú` could never give you `bù` back.
+The dictionary stores underlying tones. This lets you choose whether to apply sandhi when formatting a reading.
 
 ## 一 and 不
 
 On by default.
 
-**不** is `bù`, and flattens to `bú` before a fourth tone:
+不 changes from `bù` to `bú` before a fourth tone:
 
 ```ts
 convert(dictionary, "不是"); // "bú shì"
@@ -31,8 +28,7 @@ convert(dictionary, "不对"); // "bú duì"
 convert(dictionary, "不行"); // "bùxíng", 行 is second tone here, so no change
 ```
 
-**一** is `yī`, and becomes `yì` before tones 1, 2 and 3, `yí` before tone 4,
-and stays `yī` in ordinals and in final position:
+一 changes from `yī` to `yì` before tones 1, 2 and 3, and to `yí` before tone 4. It keeps `yī` in ordinals and final position:
 
 ```ts
 convert(dictionary, "一天"); // "yì tiān", before first tone
@@ -42,11 +38,11 @@ convert(dictionary, "一样"); // "yíyàng"
 convert(dictionary, "第一"); // "dìyī", ordinal, unchanged
 ```
 
-### The 一 that is a digit
+<a id="the-一-that-is-a-digit"></a>
 
-That last line is a rule of its own, and it is the half most converters get
-wrong. 一 assimilates when it is **counting**, and keeps its citation tone when
-it is a digit or an ordinal:
+### 一 in numbers and ordinals
+
+Counting uses can change the tone of 一. Digit sequences and ordinals retain its underlying tone:
 
 ```ts
 convert(dictionary, "十一月"); // "shíyīyuè", a last digit, not a quantity
@@ -59,21 +55,11 @@ convert(dictionary, "当时一个人"); // "dāngshí yí gè rén", 时 is not 
 convert(dictionary, "那是一条狗"); // "nà shì yìtiáo gǒu", nor is 是
 ```
 
-The signal is a numeral word before the 一 with no numeral after it. That is
-what leaves 一百一十's middle 一 alone. 十 follows it, and it is counting the
-ten.
+The rule identifies a number-final 一 by a preceding numeral and the absence of a following numeral. The middle 一 in 一百一十 still counts 十 and remains eligible for sandhi.
 
-**A conversion answers this from the 汉字, and bare pinyin from the spellings.**
-`pinyinjs sandhi shíyī gè` is given no hanzi at all, so there the pass still
-cannot tell 十 from 时 or 第 from 地. `convert` knows which characters it read
-and says so, which matters more than it sounds: 是 is spelt `shi`, it stands in
-front of a great many 一, and every one of those used to lose its sandhi to a 十
-that was never there.
+`convert` uses the source Chinese characters to distinguish numeral uses. `applySandhi` can also work from pinyin alone, but identical spellings can be ambiguous. For example, `shí` may represent 十 or 时, and `dì` may represent 第 or 地.
 
-Over 88,866 lines of Tatoeba and zh.wikipedia, 14,843 一 reach the pass with
-their citation tone. It assimilates 14,007 of them and leaves 836, which are
-第一, 之一, 星期一, 唯一, 万一 and 二十一世纪. Reading the characters moves
-1,575 一 against the spellings alone, and every one of them is a correction:
+In 88,866 corpus lines, providing the characters corrected 1,575 一 tone decisions compared with using spellings alone:
 
 |                                         |       |
 | --------------------------------------- | ----: |
@@ -82,12 +68,7 @@ their citation tone. It assimilates 14,007 of them and leaves 836, which are
 | a real 十 shedding a wrong assimilation |     6 |
 | broken                                  |     0 |
 
-亿 is deliberately left out of the numeral set, and that was measured against
-the spellings. No 一 in that text ends a number in 亿, while 意, 议, 义 and 議
-all read `yì`, all precede a 一 that really is counting, and would all have lost
-their sandhi for it. That is 11 conversions broken and none gained. The
-character set carries no such risk and holds 十, 百, 千, 万 with their 繁體 and
-大写 spellings.
+The spelling-based numeral set excludes 亿 because its reading overlaps with non-numeral characters such as 意 and 议. Character-aware conversion can distinguish these cases. Its numeral set includes 十, 百, 千 and 万, with traditional and financial forms.
 
 Turn both off with `sandhi: { yiBu: false }`, or `--no-sandhi` at the command
 line.
@@ -96,18 +77,14 @@ line.
 
 Off by default.
 
-A third tone before another third tone is said as a second tone, so 你好 is
-spoken `ní hǎo`. Standard orthography writes the underlying tones anyway, and
-that is why this stays off:
+A third tone can become a second tone before another third tone. For example, 你好 is spoken `ní hǎo`. Standard pinyin spelling retains `nǐ hǎo`:
 
 ```ts
 convert(dictionary, "好好"); // "hǎohǎo"
 convert(dictionary, "好好", { sandhi: { thirdTone: true } }); // "háohǎo"
 ```
 
-Turn it on when you are transcribing how something is _said_, for a
-pronunciation guide, a speech exercise or subtitles for a listening task, and
-leave it off when you are writing pinyin as text.
+Enable third-tone sandhi for pronunciation guides or speech exercises. Leave it disabled when you want ordinary written pinyin.
 
 ```ts
 const henHao = readWord("hěnhǎo") ?? [];
@@ -115,17 +92,13 @@ applySandhi(henHao); // hěn hǎo
 applySandhi(henHao, { thirdTone: true }); // hén hǎo
 ```
 
-### Its domain is the prosodic foot
+<a id="its-domain-is-the-prosodic-foot"></a>
 
-Stated as "a third tone before another third tone", the rule is wrong about as
-often as it is right. What it actually applies inside is the prosodic foot, and
-feet are built out of structure. The standard reference is
-[Shih 1986](https://www.researchgate.net/publication/36071823_The_Prosodic_Domain_of_Tone_Sandhi_in_Chinese),
-and the work since finds sandhi obligatory within a foot and progressively more
-optional across larger prosodic boundaries.
+### Word and phrase grouping
 
-Three things follow, and a left-to-right scan of the syllables gets all three
-wrong:
+Third-tone sandhi depends on prosodic feet, groups of syllables pronounced together. It is strongest within a foot and more optional across larger boundaries. The reference used here is [Shih 1986](https://www.researchgate.net/publication/36071823_The_Prosodic_Domain_of_Tone_Sandhi_in_Chinese).
+
+PinyinJS approximates these groups with three rules:
 
 ```ts
 const said = { sandhi: { thirdTone: true } };
@@ -134,33 +107,17 @@ convert(dictionary, "纸老虎", said); // "zhǐláohǔ", 纸 + 老虎
 convert(dictionary, "老板很好", said); // "láobǎn hén hǎo"
 ```
 
-1. **Inside a word, the division decides.** 展覽館 is 展覽 + 館, so 覽 lowers
-   against 館. 紙老虎 is 紙 + 老虎, so 老 lowers against 虎 first and 紙 is left
-   facing a second tone it cannot assimilate to. The dictionary is asked where a
-   word divides. A division is proposed only where **both halves are words in
-   their own right**, and the most even one wins.
-2. **A monosyllabic word leans on the word after it** and joins its foot. That
-   lowers the 很 of 很喜歡, and the 我 and 也 of 我也很好 (`wó yé hén hǎo`).
-3. **Two full words are two feet.** 行長 and 很喜歡 do not form one, so
-   這家銀行的行長很喜歡旅行 is `hángzhǎng hén xǐhuan` and not `hángzháng hén`.
+1. Within a word, dictionary boundaries determine the order of changes. 展覽館 splits as 展覽 + 館, while 紙老虎 splits as 紙 + 老虎. A split requires both parts to be dictionary words, and the most even split is preferred.
+2. A one-syllable word joins the following word's group. This changes 很 in 很喜歡 and 我 and 也 in 我也很好 (`wó yé hén hǎo`).
+3. Two multi-syllable words remain separate groups. For example, 行長 and 很喜歡 keep the boundary in `hángzhǎng hén xǐhuan`.
 
-What that gives up is the monosyllable leaning **backwards**. 保管好 is
-`báoguán hǎo`, its 好 a complement of the verb in front of it, and this writes
-`báoguǎn hǎo`. Telling that apart from 老闆很好 means knowing which way the
-monosyllable attaches, a question about syntax that the words alone cannot
-answer.
+The approximation misses one-syllable words that attach to the preceding word. For example, it writes 保管好 as `báoguǎn hǎo`, while the intended pronunciation is `báoguán hǎo`. Resolving this requires grammatical information beyond word boundaries.
 
 ## Across word boundaries
 
-The pass runs over the whole syllable array at once. A sandhi trigger works
-across a boundary the decoder put in. 不 followed by a fourth tone in the next
-word still flattens.
+The pass processes the complete syllable array. 一 and 不 can change tone in response to a syllable in the next word.
 
-不 assimilates to whatever follows and needs only the syllables. Third-tone
-sandhi needs to know where the words are, so `convert` passes the grouping the
-decoder found. Calling `applySandhi` directly with only a reading takes the
-whole of it for one word, which is all a bare reading says. Pass a
-`SandhiGrouping` where you know better:
+Third-tone sandhi also needs word grouping. `convert` supplies the decoder's groups. A direct `applySandhi` call treats the reading as one word unless you supply `SandhiGrouping`:
 
 ```ts
 const reading = readWord("hángzhǎnghěnxǐhuan") ?? [];
@@ -168,31 +125,24 @@ applySandhi(reading, { thirdTone: true }); // háng zháng hén xǐ huan
 applySandhi(reading, { thirdTone: true }, [2, 1, 2]); // háng zhǎng hén xǐ huan
 ```
 
-One entry per word, holding its syllable count, or the counts of the parts it
-divides into, as `[[1, 2]]` for 紙老虎. A grouping that fails to account for
-exactly the syllables given is ignored. The `sandhi` command splits its argument
-on whitespace to get one, since that is the only boundary written pinyin has.
+Each grouping entry describes one word, using either its syllable count or the counts of its parts. For example, `[[1, 2]]` describes 紙老虎. Groupings with the wrong total syllable count are ignored. The `sandhi` CLI command derives groups from spaces in its input.
 
 ## Options
 
-`applySandhi(syllables, options?, grouping?, characters?)` takes the same object
-as the `sandhi` field of [`ConvertOptions`](../options/#sandhi). `characters`
-holds one 汉字 per syllable, or `undefined` for a syllable no single character
-answers for, and is how 一 sandhi is told what it is reading:
+`applySandhi(syllables, options?, grouping?, characters?)` accepts the same options as [`ConvertOptions.sandhi`](../options/#sandhi). The optional `characters` array associates each syllable with its source Han character. Use `undefined` when one character cannot represent the syllable:
 
 | Field       | Default | Does                         |
 | ----------- | ------- | ---------------------------- |
 | `yiBu`      | `true`  | 一 and 不 tone changes       |
 | `thirdTone` | `false` | third tone before third tone |
 
-It is merged with the defaults, so `{ thirdTone: true }` leaves `yiBu` on.
+Options are merged with the defaults. `{ thirdTone: true }` keeps `yiBu` enabled.
 
-## Where it stops
+<a id="where-it-stops"></a>
 
-儿化 is handled as a dictionary fact, over in [orthography](../orthography/),
-and no sandhi rule here touches it. The half-third-tone allophone (a third tone
-before a non-third tone, said as a low fall with no rise) goes unwritten,
-because it has no distinct pinyin spelling to write.
+## Limitations
+
+Erhua is stored in the dictionary and handled by [orthography](../orthography/). The sandhi pass does not change it. The half-third tone before a non-third tone has no separate pinyin spelling and is not marked.
 
 ## From the command line
 
@@ -204,8 +154,7 @@ $ pinyinjs sandhi --third-tone nǐhǎo
 nǐhǎo  ní hǎo
 ```
 
-`sandhi` takes written pinyin and needs no dictionary. The same two flags,
-`--no-sandhi` and `--third-tone`, also work on `convert`, `html` and `explain`.
+`sandhi` accepts written pinyin and runs without a dictionary. The `--no-sandhi` and `--third-tone` flags also work with `convert`, `html` and `explain`.
 
 <!-- card
 ```ts

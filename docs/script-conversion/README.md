@@ -1,6 +1,6 @@
 # Script conversion
 
-`toScript` converts between 简体 and 繁體.
+`toScript` converts between simplified (简体) and traditional (繁體) Chinese.
 
 ```ts
 import { loadScriptTables, toScript } from "@kensio/pinyinjs";
@@ -11,23 +11,20 @@ toScript(dictionary, tables, "我们后来发现了头发问题", { to: "zh-Hant
 // "我們後來發現了頭髮問題"
 ```
 
-The tables are a separate file from the dictionary. Code that only converts
-hanzi to pinyin never loads them. See [dictionaries](../dictionaries/) for what
-a `source` is.
+Load the script tables as well as a dictionary. The tables are separate from the data used for pinyin conversion. See [dictionaries](../dictionaries/) for setting up a data source.
 
-## Why a pinyin package converts scripts better
+<a id="why-a-pinyin-package-converts-scripts-better"></a>
 
-Simplification merged distinct characters, and what un-merges them is **the
-reading**. This package has the reading, because it decoded the text to get it.
+## Resolving ambiguous characters
+
+A simplified character can correspond to several traditional characters. PinyinJS first reads the text, then uses the selected pronunciation to choose among those forms.
 
 ```ts
 toScript(dictionary, tables, "头发", { to: "zh-Hant" }); // "頭髮"
 toScript(dictionary, tables, "出发", { to: "zh-Hant" }); // "出發"
 ```
 
-发 is 發 or 髮, and the character on its own leaves the choice open. 头发 is
-`tóufà` and 出发 is `chūfā`, and _that_ says which. The same evidence splits 干
-three ways and 只 two:
+For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and 出发 (`chūfā`) select the appropriate form. Readings also distinguish forms of 干 and 只:
 
 | Text   | Reading    | 繁體   |
 | ------ | ---------- | ------ |
@@ -37,14 +34,13 @@ three ways and 只 two:
 | 一只猫 | `yìzhīmāo` | 一隻貓 |
 | 只有   | `zhǐyǒu`   | 只有   |
 
-Other converters work from phrase tables alone. They are right about the words
-on the list and guessing past it. Because this reads the text first, the
-evidence generalises to words no list holds.
+This can resolve a character even when the script-conversion tables do not contain the complete phrase.
 
-## Both directions need it
+<a id="both-directions-need-it"></a>
 
-繁→简 looks deterministic and only looks it. Seventy common characters map more
-than one way, and the reading separates them:
+## Traditional to simplified conversion
+
+Some traditional characters also have more than one simplified mapping. The reading selects among them:
 
 ```ts
 toScript(dictionary, tables, "乾燥", { to: "zh-Hans" }); // "干燥"
@@ -55,9 +51,7 @@ toScript(dictionary, tables, "乾隆", { to: "zh-Hans" }); // "乾隆"
 
 ## Taiwan and Hong Kong
 
-Both write 繁體 and disagree about the standard form of 58 characters. Taiwan
-follows 教育部標準字體, Hong Kong 常用字字形表. Same characters, same meanings,
-**same readings**. A glyph choice never changes how anything is pronounced.
+Taiwan and Hong Kong use different standard forms for 58 characters. These regional forms represent the same characters and readings.
 
 ```ts
 toScript(dictionary, tables, "面包", { to: "zh-Hant-TW" }); // "麵包"
@@ -70,16 +64,11 @@ toScript(dictionary, tables, "面包", { to: "zh-Hant-HK" }); // "麪包"
 | 里面 | 裡面         | 裏面         |
 | 卫生 | 衛生         | 衞生         |
 
-A bare `zh-Hant` writes Taiwan. There is no region-free 繁體 to fall back on.
-Converting character by character from the usual baseline yields 爲, 衆, 峯, 羣,
-裏, 麪, which _are_ the Hong Kong forms. Declining to choose means choosing Hong
-Kong silently, and a region is therefore always applied and always named.
+`zh-Hant` uses Taiwan forms by default. Specify the Hong Kong target when you need forms such as 爲, 衆, 峯, 羣, 裏 and 麪.
 
-Two of the 58 need the reading, the argument again in miniature. Taiwan merges a
-pair of characters that Hong Kong keeps apart, and where the merge covers one
-sense rather than all of them, reversing it needs to know which sense is meant.
+Two regional mappings also depend on pronunciation:
 
-Taiwan writes 著 for every sense. Hong Kong splits it:
+Taiwan uses 著 across its senses. Hong Kong distinguishes 著 and 着:
 
 ```ts
 toScript(dictionary, tables, "看着", { to: "zh-Hant-HK" }); // "看着"
@@ -88,8 +77,7 @@ toScript(dictionary, tables, "著作", { to: "zh-Hant-HK" }); // "著作"
 
 看著 is `kànzhe` and takes 着. 著作 is `zhùzuò` and keeps 著.
 
-參 is the same shape pointing the other way. 蔘 is a variant of 參 in its `shēn`
-sense alone, so it is the ginseng that takes it and nothing else:
+The variant 蔘 applies only to the `shēn` reading of 參 (ginseng):
 
 ```ts
 toScript(dictionary, tables, "人参", { to: "zh-Hant-HK" }); // "人蔘"
@@ -97,20 +85,15 @@ toScript(dictionary, tables, "参加", { to: "zh-Hant-HK" }); // "參加"
 toScript(dictionary, tables, "参差", { to: "zh-Hant-HK" }); // "參差"
 ```
 
-Where the reading is missing, each takes its own default and the choice is
-reported as a guess: 著 defaults to 着 and 參 to 參, because those are the
-commoner senses. `isReadingSensitive` names both.
+Without a reading, 著 defaults to 着 and 參 defaults to 參. These choices are reported as uncertain. `isReadingSensitive` identifies these characters.
 
-These are the only two, and that is measured rather than assumed. 39 of the 58
-are stated by Hong Kong's own table and the other 19 are Taiwan merges read
-backwards; of those 19, 著 and 參 are the only two whose regional form covers
-fewer readings than the canonical one.
+Of the 58 regional mappings, 39 come from Hong Kong's standard table and 19 reverse Taiwan mergers. 著 and 參 are the reading-sensitive cases among those mergers.
 
-## What it was unsure about
+<a id="what-it-was-unsure-about"></a>
 
-Some conversions cannot be settled by anything. 下面 is a surface or a bowl of
-noodles, both `xiàmiàn`, and no reading tells them apart. `toScriptPieces`
-reports one choice per character with the evidence that settled it.
+## Inspecting conversion choices
+
+Some choices remain ambiguous after reading the text. For example, 下面 can refer to a surface or noodles, both pronounced `xiàmiàn`. `toScriptPieces` returns the selected form and supporting evidence for each character.
 
 ```ts
 import { isUncertainChoice, toScriptPieces } from "@kensio/pinyinjs";
@@ -124,7 +107,7 @@ choices.filter(isUncertainChoice).map((choice) => choice.from); // ["面"]
 choices[1]?.alternatives; // ["麵"]
 ```
 
-Four kinds of evidence, strongest first:
+Evidence has four levels, from strongest to weakest:
 
 | `evidence` | Means                                                        |
 | ---------- | ------------------------------------------------------------ |
@@ -133,9 +116,7 @@ Four kinds of evidence, strongest first:
 | `reading`  | rival forms existed and the syllable picked between them     |
 | `default`  | rival forms existed and nothing separated them — **a guess** |
 
-`alternatives` is empty exactly when the evidence is `locked`, so reading one of
-the two tells you the other. The character's own form counts as a rival, which
-is what makes 万 a guess: it is 萬 counting and 万 in the surname 万俟.
+`alternatives` is empty when the evidence is `locked`. The original character can itself be an alternative. For example, 万 usually becomes 萬 but remains 万 in the surname 万俟.
 
 ```ts
 const { choices } = toScriptPieces(dictionary, tables, "一万人", {
@@ -146,15 +127,9 @@ choices[1]?.evidence; // "default"
 choices[1]?.alternatives; // ["万"]
 ```
 
-The forms are written in the target's own orthography, so a Hong Kong
-conversion offers 麪 where a Taiwan one offers 麵. A region can also settle what
-the script left open: 台 and 臺 are two characters in Taiwan and one in Hong
-Kong, so 台北 converts to 台北 with nothing guessed at.
+Alternatives use the target region's forms. A Hong Kong conversion offers 麪 where Taiwan offers 麵. Regional rules can also remove ambiguity. Hong Kong uses 台 for both Taiwan forms 台 and 臺, so 台北 remains 台北 without an uncertain choice.
 
-`isUncertainChoice` is `default` alone. A character settled by its reading
-counts as settled. That evidence is the reason this converts more accurately
-than an orthographic converter can, and reporting it as doubt would throw the
-claim away.
+`isUncertainChoice` is true only for `default` evidence. Choices resolved by a reading are treated as settled.
 
 ```ts
 const { choices } = toScriptPieces(dictionary, tables, "头发", {
@@ -164,41 +139,32 @@ const { choices } = toScriptPieces(dictionary, tables, "头发", {
 choices.map((choice) => choice.evidence); // ["locked", "reading"]
 ```
 
-Over the gold corpus, 97.6% of characters are `locked` and 1.7% are guesses,
-which is what `pnpm accuracy` reports.
+In the reference corpus, 97.6% of character choices were `locked` and 1.7% used the default. Run `pnpm accuracy` to reproduce the measurement.
 
 ## Detecting the input
 
-The script of the text is detected unless you name it, and that matters more
-than it sounds. Plenty of characters are current in **both** scripts, so running
-繁體 through the 简→繁 tables would rewrite them. 准 is 简体 for 準 and a 繁體
-character in its own right, and 准將 would come back 準將.
+The converter detects the input script unless you supply `from`. Detection prevents a valid traditional form from being treated as simplified input. For example, traditional 准將 should retain 准.
 
 ```ts
 toScript(dictionary, tables, "准將", { to: "zh-Hant" }); // "准將", unchanged
 toScript(dictionary, tables, "群众", { to: "zh-Hant", from: "Hans" }); // "群眾"
 ```
 
-Pass `from` when the text is short enough that detection has nothing to go on. A
-run of characters both scripts share leaves detection with no evidence, and the
-conversion then assumes the text needs converting.
+Set `from` when short input consists only of characters shared by both scripts. Without evidence for the source script, the converter assumes the input needs conversion.
 
-## This is orthography, not translation
+<a id="this-is-orthography-not-translation"></a>
+
+## Vocabulary is preserved
 
 ```ts
 toScript(dictionary, tables, "软件", { to: "zh-Hant" }); // "軟件"
 ```
 
-Not 軟體. 軟體 and 软件 are different **words** for the same thing, the way
-"lorry" and "truck" are, and swapping one for the other is translation. Other
-tools fold a vocabulary substitution list into script conversion. This one
-converts the script and leaves the vocabulary alone.
+Script conversion changes character forms while preserving word choice. It does not replace 软件 with the Taiwan term 軟體. Vocabulary substitution requires a separate application step.
 
 ## Accuracy
 
-繁→简 is near-deterministic, so 简→繁→简 has to be the identity for essentially
-every word. That makes it a test needing no hand-labelling at all.
-`pnpm accuracy` runs it over every key in the dictionary:
+The accuracy check converts simplified dictionary keys to traditional and back. Most should reproduce the original simplified word. Run it with `pnpm accuracy`:
 
 | Trip           | words in use | every key |
 | -------------- | -----------: | --------: |
@@ -206,8 +172,7 @@ every word. That makes it a test needing no hand-labelling at all.
 | 繁→简→繁       |        98.9% |     99.8% |
 | 繁TW→繁HK→繁TW |        99.7% |     99.6% |
 
-繁→简→繁 is lossy **by design**, and the figure is reported without being
-targeted. 卻 and 却 both simplify to 却, and only one of them can come back.
+A traditional-to-simplified-to-traditional conversion can lose distinctions. For example, 卻 and 却 both simplify to 却, so only one form can be reconstructed. The check reports this loss.
 
 ## At the command line
 

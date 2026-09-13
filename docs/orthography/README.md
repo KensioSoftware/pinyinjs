@@ -1,25 +1,18 @@
 # Orthography
 
-Correct pinyin is word-spaced, capitalised and punctuated, and never a bare run
-of syllables. 我要去北京玩儿。is `Wǒ yào qù Běijīng wánr.` and not
-`wǒ yào qù běi jīng wán er.`
+PinyinJS applies word spacing, capitalisation and punctuation after selecting readings. For example, 我要去北京玩儿。becomes `Wǒ yào qù Běijīng wánr.`.
 
 ```ts
 convert(dictionary, "我要去北京玩儿。"); // "Wǒ yào qù Běijīng wánr."
 ```
 
-Three separate things happen in that one example. 北京 groups into one word, it
-capitalises as a proper noun, and 儿 attaches as an r-suffix instead of
-surfacing as `er`. The reference standard is 《汉语拼音正词法基本规则》 GB/T
-16159—2012, and this runs as a pipeline stage of its own, after the decoder.
+In this example, 北京 forms one word and is capitalised as a place name. 儿 becomes an r-suffix on `wán`. The rules implement parts of the pinyin orthography standard, GB/T 16159-2012.
 
-Turn the whole spacing pass off with `grouping: false`. Capitals and apostrophes
-have [options](../options/) of their own.
+Set `grouping: false` to disable word grouping. Capitalisation and apostrophes have separate [options](../options/).
 
 ## Word spacing (分词连写)
 
-The decoder produces words, and 分词连写 decides which of them are written
-together.
+The decoder finds words. The orthography pass then decides which neighbouring words should be joined or separated in written pinyin.
 
 ```ts
 convert(dictionary, "他看了"); // "tā kànle", aspect particle attaches
@@ -32,20 +25,18 @@ convert(dictionary, "南京市"); // "Nánjīng Shì", place generic separates
 convert(dictionary, "南京市", { grouping: false }); // "Nánjīngshì"
 ```
 
-Three rules survive being measured against the whole dictionary, and those three
-are what is implemented:
+The implemented rules cover:
 
 - the aspect particles 了, 着 and 过 attaching to a verb or adjective
 - a `k`-tagged suffix attaching to its stem
 - the generic half of an administrative place name, where the word is tagged
   `ns` **and** the part before the generic is itself a dictionary entry
 
-That second condition on place names earns its place. Without it 上山下乡 is
-tagged `ns` and comes apart as `Shàngshānxià Xiāng`.
+The second condition prevents incorrect place-name splits. For example, 上山下乡 is tagged `ns`, but it should remain one word.
 
 ### The curated list
 
-Some spacings no rule reaches, and those live in a curated word list instead:
+A curated word list handles spacing that cannot be determined reliably from these rules:
 
 ```ts
 convert(dictionary, "不是"); // "bú shì"
@@ -55,7 +46,7 @@ convert(dictionary, "中国人"); // "Zhōngguórén"
 convert(dictionary, "我还给你了。"); // "Wǒ huán gěi nǐ le."
 ```
 
-Each of those defeated a rule for a specific reason:
+These entries require word-specific handling:
 
 | Wanted               | Why no rule reaches it                                           |
 | -------------------- | ---------------------------------------------------------------- |
@@ -65,7 +56,7 @@ Each of those defeated a rule for a specific reason:
 | 中国人 `Zhōngguórén` | no suffix tag marks 人, and the decode splits it                 |
 | 还给 `huán gěi`      | 开会 and 睡觉 are also verb pairs and are written together       |
 
-The list is curated, and a word it misses is written the way the rules leave it:
+Words outside the list use the general rules:
 
 ```ts
 convert(dictionary, "不但"); // "búdàn"
@@ -73,19 +64,15 @@ convert(dictionary, "大米"); // "dàmǐ"
 convert(dictionary, "青海"); // "Qīnghǎi"
 ```
 
-### Why splitting is harder than joining
+<a id="why-splitting-is-harder-than-joining"></a>
 
-Joining what the decode separated overrides no evidence, since the dictionary
-had no entry for the joined form and no evidence pointed either way. Splitting a
-decoded word contradicts positive evidence that it _is_ one word. It needs a
-condition strong enough to survive the whole dictionary, or a listed entry with
-a reason attached. That asymmetry is why the rule set is short and the list
-exists.
+### Splitting dictionary words
+
+A dictionary entry provides evidence that its characters form one word. Splitting it requires a specific orthographic rule or an entry in the curated list. Adjacent decoded words can also be joined when spelling rules require it.
 
 ## Hyphens (重叠)
 
-A reduplication is one word with a boundary inside it, and GB/T 16159 marks that
-boundary with a hyphen:
+GB/T 16159 uses a hyphen within these reduplication patterns:
 
 ```ts
 convert(dictionary, "干干净净"); // "gāngān-jìngjìng"
@@ -94,37 +81,24 @@ convert(dictionary, "研究研究"); // "yánjiū-yánjiū"
 convert(dictionary, "请你休息休息。"); // "Qǐng nǐ xiūxi-xiūxi."
 ```
 
-The shape is the whole of the evidence, which matters because two thirds of the
-dictionary carries no part-of-speech tag. A four-character word whose halves
-each double is a reduplication and almost never anything else. Over 711,000
-decoded words of Tatoeba and zh.wikipedia the AABB rule fires 66 times and all
-66 are reduplications.
+The AABB rule uses the character pattern and works without part-of-speech tags. In 711,000 decoded words from Tatoeba and Chinese Wikipedia, all 66 matches were reduplications.
 
-The repeat rule, as in 研究研究 and 休息休息, reads two words, because verb
-reduplication is productive and the dictionary has no entry for 研究研究. It
-fires 54 times over the same text and is right 46 of them. The eight misses are
-a word ending one clause and starting the next, as in 告诉我们｜我们在哪里,
-which only syntax could separate from 讨论讨论.
+Repeated two-character words, such as 研究研究 and 休息休息, can be joined with a hyphen even when the complete repetition has no dictionary entry. This rule was correct in 46 of 54 corpus matches. It can misidentify a word repeated across a clause boundary, such as 我们 in 告诉我们｜我们在哪里.
 
-Two things it deliberately leaves alone:
+The rule excludes these cases:
 
 ```ts
 convert(dictionary, "爸爸妈妈"); // "bàba māma", two words, not AABB
 convert(dictionary, "看看"); // "kànkan", written solid, neutral second syllable
 ```
 
-爸爸妈妈 has exactly the AABB shape and is two words. What separates it from
-干干净净 is that the decode produced two words, and that is the condition. The
-dictionary alone could never tell them apart, since 匆匆 and 爸爸 are both words
-and so are 匆忙 and 爸妈. The cost is measurable. Of 43 AABB spans arriving as
-two words, about 16 are reduplications the decoder split, and those keep their
-space.
+AABB must arrive from the decoder as one word. This keeps 爸爸妈妈 as two words. It can also miss reduplications that the decoder splits. About 16 of 43 corpus examples arriving as two words had that problem.
 
-### 成语, from a list
+<a id="成语-from-a-list"></a>
 
-The same hyphen goes down the middle of a four-syllable 成语, but only one that
-can be read as two disyllables. The rest are written solid, and which is which
-comes from a curated list:
+### Idiom hyphenation
+
+Four-syllable idioms (成语) take a hyphen when they consist of two independent two-syllable units. A curated list identifies these idioms:
 
 ```ts
 convert(dictionary, "风平浪静"); // "fēngpíng-làngjìng"
@@ -134,19 +108,9 @@ convert(dictionary, "不亦乐乎"); // "búyìlèhū", cannot be halved
 convert(dictionary, "目不转睛"); // "mùbùzhuǎnjīng", 目 ｜ 不转睛
 ```
 
-No rule reaches this. Conditioning on both halves being dictionary words fires
-on 10,202 of the 22,192 four-character idioms and is uncorrelated with the
-standard's criterion. It fires on 层出不穷 and not on 风平浪静, which are the
-standard's own two examples of the same rule, and it fires on 精神文明 and
-凯旋归来, which want a space. No source carries hyphenated pinyin either, so
-unlike everything else here a rule could not even be scored.
+Two dictionary matches alone cannot establish this boundary. That test also matches phrases requiring a space and misses some examples specified by the standard.
 
-The list holds 117 idioms in both scripts, the ones whose two halves are each a
-self-contained disyllable, where 2+2 is beyond doubt. Measured on Tatoeba and
-zh.wikipedia it covers 15.2% of the four-character idioms that actually turn up.
-Most of the remainder are either genuinely not 2+2 (据我所知, 心不在焉) or not
-成语 at all (非常感谢, 可口可乐). An idiom the list misses is written the way it
-was before, which is also what the standard does with the ones it cannot halve.
+The list contains 117 idioms in both scripts and covers 15.2% of four-character idioms in the measured corpus. Unlisted idioms retain the spacing produced by the general rules.
 
 ## Capitals
 
@@ -158,22 +122,11 @@ convert(dictionary, "长江"); // "Cháng Jiāng"
 convert(dictionary, "你好，世界"); // "nǐ hǎo, shìjiè"
 ```
 
-Proper nouns always, and the first word of a sentence only where the source is
-punctuated as one. That punctuation is the only thing separating 学生 looked up
-as a word from 这是我的书。written as a sentence, and a comma leaves the next
-word lower case.
+Dictionary-marked proper nouns are capitalised. Sentence-initial capitalisation requires sentence punctuation in the input. A comma does not start a new sentence.
 
-A proper noun is a flag on a dictionary entry, set from jieba's part-of-speech
-tags (`nr` person, `ns` place, `nt` organisation, `nz` other) and demoted again
-where CC-CEDICT writes the headword's pinyin in lower case. There is no name
-rule of any kind, no surname list, and no test on what follows a surname.
+Proper-noun flags come from jieba tags (`nr` for people, `ns` for places, `nt` for organisations and `nz` for other names). CC-CEDICT entries with lowercase readings can remove the flag. PinyinJS has no general name recogniser or surname list.
 
-The veto reads the senses that state a meaning and skips the ones that only
-refer on. CC-CEDICT gives a district, county or city its own headword and
-cross-refers the bare name to it, so 长寿 carries
-`[Chang2 shou4] /see 長壽區|长寿区/` beside `[chang2 shou4] /longevity/`. That
-capital belongs to 长寿区, and reading it as 长寿's own put a capital on the
-longevity sense everywhere it appeared.
+Only definitions with their own meaning can remove a proper-noun flag. Cross-references are excluded from that check. For example, the capitalised reference from 长寿 to 长寿区 describes the district, while the lowercase entry for 长寿 describes longevity.
 
 ```ts
 convert(dictionary, "祝你健康长寿。"); // "Zhù nǐ jiànkāng chángshòu."
@@ -181,25 +134,11 @@ convert(dictionary, "长寿区在重庆。"); // "Chángshòu Qū zài Chóngqì
 convert(dictionary, "我们的友谊很深。"); // "Wǒmen de yǒuyì hěn shēn."
 ```
 
-118 keys lose the flag to this, among them 友谊, 温泉, 白云, 武功, 红旗 and 凤凰.
-Over the 88,866 lines the capitals of 104 distinct runs change, and about two
-thirds of those are corrections. The rest are a bare place name sitting inside a
-longer one the dictionary has no entry for, where 青山公路 in Hong Kong loses its
-capital along with 青山 the green hills.
+This removed flags from 118 keys, including 友谊, 温泉 and 白云. It corrected about two thirds of the affected corpus cases. It can also remove a needed capital when a longer place name is missing from the dictionary, such as 青山公路.
 
-Where every sense refers on, the cross-reference is all the evidence there is
-and it is taken at its word. 2,347 flagged keys sit there, among them 三亚, 上饶
-and 三门峡.
+If all senses are cross-references, their capitalisation is used. This applies to 2,347 flagged keys, including 三亚, 上饶 and 三门峡.
 
-A bare character has a third condition to meet. jieba tags 王, 连 and 云 `nr`,
-and CC-CEDICT capitalises a sense of each. Both of those are facts about the
-surname and say nothing about the character standing on its own. 王 is the king
-too, 连 is "even" and 云 is a cloud. Neither source can tell those apart, and jieba's
-word list can, because a character heads words there and every word carries a
-corpus count and a tag of its own. 李 heads 40,346 occurrences of names against
-9,787 of ordinary words, where 连 heads 2,102 against the 23,042 of 连续, 连接
-and 连忙. The character's own count is counted with the words, which is what
-settles 帅 (155 of names against 86 of words, and 795 occurrences alone).
+Single-character names require an additional frequency check. A character must occur more often at the start of names than in ordinary words, including its standalone occurrences. This helps distinguish a surname such as 李 from a common word that can also be a surname, such as 连.
 
 ```ts
 convert(dictionary, "他连再见也不说"); // "tā lián zàijiàn yě bù shuō"
@@ -207,21 +146,11 @@ convert(dictionary, "这周我一直在工作"); // "zhè zhōu wǒ yìzhí zài
 convert(dictionary, "他很帅"); // "tā hěn shuài"
 ```
 
-243 of the 511 single-character keys keep the flag, and over 88,866 lines of
-corpus the condition takes a capital off 1,678 runs and adds none. A character
-that heads names and is a common word besides still survives it. 福 heads 10,255
-occurrences of names against 579, so 清心的人有福了 is `qīngxīn de rén yǒu Fú
-le`.
+The check retains 243 of 511 single-character flags. It remains imperfect when a common character frequently starts names. For example, 福 can still be capitalised in 清心的人有福了.
 
-`Lǐ Huá` falls out of the dictionary being consulted a character at a time. The
-dictionary has no entry for 李华. It decodes as two single-character words, and
-李 and 华 each carry the flag on their own. 李 is tagged `nr`, and 华 is tagged
-`ns`, a place name and nothing to do with given names. Both capitals and the
-space between them come from that, and never from recognising a person.
+`Lǐ Huá` is produced from two individually flagged characters because 李华 has no dictionary entry. The result follows dictionary tags, without recognising the full text as a person's name.
 
-Which means it works where the characters happen to be flagged and nowhere else,
-and the gaps are easy to find. 42 of the first hundred 百家姓 surnames carry no
-flag at all, and the surname loses its capital:
+Names whose characters lack the flag may remain lowercase. This affects 42 of the first hundred surnames in 百家姓:
 
 ```ts
 convert(dictionary, "李华"); // "Lǐ Huá"
@@ -230,16 +159,11 @@ convert(dictionary, "孙华"); // "sūn Huá"
 convert(dictionary, "錢華"); // "qián Huá", the same gap in 繁體
 ```
 
-A surname list would capitalise all four of those. The last three coming out
-this way is what says there is none.
+Check name capitalisation when presenting converted text to readers.
 
-The flag is the same under either script. It comes from jieba, jieba counted
-简体, and a 繁體 character takes the answer its 简体 character reached. See
-[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
+Simplified and traditional forms share proper-noun flags derived from jieba. See [shared tags and counts](../scripts-and-locales/#tags-frequency-and-names).
 
-Inheriting jieba's tags means inheriting its mistakes in the other direction
-too. 无缝钢管 is tagged `nz` and converts as `Wúfènggāngguǎn`, with a capital it
-has not earned.
+Incorrect source tags can also cause unwanted capitals. For example, jieba tags 无缝钢管 as `nz`, producing `Wúfènggāngguǎn`.
 
 ### The parts of a proper name are written apart
 
@@ -251,22 +175,13 @@ convert(dictionary, "北京大学"); // "Běijīng Dàxué"
 convert(dictionary, "上海交通大学"); // "Shànghǎi Jiāotōng Dàxué"
 ```
 
-GB/T 16159 5.1 writes 姓 apart from 名, **and** a proper noun apart from its
-generic, each part capitalised. Both halves of that clause are one rule here,
-because the evidence for them is the same evidence.
+GB/T 16159 section 5.1 separates surnames from given names and proper names from generic terms. Each part is capitalised.
 
-齐白石 and 北京大学 are dictionary entries, though, and the decoder produces
-**one** word each, and reading them as one word is what makes them read
-correctly at all. That makes this a split, and
-[splitting contradicts](#why-splitting-is-harder-than-joining) the dictionary's
-own claim that the characters belong together.
+The decoder returns dictionary names such as 齐白石 and 北京大学 as single words. The orthography pass can then [split those words](#why-splitting-is-harder-than-joining) at boundaries recorded by CC-CEDICT.
 
-The obvious conditions all fall short. A surname list takes 马克思, 高尔基, 巴赫
-and 牛顿 apart, not one of which is a Chinese name, since the shape is identical
-to 齐 + 白石. And a list of generics cannot say where 上海浦东发展银行 divides.
+The boundary comes from the entry itself. Surname or generic-term lists cannot reliably distinguish names such as 齐白石 from transliterations such as 马克思, or find every boundary in an organisation name.
 
-**The condition is CC-CEDICT's own capitalisation, which states the boundary
-instead of leaving it to be inferred:**
+Capital letters in CC-CEDICT's pinyin identify the boundaries:
 
 | Entry        | CC-CEDICT pinyin                   | Divides at           |
 | ------------ | ---------------------------------- | -------------------- |
@@ -276,45 +191,24 @@ instead of leaving it to be inferred:**
 | 上海交通大学 | `Shang4 hai3 Jiao1 tong1 Da4 xue2` | 上海 ｜ 交通 ｜ 大学 |
 | 马克思       | `Ma3 ke4 si1`                      | nothing, one word    |
 
-So a compound surname is recognised without a list of compound surnames, a
-generic without a list of generics, and a transliteration is excluded without a
-list of transliterations. It is the same source and the same signal that already
-vetoes jieba's proper-noun tags, extended from _whether_ a word is a proper noun
-to _where_ its parts divide.
+This handles compound surnames, generic terms and transliterated names according to the source entry.
 
-**Every stated boundary is cut, not only the first**, and that is what separates
-an organisation from a person. **48% of `nt` entries carrying a boundary carry
-more than one**, against 1.6% of `nr`. One cut would leave 上海交通大学 as
-`Shànghǎi Jiāotōngdàxué`.
+Every recorded boundary is applied. Among tagged entries with boundaries, 48% of organisations (`nt`) and 1.6% of people (`nr`) have more than one boundary.
 
-A tag is still required, because the mark reaches past what 5.1 covers. The rule
-takes `nr` and `nt` and no others:
+Only `nr` and `nt` entries use this rule:
 
 | Tag  | With a boundary | Why not                                                                                                              |
 | ---- | --------------: | -------------------------------------------------------------------------------------------------------------------- |
 | `ns` |           5,341 | the [place rule](#word-spacing-分词连写) has its own measured condition, and 美德 `Mei3 De2` is also `měidé`, virtue |
 | `nz` |             346 | 第二次世界大战 is `Di4 er4 Ci4 Shi4 jie4 Da4 zhan4`, which divides after 第二                                        |
 
-Measured over 88,866 lines of Tatoeba and zh.wikipedia the rule fires **548
-times over 221 distinct words**, 304 personal names and 244 organisations, and
-nearly all are a boundary the standard wants, among them 蒋介石, 孙中山, 诸葛亮,
-夏目漱石, 中国共产党, 汇丰银行, 黄埔军校, 中国社会科学院, and 富士山 →
-`Fùshì Shān`, all of them words jieba calls a name and CC-CEDICT still marks.
+Across 88,866 lines from Tatoeba and Chinese Wikipedia, the rule applied 548 times to 221 distinct words. These included 304 personal names and 244 organisations.
 
-Three things it gets wrong, all inherited:
+Known source-data errors include:
 
-- **An abbreviation whose every element is capitalised.** 中共中央 is
-  `Zhong1 Gong4 Zhong1 yang1`, so it divides at each character and comes out
-  `Zhōng Gòng Zhōngyāng` where `Zhōnggòng Zhōngyāng` is wanted. **22 of the 244
-  organisation firings** have this shape. A "no one-character part" condition
-  would fix it and destroy the personal names, where a one-character 姓 is the
-  norm at 74.6% of `nr` entries with a boundary.
-- **A transliteration CC-CEDICT capitalised as though it were a Chinese name.**
-  白求恩 is `Bai2 Qiu2 en1`, so Bethune comes out `Bái Qiú'ēn`.
-- **Names the tag misses entirely.** 习近平 is tagged `nrfg` and 周恩来 `t`, and
-  no proper-noun flag follows from either, so both convert with no capital at
-  all, as `xíjìnpíng` and `zhōu'ēnlái`, and never reach this rule. That is a
-  tagging gap, and not a boundary one.
+- Abbreviations with too many capitalised parts. 中共中央 becomes `Zhōng Gòng Zhōngyāng`, while the intended grouping is `Zhōnggòng Zhōngyāng`.
+- Transliterated names marked as Chinese names. CC-CEDICT's capitalisation makes 白求恩 (Bethune) become `Bái Qiú'ēn`.
+- Missing proper-noun tags. 习近平 is tagged `nrfg` and 周恩来 is tagged `t`, so neither reaches this rule.
 
 ### 老王 is Lǎo Wáng
 
@@ -323,20 +217,9 @@ convert(dictionary, "我去把老王找来。"); // "Wǒ qù bǎ Lǎo Wáng zhǎ
 convert(dictionary, "那是小李的书。"); // "Nà shì Xiǎo Lǐ de shū."
 ```
 
-GB/T 16159 writes the 称呼语 in front of a surname apart and with a capital of
-its own. The words were already apart, and only the capital was missing. The
-rule marks the prefix a proper noun and lets the writer do what it already does
-with one.
+The prefixes 老 and 小 are written separately and capitalised when they precede a single-character word marked as a proper noun.
 
-The surname is the evidence. A one-character word the dictionary marks a proper
-noun is what 老 and 小 attach to. **大 is deliberately left out.** It is written
-the same way in 大李, but it is also an ordinary adjective in front of anything
-at all, and it is the one that goes wrong. Over 88,866 lines the three prefixes
-fire 49 times together and both clear mistakes are 大, in 泡大池 (a big pool)
-and 那头大熊 (a big bear). Without it the rule fires **38 times over 12 distinct
-pairs**, 小王, 小李, 老王, 小丁 and eight more, and every one of them read in
-context is a real form of address, including 小萨米·戴维斯, where 小 is doing
-the work of "Jr".
+大 is excluded because it often acts as an ordinary adjective. In 88,866 corpus lines, the 老 and 小 rule matched 38 forms of address across 12 distinct pairs, including 小王, 小李 and 老王.
 
 ## Apostrophes (隔音符号)
 
@@ -347,19 +230,13 @@ convert(dictionary, "女儿"); // "nǚ'ér"
 convert(dictionary, "海鸥"); // "hǎi'ōu"
 ```
 
-An apostrophe goes before any syllable of a word that begins with `a`, `o` or
-`e` unless it is the first. Those three are the complete trigger set. `i`, `u`
-and `ü` surface as `y` and `w` in that position, where the ambiguity cannot
-arise.
+By default, an apostrophe precedes a non-initial syllable beginning with `a`, `o` or `e` within a word. Initial `i`, `u` and `ü` are written with `y` or `w` and do not need this separator.
 
-`apostrophe: "standard"` writes it only where leaving it out would genuinely
-read as something else, and that is what GB/T 16159 asks for. `"always"` is the
-default because that is what essentially every style guide does.
+`apostrophe: "standard"` inserts an apostrophe only when omitting it would create an ambiguous spelling, following GB/T 16159. The default is `"always"`.
 
 ## Punctuation
 
-`。，、；：？！` are rewritten as their Latin equivalents and take the space the
-full-width glyph carried:
+By default, `。，、；：？！` become Latin punctuation with the appropriate following space:
 
 ```ts
 convert(dictionary, "北京。"); // "Běijīng."
@@ -370,8 +247,7 @@ Brackets and quotation marks are left alone under either setting.
 
 ## 儿 and 儿化
 
-One character, three behaviours. Each word carries its own, as a dictionary
-fact:
+The dictionary records how 儿 behaves in each word:
 
 ```ts
 convert(dictionary, "玩儿"); // "wánr", retroflex suffix, one syllable
@@ -379,42 +255,24 @@ convert(dictionary, "女儿"); // "nǚ'ér", full syllable, needs an apostrophe
 convert(dictionary, "儿子"); // "érzi", full syllable, word-initial
 ```
 
-The erhua flag comes from CC-CEDICT's explicit `r5` token. Source data is
-unreliable here, since the phrase corpus writes 玩儿 as `wán er`. That is why
-the build refuses to write an artifact unless 儿化 round-trips both ways.
+Erhua flags come from CC-CEDICT's explicit `r5` token. The dictionary build checks that these readings survive parsing and formatting.
 
-## Where it stops
+<a id="where-it-stops"></a>
 
-The standard is larger than what is built. Known gaps, all of which degrade to
-something readable:
+## Limitations
+
+PinyinJS implements part of GB/T 16159. Known gaps include:
 
 | GB/T 16159 says                                           | What happens now          |
 | --------------------------------------------------------- | ------------------------- |
 | 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit |
 | 成语 outside the curated list                             | written solid, no hyphen  |
 
-Both are gaps by decision, and the decision is measured.
+These cases require boundaries that the available dictionary data cannot reliably supply.
 
-**Splitting a 4+ syllable compound needs to know where the boundary is, and the
-only evidence available is uncorrelated with the standard.** Over 88,866 lines
-the decoder produces 9,210 words of four syllables or more, 4,462 of them
-distinct. Asking whether the word cuts into two dictionary words, the same
-condition the 成语 hyphen rejected, leaves 58.11% with exactly one cut, 4.62%
-with several and 37.27% with none. And that one cut is the standard's boundary
-only about a fifth of the time. Of the 2,593 one-cut words, **20.83% are tagged
-`i` and 16.08% `l`**, 成语 and 习语, which the standard writes solid or
-hyphenates, so splitting them would be actively wrong, against 21.91% tagged
-`n`, the nouns 6.1.6 is actually about. A further **21.52% carry no tag at
-all**, the caveat below arriving in practice. Conditioning on `n` looks better
-in a sample and still fires on 登峰造极 and 天马行空, both 成语 that jieba tags
-`n`. Since splitting a decoded word overrides positive evidence that it is one
-word, that falls short of a strong enough condition, and the rule stays
-unwritten.
+A compound with four or more syllables may contain several dictionary words without requiring a split in standard pinyin. Some such compounds are idioms that should remain joined or hyphenated. Part-of-speech tags are also inconsistent. PinyinJS therefore leaves these compounds intact unless a specific rule or curated entry supplies the boundary.
 
-One coverage caveat is worth knowing before expecting more from the
-tag-conditioned rules. 487,552 of 721,718 Han words carry no part-of-speech tag
-at all, since only the jieba-sourced third of the dictionary has one. Any rule
-conditioned on a tag is silently inert on two thirds of the vocabulary.
+Rules based on part-of-speech tags cover only tagged entries. In the measured dictionary, 487,552 of 721,718 Han words had no tag. These rules cannot apply to roughly two thirds of the vocabulary.
 
 <!-- card
 ```ts

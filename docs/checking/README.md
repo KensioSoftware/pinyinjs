@@ -1,7 +1,7 @@
 # Checking typed pinyin
 
-`check` marks a pinyin transcription somebody typed against the Chinese text it
-was written for, syllable by syllable.
+`check` compares typed pinyin with Chinese text and reports a verdict for each
+syllable.
 
 ```ts
 import { check } from "@kensio/pinyinjs";
@@ -12,18 +12,17 @@ marked.syllables[1]?.source; // "行"
 marked.score; // 0.5
 ```
 
-It is for an exercise that wants the mistake identified, and not just a pass or
-a fail. A learner types the pinyin for a sentence, and what comes back says
-which syllable went wrong and how.
+Use it to mark pronunciation exercises and highlight missing syllables, wrong
+readings or tone mistakes.
 
-## Why a dictionary is worth having for this
+<a id="why-a-dictionary-is-worth-having-for-this"></a>
 
-**A string comparison marks a learner wrong for being right**, and there are
-six distinct ways it does. Being fair about them is the whole reason this
-belongs in a library that already knows how the text is read.
+## Accepted variations
 
-**Either notation.** `bei3` and `běi` are the same syllable, and mix freely
-within a word, because the [syllable layer](../syllables/) parses both:
+The checker accepts several ways to write the same reading.
+
+Tone marks and tone numbers can be mixed within a word. The
+[syllable parser](../syllables/) treats `bei3` and `běi` as the same syllable:
 
 ```ts
 check(dictionary, "北京", "běijīng").isCorrect; // true
@@ -31,31 +30,26 @@ check(dictionary, "北京", "bei3jing1").isCorrect; // true
 check(dictionary, "北京", "bei3jīng").isCorrect; // true
 ```
 
-**A reading the decoder itself was unsure of.** 行 standing on its own is chosen
-by a prior alone. `xíng`, `háng` and `héng` were all there for the taking, and
-the [confidence](../confidence/) report says so. A learner who guessed the other
-way has not made a mistake the library is entitled to call one:
+When the decoder is uncertain, the checker accepts its plausible alternatives.
+For 行 alone, this includes `xíng`, `háng` and `héng`:
 
 ```ts
 check(dictionary, "行", "xíng").isCorrect; // true
 check(dictionary, "行", "háng").isCorrect; // true
 ```
 
-The forgiveness stops exactly where the guessing does. 银行 is a word, and
-reading its 行 as `xíng` means breaking that word apart, which the decoder
-charges for. So this is a real mistake and is marked as one:
+A reading that breaks a recognised word is rejected. For example, the 行 in
+银行 must be `háng`:
 
 ```ts
 check(dictionary, "银行", "yínxíng").syllables[1]?.verdict; // "wrong"
 ```
 
-That threshold is the one [`isUncertain`](../confidence/) uses, asked here as a
-question. A rejected reading is accepted if taking it would have cost less than
-one word boundary.
+This uses the same threshold as [`isUncertain`](../confidence/). An alternative
+is accepted if choosing it would cost less than one word boundary.
 
-**Sandhi either way.** 你好 is written `nǐ hǎo` and said `ní hǎo`, and 不是 is
-`bú shì` on the page over an underlying `bù shì`. Both forms of both pass. See
-[sandhi](../sandhi/) for why the two differ at all:
+Both underlying tones and [sandhi](../sandhi/) forms are accepted. 你好 can be
+`nǐ hǎo` or `ní hǎo`, and 不是 can be `bù shì` or `bú shì`:
 
 ```ts
 check(dictionary, "你好", "nǐ hǎo").isCorrect; // true
@@ -64,9 +58,7 @@ check(dictionary, "不是", "bú shì").isCorrect; // true
 check(dictionary, "不是", "bù shì").isCorrect; // true
 ```
 
-**Tones written or not.** `Syllable.tone` distinguishes "no tone was written"
-from the neutral tone, so leaving the tones off is a different report from
-getting one wrong:
+An omitted tone is reported separately from a wrong tone:
 
 ```ts
 check(dictionary, "北京", "bei jing").syllables.map((one) => one.verdict);
@@ -75,8 +67,8 @@ check(dictionary, "北京", "bei3jing3").syllables.map((one) => one.verdict);
 // ["correct", "tone"]
 ```
 
-**Apostrophes.** The 隔音符号 marks a syllable boundary and carries no sound. It
-settles none of these:
+Apostrophes mark syllable boundaries. The checker accepts their omission when
+the syllables are still unambiguous:
 
 ```ts
 check(dictionary, "西安", "Xī'ān").isCorrect; // true
@@ -84,18 +76,16 @@ check(dictionary, "西安", "xi1an1").isCorrect; // true
 check(dictionary, "海鸥", "hǎiōu").isCorrect; // true, the mark is optional there
 ```
 
-The one exception is the 隔音符号 that does real work. `xiān` is 先, and reading
-it as two syllables is the thing the mark exists to make possible. That one is
-marked wrong, because it says something else. Tone marks settle it where they
-can, so `Xīān` passes. Two marks are two syllables, and 西安 is the only thing
-it can be.
+For 西安, `xiān` is wrong because it is one syllable. `Xīān` passes because
+the two tone marks identify two syllables.
 
-**Word spacing.** An axis of its own, because it is a mistake in its own right.
-See [word spacing](#word-spacing) below.
+Word spacing is reported separately. See [word spacing](#word-spacing).
 
-## The verdicts
+<a id="the-verdicts"></a>
 
-One entry per syllable expected or typed, in order.
+## Syllable verdicts
+
+The result contains one entry per expected or typed syllable, in order.
 
 | Verdict    | Means                                          |
 | ---------- | ---------------------------------------------- |
@@ -106,22 +96,21 @@ One entry per syllable expected or typed, in order.
 | `missing`  | a syllable of the reading that was not typed   |
 | `extra`    | a syllable typed that the reading does not use |
 
-Word spacing is reported beside them, on `spacing`, and never folded in. See
-[word spacing](#word-spacing).
+The `spacing` field reports word spacing separately from the syllable verdict.
 
-A neutral-tone syllable typed with no mark is `correct` and not `toneless`,
-because that is how pinyin writes the neutral tone:
+An unmarked neutral-tone syllable is `correct`. Pinyin normally writes the
+neutral tone without a mark:
 
 ```ts
 check(dictionary, "我的书", "wǒ de shū").isCorrect; // true
 ```
 
-### Being strict about tones
+<a id="being-strict-about-tones"></a>
 
-`toneless` counts as correct by default, which is what an exercise teaching the
-syllables before the tones wants. `tones: "required"` counts it wrong, and
-reports the same verdict either way. An application can always tell the two
-kinds of tone mistake apart, whatever it decides to do about them.
+### Requiring tones
+
+By default, `toneless` counts as correct. Set `tones: "required"` to count it
+as a mistake. The verdict remains `toneless` in either mode.
 
 ```ts
 check(dictionary, "北京", "bei jing").isCorrect; // true
@@ -130,9 +119,8 @@ check(dictionary, "北京", "bei jing", { tones: "required" }).isCorrect; // fal
 
 ## Word spacing
 
-Where the words go is its own axis, reported on `spacing` and separate from the
-syllable's own verdict, because it is a separate mistake. `yín háng` reads 银行
-perfectly and writes it as two words:
+The `spacing` field reports whether word boundaries match. For example,
+`yín háng` has the right syllables for 银行 but splits one word into two:
 
 ```ts
 const split = check(dictionary, "银行", "yín háng");
@@ -146,34 +134,34 @@ split.syllables.map((one) => one.spacing); // ["correct", "split"]
 | `split`   | a word was written as two                     |
 | `joined`  | two words were written as one                 |
 
-It is undefined for a syllable that was only expected or only typed, since it
-has no counterpart to compare against.
+`spacing` is undefined for a missing or extra syllable because it has no
+counterpart to compare.
 
-Like everything else here, it is reported whatever the caller does with it, and
-counted only when asked for:
+Spacing is always reported. Set `spacing: "required"` to include it in the score:
 
 ```ts
 check(dictionary, "银行", "yín háng").isCorrect; // true
 check(dictionary, "银行", "yín háng", { spacing: "required" }).isCorrect; // false
 ```
 
-Off by default, because the 分词连写 it grades against falls short of a complete
-正词法 implementation ([orthography](../orthography/) says where it stops), and
-a learner can write a word the standard writes differently from the way this
-does. Turn it on for an exercise where the spacing is the point.
+Spacing is excluded from the score by default. The
+[orthography implementation](../orthography/) covers only part of the standard,
+and some valid spellings may differ from its output. Enable spacing checks
+when the exercise is specifically testing word boundaries.
 
-### The tolerance
+<a id="the-tolerance"></a>
 
-These all grade the spacing and share one option:
+### Accepted boundaries
+
+With `spacing: "required"`, the checker accepts these variations:
 
 ```ts
 const graded = { spacing: "required" } as const;
 ```
 
-**Two spacing conventions, and both are accepted.** 分词连写 is what puts an
-aspect particle on its verb and separates the generic half of a place name. The
-words the dictionary knows are what `grouping: false` writes. Both come out of
-this package, and a learner may have been taught either:
+Both orthographic grouping and dictionary word boundaries are accepted.
+Orthographic grouping joins aspect particles to verbs and separates the generic
+part of a place name. `grouping: false` uses dictionary words directly:
 
 ```ts
 check(dictionary, "他看了", "tā kànle", graded).isCorrect; // true, 分词连写
@@ -182,9 +170,8 @@ check(dictionary, "南京市", "Nánjīng Shì", graded).isCorrect; // true
 check(dictionary, "南京市", "Nánjīngshì", graded).isCorrect; // true
 ```
 
-**A hyphen allows both.** 干干净净 is `gāngān-jìngjìng`, one orthographic word
-with a boundary written inside it, so rendering that mark as a space has not
-invented a boundary and running it together has not lost one:
+A hyphenated word can be written with a space or joined without the hyphen.
+For example, 干干净净 is normally `gāngān-jìngjìng`:
 
 ```ts
 check(dictionary, "干干净净", "gāngān-jìngjìng", graded).isCorrect; // true
@@ -192,8 +179,7 @@ check(dictionary, "干干净净", "gāngān jìngjìng", graded).isCorrect; // t
 check(dictionary, "干干净净", "gāngānjìngjìng", graded).isCorrect; // true
 ```
 
-What is left after that is a real mistake, a word broken in half or a sentence
-with no boundaries in it at all:
+Other missing or extra boundaries are reported as spacing mistakes:
 
 ```ts
 check(dictionary, "我要去北京。", "wǒyàoqùběijīng", graded).syllables.map(
@@ -201,7 +187,9 @@ check(dictionary, "我要去北京。", "wǒyàoqùběijīng", graded).syllables
 ); // ["correct", "joined", "joined", "joined", "correct"]
 ```
 
-## What each syllable carries
+<a id="what-each-syllable-carries"></a>
+
+## Syllable details
 
 | Field       | Is                                                      |
 | ----------- | ------------------------------------------------------- |
@@ -214,10 +202,7 @@ check(dictionary, "我要去北京。", "wǒyàoqùběijīng", graded).syllables
 | `source`    | the characters the expected syllable reads              |
 | `at`        | where those characters start, in code points            |
 
-`source` and `at` are what showing the mistake against the text needs. The
-answer alone cannot say which 行 of a sentence was misread, and highlighting the
-character the learner got wrong is more use than printing the right answer at
-them.
+Use `source` and `at` to highlight the characters associated with a mistake.
 
 ```ts
 const marked = check(dictionary, "我要去银行", "wǒ yào qù yínxíng");
@@ -227,56 +212,51 @@ marked.syllables
 // [["行", 4, "xíng"]]
 ```
 
-`text` is kept separately from `actual` because what was typed need not be a
-syllable at all. Something unreadable comes back as written, with `actual`
-undefined and a `wrong` verdict.
+`text` preserves what the learner typed. If it cannot be parsed as a syllable,
+`actual` is undefined and the verdict is `wrong`.
 
-## The score
+<a id="the-score"></a>
 
-`score` is the share of the reported syllables that counted as correct, from 0
-to 1, and `isCorrect` is whether all of them did.
+## Score
 
-It is over the entries reported, and not over the expected reading, so that
-inventing a syllable costs as much as dropping one. An answer padded with
-syllables has more entries than the reading has, and scoring against the reading
-alone would let it pad for free.
+`score` is the proportion of reported syllables counted as correct, from 0 to 1.
+`isCorrect` is true when every reported syllable counts as correct.
+
+The denominator includes extra typed syllables. Adding a syllable and omitting
+a syllable both reduce the score.
 
 ```ts
 check(dictionary, "北京", "běi běi jīng").score; // 2/3
 check(dictionary, "北京市", "běi shì").score; // 2/3
 ```
 
-## The two readings are aligned first
+<a id="the-two-readings-are-aligned-first"></a>
 
-A syllable dropped halfway through an answer would otherwise put everything
-after it out of step, and be reported as a mistake on every syllable that
-follows instead of on the one that caused it. So the two readings are aligned
-first, on their toneless spellings, by the same machinery that scores the
-decoder against the gold corpus:
+## Alignment
+
+The checker aligns expected and typed syllables by their toneless spellings
+before grading them. A missing syllable does not shift every subsequent
+syllable into the wrong position:
 
 ```ts
 check(dictionary, "北京市", "běi shì").syllables.map((one) => one.verdict);
 // ["correct", "missing", "correct"]
 ```
 
-What the alignment leaves unmatched is then paired off within each gap, and that
-is what makes a substitution one mistake instead of two. 银行 typed `yínxíng`
-anchors on `yín`, leaving one expected `háng` against one typed `xíng`. That is
-one wrong syllable, and not a missing one plus an invented one.
+Unmatched syllables within each gap are paired as substitutions. For 银行 typed
+as `yínxíng`, `yín` aligns and `xíng` is one wrong syllable in place of `háng`.
 
 ## Options
 
-Every [conversion option](../options/) is accepted and passed to the conversion
-the answer is read from, plus the two that say what a perfect score requires.
+`check` accepts every [conversion option](../options/), plus `tones` and
+`spacing` to control scoring.
 
 | Option    | Default      | Values                     |
 | --------- | ------------ | -------------------------- |
 | `tones`   | `"optional"` | `"optional"`, `"required"` |
 | `spacing` | `"optional"` | `"optional"`, `"required"` |
 
-`readings` is the one worth knowing about here. No rule settles every polyphone,
-but an exercise knows which sense its own sentence uses, where the decoder can
-only weigh the evidence:
+Use `readings` when the exercise requires a particular pronunciation:
 
 ```ts
 check(dictionary, "这篇文章不太长。", "zhè piān wénzhāng bú tài cháng", {
@@ -301,32 +281,32 @@ $ pinyinjs check 银行 "yín háng" --require-spacing
   行     háng    háng    correct   split
 ```
 
-The heading is the text, the answer as the conversion writes it, and the score.
-Then one line per syllable, holding the characters, what was expected, what was
-typed, the verdict, and the spacing where it went wrong.
+The CLI prints the text, expected reading and score, followed by each syllable
+with its source characters, expected reading, typed text and verdict. Spacing
+mistakes appear beside the affected syllables.
 
-Everything after the first argument is joined back up, so unquoted pinyin works
-(`pinyinjs check 北京市 běijīng shì`). A piped file is one pair per line,
-separated by a tab, since both halves can have spaces in them:
+The first argument is Chinese text. Remaining arguments are joined as the typed
+pinyin, so `pinyinjs check 北京市 běijīng shì` works without quoting the pinyin.
+For standard input, provide one tab-separated pair per line:
 
 ```console
 $ printf '银行\tyínxíng\n北京\tbei3jing3\n' | pinyinjs check
 ```
 
-`--require-tones` and `--require-spacing` are the two flags of its own. Every
-conversion flag works too, so `--locale zh-TW` grades against 國語. `--json`
-carries every field, `at` and `source` included.
+Use `--require-tones` and `--require-spacing` to include them in the score.
+Conversion flags also apply. For example, `--locale zh-TW` checks 國語 readings.
+`--json` includes every result field, including `at` and `source`.
 
-## Cost
+<a id="cost"></a>
 
-Three conversions of the text, and each one answers a different question. The
-first is the answer, with the [confidence](../confidence/) report that says
-where the decoder was guessing. The second is the opposite corner of the sandhi
-square, and it is what gives every syllable both of its tonal forms. 一 and 不
-sandhi applies to syllables in the first and fourth tones and third-tone sandhi
-only to syllables in the third. The two passes never touch the same syllable,
-and two corners are enough for all four. The third is the other spacing
-convention, and that is where a boundary's tolerance comes from.
+## Conversion cost
+
+Each check performs three conversions. The first supplies the expected reading
+and its [confidence report](../confidence/). The second reverses both sandhi
+settings to obtain the alternative tone forms. These two conversions cover all
+four sandhi combinations because 一/不 sandhi and third-tone sandhi affect
+different syllables. The third conversion supplies the alternative word
+spacing.
 
 <!-- card
 ```ts

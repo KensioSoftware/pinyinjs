@@ -1,8 +1,6 @@
 # Dictionaries
 
-A dictionary is the compiled word list conversion runs against. It is a
-fetchable file, so loading one is asynchronous. Keeping it out of the module
-graph keeps 10 MB of data out of your bundle.
+A dictionary supplies the word readings used for Chinese-to-pinyin conversion. Its data is loaded asynchronously from files, separately from the JavaScript bundle.
 
 ```ts
 import { convert, loadDictionary } from "@kensio/pinyinjs";
@@ -12,18 +10,13 @@ const dictionary = await loadDictionary(fileSource("./data"), "full");
 convert(dictionary, "银行"); // "yínháng"
 ```
 
-Load it once and keep it. It is immutable, safe to share across requests, and
-decodes individual entries lazily. Building a second one repeats the work for no
-gain.
+Load a dictionary once and reuse it. Dictionaries are immutable and safe to share across requests. Individual entries are decoded on first access.
 
 ## Sources
 
-`loadDictionary(source, tier)` takes a `DictionarySource`, anything that can
-fetch the artifacts by name. Two are provided.
+`loadDictionary(source, tier)` accepts a `DictionarySource` that retrieves dictionary files by name. PinyinJS provides sources for disk and HTTP access.
 
-**`fileSource(directory)`** reads from disk, and is the Node one. It lives at
-`@kensio/pinyinjs/node`, away from the package root, so the browser path can
-never reach a Node built-in:
+`fileSource(directory)` reads from disk in Node.js. Import it from `@kensio/pinyinjs/node`:
 
 ```ts
 import { fileSource } from "@kensio/pinyinjs/node";
@@ -31,8 +24,7 @@ import { fileSource } from "@kensio/pinyinjs/node";
 const source = fileSource("node_modules/@kensio/pinyinjs/data");
 ```
 
-**`fetchSource(baseUrl)`** fetches over HTTP, and is exported from the package
-root:
+`fetchSource(baseUrl)` loads files over HTTP. Import it from `@kensio/pinyinjs`:
 
 ```ts
 import { fetchSource, loadDictionary } from "@kensio/pinyinjs";
@@ -40,10 +32,7 @@ import { fetchSource, loadDictionary } from "@kensio/pinyinjs";
 const dictionary = await loadDictionary(fetchSource("/data"), "standard");
 ```
 
-Serve the package's `data/` directory at that URL and leave the artifacts
-uncompressed, letting HTTP `Content-Encoding: br` do the compressing.
-`DecompressionStream` has no brotli. The transfer encoding is the only route to
-a brotli-compressed artifact in a browser.
+Serve the package's `data/` directory at that URL. The server can apply Brotli compression with `Content-Encoding: br`. The browser decompresses the response before PinyinJS reads it.
 
 ## Tiers
 
@@ -53,12 +42,9 @@ a brotli-compressed artifact in a browser.
 | `standard` |  66,970 |            377 KB | the most common words  |
 | `full`     | 461,555 |          2,378 KB | every word             |
 
-`full` is the default, and is what a server should use. 2.4 MB costs a server
-little, and the extra words are exactly what stops a rare name being read
-character by character.
+`full` is the default tier and provides the most complete word coverage. It is a suitable default for servers and applications that need uncommon names or vocabulary.
 
-In a browser the tiers are nested. You can start converting before the whole
-thing has arrived:
+The tiers are nested. In a browser, you can start with a smaller tier and replace it after a larger tier loads:
 
 ```ts
 let dictionary = await loadDictionary(fetchSource("/data"), "standard");
@@ -68,9 +54,7 @@ dictionary = await loadDictionary(fetchSource("/data"), "full");
 render(convert(dictionary, text)); // same text, better readings
 ```
 
-`core` is single characters only. Word-based disambiguation is out of reach,
-everything falls back on character priors, and both the readings and the spacing
-suffer:
+`core` contains single characters only. It cannot use dictionary words to resolve ambiguous readings or word boundaries:
 
 ```ts
 // core
@@ -82,15 +66,13 @@ convert(dictionary, "银行"); // "yínháng"
 convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 ```
 
-It is for the case where 70 KB is the budget and any pinyin beats none.
+Use `core` when download size is the main constraint and character-level readings are sufficient.
 
-The entry counts above are dictionary entries. `dictionary.size` counts keys, a
-larger number, because 繁體 spellings are keys in their own right. That is
-16,976 for `core`, 97,998 for `standard`, and 723,147 for `full`.
+The table counts dictionary entries. `dictionary.size` counts searchable keys, including separate traditional spellings. The key counts are 16,976 for `core`, 97,998 for `standard` and 723,147 for `full`.
 
 ## Querying directly
 
-The dictionary answers questions on its own, and `convert` is only one caller.
+You can query a dictionary directly without converting text:
 
 ```ts
 const entry = dictionary.lookup("头发");
@@ -106,10 +88,7 @@ dictionary.frequencyOf("头发"); // 9, how common it is, 0 rarest to 15
 dictionary.size; // 723147, keys in the full tier, not entries
 ```
 
-Both scripts are keys in the same dictionary. A 繁體 word is found directly,
-with no conversion step before the lookup. See
-[scripts and locales](../scripts-and-locales/) for why that matters more than it
-sounds like it should.
+Both simplified and traditional spellings are searchable keys. Traditional words are looked up directly. See [scripts and locales](../scripts-and-locales/) for script handling and regional readings.
 
 ### WordEntry
 
@@ -122,14 +101,9 @@ sounds like it should.
 | `isProperNoun`  | `boolean`     | drives capitalisation                                             |
 | `cost`          | `number`      | decoding cost, quantised from corpus frequency; lower is likelier |
 
-`lookup` returns `undefined` for a word the dictionary lacks. `partOfSpeech` is
-empty far more often than you might expect. Only the jieba-sourced third of the
-dictionary carries a tag at all, and a 繁體 character takes the tag of the 简体
-character it pairs with, since jieba counted one script and not the other. See
-[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
+`lookup` returns `undefined` when a word is absent. `partOfSpeech` may be empty because only jieba-sourced entries have tags. Traditional characters inherit the tags of their paired simplified forms. See [shared tags and counts](../scripts-and-locales/#tags-frequency-and-names).
 
-`readingsOf(character)` returns every reading the dictionary knows for a single
-character, likeliest first, as reading arrays:
+`readingsOf(character)` returns a single character's known readings in preference order:
 
 ```ts
 import { writeSyllable } from "@kensio/pinyinjs";
@@ -142,15 +116,11 @@ dictionary
 // ["xíng", "háng", "héng", "hàng"]
 ```
 
-`hasPrefix` is what makes the lattice cheap to build, since "does any word start
-here?" is the question that decides whether to keep walking, and it is answered
-by the same binary search as a lookup, with no second index beside it.
+`hasPrefix` checks whether any dictionary key begins with the supplied text. It uses the same sorted index as `lookup`.
 
 ### By position
 
-The keys are sorted and numbered, and three methods take that number rather than
-a word. They are the seam a second index over the same dictionary is built
-through, and [candidates](../candidates/) derives one from them:
+Dictionary keys have positions in a sorted list. These methods access entries by position and support derived indexes such as [candidates](../candidates/):
 
 ```ts
 dictionary.wordAt(0); // the first key in code-unit order
@@ -158,17 +128,11 @@ dictionary.frequencyAt(0); // its frequency bucket, 0 rarest to 15
 dictionary.readingsInOrder().readingAt(0); // "yin2 hang2", at the string level
 ```
 
-`readingsInOrder` hands back a cursor, because the array it would replace is 39
-MB on the full tier. The cursor holds the character defaults that a derived
-reading is assembled from (83.25% of the full tier's keys store no reading of
-their own). Build what needs it, use it, and let it go. No `Syllable` is
-constructed anywhere along that path, and that is what makes a pass over every
-key affordable.
+`readingsInOrder` returns a cursor over reading strings. It derives missing word readings from character defaults without constructing `Syllable` objects. Consume the cursor while building an index, then release it. Keeping all readings in an array measured about 39 MB on `full`.
 
 ## Ranking words by frequency
 
-`frequencyOf` reads a word's bucket off the search `lookup` already runs.
-Ordering a word list by how common each word is costs one lookup a word:
+`frequencyOf` returns a word's frequency bucket. Use it to rank words with one lookup per word:
 
 ```ts
 dictionary.frequencyOf("银行"); // 10
@@ -176,21 +140,11 @@ dictionary.frequencyOf("殿下"); // 7
 dictionary.frequencyOf("蛋糕店铺子"); // undefined, no such key
 ```
 
-A word the dictionary lacks reports `undefined`, the way `lookup` does. Bucket 0
-says something else. The word is a key the corpus never counted, which two
-thirds of the full tier's keys are. `frequencyAt` answers the same question by
-position, for a caller already sweeping the keys.
+`undefined` means the word is absent. Bucket 0 means the word is present but has no corpus count. About two thirds of `full` keys fall into that bucket. `frequencyAt` returns the same information by key position.
 
-`cost`, `frequencyAt` and `frequencyOf` are quantised to 16 buckets, which is
-all the decoder ever acts on when it weighs one candidate word against another.
-Ranking a word list against itself wants more than that. Rank the 120,858
-CC-CEDICT headwords the full tier holds by `cost` and 5,934 of them land on the
-value at rank 10,000, so a top-10,000 cut of that list is settled inside a band
-the buckets put in one place.
+`cost`, `frequencyAt` and `frequencyOf` use sixteen frequency buckets. Many words therefore have equal values. In a ranking of 120,858 CC-CEDICT headwords, the bucket containing rank 10,000 held 5,934 words.
 
-`full.counts` holds the corpus count each of those buckets was quantised from,
-one per key of the full tier and in the same positions. It is a file of its own
-(243 KB brotli), read by `loadWordCounts` and by nothing on the conversion path:
+For finer ranking, load `full.counts` with `loadWordCounts`. It contains one corpus count per key in the `full` tier and adds about 243 KB compressed with Brotli. Normal conversion does not load this file:
 
 ```ts
 import { loadDictionary, loadWordCounts } from "@kensio/pinyinjs";
@@ -210,48 +164,27 @@ words.toSorted(
 );
 ```
 
-The sweep is what pairs the two. Counts are positional, and `wordAt` is what
-turns a position into a word. Made this way, the cut at 10,000 lands in a tie 16
-words wide.
+Pair each count with `wordAt` at the same position. In the example ranking, raw counts reduced the tie at rank 10,000 to 16 words.
 
-Counts exist for `full` alone. A ranking over part of the vocabulary answers a
-different question, and a caller ranking words has the whole list in hand. Check
-`counts.size` against `dictionary.size` before pairing them, since a smaller
-tier numbers its keys differently and every position would name another word.
+Counts are available only for `full`. Check `counts.size` against `dictionary.size` before pairing them. Positions in smaller tiers refer to different keys.
 
-A count of zero means the corpus is silent about that key, which two thirds of
-the full tier's keys are. A 繁體 character carries the count of the 简体
-character it pairs with, since the corpus was written in one script and the two
-are the same character. 時 reads 103,735 because 时 does. See
-[the tags and the counts are thinner too](../scripts-and-locales/#the-tags-and-the-counts-are-thinner-too-and-both-are-carried-across).
+A zero count means the source corpus has no count for that key. Traditional characters inherit counts from their paired simplified forms. For example, 時 has the same count of 103,735 as 时. See [shared tags and counts](../scripts-and-locales/#tags-frequency-and-names).
 
-`frequencyAt` and `full.counts` disagree over one class of key. A proper noun
-the corpus never counted is bucketed as though jieba had counted it 3, the
-default jieba itself gives a word it lists and cannot count. A name is missing
-from that list far more often than it is rare, and 脸书 counted 0 used to cost
-the decoder more than 脸 and 书 together. It is counted 0 and bucketed 2, and
-10,676 of the full tier's keys are in the same position. Rank on the counts
-where the question is how often a word is met, and on the buckets where it is
-what the decoder will do with it.
+Raw counts and frequency buckets differ for uncounted proper nouns. Their raw count stays zero, but the decoder assigns a frequency bucket corresponding to a count of 3. This keeps missing counts from making names unnecessarily expensive to decode. The measured `full` tier has 10,676 such keys. Use raw counts for frequency ranking and buckets to inspect decoder scoring.
 
-jieba supplies the counts, and jieba is a segmenter.
-Its weights are tuned to make segmentation come out right, and how often a
-reader meets a word is a separate measurement (a corpus list such as SUBTLEX-CH
-or BCC would be one). These counts rank common vocabulary well and say very
-little about the long tail.
+Counts come from jieba and were collected for segmentation. They help rank common vocabulary but provide limited evidence about rare words. They are not a dedicated measure of how often readers encounter each word.
 
-## What it costs in memory
+<a id="what-it-costs-in-memory"></a>
 
-The index is a sorted, newline-joined string plus a `Uint32Array` of offsets,
-searched by binary search. On the full 412k word list that is about 2.8 MB of
-heap and builds in around 14 ms, against 22.6 MB for a `Map` with a prefix
-`Set` beside it.
+## Memory usage
 
-Entries are decoded the first time a word is asked about, not on load, because
-decoding all 723,147 would cost far more than the lookups a page actually
-performs.
+The lookup index stores sorted keys in a newline-separated string with a `Uint32Array` of offsets. On a measured 412,000-word list, it used about 2.8 MB of heap and took around 14 ms to build. The equivalent `Map` and prefix `Set` used 22.6 MB.
 
-## Checking what got loaded
+Word entries are decoded on first access. Loading the dictionary does not decode every entry.
+
+<a id="checking-what-got-loaded"></a>
+
+## Inspecting a loaded dictionary
 
 ```console
 $ pinyinjs info
@@ -270,14 +203,9 @@ syllables  415 attested, 424 spellings in the inventory
 | [phrase-pinyin-data](https://github.com/mozillazg/phrase-pinyin-data) | the bulk of the word readings                         | MIT          |
 | [jieba](https://github.com/fxsjy/jieba)                               | word frequencies and part-of-speech tags              | MIT          |
 
-The compiled dictionaries are committed to the repository, so what ships is
-exactly what was tested. Because CC-CEDICT is CC BY-SA 4.0, the artifacts in
-`data/` are share-alike even though the code is Apache-2.0.
+Compiled dictionaries are committed and tested with the library. The code uses Apache-2.0, and the data artifacts use CC BY-SA 4.0 because they include CC-CEDICT data.
 
-The build fails where it could warn. No artifact is written unless 儿化 is
-repaired both ways, 一 and 不 sandhi is normalised out of the stored readings,
-every syllable is one the inventory knows, and every tier reads back exactly as
-it was built.
+The dictionary build validates erhua readings, removes applied sandhi from stored 一 and 不, checks the syllable inventory, and verifies that every tier can be read back correctly. A failed validation stops the build.
 
 <!-- card
 ```ts

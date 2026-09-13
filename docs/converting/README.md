@@ -1,8 +1,6 @@
 # Converting
 
-`convert` takes a dictionary and some text and returns pinyin. Everything else
-in the package is either something it uses on the way or a different view of
-the same answer.
+`convert` takes a loaded dictionary and Chinese text and returns a pinyin string.
 
 ```ts
 convert(dictionary, "银行"); // "yínháng"
@@ -11,27 +9,115 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 convert(dictionary, "3D银行"); // "sān D yínháng", the digit is read, the letter is not
 ```
 
-The signature is `convert(dictionary, text, options?)`. Options are documented
-in full in [options](../options/). This page is about what happens between the
-two arguments and the string that comes back.
+Call `convert(dictionary, text, options?)`. The third argument controls formatting and reading selection. See [options](../options/) for the full reference.
 
-## Why the word is the unit
+<a id="readings-you-assert-yourself"></a>
 
-行 has four readings, `xíng`, `háng`, `héng` and `hàng`, and the character on
-its own gives no way to choose between them. 银行 is `yínháng` and 行长 is
-`hángzhǎng`. A per-character table cannot get both right, and picking the
-commonest reading gets one of them wrong every time.
+## Custom readings
 
-So the unit is the word, and the words have to be found in the text before
-anything can be read. That is segmentation, and it is ambiguous in its own
-right. 南京市长江大桥 is 南京市 / 长江 / 大桥 or 南京 / 市长 / 江大桥, and the
-two disagree about whether 长 is `cháng` or `zhǎng`.
+Use the `readings` option when your application knows the intended pronunciation. This is useful for ambiguous text, names or domain-specific vocabulary:
 
-## What the decoder does
+```ts
+convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
+```
 
-Every dictionary match at every position goes into a lattice, a graph where
-each edge is a word and carries the reading that word has. Converting is then
-choosing a path.
+For reusable word corrections, pass an object mapping text to pinyin:
+
+```ts
+const CORRECTIONS = { 太长: "tài cháng", 长头发: "cháng tóufa" };
+convert(dictionary, text, { locale: "zh-CN", readings: CORRECTIONS });
+```
+
+A word hint applies to the exact text it names. It leaves longer dictionary words containing that text unchanged:
+
+```ts
+convert(dictionary, "校长", { readings: { 长: "cháng" } }); // "xiàozhǎng"
+```
+
+To override a longer word, include the whole word in the hint. Its word boundary is preserved:
+
+```ts
+convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }); // "yínxíng"
+```
+
+A positional hint overrides one character, including its reading inside a longer word. Positions count Unicode code points from the start of the original input, including non-Han text. Each positional hint supplies one syllable:
+
+```ts
+convert(dictionary, "头发越长越漂亮", {
+  readings: [{ at: 3, reading: "cháng" }],
+});
+convert(dictionary, "校长", { readings: [{ at: 1, reading: "cháng" }] }); // "xiàocháng"
+```
+
+The list form accepts both word and positional hints. An unmarked syllable means neutral tone, so `{ 的: "de" }` specifies the particle. Hints change readings without changing word spacing. Invalid pinyin in a hint throws an error.
+
+## Non-Han text
+
+Latin letters and other non-Han text are preserved, subject to the number and punctuation settings below.
+
+```ts
+convert(dictionary, "3D银行"); // "sān D yínháng"
+convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
+convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
+```
+
+Numbers are expanded before surrounding Chinese text is decoded. Their spoken form provides context for word boundaries and reading rules. For example, `2个人` is decoded with the context of 两个人 and becomes `liǎng gè rén`.
+
+Context is available on both sides of the number. In 那条河长300公里, the measurement can therefore select the adjectival reading of 长.
+
+```ts
+convert(dictionary, "那条河长300公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
+convert(dictionary, "那条河长三百公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
+```
+
+Lookahead extends up to four characters after the number.
+
+The following characters determine how a number is read. For example, 1998年 spells out the digits, while 3个 reads a quantity. See [numbers](../numerals/) for the rules and limitations. Set `numbers: "keep"` to preserve the original digits.
+
+When a number is spoken, adjacent Latin text is spaced accordingly. This gives `3D银行` an extra space that is absent under `numbers: "keep"`.
+
+By default, `。，、；：？！` become their Latin equivalents. See [punctuation](../orthography/#punctuation) for the settings.
+
+## Spacing, capitals and apostrophes
+
+`convert` applies word spacing, capitalisation and apostrophes after selecting readings. Apostrophes mark potentially ambiguous syllable boundaries.
+
+```ts
+convert(dictionary, "他看了"); // "tā kànle"
+convert(dictionary, "南京市"); // "Nánjīng Shì"
+convert(dictionary, "天安门"); // "Tiān'ānmén"
+```
+
+See [orthography](../orthography/) for the spelling rules and known limitations.
+
+<a id="getting-more-than-a-string-back"></a>
+
+## Structured output
+
+| You want                               | Use                                                   |
+| -------------------------------------- | ----------------------------------------------------- |
+| the pinyin                             | `convert`                                             |
+| one piece at a time, with confidence   | `convertPieces`, [confidence](../confidence/)         |
+| marked-up HTML                         | `convertToHtml`, [HTML output](../html/)              |
+| what the dictionary holds for one word | `dictionary.lookup`, [dictionaries](../dictionaries/) |
+
+`convertPieces` returns individual syllables with confidence information. You can render them with `toHtml` or combine them with `joinPieces`. `convertToHtml` is equivalent to `toHtml(convertPieces(…))`, and `joinPieces(convertPieces(…))` produces the same text as `convert`.
+
+`convert` avoids calculating alternative-reading costs. Use it for a string result. Use `convertPieces` when you need per-syllable data or confidence information. Calculating alternatives takes about 1.5 times the work of a plain conversion.
+
+<a id="why-the-word-is-the-unit"></a>
+
+## Word context
+
+Characters can have several readings. 行 has `xíng`, `háng`, `héng` and `hàng`. The surrounding word determines the appropriate reading. For example, 银行 is `yínháng` and 行长 is `hángzhǎng`.
+
+Selecting readings also requires finding word boundaries. 南京市长江大桥 can be split as 南京市 / 长江 / 大桥 or 南京 / 市长 / 江大桥. The two splits give 长 different readings (`cháng` and `zhǎng`).
+
+<a id="what-the-decoder-does"></a>
+
+## How the decoder selects readings
+
+The decoder builds a lattice, a graph containing every dictionary word that matches at each position. Each edge represents a word and its reading. A path through the graph represents one way to segment and read the text.
 
 ```
 input
@@ -44,30 +130,17 @@ input
   └─ formatting           diacritics, digits, superscripts or HTML
 ```
 
-Two things about this are worth knowing as a user.
+A position is locked when every candidate path gives it the same reading. About two thirds of positions in running text are locked. The decoder searches for the lowest-cost path through the remaining stretches, which are typically two to six characters long.
 
-**Most positions never get scored.** After the lattice is built, the decoder
-asks at each position how many distinct readings survive across every path
-through it. Where the answer is one, the position is _locked_ and no amount of
-scoring can move it. That is about two thirds of positions in running text. Only
-the short stretches between locked positions get a shortest-path decode, and
-they are typically two to six characters long.
+Different word boundaries can produce the same reading. For example, 研究生 / 命 and 研究 / 生命 give the same syllables but different spacing. Reading accuracy and word spacing are therefore separate concerns.
 
-**Segmentation ambiguity that never crosses a polyphone cannot produce a wrong
-reading.** 研究生命起源 splits as 研究生 / 命 or 研究 / 生命 and reads the same
-either way. It does change the spacing, and that is why segmentation still
-matters, but a spacing mistake is ugly and readable where a reading mistake is
-simply wrong. The two are held to different bars on purpose.
+Use [confidence](../confidence/) information to identify positions where the decoder chose among alternative readings.
 
-The consequence you can see from outside is that the decoder knows when it was
-choosing, and will tell you. See [confidence](../confidence/).
+<a id="rules-where-the-cost-model-cannot-reach"></a>
 
-## Rules, where the cost model cannot reach
+## Context rules
 
-Some readings are settled by context rather than by evidence about the
-characters, and no amount of frequency data reaches them. Those are handled by
-typed rules that run over the lattice, after it is built and before anything is
-decoded, and that may only take candidates away, never invent one.
+Context rules remove incompatible readings before the decoder scores the graph. They use surrounding words and grammatical patterns. A rule can remove a dictionary candidate but cannot introduce a new reading.
 
 ```ts
 convert(dictionary, "我得走了"); // "wǒ děi zǒule", modal
@@ -75,13 +148,13 @@ convert(dictionary, "他跑得很快"); // "tā pǎo de hěn kuài", particle
 convert(dictionary, "他得到了"); // "tā dédàole", the word decides
 ```
 
-得 is one character with three readings. The dictionary can only carry a
-default, and the default is the particle `de`, so every modal 得 read as one
-until this. What separates them is entirely contextual. The particle attaches to
-the verb or adjective in front of it, so a 得 with a pronoun, adverb or time
-word before it and a verb phrase after it is something else.
+### 得 as a modal verb
 
-The second is 教, `jiào` in the dictionary and `jiāo` when it teaches:
+得 has three readings. Its default is the neutral-tone particle `de`. The rule selects a modal reading when 得 follows a pronoun, adverb or time word and precedes a verb phrase. A particle 得 normally attaches to the preceding verb or adjective.
+
+### 教 as a verb
+
+The rule selects `jiāo` when 教 means to teach. Its default character reading is `jiào`:
 
 ```ts
 convert(dictionary, "他在北京大学教了三年书。"); // "Tā zài Běijīng Dàxué jiāole sān nián shū."
@@ -89,41 +162,29 @@ convert(dictionary, "我教英语"); // "wǒ jiāo Yīngyǔ"
 convert(dictionary, "教育"); // "jiàoyù", and 宗教 is `zōngjiào`
 ```
 
-The compounds carry their own reading and are right already. What is left is the
-教 standing as a word of its own, and that one is the verb. The object is what
-says so, whether a pronoun, a noun or a name after it, or an aspect particle,
-since only a verb takes 了, 过 or 得. A modal or a negator in front of it says
-the same thing from the other side, and reaches the 教 that governs nothing at
-all:
+Dictionary compounds keep their own readings. For standalone 教, a following pronoun, noun, name or aspect particle supports the verb reading. A preceding modal or negator can also select it when there is no object:
 
 ```ts
 convert(dictionary, "他怎么教，我都学不会。"); // "Tā zěnme jiāo, wǒ dōu xué búhuì."
 convert(dictionary, "这在学校是不教的"); // "zhè zài xuéxiào shì bù jiāo de"
 ```
 
-Over 88,866 lines 181 教 decode as a word of their own and every one read
-`jiào`. This moves 162 and is wrong on three, where a nominal compound takes an
-object's shape, in 统一教创始人, 方法教深思 and 做到了教政分离. 有 is left out
-of the modal set, since 有教无类 is `yǒujiào wúlèi`.
+In 88,866 lines, the rule changed 162 of 181 standalone 教 readings, with three incorrect changes. The exceptions were nominal compounds that resembled verbs with objects. 有 is excluded from the modal set to preserve 有教无类 (`yǒujiào wúlèi`).
 
-The third rule keeps 儿 from standing on its own where the dictionary says it
-should not:
+### Dictionary-supported erhua
+
+The rule joins 儿 to the preceding syllable when their dictionary entry specifies an r-suffix:
 
 ```ts
 convert(dictionary, "那边儿"); // "nà biānr", not "nàbian ér"
 convert(dictionary, "女儿"); // "nǚ'ér", a syllable of its own, and stays one
 ```
 
-儿化 is a per-word dictionary fact, and 2,009 of the 2,067 words ending in 儿
-carry it, but the list has 这边儿, 上边儿 and 旁边儿 without 那边儿. Where the
-character in front of a 儿 makes an attested 儿化 word, the reading that leaves
-儿 stranded as `ér` is taken off the lattice. That asserts no new fact, since
-边儿 is `biānr` because the dictionary says so. The spacing still falls short of
-what GB/T 16159 wants, since 那边儿 is one word and this writes two, because the
-word it would need is precisely the one missing.
+The dictionary marks 2,009 of 2,067 words ending in 儿 as erhua. A recognised ending such as 边儿 can supply the suffix even when the complete word, such as 那边儿, is missing. This fixes the reading but may leave an extra word boundary because the complete word has no entry.
 
-The fourth keeps a 量词 out of the word behind it where a number is counting
-with it:
+### Counted measure words
+
+A measure word (量词) following a number is kept separate from the next word:
 
 ```ts
 convert(dictionary, "三个人"); // "sān gè rén", three people
@@ -131,22 +192,13 @@ convert(dictionary, "个人"); // "gèrén", the word, with nothing counting
 convert(dictionary, "五分钟"); // "wǔ fēnzhōng", untouched
 ```
 
-个人 is a common noun, so 三个人 read as three _personals_, with no weight on
-the 个 belonging to the 三 in front of it. What makes it decidable is the
-dictionary's own tagging. 个, 次, 天 and 杯 are 量词, and the characters that
-merely look like one here carry other tags (分 is a verb, 部 and 成 are nouns,
-年 and 点 are numerals), so 五分钟, 三部分, 五成分 and 五年级 are left alone,
-and those are exactly the words a rule firing on every character after a number
-would break. An ordinal counts nothing, so 第三集团军 is left alone too, and a
-numeral inside a longer word counts nothing either. The 一 of 唯一道路 belongs
-to 唯一.
+For example, 三个人 contains 三 + 个 + 人. The rule prevents the noun 个人 from absorbing the measure word 个. It uses dictionary tags for 个, 次, 天 and 杯. Other tags protect words such as 五分钟, 三部分, 五成分 and 五年级. Ordinals such as 第三集团军 and numerals inside words such as 唯一道路 are excluded.
 
-Over 88,866 lines it forbids 561 edges and moves 53 decodes, of which three are
-wrong. Those are 一批评, 这一名词 and 六七股灾, where the 一 and the 六七 count
-nothing and no tag says so. One reading changes in the whole corpus, and it is a
-fix, since 下了两天雨 read 天雨 as `tiān yù`.
+In 88,866 lines, this changed 53 conversions, with three incorrect changes where a numeral-like prefix was not counting. It corrected one pronunciation, the 天 in 下了两天雨.
 
-The fifth reads 长 as `cháng` where an adverb of degree measures it:
+### 长 as an adjective
+
+The rule selects `cháng` when context indicates length, including a preceding degree adverb:
 
 ```ts
 convert(dictionary, "这篇文章不太长。"); // "Zhè piān wénzhāng bú tài cháng."
@@ -155,23 +207,11 @@ convert(dictionary, "她长得很漂亮"); // "tā zhǎng de hěn piàoliang", g
 convert(dictionary, "校长"); // "xiàozhǎng", through the word
 ```
 
-长 is stored `zhǎng` with `cháng` as an alternate, and that is what the sources
-say about the character alone (Unihan counts `zhǎng(1879)` against
-`cháng(1179)`). The default earns its place, since 署长, 团长, 公安局长 and
-总会长 all reach a bare 长 at the end of a title and read it correctly. The gap
-was the adjective, which no word covers and no part of the cost model could
-prefer.
+The default character reading is `zhǎng`. This is appropriate for titles such as 署长 and 团长. The rule supplies `cháng` for standalone adjectival uses that lack a dictionary word.
 
-A degree adverb settles it from the left alone, as with 得. A growing 长 is a
-verb and no 很, 太, 最 or 多 modifies one, whereas what follows an adjectival 长
-is a noun, a particle or the end of the sentence, and that is what follows half
-the verbs too. 得, 着 and the 越…越 correlative are guarded, since 真长得很快 and
-越长越高 are reachable from both sides. 了 and 的 need no guard, because after an
-adverb they are the sentence particle and the attributive, which makes 时间太长了
-and 很长的道路 both `cháng`.
+Adverbs such as 很, 太, 最 and 多 indicate an adjective. The rule excludes ambiguous patterns involving 得, 着 and 越…越, including 真长得很快 and 越长越高. Sentence-final 了 and attributive 的 remain eligible, as in 时间太长了 and 很长的道路.
 
-Two more read the far side alone. A quality can be compared, intensified and
-conjoined where a growing cannot, and a length can be given in metres:
+Following comparisons, intensifiers, conjunctions and measurements can also indicate length:
 
 ```ts
 convert(dictionary, "长一点"); // "cháng yìdiǎn"
@@ -181,11 +221,9 @@ convert(dictionary, "那条河长三百公里"); // "nà tiáo hé cháng sānb�
 convert(dictionary, "那条河长300公里"); // "nà tiáo hé cháng sānbǎi gōnglǐ"
 ```
 
-Only a distance or a stretch of time counts as a measurement, and the corpus is
-why: a numeral after a 长 is more often counting something else, as in
-学校现有通榆和新长两个校区 and 竞争马华总会长一职, and both of those are `zhǎng`.
+Measurements must express distance or duration. A number alone is insufficient because it may count something else, as in 新长两个校区 or 总会长一职.
 
-Two more need both sides:
+Some patterns require context on both sides:
 
 ```ts
 convert(dictionary, "那座桥不长。"); // "Nà zuò qiáo bù cháng."
@@ -196,51 +234,28 @@ convert(dictionary, "我看见一个长头发的女生"); // "wǒ kànjiàn yí 
 convert(dictionary, "这是我第一次长胡子"); // "zhè shì wǒ dìyīcì zhǎng húzi"
 ```
 
-A 量词 in front is asked of every word ending there rather than the longest,
-since 一个 is tagged a numeral and the 量词 is the 个 inside it. An ordinal is
-excluded, because 第一次 is when the growing happened rather than what is being
-counted.
+A preceding measure word can be part of a longer dictionary entry. For example, the rule finds 个 inside 一个. Ordinals are excluded because they can describe when an action happened.
 
-不 and 还 scope a verb as readily as a quality, so neither is a degree adverb,
-and a noun after a 长 is 长知识 as readily as 长头发. What separates the pairs is
-the far side. A growing 长 governs something and an adjectival one has nothing
-left to say, so a scoped 长 that closes its clause is the adjective; and a 量词
-or 有 in front of a 长 leaves it nothing to be the verb of, since the subject is
-already spoken for.
+不 and 还 can modify either an adjective or a verb. The rule also checks whether 长 ends the clause. A preceding measure word or 有 can help distinguish an adjective from a verb with an object.
 
-Over 88,866 lines, 379 长 and 長 decode as a word of their own and this moves
-125 to `cháng`. On CPP's 40 hand-labelled 长 the character goes 85.00% to
-92.50%.
+In 88,866 lines, the rule changed 125 of 379 standalone 长 or 長 readings to `cháng`. Accuracy on 40 hand-labelled 长 examples increased from 85.00% to 92.50%.
 
-A verb in front is **not** one of the contexts, though 他留长头发 wears long hair
-where 他长头发 grows it. jieba tags 树 a verb and 习惯 a noun, so no tag names the
-set, and taking every verb read 树长叶子 and 教育长邓演达 as adjectives.
+A preceding verb alone does not trigger the rule. Dictionary tags cannot reliably distinguish 他留长头发 (wearing long hair) from 他长头发 (growing hair).
 
-The same rule pushes the other way on 越长越X, where growing is what the
-correlative is about:
+For some 越长越X patterns, the rule instead favours `zhǎng`:
 
 ```ts
 convert(dictionary, "他越长越高"); // "tā yuè zhǎng yuè gāo"
 convert(dictionary, "时间越长越好"); // "shíjiān yuè cháng yuè hǎo"
 ```
 
-越长 is a key read `yuè cháng`, and the only one of its shape. 越大, 越高, 越好
-and 越快 are all absent, so 越高越好 decodes as two words while 越长越高 reaches
-for a word no other member of the paradigm has. It carries no part of speech,
-and that is how a reading somebody asserted is held rather than a word anybody
-counted, and it comes from one source. Where the far half of the correlative
-names something growing produces (高, 大, 胖, 壮, 结实) that edge is dropped and
-the character's own `zhǎng` stands.
+The dictionary contains 越长 with the reading `yuè cháng`. When the second half describes growth, such as 高, 大, 胖, 壮 or 结实, the rule removes that compound reading and allows the character reading `zhǎng`.
 
-This one is a heuristic and is labelled as such. 越长 occurs three times in the
-88,866 lines and all three are 越来越长 or 说的越长, so unlike the rest of the
-page there is no corpus behind the shape. It is deliberately a `forbid` rather
-than a `force`, which leaves `cháng` standing as a rival a single bucket dearer.
-越长越X is genuinely ambiguous, since 孩子越长越漂亮 grows where 头发越长越漂亮
-lengthens, so the decode answers with the likelier reading and still reports
-itself as [guessing](../confidence/). 漂亮 is out of the list for that reason.
+This is a heuristic with limited corpus evidence. It removes one candidate without forcing `zhǎng`, and `cháng` remains an alternative. Ambiguous patterns still report [uncertainty](../confidence/). 漂亮 is excluded because both growing more beautiful and lengthening can fit 越长越漂亮.
 
-The sixth reads 弹 as `tán` where it is playing rather than a projectile:
+### 弹 as a verb
+
+The rule selects `tán` when 弹 means to play an instrument:
 
 ```ts
 convert(dictionary, "他会弹一点儿古筝。"); // "Tā huì tán yìdiǎnr gǔzhēng."
@@ -248,43 +263,17 @@ convert(dictionary, "他钢琴弹得很好"); // "tā gāngqín tán de hěn hǎ
 convert(dictionary, "子弹"); // "zǐdàn", through the word
 ```
 
-弹 is stored `dàn` with `tán` as an alternate, and the sources agree about the
-character alone (Unihan counts `dàn(313)` against `tán(50)`). That is a fact
-about a corpus in which nearly every 弹 is ammunition, and every one of those is
-a word that carries its own reading: 子弹, 炸弹, 导弹, 原子弹 and 手榴弹 were
-right already. What the default was left deciding is the 弹 standing as a word
-of its own, and in running text that one is the verb.
+The default character reading is `dàn`. Dictionary words such as 子弹, 炸弹 and 导弹 already carry that reading. The rule handles standalone verbal uses.
 
-The object is what says so, as it is for 教, whether an instrument, a piece or
-its composer after it, or 了, 过, 着 or 得, since only a verb takes those. That
-object has to be **two characters or more**, the one place this departs from 教.
-弹 joins bound morphemes into nouns far more readily, as in 着弹点, 掷弹兵,
-供弹爪, 底排弹时 and 弹洞, and each of those puts a single tagged character
-where an object would go, whereas what the verb governs is a word. 教 could not
-take the same guard, 教我 and 教你 being its commonest shape. The other side
-needs no guard, because the nominal compounds starting with 弹 are all listed.
-弹匣, 弹坑, 弹壳, 弹片, 弹药, 弹道 and 弹头 reach their reading through the
-word.
+A following object or aspect particle supports `tán`. An object must contain at least two characters to avoid noun compounds such as 着弹点 and 弹洞. This differs from 教, which commonly takes single-character objects such as 我 and 你. Listed noun compounds such as 弹匣 and 弹药 retain their word readings.
 
-The 88,866 lines are the wrong corpus for this rule on their own, holding 38
-bare 弹 of which 31 are somebody playing something, so CPP's 20,147 sentences
-are measured with them as plain text. The benchmark is drawn from military
-articles, where the shapes this can break live. Over the 109,013 lines together,
-60 弹 decode as a word of their own, every one read `dàn`, and 34 of the 60 are
-wrong. This moves 30, of which 29 are right and one is wrong, that one being
-拆弹专家, a compound with an object's shape on both sides. It leaves five.
-开始弹, 四手联弹 and 弹起三次 have no object to see, and
-用那种指法弹不会觉得费力 and 反手持法去弹班卓琴 send the decode to 班 rather
-than 班卓琴. On CPP's 40 hand-labelled 弹 nothing moves, all 40 having been
-right through a word.
+Across 109,013 corpus lines, the rule changed 30 standalone readings. It corrected 29 and misread 拆弹专家. It still misses some verbs without a recognised object, such as 开始弹, 四手联弹 and 弹起三次. The 40 hand-labelled 弹 examples were already correct through dictionary words.
 
-As with 教, forcing the single-character edge falls short on its own, since a
-reading spanning two characters carries its own 弹 in. 我的爱好是开车和弹吉他
-read `dàn` off 和弹, a pair held with no part of speech. A tagged word ending in
-弹 is left alone, and that is every one that matters.
+The rule also removes untagged multi-character candidates that carry the conflicting reading. For example, 和弹 can otherwise supply `dàn` in 我的爱好是开车和弹吉他. Tagged words ending in 弹 remain eligible.
 
-The seventh keeps a word beginning with 的 from starting where the structural
-particle does:
+### Structural 的
+
+The rule prevents an untagged candidate from combining the particle 的 with the start of the following word:
 
 ```ts
 convert(dictionary, "没有人知道他的真名字"); // "méiyǒu rén zhīdào tā de zhēn míngzi"
@@ -292,33 +281,24 @@ convert(dictionary, "我的确知道"); // "wǒ díquè zhīdào", a word jieba 
 convert(dictionary, "我要一辆的士"); // "wǒ yào yí liàng dīshì"
 ```
 
-的 attaches to the modifier in front of it and the head follows, so a key
-spanning that 的 and the head's first character is describing another sentence.
-的真, 的卡, 的筆 and 的這 are all keys, and none of them is a word. Only an
-untagged key is taken off the lattice, which is the same line the 教 rule draws:
-的确, 的士 and 的哥 are words jieba counted, and each of them can genuinely
-begin where this fires.
+Candidates such as 的真, 的卡, 的筆 and 的這 can incorrectly cross a grammatical boundary. Tagged words such as 的确, 的士 and 的哥 are retained.
 
-Over 88,866 lines it forbids edges in 40 runs and every one is a correction.
-Half of them correct the spacing as much as the reading, since 你說的對 was one
-word, `deduì`.
+In 88,866 lines, the rule corrected 40 runs. Some corrections also changed spacing, including the former single-word output `deduì` for 你說的對.
 
-The eighth reads the 得 of a potential complement as the particle:
+### 得 in potential complements
+
+The rule selects neutral-tone 得 between a verb and a potential complement:
 
 ```ts
 convert(dictionary, "他算得上一个作家"); // "tā suàn de shàng yí gè zuòjiā"
 convert(dictionary, "取得上级批准"); // "qǔdé shàngjí pīzhǔn", the word
 ```
 
-算得 is a key jieba counted and the phrase corpus reads `suàn dé`, which is what
-it says standing alone and not what a complement leaves it doing. Both sides are
-needed: a verb before the 得 rules out 只得上山, where the 得 belongs to an adverb,
-and the complement after it has to stand on its own, which rules out 取得上级批准
-where 上 is the front of 上级. 了 and 过 are left out of the complement set
-because both are aspect markers too, and 获得了 and 赢得过 are far commoner than
-吃得了 and 说得过去.
+Both sides are checked. A verb before 得 excludes 只得上山, where 得 belongs to an adverb. The complement must stand alone, which excludes 取得上级批准, where 上 belongs to 上级. Ambiguous 了 and 过 are excluded because they also mark aspect.
 
-The ninth reads 过 toneless where it marks experiential aspect:
+### Experiential 过
+
+The rule selects neutral-tone 过 after a verb when it marks a past experience:
 
 ```ts
 convert(dictionary, "他去过法国。"); // "Tā qùguo Fǎguó."
@@ -326,31 +306,17 @@ convert(dictionary, "我吃过饭了。"); // "Wǒ chīguo fàn le."
 convert(dictionary, "他经过我家"); // "tā jīngguò wǒjiā", the word
 ```
 
-The marker is toneless and the dictionary leads with `guò`, so every 去过, 见过
-and 听说过 came out fourth tone. Aspect attaches to a verb and to nothing else.
-A 过 with a verbal word ending immediately in front of it is the marker. What
-follows says nothing either way, an object, a 了 and the end of the sentence all
-standing behind the marker as readily as behind the verb 过.
+The default reading is `guò`. A verbal word ending immediately before 过 supports its use as an aspect marker, as in 去过, 见过 and 听说过.
 
-Forcing the single-character edge falls short on its own, for the reason the 教
-rule gives. 我从没见过风车 read `guò` off 见过 and 你已經吃過飯了 off 吃過飯. A
-pair carrying no part of speech is taken off the lattice with it. A key of three
-characters is a word in its own right and keeps its 过. That leaves 睡过头,
-过马路 and 反应过度 alone.
+The rule also removes conflicting untagged pairs. Longer dictionary words retain their readings, including 睡过头, 过马路 and 反应过度.
 
-Over 88,866 lines, 1,437 过 and 過 decode as a word of their own and every one of
-them reads `guò`. This moves 1,002 and 29 more that no boundary had split out.
-The condition was sized before the rule was written, and it is right on 939 of
-the 998 it holds for. The 59 misses are a directional or resultative complement
-(他游过了河, 他们转过身), 过 as a verb behind a modal (你要過聖誕節了嗎), 过
-meaning to exceed (期望过高), and one noun.
+The grammatical condition was correct in 939 of 998 examined cases. Known mistakes include directional and resultative complements, such as 他游过了河 and 他们转过身, and verbal uses such as 你要過聖誕節了嗎.
 
-Tightening it was measured and rejected. A written-out set of the verbs that take
-a crossing 过 would carry the rule from 94% right to 96%, at the cost of
-我在这个泳池里游过泳 and of every 跑过马拉松 these 88,866 lines do not happen to
-hold.
+The rule does not exclude all motion verbs. Doing so would miss valid experiential uses such as 游过泳 and 跑过马拉松.
 
-The tenth reads 的 as `dī` only where the taxi word holding it stands:
+### Taxi words containing 的
+
+The rule keeps `dī` in recognised taxi words while excluding those readings from modifier phrases:
 
 ```ts
 convert(dictionary, "打的去旅馆吧。"); // "Dǎdī qù lǚguǎn ba."
@@ -358,35 +324,17 @@ convert(dictionary, "他给谁打的电话？"); // "Tā gěi shéi dǎ de diàn
 convert(dictionary, "我的哥哥们在树下。"); // "Wǒ de gēgemen zài shù xià."
 ```
 
-的士, 的哥, 的姐, 打的, 面的 and 摩的 are the six keys carrying a `dī`, and it is
-the only `dī` the dictionary holds. All six also spell a modifier, a particle 的
-and a head, much the commoner reading of the same characters, and the decode had
-it both ways at once. 我的哥哥们 came out `wǒ dī gēgē men` on the strength of
-的哥.
+The dictionary records `dī` in 的士, 的哥, 的姐, 打的, 面的 and 摩的. These characters can also occur across a particle boundary. For example, 我的哥哥们 contains the particle 的 followed by 哥哥, not the taxi word 的哥.
 
-What follows the 的 decides it, and where the key sits around the 的 decides
-which question that is. A key beginning with the 的 offers its own second
-character as the head, and a longer word starting there is the better claim on
-it (哥哥, 姐姐, 士兵). A key ending with the 的 puts the head outside itself,
-where a noun or a pronoun is that head and an adjective or an adverb is the
-complement of a 的 standing in for 得. The character in front of the 的 is asked
-about too, since a longer word ending there owns it. That is what 上面的, 方面的
-and 表面的 are.
+The rule checks words around both ends of the candidate. A longer word can claim a character inside it, as 哥哥 does in 的哥 or 上面 does in 面的. Following nouns, pronouns, adjectives and adverbs provide further evidence for particle uses.
 
-Where the word does stand the bare 的 is taken off the lattice under it. That is
-the spacing half of the same claim. 的 sits in the cheapest band the dictionary
-holds. A two-character key spanning one is therefore weighed against a split
-starting several buckets ahead of an ordinary word's, and the rarer keys lost.
-的士 came apart at 16.62 against 16.24 for the split, where 的哥 at 14.62 held.
+When context supports a taxi word, the rule removes the competing single-character 的 candidate. This also keeps the taxi word together in the output.
 
-Over the same 88,866 lines, 21 的 read `dī` and 9 of them were the particle. The
-rule changes 17 runs. Six are readings it corrects, ten are taxi words that were
-split and now hold together, and the last is 用一元硬币来打的, which joins up
-while staying wrong. That one closes a 是⋯的 whose 是 sits in the clause before
-it.
+In 88,866 lines, the rule corrected six readings and ten word boundaries. One phrase remained wrong, 用一元硬币来打的, where an earlier clause supplied the 是 of a 是…的 construction.
 
-The eleventh carries a 离合词's reading across a 量词 pushed into the middle of
-it:
+### Separated compounds
+
+The rule preserves a separable verb's reading when 个 appears between its two characters:
 
 ```ts
 convert(dictionary, "我想向老师请个假。"); // "Wǒ xiǎng xiàng lǎoshī qǐng gè jià."
@@ -394,163 +342,21 @@ convert(dictionary, "就去睡个觉吧"); // "jiù qù shuì gè jiào ba"
 convert(dictionary, "他会弹个琴"); // "tā huì tán gè qín"
 ```
 
-请假 is one word and carries one reading. 请个假 is the same word with a 个
-inside it, and each half falls back on its character's default. 假 went to
-`jiǎ`, 觉 to `jué`, 弹 to `dàn` and 空 to `kōng`, every one of them the reading
-the compound exists to rule out. The dictionary already holds `jià` as an
-alternate of 假 and already states that 请假 is `qǐng jià`. What was missing is
-that the second fact reaches the first across a 个.
+For example, 请假 and 请个假 both use `jià`. The dictionary reading of 请假 supplies the reading across 个. The same mechanism handles 睡个觉, 弹个琴 and 教个书.
 
-Three conditions decide it. The pair either side of the 个 has to be a word the
-dictionary tags (an untagged key is a reading somebody recorded, and 是个甚么
-finds 是甚 among them). The character in front has to be a verb. That is what
-separates 请个假 from 一个只, 两个都 and 八个行, where the 个 counts the numeral
-in front of it. And the far half must stand clear of a tagged word of its own,
-since 有个奇怪的女人 has 有奇 behind it and the 奇 belongs to 奇怪.
+The surrounding pair must be a tagged dictionary word, the first character must be a verb, and the second must be free of a competing tagged word. These checks exclude counting phrases such as 一个只 and protect 奇怪 in 有个奇怪的女人.
 
-Both halves are settled, because either one can be the polyphone. 请个假 and
-睡个觉 misread the character after the 个, 弹个琴 and 教个书 the character before
-it.
+The rule can constrain either half of the compound. 请个假 and 睡个觉 need a correction after 个, while 弹个琴 and 教个书 need one before it.
 
-个 is the only 量词 in the rule. The dictionary tags 道, 名, 家 and 子 the same
-way, and those spend almost all of their time as ordinary morphemes. Widening to
-the whole tag carries the rule from 3 firings to 109, of which 46 are 知道了 read
-off 知了. 下 and 回 separate a compound readily enough and also head a
-directional complement, where 坐下来 and 生下来 end in a 来 the compound behind
-them says is `lái`. Adding that pair costs 34 wrong firings and gains none.
+Only 个 is supported as the inserted measure word. Other classifier tags also occur on ordinary morphemes, and 下 and 回 can introduce directional complements. Expanding the rule to those cases produced incorrect readings.
 
-Over 88,866 lines, 2,018 head-个-tail shapes have a dictionary pair behind them.
-The conditions admit 3 and all 3 are corrections (请个假, 打个折 and 睡個覺). The
-66 they decline are pairs the index happens to hold, where no word was ever
-split in two, and the verb condition alone accounts for 44 of them.
+In 88,866 lines, the complete conditions matched three phrases, 请个假, 打个折 and 睡個覺. All three were corrections.
 
-Rules are exported (`READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`,
-`TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
-`ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`,
-`applyEdgeRules`) and
-`decodeRun` takes its own list, so an application with its own domain can add to
-them or decode with none.
-
-## Readings you assert yourself
-
-No rule settles every polyphone, and some texts are genuinely ambiguous.
-孩子越长越漂亮 grows where 头发越长越漂亮 lengthens, and the characters alone
-leave the choice open. An application that knows its own content can say what
-this one could only guess at, with the `readings` option:
-
-```ts
-convert(dictionary, "这篇文章不太长。", { readings: { 太长: "tài cháng" } });
-```
-
-The terse form is a plain object of text to reading, the shape a corrections
-table takes after an application has accumulated a few. Keep it as a constant
-and pass it everywhere:
-
-```ts
-const CORRECTIONS = { 太长: "tài cháng", 长头发: "cháng tóufa" };
-convert(dictionary, text, { locale: "zh-CN", readings: CORRECTIONS });
-```
-
-**A word hint is an assertion about the text it names**, so it rewrites the
-reading of exactly those characters and no more. It leaves a longer word that
-happens to contain them alone:
-
-```ts
-convert(dictionary, "校长", { readings: { 长: "cháng" } }); // "xiàozhǎng"
-```
-
-That is deliberate, and it is what makes a corrections table safe to accumulate.
-The dictionary knowing 校长 is better evidence about that stretch than a remark
-about one of its characters, so an entry never reaches into a word nobody was
-thinking about. Naming the whole word does reach it, and the word stays whole:
-
-```ts
-convert(dictionary, "银行", { readings: { 银行: "yín xíng" } }); // "yínxíng"
-```
-
-**A positional hint is an assertion about one character of one text**, and it
-outranks everything, the enclosing word included. Positions are counted in code
-points from the start of the text, across any non-Han runs in it, and the
-reading is one syllable, since a position names one character:
-
-```ts
-convert(dictionary, "头发越长越漂亮", {
-  readings: [{ at: 3, reading: "cháng" }],
-});
-convert(dictionary, "校长", { readings: [{ at: 1, reading: "cháng" }] }); // "xiàocháng"
-```
-
-The list form takes both kinds, so mix them where a table needs one exception.
-An unmarked syllable is 轻声, as everywhere else here, and `{ 的: "de" }` is the
-particle. Spacing is untouched, since a hint changes what a stretch reads as and
-never where the words fall. A hint that cannot be parsed throws instead of being
-skipped, because a correction that silently does nothing is worse than one that
-fails.
-
-## Non-Han text
-
-Latin letters, punctuation and anything else that was never Han pass through
-exactly as written. Digits are the one exception, and they are read.
-
-```ts
-convert(dictionary, "3D银行"); // "sān D yínháng"
-convert(dictionary, "1998年"); // "yī jiǔ jiǔ bā nián"
-convert(dictionary, "3D银行", { numbers: "keep" }); // "3Dyínháng"
-```
-
-**The Han around a number is decoded with that number beside it**, as the 汉字
-it would have been written with. Without it a run has no idea what surrounded
-it, and 2个人 read as `liǎng gèrén`, two _personals_, where 两个人 written out
-has always been `liǎng gè rén`. The digits are read first, since what decides
-how they are said is the character after them, which needs no decode, and the
-runs are then decoded knowing them.
-
-Both directions, since a rule reads both. 那条河长300公里 is four runs and the 长
-ends the first of them, so a rule asking what the 长 is measured in used to see
-nothing at all — the numeral is one run away and the 公里 two.
-
-```ts
-convert(dictionary, "那条河长300公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
-convert(dictionary, "那条河长三百公里。"); // "Nà tiáo hé cháng sānbǎi gōnglǐ."
-```
-
-The trailing context stops four characters past the number, which is as far as
-a rule can look ahead.
-
-Which style a number takes comes from what follows it, since 1998年 is a year
-and 3个 is a count, and it needs no dictionary. `src/numerals/` is arithmetic
-and about twenty readings. [Numbers](../numerals/) has the three rules and the
-limits on what they guess at. `numbers: "keep"` leaves every digit exactly as it
-was written, the behaviour this had before there was anything to read them with.
-
-Once a digit _has_ been read, the letters beside it are being said too, which
-is why `3D银行` gains a space it keeps none of under `numbers: "keep"`.
-
-Full-width punctuation is the exception, being Chinese text and not foreign
-text. `。，、；：？！` are rewritten as their Latin equivalents by default. See
-[orthography](../orthography/#punctuation).
-
-## Spacing, capitals and apostrophes
-
-`convert` returns pinyin written the way the standard writes it, and never a
-bare run of syllables. That means word spacing, capitals on proper nouns and
-sentences, and 隔音符号 where a syllable boundary would otherwise be ambiguous.
-
-```ts
-convert(dictionary, "他看了"); // "tā kànle"
-convert(dictionary, "南京市"); // "Nánjīng Shì"
-convert(dictionary, "天安门"); // "Tiān'ānmén"
-```
-
-All of that is [orthography](../orthography/), including where it stops.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO` and `SEPARATED_COMPOUND`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
-`convertGreedily` decodes with longest-match instead, taking the longest
-dictionary word at each position and never reconsidering. It is kept because it
-is what the previous generation of this library did, and because having a
-baseline in the repository is how the lattice's accuracy gets measured rather
-than asserted.
+`convertGreedily` selects the longest dictionary word at each position without reconsidering earlier choices. It provides a baseline for comparing the lattice decoder.
 
 ```ts
 import { convertGreedily } from "@kensio/pinyinjs";
@@ -559,34 +365,9 @@ convert(dictionary, "研究生命起源"); // "yánjiū shēngmìng qǐyuán"
 convertGreedily(dictionary, "研究生命起源"); // "yánjiūshēng mìng qǐyuán"
 ```
 
-Greedy takes 研究生 because it is longer, and 生命 loses. Both readings happen
-to be right here, this being the ambiguity that stays clear of a polyphone, so
-what it costs is the spacing.
+In this example, the greedy decoder selects 研究生 because it is longer. The syllables remain correct, but the word spacing changes.
 
-Measured on 20,139 hand-labelled polyphonic characters, the lattice reads 91.30%
-correctly against greedy's 91.08%. That is 72 characters it gets right where
-greedy misses, against 28 the other way. Small, but real. Use `convert`.
-`convertGreedily` is there to be compared against, and `pnpm accuracy` and
-`pnpm polyphones` in the repository are what compare them.
-
-## Getting more than a string back
-
-| You want                               | Use                                                   |
-| -------------------------------------- | ----------------------------------------------------- |
-| the pinyin                             | `convert`                                             |
-| one piece at a time, with confidence   | `convertPieces`, [confidence](../confidence/)         |
-| marked-up HTML                         | `convertToHtml`, [HTML output](../html/)              |
-| what the dictionary holds for one word | `dictionary.lookup`, [dictionaries](../dictionaries/) |
-
-`convertPieces` is the general one. `convertToHtml` is exactly
-`toHtml(convertPieces(…))`, and `joinPieces(convertPieces(…))` gives back what
-`convert` returns, so anything the other two do you can do yourself from the
-pieces.
-
-`convert` calls the plain decode, though, and never `convertPieces`. Pricing the
-alternatives costs a second sweep of the lattice, around 1.5× the work. Reach
-for `convertPieces` when you want the confidence, rather than as the general
-form of `convert`.
+On 20,139 hand-labelled polyphonic characters, `convert` scored 91.30% accuracy and `convertGreedily` scored 91.08%. The lattice corrected 72 greedy errors and introduced 28 others. Use `convert` for normal conversion. The repository commands `pnpm accuracy` and `pnpm polyphones` compare both algorithms.
 
 <!-- card
 ```ts

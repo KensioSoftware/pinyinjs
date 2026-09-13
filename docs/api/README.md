@@ -1,17 +1,18 @@
 # API
 
-Everything the package exports, grouped by what it is for. `src/index.ts` names
-every export one by one. The surface is a deliberate choice, and internal code
-stays internal unless it appears there.
+This page lists the public exports by topic. `src/index.ts` defines the package
+API.
 
-Two entry points:
+The package has two JavaScript entry points:
 
 | Import from             | Holds                                                    |
 | ----------------------- | -------------------------------------------------------- |
 | `@kensio/pinyinjs`      | everything below                                         |
 | `@kensio/pinyinjs/node` | `fileSource`, the only thing that touches Node built-ins |
 
-## The short version
+<a id="the-short-version"></a>
+
+## Common functions
 
 | Function                                             | Does                                              |
 | ---------------------------------------------------- | ------------------------------------------------- |
@@ -37,8 +38,7 @@ Two entry points:
 | `applyToneMark` / `stripToneMarks` / `toneFromMarks` | tone marks                                        |
 | `convertGreedily(...)`                               | the old longest-match decoder, kept as a baseline |
 
-If you are reading this to find one thing, it is almost certainly in that
-table. The rest of the page is the full surface.
+The sections below list the remaining exports and link to their guides.
 
 ## Converting
 
@@ -56,29 +56,26 @@ See [converting](../converting/), [options](../options/) and
 | `ConvertOptions`, `ConvertedPiece`                      | types                                          |
 | `ReadingConfidence`, `ReadingAlternative`, `ScoredUnit` | types                                          |
 
-The decoder's own parts are exported too, for anyone building directly on the
-lattice: `buildLattice`, `allEdges`, `cutPoints`,
+For direct access to the decoder, use `buildLattice`, `allEdges`, `cutPoints`,
 `READING_CHARGE`, `decodeReadings`, `decodeRun`, `decodeRunScored`,
 `decodeSpacing`, `decodeGreedily`, `shortestPath`, `readingCost`,
 `spacingCost`, `projectReadings`, `settledUnits`, `unitsOf`, `isSettled`,
-`splitRuns`, with the types `Lattice`, `LatticeEdge`, `ReadingProjection`,
+`splitRuns`, and the types `Lattice`, `LatticeEdge`, `ReadingProjection`,
 `ReadingUnit`, `DecodedWord`, `ScoredWord`, `TextRun`, `CostOf`.
 
-The rules that run over the lattice are exported with them: `READING_RULES`,
-`MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`,
-`COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`,
-`SEPARATED_COMPOUND`,
-`applyEdgeRules`,
-`wordEndingAt`, `wordsEndingAt`, `wordStartingAt`, `wordsStartingAt`, `tagOf`, and the types `EdgeRule`, `EdgeContext`,
-`EdgeVerdict`, since `decodeRun` and `decodeRunScored` take their own list and
-an application with its own vocabulary may want to add to it, or pass `[]` to
-decode with none.
+The reading rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
+`POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
+`ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO` and `SEPARATED_COMPOUND`.
+`decodeRun` and `decodeRunScored` accept a custom rule list, including `[]` to
+disable rules. Rule helpers include `applyEdgeRules`, `wordEndingAt`,
+`wordsEndingAt`, `wordStartingAt`, `wordsStartingAt` and `tagOf`, with the types
+`EdgeRule`, `EdgeContext` and `EdgeVerdict`.
 
-Readings a caller asserts are supplied through `ConvertOptions.readings`. A rule
-can only keep or drop an edge, and a hint is a reading no source attests, so a
-rule has nowhere to carry one. The types are `ReadingHints`, `ReadingHint`,
-`WordReading` and `PositionalReading`. See
-[readings you assert yourself](../converting/#readings-you-assert-yourself).
+Use `ConvertOptions.readings` to supply a pronunciation directly. Reading rules
+can keep or drop existing edges. Reading hints can also supply new readings.
+The types are `ReadingHints`, `ReadingHint`, `WordReading` and
+`PositionalReading`. See
+[custom readings](../converting/#readings-you-assert-yourself).
 
 ## Numbers
 
@@ -122,9 +119,7 @@ See [romanisation](../romanization/).
 | `IpaOptions`, `WriteWord`                            | types                                    |
 | `TranscriptionSystem`, `TranscriptionSystemName`     | types                                    |
 
-The syllable tables live in `src/transcription/`. Bopomofo has a script of its
-own and IPA writes sounds, so half of them are transcriptions and only half are
-romanisations. The docs path keeps the older name because it is published.
+The transcription tables are in `src/transcription/`.
 
 ## HTML
 
@@ -173,10 +168,9 @@ See [candidates](../candidates/).
 | `ReverseIndexBuild` | type: a build being driven a slice at a time                                     |
 | `ReverseIndexData`  | type: the pieces, for posting between threads                                    |
 
-The index is derived from a loaded `Dictionary`, with no second fetch. See the
-page for the measurement that settled that. It derives through
-`Dictionary.wordAt`, `Dictionary.frequencyAt` and
-`Dictionary.readingsInOrder`, which are exported with the dictionary below.
+`ReverseIndex` is built from a loaded `Dictionary` without another download.
+It uses `Dictionary.wordAt`, `Dictionary.frequencyAt` and
+`Dictionary.readingsInOrder`.
 
 ## Checking typed pinyin
 
@@ -221,15 +215,14 @@ See [dictionaries](../dictionaries/).
 | `TIERS`, `DEFAULT_TIER`, `STANDARD_TIER_WORDS`, `selectTier`  | the tiers                                                             |
 | `WordEntry`, `DictionaryReadings`, `DictionarySource`, `Tier` | types                                                                 |
 
-The build pipeline is exported as well, since the artifacts are reproducible
-from the sources: `buildArtifact`, `readArtifact`, `encodeReading`,
-`decodeReading`, `findRoundTripFailure`, `mergeSources`, `checkBuild`,
-`BUILD_ASSERTIONS`, `BuiltDictionary`, `KeyIndex`, `FrequencyTable`,
-`FREQUENCY_BUCKETS`, `buildWordCounts`, `TraditionalTable`, `pairScripts`, `attachErhua`,
-`withErhua`, `isErFinal`, `NON_ERHUA_ER_WORDS`, `readDictionaryReading`,
-`readAlignedReading`, `isSameReading`, `isSameSyllable`, `OVERRIDE_READINGS`,
-`READING_OVERRIDES`, `readOverrideReading`, with the types
-`DictionaryArtifact`, `DictionaryEntry`, `EntryReadings`, `KeyLookup`,
+The dictionary build API includes `buildArtifact`, `readArtifact`,
+`encodeReading`, `decodeReading`, `findRoundTripFailure`, `mergeSources`,
+`checkBuild`, `BUILD_ASSERTIONS`, `BuiltDictionary`, `KeyIndex`,
+`FrequencyTable`, `FREQUENCY_BUCKETS`, `buildWordCounts`, `TraditionalTable`,
+`pairScripts`, `attachErhua`, `withErhua`, `isErFinal`, `NON_ERHUA_ER_WORDS`,
+`readDictionaryReading`, `readAlignedReading`, `isSameReading`, `isSameSyllable`,
+`OVERRIDE_READINGS`, `READING_OVERRIDES` and `readOverrideReading`. The types
+are `DictionaryArtifact`, `DictionaryEntry`, `EntryReadings`, `KeyLookup`,
 `BuildAssertion`, `MergeSources`, `MergeResult`, `MergeStats`,
 `ReadingOverride` and `ReadCharacters`.
 
@@ -304,8 +297,8 @@ See [scripts and locales](../scripts-and-locales/).
 
 ## Script conversion
 
-简体 ↔ 繁體. The change is orthographic, and the words themselves stay put. See
-[scripts and locales](../scripts-and-locales/).
+See [script conversion](../script-conversion/) for converting between
+simplified and traditional characters.
 
 | Export                                               | Is                                         |
 | ---------------------------------------------------- | ------------------------------------------ |
@@ -325,26 +318,19 @@ See [scripts and locales](../scripts-and-locales/).
 
 ## Stability
 
-**Everything on this page is covered by semantic versioning from 1.0.0.** That
-includes the decoder internals and the build pipeline, exported because they are
-useful and testable. Committing to them is the price of having exported them.
-The alternative was to withdraw them at 1.0 for the sake of a smaller promise.
+The public API follows semantic versioning, including the exported decoder and
+dictionary-build functions.
 
-Two things sit deliberately outside it:
+Two kinds of change can occur without a major release:
 
-- **The readings themselves.** A dictionary rebuild can change what a word
-  converts to. That is what a source refresh is for, and every rule this package
-  adds is measured in exactly those terms. The figures in
-  `docs/orthography/` and the accuracy harnesses are where those changes are
-  recorded.
-- **The artifact format under `data/`.** `loadDictionary` is the only reader.
-  `./data/*` is exported so a page can be served the files. Anything that parses
-  one by hand is on its own.
+- Dictionary updates and reading rules can change the pronunciation or word
+  boundaries returned for a text. The accuracy harnesses measure these changes.
+- The dictionary artifact format can change. Use `loadDictionary` to read it.
+  The `./data/*` exports allow applications to serve the files, but direct
+  parsing of their contents is unsupported.
 
-`Dictionary` is a class with a private constructor, so `Dictionary.from` and the
-loaders are the only ways to build one. New optional fields may appear on
-`WordEntry`, as `nameBoundaries` did. Adding one is additive, and additive
-changes ship in a minor release.
+`Dictionary` has a private constructor. Create instances with `Dictionary.from`
+or a loader. Minor releases may add optional `WordEntry` fields.
 
 <!-- card
 ```ts

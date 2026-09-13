@@ -1,8 +1,6 @@
 # Confidence
 
-The decoder knows when it was guessing, and `convertPieces` tells you. Every
-syllable comes back with the reading behind it, what it was chosen over, and
-how much taking the alternative would have cost.
+`convertPieces` returns pinyin one syllable at a time, with information about alternative readings. Use it when your application needs to show where the conversion is uncertain.
 
 ```ts
 import { convertPieces, isUncertain, writeSyllable } from "@kensio/pinyinjs";
@@ -16,9 +14,7 @@ pieces[1]?.confidence?.alternatives.map((found) =>
 ); // ["xíng", "héng", "hàng"]
 ```
 
-Greedy longest-match cannot do this. A scored decode can. For a learner-facing
-tool the flag is a feature in its own right, and an uncertain reading can be
-shown as uncertain instead of being presented as fact.
+Each syllable includes its selected reading and the additional cost of choosing an alternative. Your UI can use this information to mark readings that may need review.
 
 ## Pieces
 
@@ -33,8 +29,7 @@ A piece is either a syllable or the text between two of them:
 | `syllable`   | the `Syllable` behind it            | absent                    |
 | `confidence` | how settled it was                  | absent                    |
 
-`joinPieces(pieces)` gives back exactly what `convert` returns. The pieces
-decompose that one answer.
+`joinPieces(pieces)` joins the pieces into the same string that `convert` returns.
 
 ```ts
 const pieces = convertPieces(dictionary, "长江大桥");
@@ -59,24 +54,13 @@ guesses("行").map((piece) => piece.text); // ["xíng"], nothing but a prior cho
 guesses("银行").map((piece) => piece.text); // [], the word settles both syllables
 ```
 
-**Locked** means the lattice offers one reading at that position across every
-path through it. No amount of scoring can move it, and the decoder skips
-locked positions before the shortest-path decode runs.
+A locked position has only one possible reading in the lattice (the graph of candidate words and readings). Scoring cannot change that reading. The decoder skips these positions when comparing alternatives.
 
-A reading a [rule](../converting/#rules-where-the-cost-model-cannot-reach)
-settled reports as locked too, for the same reason. The rules run over the
-lattice before anything is decoded, and the 得 of 我得走了 has one reading left
-by the time the decode sees it. The flag still means what it says, that the
-decode itself made no choice here. The 1.50% below is measured over positions
-the data locked, and these fall outside it.
+Readings selected by a [rule](../converting/#rules-where-the-cost-model-cannot-reach) also report as locked. Rules remove incompatible readings before the decoder scores the candidates. For example, the rule for 得 in 我得走了 leaves only one reading. The 1.50% error rate below covers positions locked by dictionary data and excludes positions locked by rules.
 
-**Backed by a word** means other readings existed, but reaching any of them
-would have meant breaking apart a word the dictionary attests. 长江大桥 reads
-`Cháng` on that basis, and `zhǎng` is what it beat.
+A reading is backed by a word when choosing an alternative would require splitting a dictionary word. In 长江大桥, the word supports `Cháng` over `zhǎng`.
 
-**Uncertain** means a rival reading was available without breaking a word up,
-usually a bare polyphone falling back on a character-level prior. That is the
-decoder saying it had very little to go on.
+An uncertain reading has an alternative that can be selected without splitting a word. This usually occurs when the decoder chooses among the readings of an individual character using their default ordering.
 
 ## Alternatives and their cost
 
@@ -86,20 +70,11 @@ pieces[0]?.confidence?.alternatives;
 // [{ reading: [ … zhǎng … ], cost: 14.62, … }]
 ```
 
-An alternative's `cost` is how much more the cheapest conversion taking it
-would have cost, in the decoder's own units, including what taking it would
-have forced on its neighbours. It is computed by one forward and one backward
-sweep of the lattice, which prices every distinct reading a stretch offers.
+An alternative's `cost` is the increase in total conversion cost if that reading is used. It includes any changes required to neighbouring readings. The decoder calculates these costs with forward and backward passes through the candidate graph.
 
-**Treat it as a measure of how much evidence there was, not as a probability.**
-No source upstream says how much likelier a character's first reading is than
-its second, so every bare polyphone's runner-up sits about one unit away
-whatever the real odds are. What the number does separate reliably is _where the
-evidence came from_. A rival cheaper than the per-word charge was available
-without breaking a word apart, and a dearer one had to break one.
+The cost measures the difference between candidate conversions. It is not a probability. Character reading order supplies no measured frequency, and the next reading of an isolated character usually costs about one additional unit. An alternative costing less than the per-word charge can be selected without splitting a word. A more expensive alternative requires a split.
 
-That cut is the one worth acting on, and it has been measured. On 20,139
-hand-labelled polyphonic characters:
+The following error rates were measured on 20,139 hand-labelled polyphonic characters:
 
 | State            |  Cases |  Wrong |
 | ---------------- | -----: | -----: |
@@ -107,35 +82,25 @@ hand-labelled polyphonic characters:
 | backed by a word | 12,364 |  4.43% |
 | uncertain        |  5,710 | 19.86% |
 
-Two thirds of the decoder's errors sit in the uncertain band, which is 28% of
-the positions. That is what makes the flag worth surfacing.
+Uncertain positions account for 28% of the measured characters and about two thirds of the conversion errors.
 
-**What it is not is a graded score.** Almost every uncertain reading is
-uncertain by the same margin, one `ALTERNATE_PENALTY`, because that is all the
-gap between a character's first and second reading ever costs. So 是 is flagged
-wherever no word covers it, and 是 is `shì` nearly every time. Moving the
-threshold anywhere between one unit and the per-word charge changes what is
-flagged by a percentage point. Read the flag as "no word covered this
-character", which is what it measures, and not as a confidence.
+Use `isUncertain` to identify readings with limited word context. Most uncertain readings have the same cost margin, one `ALTERNATE_PENALTY`. The flag therefore cannot rank them by likelihood. For example, 是 is flagged when no word covers it even though its reading is almost always `shì`. Changing the threshold between one unit and the per-word charge changes the flagged share by about one percentage point.
 
-## The unit is a span
+<a id="the-unit-is-a-span"></a>
 
-玩儿 read as `wánr` over two characters is a different claim from 玩 `wán` plus
-儿 `ér`. An alternative therefore carries its own span, and a claim spanning
-more than one character can never be the sole claim at a position, because the
-single-character edge is always there beside it.
+## Character spans
 
-## Cost of asking
+An alternative includes the characters it covers. For example, 玩儿 pronounced `wánr` covers two characters, while 玩 `wán` and 儿 `ér` are separate readings. A reading that covers several characters also has single-character alternatives in the graph.
 
-Pricing the alternatives is a second sweep of the lattice, about 1.5× the work
-of a plain decode. `convert` skips it. If you only want the string, call
-`convert`.
+<a id="cost-of-asking"></a>
+
+## Performance
+
+Calculating alternatives requires another pass through the candidate graph and takes about 1.5 times the work of a plain conversion. Use `convert` when you only need the pinyin string.
 
 ## Showing it to a reader
 
-`convertToHtml` marks uncertain syllables for you and lists what they beat in a
-`data-alternatives` attribute. See [HTML output](../html/). The
-[`explain` command](../cli/#explain) prints the same information at a terminal.
+`convertToHtml` adds a class to uncertain syllables and lists alternative readings in `data-alternatives`. See [HTML output](../html/). The [`explain` command](../cli/#explain) displays the same information in a terminal.
 
 <!-- card
 ```ts
