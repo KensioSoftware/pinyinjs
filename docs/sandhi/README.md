@@ -38,6 +38,34 @@ convert(dictionary, "一样"); // "yíyàng"
 convert(dictionary, "第一"); // "dìyī", ordinal, unchanged
 ```
 
+### The characters 一 and 不
+
+Both rules apply to a character rather than to a sound. 医, 依, 衣 and 伊 are all `yī`, and 部, 布, 步 and 埠 are all `bù`. None of them changes tone for what follows it:
+
+```ts
+convert(dictionary, "医生"); // "yīshēng", not yìshēng
+convert(dictionary, "依然"); // "yīrán"
+convert(dictionary, "部队"); // "bùduì", not búduì
+convert(dictionary, "全部是"); // "quánbù shì", across a word boundary too
+```
+
+`convert` knows which Han characters it read and applies both rules only to 一 and 不. `applySandhi` given pinyin alone has only the spelling, so `pinyinjs sandhi yīshēng` still changes a 医 it cannot see.
+
+### A 一 that ends a word
+
+一 assimilates to the syllable it counts, and that syllable is inside its own word. A 一 at the end of a longer word counts nothing, so it keeps `yī` whatever starts the next word:
+
+```ts
+convert(dictionary, "唯一办法"); // "wéiyī bànfǎ", not wéiyí
+convert(dictionary, "统一中国"); // "tǒngyī Zhōngguó"
+convert(dictionary, "星期一去"); // "xīngqīyī qù"
+convert(dictionary, "一个"); // "yí gè", here 一 is a word on its own
+```
+
+The last line is the distinction. A 一 counting a 个 is a one-syllable word that joins the following word's group, while the 一 of 唯一 is already inside a word. 不 behaves differently and still changes at the end of a word, since what it negates is often in the next one.
+
+This comes from the word boundaries the decoder found. Supply a `SandhiGrouping` to `applySandhi` where you know them.
+
 <a id="the-一-that-is-a-digit"></a>
 
 ### 一 in numbers and ordinals
@@ -57,9 +85,9 @@ convert(dictionary, "那是一条狗"); // "nà shì yìtiáo gǒu", nor is 是
 
 The rule identifies a number-final 一 by a preceding numeral and the absence of a following numeral. The middle 一 in 一百一十 still counts 十 and remains eligible for sandhi.
 
-`convert` uses the source Chinese characters to distinguish numeral uses. `applySandhi` can also work from pinyin alone, but identical spellings can be ambiguous. For example, `shí` may represent 十 or 时, and `dì` may represent 第 or 地.
+`convert` uses the source Chinese characters to distinguish numeral uses. `applySandhi` can also work from pinyin alone, but identical spellings can be ambiguous. For example, `shí` may represent 十 or 时, `dì` may represent 第 or 地, and `yī` may represent 一 or 医.
 
-In 88,866 corpus lines, providing the characters corrected 1,575 一 tone decisions compared with using spellings alone:
+In 88,866 corpus lines, providing the characters corrected 1,575 一 tone decisions compared with using spellings alone. The count was measured for this rule alone, before the two rules above were added:
 
 |                                         |       |
 | --------------------------------------- | ----: |
@@ -117,7 +145,7 @@ The approximation misses one-syllable words that attach to the preceding word. F
 
 The pass processes the complete syllable array. 一 and 不 can change tone in response to a syllable in the next word.
 
-Third-tone sandhi also needs word grouping. `convert` supplies the decoder's groups. A direct `applySandhi` call treats the reading as one word unless you supply `SandhiGrouping`:
+Third-tone sandhi and 一 also need word grouping. `convert` supplies the decoder's groups. A direct `applySandhi` call treats the reading as one word unless you supply `SandhiGrouping`:
 
 ```ts
 const reading = readWord("hángzhǎnghěnxǐhuan") ?? [];
@@ -129,7 +157,7 @@ Each grouping entry describes one word, using either its syllable count or the c
 
 ## Options
 
-`applySandhi(syllables, options?, grouping?, characters?)` accepts the same options as [`ConvertOptions.sandhi`](../options/#sandhi). The optional `characters` array associates each syllable with its source Han character. Use `undefined` when one character cannot represent the syllable:
+`applySandhi(syllables, options?, grouping?, characters?)` accepts the same options as [`ConvertOptions.sandhi`](../options/#sandhi). The optional `characters` array associates each syllable with its source Han character, and is what identifies 一 and 不. Use `undefined` when one character cannot represent the syllable:
 
 | Field       | Default | Does                         |
 | ----------- | ------- | ---------------------------- |

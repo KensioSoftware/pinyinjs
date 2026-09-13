@@ -1,5 +1,13 @@
 import type { Syllable } from "../syllable/syllable.js";
+import {
+  endingsOf,
+  junctionsOf,
+  type SandhiGrouping,
+} from "./sandhi-grouping.js";
 import { isBu, isCounting, isYi, yiToneBefore } from "./sandhi-tones.js";
+
+export type { SandhiGrouping } from "./sandhi-grouping.js";
+
 /**
  * How much of the sandhi to apply.
  */
@@ -19,80 +27,6 @@ export interface SandhiOptions {
    * learner wants to see them. Available for callers transcribing speech.
    */
   readonly thirdTone?: boolean;
-}
-
-/**
- * How the syllables group, for third-tone sandhi to read.
- *
- * One entry per word: its syllable count, or the counts of the constituents it
- * divides into. 老板 很 好 is `[2, 1, 1]` and 纸老虎 is `[[1, 2]]`.
- *
- * Sandhi's domain is the prosodic foot rather than the word, and the foot is
- * built from structure — which is why this is worth carrying. See
- * {@link applyThirdTone} for what is done with it.
- */
-export type SandhiGrouping = readonly (number | readonly number[])[];
-
-/**
- * Where sandhi may apply, as the index of the syllable that would lower.
- *
- * Every junction is between adjacent syllables — words and their constituents
- * cover the reading end to end — so one index says all of it, and the three
- * lists are the three passes {@link applyThirdTone} makes.
- */
-interface SandhiJunctions {
-  /** Inside a constituent. */
-  readonly inner: readonly number[];
-  /** Between the constituents of a word. */
-  readonly parts: readonly number[];
-  /** Between a single-syllable word and the word after it. */
-  readonly words: readonly number[];
-}
-
-/**
- * Read a grouping as the junctions it puts in the syllable array.
- *
- * The whole array is treated as one undivided word where no grouping is given,
- * or where the one given does not account for exactly the syllables there are —
- * a grouping that does not fit is describing some other text, and guessing
- * which syllables it meant would be worse than ignoring it.
- */
-function junctionsOf(
-  length: number,
-  grouping?: SandhiGrouping,
-): SandhiJunctions {
-  const undivided: SandhiJunctions = {
-    inner: Array.from({ length: Math.max(length - 1, 0) }, (_, at) => at),
-    parts: [],
-    words: [],
-  };
-  if (grouping === undefined) {
-    return undivided;
-  }
-
-  const inner: number[] = [];
-  const parts: number[] = [];
-  const words: number[] = [];
-  let at = 0;
-  for (const [index, word] of grouping.entries()) {
-    const divisions = typeof word === "number" ? [word] : word;
-    const from = at;
-    for (const [division, size] of divisions.entries()) {
-      for (let step = 1; step < size; step++) {
-        inner.push(at + step - 1);
-      }
-      at += size;
-      // The junction closing a word's last constituent is the one *around* the
-      // word rather than one inside it.
-      if (division < divisions.length - 1) {
-        parts.push(at - 1);
-      }
-    }
-    if (at - from === 1 && index < grouping.length - 1) {
-      words.push(at - 1);
-    }
-  }
-  return at === length ? { inner, parts, words } : undivided;
 }
 
 /**
@@ -165,14 +99,24 @@ function applyThirdTone(
  * contextual tone is put back, over the whole syllable array rather than within
  * a word, which is what lets 不 in one word assimilate to a tone in the next.
  *
- * 不 assimilates to whatever follows it and needs nothing but the syllables.
- * Third-tone sandhi is not like that — its domain is the foot rather than the
- * syllable string — so `grouping` says where the words and their parts are.
- * Without one the whole array is taken for a single word, which is what a
- * caller holding nothing but a reading has. 一 sits between the two: the tone it
- * takes is settled by the syllables, and whether it takes one at all is a
- * question about the 汉字, so `characters` carries them where the caller has
- * them. See {@link isCounting}.
+ * A caller holding nothing but a reading can still use this, and several do:
+ * `pinyinjs sandhi bùshì` and the numeral reader both hand over syllables and
+ * nothing else. `grouping` and `characters` are what a caller that knows more
+ * says so with, and each one is read on its own, since a caller can have one
+ * and not the other.
+ *
+ * `characters` holds one 汉字 per syllable, and is what tells 一 and 不 apart
+ * from the syllables that merely sound like them — 医生 is `yīshēng` and 部队
+ * is `bùduì`. Without it the pass falls back to the spellings, which is all
+ * bare pinyin offers. See {@link isYi} and {@link isCounting}.
+ *
+ * `grouping` says where the words and their parts are. Third-tone sandhi needs
+ * it because its domain is the prosodic foot rather than the syllable string,
+ * and 一 needs the word ends out of it: a 一 that closes a longer word is not
+ * counting the word after it. Without a grouping the whole array is taken for
+ * a single word, which is all a bare reading says.
+ *
+ * 不 is the one rule that needs neither: it assimilates to whatever follows.
  *
  * Never operates on a string. The old project patched output text with regexes,
  * which is what made its rules order-dependent and untestable.
@@ -188,21 +132,30 @@ export function applySandhi(
     ? applyThirdTone(syllables, grouping)
     : [...syllables];
 
+  const endings = endingsOf(syllables.length, grouping);
   for (const [at, syllable] of applied.entries()) {
+    const character = characters?.[at];
     const following = applied[at + 1];
 
-    if (yiBu && isYi(syllable) && syllable.tone === 1) {
+    if (yiBu && isYi(syllable, character) && syllable.tone === 1) {
       // A 一 that is not counting keeps its citation tone, so it is left
       // exactly as the dictionary stored it.
       if (isCounting(applied, at, characters)) {
-        applied[at] = { ...syllable, tone: yiToneBefore(following?.tone) };
+        // A 一 closing a longer word counts nothing, because what follows it
+        // is outside the word: 唯一 is `wéiyī` whatever comes next, and so are
+        // 之一, 统一 and 星期一. The 一 of 一个 is a word of its own, which is
+        // why it still assimilates across the boundary.
+        const counted = endings.has(at) ? undefined : following;
+        applied[at] = { ...syllable, tone: yiToneBefore(counted?.tone) };
       }
       continue;
     }
     // 不 flattens to second tone before a fourth, and is otherwise unchanged.
+    // Unlike 一 it keeps assimilating at the end of a word, since what it
+    // negates is regularly in the next one: 决不会 is `juébú huì`.
     if (
       yiBu &&
-      isBu(syllable) &&
+      isBu(syllable, character) &&
       syllable.tone === 4 &&
       following?.tone === 4
     ) {

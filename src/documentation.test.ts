@@ -378,9 +378,8 @@ describe("the examples in docs/", () => {
       // An ordinal counts nothing, and a numeral inside a longer word is not
       // counting either.
       assertIdentical(convert(dictionary, "第三集团军"), "dìsān jítuánjūn");
-      // 道路 stays one word, which is the page's claim; the 一 of 唯一 taking
-      // a sandhi it should not is a separate miss and not this rule's.
-      assertStringIncludes(convert(dictionary, "唯一道路"), "dàolù");
+      // 道路 stays one word, which is the page's claim.
+      assertIdentical(convert(dictionary, "唯一道路"), "wéiyī dàolù");
     });
 
     it("reads 长 as cháng where an adverb of degree measures it", () => {
@@ -1941,6 +1940,22 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "不是"), "bú shì");
       assertIdentical(convert(dictionary, "不对"), "bú duì");
       assertIdentical(convert(dictionary, "不行"), "bùxíng");
+    });
+
+    it("gates both rules on the character, as the page shows", () => {
+      assertIdentical(convert(dictionary, "医生"), "yīshēng");
+      assertIdentical(convert(dictionary, "医院"), "yīyuàn");
+      assertIdentical(convert(dictionary, "依然"), "yīrán");
+      assertIdentical(convert(dictionary, "依靠"), "yīkào");
+      assertIdentical(convert(dictionary, "部队"), "bùduì");
+      assertIdentical(convert(dictionary, "全部是"), "quánbù shì");
+    });
+
+    it("keeps a 一 that ends a word, as the page shows", () => {
+      assertIdentical(convert(dictionary, "唯一办法"), "wéiyī bànfǎ");
+      assertIdentical(convert(dictionary, "统一中国"), "tǒngyī Zhōngguó");
+      assertIdentical(convert(dictionary, "星期一去"), "xīngqīyī qù");
+      assertIdentical(convert(dictionary, "一个"), "yí gè");
     });
 
     it("writes each 一 sandhi the page lists", () => {
