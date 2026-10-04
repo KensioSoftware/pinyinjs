@@ -4,12 +4,16 @@ import { TAXI_DI } from "./taxi-rule.js";
 import { EXPERIENTIAL_GUO } from "./guo-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 import { SEPARATED_COMPOUND } from "./split-rule.js";
+import { RETURNING_HUAN } from "./huan-rule.js";
+import { REDUPLICATED_VERB } from "./reduplication-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
 export { EXPERIENTIAL_GUO } from "./guo-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 export { SEPARATED_COMPOUND } from "./split-rule.js";
+export { RETURNING_HUAN } from "./huan-rule.js";
+export { REDUPLICATED_VERB } from "./reduplication-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
   type EdgeContext,
@@ -160,4 +164,6 @@ export const READING_RULES: readonly EdgeRule[] = [
   PLAYING_TAN,
   EXPERIENTIAL_GUO,
   SEPARATED_COMPOUND,
+  REDUPLICATED_VERB,
+  RETURNING_HUAN,
 ];
