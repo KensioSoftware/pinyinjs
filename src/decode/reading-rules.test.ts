@@ -23,6 +23,8 @@ import {
   PARTICLE_DE,
   PLAYING_TAN,
   READING_RULES,
+  REDUPLICATED_VERB,
+  RETURNING_HUAN,
   SEPARATED_COMPOUND,
   TEACHING_JIAO,
 } from "./reading-rules.js";
@@ -952,6 +954,178 @@ describe("a 离合词 a 量词 has been pushed into", () => {
       "qǐng",
       "gè",
       "jià",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for the reduplicated verbs.
+ *
+ * 数 is stored `shù` with `shǔ` as an alternate, and 数字 is the tagged word
+ * that has to keep its own reading. 卷 carries the 一卷 that reached into
+ * 卷一卷, and 查 the literary 查查 that the rule must not read 查一查 off.
+ */
+const reduplicationDictionary = dictionaryOf([
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("了", "le", {
+    partOfSpeech: "ul",
+    frequency: 90_000,
+    alternates: [reading("liǎo")],
+  }),
+  entry("一", "yī", { partOfSpeech: "m", frequency: 80_000 }),
+  entry("数", "shù", {
+    partOfSpeech: "n",
+    frequency: 20_000,
+    alternates: [reading("shǔ")],
+  }),
+  entry("數", "shù", {
+    partOfSpeech: "n",
+    frequency: 8000,
+    alternates: [reading("shǔ")],
+  }),
+  entry("字", "zì", { partOfSpeech: "n", frequency: 8000 }),
+  entry("数字", "shù zì", { partOfSpeech: "n", frequency: 9000 }),
+  entry("数数", "shǔ shù", { partOfSpeech: "n", frequency: 30 }),
+  entry("卷", "juǎn", {
+    partOfSpeech: "v",
+    frequency: 6000,
+    alternates: [reading("juàn")],
+  }),
+  entry("一卷", "yī juàn", { partOfSpeech: "m", frequency: 900 }),
+  entry("查", "chá", {
+    partOfSpeech: "v",
+    frequency: 9000,
+    alternates: [reading("zhā")],
+  }),
+  entry("查查", "zhā zhā", { partOfSpeech: "v", frequency: 20 }),
+]);
+
+describe("a verb said twice around 了 or 一", () => {
+  /** How a run of the reduplicated cases reads, word by word. */
+  function readTwice(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(reduplicationDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads both halves of 数了数 as the verb", () => {
+    assertArrayEquals(readTwice("他数了数"), ["tā", "shǔ", "le", "shǔ"]);
+  });
+
+  it("reads the default shù without the rule, which is the bug", () => {
+    assertArrayEquals(readTwice("他数了数", []), ["tā", "shù", "le", "shù"]);
+  });
+
+  it("reads the tentative 数一数 the same way", () => {
+    assertArrayEquals(readTwice("数一数"), ["shǔ", "yī", "shǔ"]);
+  });
+
+  it("reads the 繁體 character the same way", () => {
+    assertArrayEquals(readTwice("數了數"), ["shǔ", "le", "shǔ"]);
+  });
+
+  it("leaves a tagged word starting at the second half alone", () => {
+    // 数了数字 counted the digits, and 数字 is `shùzì`.
+    assertArrayEquals(readTwice("数了数字"), ["shù", "le", "shùzì"]);
+  });
+
+  it("takes the reading a word over the infix would carry in", () => {
+    assertArrayEquals(readTwice("卷一卷"), ["juǎn", "yī", "juǎn"]);
+    assertArrayEquals(readTwice("卷一卷", []), ["juǎn", "yījuàn"]);
+  });
+
+  it("declines a count said twice", () => {
+    // 一卷一卷 is one roll after another, and the numeral in front says so.
+    assertArrayEquals(readTwice("一卷一卷"), ["yījuàn", "yījuàn"]);
+  });
+
+  it("leaves a character outside the table to the decode", () => {
+    // 查查 is a literary `zhāzhā`, and 查一查 is `chá`.
+    assertArrayEquals(readTwice("查一查"), ["chá", "yī", "chá"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readTwice("数了数", [REDUPLICATED_VERB]), [
+      "shǔ",
+      "le",
+      "shǔ",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for 还, which is stored `hái` with `huán` as an
+ * alternate.
+ *
+ * 书法 is the tagged word that keeps a 还 in front of it the adverb, and 倒还
+ * the untagged pair that would carry `hái` into the position.
+ */
+const huanDictionary = dictionaryOf([
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("还", "hái", {
+    partOfSpeech: "d",
+    frequency: 60_000,
+    alternates: [reading("huán")],
+  }),
+  entry("還", "hái", {
+    partOfSpeech: "d",
+    frequency: 20_000,
+    alternates: [reading("huán")],
+  }),
+  entry("钱", "qián", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("錢", "qián", { partOfSpeech: "n", frequency: 8000 }),
+  entry("书", "shū", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("法", "fǎ", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("书法", "shū fǎ", { partOfSpeech: "n", frequency: 3000 }),
+  entry("有", "yǒu", { partOfSpeech: "v", frequency: 80_000 }),
+  entry("倒", "dǎo", { partOfSpeech: "v", frequency: 9000 }),
+  entry("倒还", "dǎo hái", { frequency: 10_000 }),
+]);
+
+describe("还 where it gives something back", () => {
+  /** How a run of the 还 cases reads, word by word. */
+  function readHuan(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(huanDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads it huán in front of the money given back", () => {
+    assertArrayEquals(readHuan("我还钱"), ["wǒ", "huán", "qián"]);
+  });
+
+  it("reads the default hái without the rule, which is the bug", () => {
+    assertArrayEquals(readHuan("我还钱", []), ["wǒ", "hái", "qián"]);
+  });
+
+  it("reads it huán in front of a book, in either script", () => {
+    assertArrayEquals(readHuan("还书"), ["huán", "shū"]);
+    assertArrayEquals(readHuan("還錢"), ["huán", "qián"]);
+  });
+
+  it("leaves the adverb in front of a tagged word of its own", () => {
+    assertArrayEquals(readHuan("他还书法"), ["tā", "hái", "shūfǎ"]);
+  });
+
+  it("leaves a 还 closing the run as the adverb", () => {
+    assertArrayEquals(readHuan("他还"), ["tā", "hái"]);
+  });
+
+  it("leaves the adverb in front of a verb", () => {
+    assertArrayEquals(readHuan("还有钱"), ["hái", "yǒu", "qián"]);
+  });
+
+  it("takes the reading an untagged pair would carry in", () => {
+    assertArrayEquals(readHuan("倒还钱"), ["dǎo", "huán", "qián"]);
+    assertArrayEquals(readHuan("倒还钱", []), ["dǎohái", "qián"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readHuan("我还钱", [RETURNING_HUAN]), [
+      "wǒ",
+      "huán",
+      "qián",
     ]);
   });
 });

@@ -352,7 +352,37 @@ Only 个 is supported as the inserted measure word. Other classifier tags also o
 
 In 88,866 lines, the complete conditions matched three phrases, 请个假, 打个折 and 睡個覺. All three were corrections.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO` and `SEPARATED_COMPOUND`. `applyEdgeRules` applies a list to the candidate graph.
+### Reduplicated verbs
+
+A verb said twice around 了 or 一 takes its verb reading on both halves:
+
+```ts
+convert(dictionary, "他数了数桌上的数字。"); // "Tā shǔ le shǔ zhuō shàng de shùzì."
+convert(dictionary, "数一数"); // "shǔ yì shǔ"
+convert(dictionary, "他弹了弹烟灰"); // "tā tánle tán yānhuī"
+```
+
+数 is stored `shù`, the noun, with `shǔ` as an alternate. 数数 is a dictionary word, but 了 between the halves hides it, and each 数 fell back on `shù`. The same shape split other verbs down the middle. 弹了弹 read `tán le dàn` and 教了教 `jiāo le jiào`.
+
+The rule covers 数, 凉, 种, 教, 弹, 卷 and 削 (with their 繁體 forms). Each has a verb reading that differs from its default or from a word that reaches into the shape (一卷 in 卷一卷). The list is written by hand. The dictionary has no tag per reading, and the reduplicated words it does hold are mostly literary (查查 is `zhāzhā`, and reading 查一查 off it would be wrong).
+
+A numeral in front turns the shape away, since 一卷一卷 counts rolls. A tagged word claiming either half does too, which keeps 数了数字 as `shù le shùzì`. The 107 matches across 88,866 corpus lines already read both halves alike, and the rule moves none of them.
+
+### 还 as a verb
+
+The rule selects `huán` when 还 gives back money, a book or an account:
+
+```ts
+convert(dictionary, "我得去银行还钱。"); // "Wǒ děi qù yínháng huán qián."
+convert(dictionary, "请明天前还书"); // "qǐng míngtiān qián huán shū"
+convert(dictionary, "他还书法很好"); // "tā hái shūfǎ hěn hǎo"
+```
+
+The default character reading is `hái`, the adverb. The full tier holds 还钱, 还书 and 还账 as words, and the standard tier holds none of them (no frequency list counts them), so standard read 还钱 as `hái qián`. The rule makes standard agree with full.
+
+The objects are listed by hand. jieba tags 有点, 客气 and 问 as nouns, and 还 in front of each of those is the adverb. The object must also stand clear of a tagged word of its own, which keeps 还书法 `hái`. In 88,866 corpus lines and both CPP splits, the rule changed 5 standard-tier readings and all 5 were corrections.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB` and `RETURNING_HUAN`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

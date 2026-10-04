@@ -316,6 +316,34 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "他经过我家"), "tā jīngguò wǒjiā");
     });
 
+    it("reads a reduplicated verb the way the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "他数了数桌上的数字。"),
+        "Tā shǔ le shǔ zhuō shàng de shùzì.",
+      );
+      assertIdentical(convert(dictionary, "数一数"), "shǔ yì shǔ");
+      assertIdentical(
+        convert(dictionary, "他弹了弹烟灰"),
+        "tā tánle tán yānhuī",
+      );
+      assertIdentical(convert(dictionary, "数了数字"), "shù le shùzì");
+    });
+
+    it("reads 还 as huán where it gives something back", () => {
+      assertIdentical(
+        convert(dictionary, "我得去银行还钱。"),
+        "Wǒ děi qù yínháng huán qián.",
+      );
+      assertIdentical(
+        convert(dictionary, "请明天前还书"),
+        "qǐng míngtiān qián huán shū",
+      );
+      assertIdentical(
+        convert(dictionary, "他还书法很好"),
+        "tā hái shūfǎ hěn hǎo",
+      );
+    });
+
     it("reads 教 as jiāo where it teaches and jiào where it does not", () => {
       assertIdentical(
         convert(dictionary, "他在北京大学教了三年书。"),
