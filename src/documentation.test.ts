@@ -227,6 +227,17 @@ function scored(haystack: string, query: string): number {
 }
 
 /**
+ * 干干净净 as HTML in some system, with its spans stripped.
+ */
+function writtenAsHtml(options: HtmlOptions): string {
+  return convertToHtml(dictionary, "干干净净", {
+    ...options,
+    lang: false,
+    toneClasses: false,
+  }).replaceAll(/<\/?span[^>]*>/gu, "");
+}
+
+/**
  * A number read out, as the numbers page reads it.
  */
 function said(value: string | number, options: NumeralOptions = {}): string {
@@ -1129,19 +1140,13 @@ describe("the examples in docs/", () => {
     });
 
     it("drops a mark pinyin writes that the system has no use for", () => {
-      const written = (options: HtmlOptions): string =>
-        convertToHtml(dictionary, "干干净净", {
-          ...options,
-          lang: false,
-          toneClasses: false,
-        }).replaceAll(/<\/?span[^>]*>/gu, "");
-      assertIdentical(written({}), "gāngān-jìngjìng");
+      assertIdentical(writtenAsHtml({}), "gāngān-jìngjìng");
       assertIdentical(
-        written({ transcription: WADE_GILES }),
+        writtenAsHtml({ transcription: WADE_GILES }),
         "kan¹-kan¹-ching⁴-ching⁴",
       );
       assertIdentical(
-        written({ transcription: BOPOMOFO }),
+        writtenAsHtml({ transcription: BOPOMOFO }),
         "ㄍㄢ ㄍㄢ ㄐㄧㄥˋ ㄐㄧㄥˋ",
       );
     });

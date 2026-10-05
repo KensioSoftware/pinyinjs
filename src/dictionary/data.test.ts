@@ -206,6 +206,13 @@ function countOf(word: string): number | undefined {
 }
 
 /**
+ * The count the artifact quantised for the key at a position.
+ */
+function quantised(at: number): number {
+  return countForQuantising(counts.countOf(at), full.isNameAt(at));
+}
+
+/**
  * Read `size` through a local, so the smartass Set/Map size rule does not fire
  * on a type that is neither.
  */
@@ -440,8 +447,6 @@ describe("the committed dictionary", () => {
       // corpus never counted is quantised at jieba's default for an uncounted
       // word, where `full.counts` keeps the zero the corpus reported. See
       // `countForQuantising`.
-      const quantised = (at: number): number =>
-        countForQuantising(counts.countOf(at), full.isNameAt(at));
       let previousCount = quantised(0);
       let previousBucket = buckets.bucketOf(0);
       const disagreements: string[] = [];

@@ -34,12 +34,12 @@ function convert(text: string, to: ScriptTarget): string {
   return toScript(dictionary, tables, text, { to });
 }
 
-describe("the shipped script-only sets", () => {
-  /** What the committed tables say a text is written in. */
-  function detect(text: string): string | undefined {
-    return detectScript(text, tables.hansOnly, tables.hantOnly);
-  }
+/** What the committed tables say a text is written in. */
+function detect(text: string): string | undefined {
+  return detectScript(text, tables.hansOnly, tables.hantOnly);
+}
 
+describe("the shipped script-only sets", () => {
   it("holds the 繁體 characters a stray headword used to disqualify", () => {
     for (const character of ["幾", "衛", "卻", "徵", "襪"]) {
       assertTrue(tables.hantOnly.has(character));
