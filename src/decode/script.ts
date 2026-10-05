@@ -8,7 +8,7 @@ import { READING_RULES } from "./reading-rules.js";
 import { splitRuns } from "./runs.js";
 
 import { applyRegion } from "./script-region.js";
-import { convertWord, targetOf } from "./script-words.js";
+import { convertWord, keepConcerning, targetOf } from "./script-words.js";
 import type {
   ScriptChoice,
   ScriptConversion,
@@ -70,6 +70,8 @@ export function toScriptPieces(
       converted += run.text;
       continue;
     }
+    const characters = toCharacters(run.text);
+    let from = 0;
     // 繁體 glyph variants are folded to the canonical form first, so that a
     // Hong Kong input converts the same as its Taiwan spelling would.
     for (const word of decodeRun(dictionary, run.text, READING_RULES)) {
@@ -78,13 +80,20 @@ export function toScriptPieces(
       const chosen = applyRegion(
         isSameScript
           ? keepWord(canonical)
-          : convertWord(table, words, canonical, word.reading),
+          : keepConcerning(
+              convertWord(table, words, canonical, word.reading),
+              dictionary,
+              characters,
+              from,
+              word.reading,
+            ),
         word.reading,
         region,
         isAligned,
       );
       choices.push(...chosen);
       converted += chosen.map((choice) => choice.to).join("");
+      from += toCharacters(word.text).length;
     }
   }
 

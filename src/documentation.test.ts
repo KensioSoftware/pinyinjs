@@ -344,6 +344,16 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("reads 干 as gān where it means to concern", () => {
+      assertIdentical(
+        convert(dictionary, "这不干你的事！"),
+        "Zhè bù gān nǐ de shì!",
+      );
+      assertIdentical(convert(dictionary, "干你什么事"), "gān nǐ shénme shì");
+      assertIdentical(convert(dictionary, "你干你的事"), "nǐ gàn nǐ de shì");
+      assertIdentical(convert(dictionary, "无干部"), "wú gànbù");
+    });
+
     it("reads 教 as jiāo where it teaches and jiào where it does not", () => {
       assertIdentical(
         convert(dictionary, "他在北京大学教了三年书。"),
@@ -1224,6 +1234,17 @@ describe("the examples in docs/", () => {
           hant,
         );
       }
+    });
+
+    it("keeps 干 to concern where the reading alone would take 乾", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "这不干你的事", { to: "zh-Hant" }),
+        "這不干你的事",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "与你无干", { to: "zh-Hant" }),
+        "與你無干",
+      );
     });
 
     it("keeps 乾 where the reading says it is not 干", () => {

@@ -36,6 +36,13 @@ For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and �
 
 This can resolve a character even when the script-conversion tables do not contain the complete phrase.
 
+The `gān` reading alone does not separate 乾 (dry) from 干 (to concern). A word usually settles it, as in 干燥 and 干扰. A 干 standing alone takes 干 in the frames the [干 reading rule](../converting/#gan-as-to-concern) matches, and 乾 elsewhere:
+
+```ts
+toScript(dictionary, tables, "这不干你的事", { to: "zh-Hant" }); // "這不干你的事"
+toScript(dictionary, tables, "与你无干", { to: "zh-Hant" }); // "與你無干"
+```
+
 <a id="both-directions-need-it"></a>
 
 ## Traditional to simplified conversion

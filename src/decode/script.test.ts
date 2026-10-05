@@ -90,6 +90,20 @@ describe("script conversion", () => {
       assertIdentical(convert("干扰", "zh-Hant"), "干擾");
     });
 
+    it("keeps 干 where it means to concern", () => {
+      // gān as in 干扰, standing alone, where the syllable would take 乾.
+      assertIdentical(convert("这不干你的事", "zh-Hant"), "這不干你的事");
+      assertIdentical(convert("与你无干", "zh-Hant"), "與你無干");
+      assertIdentical(convert("干卿底事", "zh-Hant"), "干卿底事");
+      assertIdentical(convert("干你什么事", "zh-Hant"), "干你什麼事");
+    });
+
+    it("leaves the other senses of 干 beside the frames", () => {
+      assertIdentical(convert("你干你的事", "zh-Hant"), "你幹你的事");
+      assertIdentical(convert("无干粮", "zh-Hant"), "無乾糧");
+      assertIdentical(convert("无干部", "zh-Hant"), "無幹部");
+    });
+
     it("splits 只 and 面, which the reading cannot always settle", () => {
       assertIdentical(convert("一只猫", "zh-Hant"), "一隻貓");
       assertIdentical(convert("只有", "zh-Hant"), "只有");
@@ -183,6 +197,17 @@ describe("script conversion", () => {
       assertIdentical(gan.to, "乾");
       assertIdentical(gan.evidence, "reading");
       assertFalse(isUncertainChoice(gan));
+    });
+
+    it("credits the reading where it kept 干 to concern", () => {
+      const { choices } = toScriptPieces(dictionary, tables, "与你无干", {
+        to: "zh-Hant",
+      });
+      const gan = choices.at(-1);
+      assertNonNullable(gan);
+      assertIdentical(gan.to, "干");
+      assertIdentical(gan.evidence, "reading");
+      assertArrayEquals(gan.alternatives, ["乾", "幹"]);
     });
 
     it("credits an attested word above the characters", () => {
