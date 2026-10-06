@@ -1165,14 +1165,14 @@ const ganDictionary = dictionaryOf([
   entry("干部", "gàn bù", { partOfSpeech: "n", frequency: 9000 }),
 ]);
 
-describe("干 where it means to concern", () => {
-  /** How a run of the 干 cases reads, word by word. */
-  function readGan(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(ganDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 干 cases reads, word by word. */
+function readGan(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(ganDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("干 where it means to concern", () => {
   it("reads 不干你的事 as gān", () => {
     assertArrayEquals(readGan("这不干你的事"), [
       "zhè",
