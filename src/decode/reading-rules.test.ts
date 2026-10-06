@@ -417,14 +417,14 @@ describe("教 where it is teaching", () => {
   });
 });
 
-describe("的 where it is the structural particle", () => {
-  /** How a run of the 的 cases reads, word by word. */
-  function readDe(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(deDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 的 cases reads, word by word. */
+function readDe(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(deDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("的 where it is the structural particle", () => {
   it("forbids an untagged word beginning at the particle", () => {
     assertArrayEquals(readDe("他的真名字"), ["tā", "de", "zhēn", "míngzi"]);
   });
@@ -444,14 +444,14 @@ describe("的 where it is the structural particle", () => {
   });
 });
 
-describe("的 in the taxi vocabulary", () => {
-  /** How a run of the taxi cases reads, word by word. */
-  function readTaxi(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(taxiDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the taxi cases reads, word by word. */
+function readTaxi(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(taxiDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("的 in the taxi vocabulary", () => {
   it("keeps the taxi word whole where it stands", () => {
     assertArrayEquals(readTaxi("的士"), ["dīshì"]);
     assertArrayEquals(readTaxi("打的去"), ["dǎdī", "qù"]);
@@ -481,14 +481,14 @@ describe("的 in the taxi vocabulary", () => {
   });
 });
 
-describe("得 marking a potential complement", () => {
-  /** How a run of the complement cases reads, word by word. */
-  function readPotential(run: string): readonly string[] {
-    return decodeRun(potentialDictionary, run, READING_RULES).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the complement cases reads, word by word. */
+function readPotential(run: string): readonly string[] {
+  return decodeRun(potentialDictionary, run, READING_RULES).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("得 marking a potential complement", () => {
   it("reads the 得 of a potential complement as the particle", () => {
     assertArrayEquals(readPotential("算得上是"), [
       "suàn",
@@ -551,14 +551,14 @@ describe("a 量词 the number in front of it counts", () => {
   });
 });
 
-describe("长 as an adjective", () => {
-  /** How a run of the 长 cases reads, word by word. */
-  function readChang(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(changDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 长 cases reads, word by word. */
+function readChang(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(changDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("长 as an adjective", () => {
   it("reads 长 as cháng after a degree adverb", () => {
     assertArrayEquals(readChang("很长"), ["hěn", "cháng"]);
   });
@@ -695,14 +695,14 @@ describe("长 as an adjective", () => {
   });
 });
 
-describe("弹 where it is playing", () => {
-  /** How a run of the 弹 cases reads, word by word. */
-  function readTan(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(tanDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 弹 cases reads, word by word. */
+function readTan(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(tanDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("弹 where it is playing", () => {
   it("reads 弹 as tán in front of the instrument", () => {
     assertArrayEquals(readTan("弹吉他"), ["tán", "jítā"]);
   });
@@ -760,14 +760,14 @@ describe("弹 where it is playing", () => {
   });
 });
 
-describe("过 where it marks experiential aspect", () => {
-  /** How a run of the 过 cases reads, word by word. */
-  function readGuo(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(guoDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 过 cases reads, word by word. */
+function readGuo(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(guoDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("过 where it marks experiential aspect", () => {
   it("reads 过 toneless after a verb", () => {
     assertArrayEquals(readGuo("我去过"), ["wǒ", "qù", "guo"]);
   });
@@ -890,14 +890,14 @@ const splitDictionary = dictionaryOf([
   entry("折么", "shé mǒ", { frequency: 100 }),
 ]);
 
-describe("a 离合词 a 量词 has been pushed into", () => {
-  /** How a run of the separated cases reads, word by word. */
-  function readSplit(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(splitDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the separated cases reads, word by word. */
+function readSplit(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(splitDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("a 离合词 a 量词 has been pushed into", () => {
   it("carries the compound's reading over the 量词 to the tail", () => {
     assertArrayEquals(readSplit("请个假"), ["qǐng", "gè", "jià"]);
   });
@@ -1001,14 +1001,14 @@ const reduplicationDictionary = dictionaryOf([
   entry("查查", "zhā zhā", { partOfSpeech: "v", frequency: 20 }),
 ]);
 
-describe("a verb said twice around 了 or 一", () => {
-  /** How a run of the reduplicated cases reads, word by word. */
-  function readTwice(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(reduplicationDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the reduplicated cases reads, word by word. */
+function readTwice(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(reduplicationDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("a verb said twice around 了 or 一", () => {
   it("reads both halves of 数了数 as the verb", () => {
     assertArrayEquals(readTwice("他数了数"), ["tā", "shǔ", "le", "shǔ"]);
   });
@@ -1084,14 +1084,14 @@ const huanDictionary = dictionaryOf([
   entry("倒还", "dǎo hái", { frequency: 10_000 }),
 ]);
 
-describe("还 where it gives something back", () => {
-  /** How a run of the 还 cases reads, word by word. */
-  function readHuan(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(huanDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 还 cases reads, word by word. */
+function readHuan(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(huanDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("还 where it gives something back", () => {
   it("reads it huán in front of the money given back", () => {
     assertArrayEquals(readHuan("我还钱"), ["wǒ", "huán", "qián"]);
   });
@@ -1165,14 +1165,14 @@ const ganDictionary = dictionaryOf([
   entry("干部", "gàn bù", { partOfSpeech: "n", frequency: 9000 }),
 ]);
 
-describe("干 where it means to concern", () => {
-  /** How a run of the 干 cases reads, word by word. */
-  function readGan(run: string, rules = READING_RULES): readonly string[] {
-    return decodeRun(ganDictionary, run, rules).map((word) =>
-      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
-    );
-  }
+/** How a run of the 干 cases reads, word by word. */
+function readGan(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(ganDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
 
+describe("干 where it means to concern", () => {
   it("reads 不干你的事 as gān", () => {
     assertArrayEquals(readGan("这不干你的事"), [
       "zhè",

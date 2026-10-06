@@ -146,12 +146,12 @@ describe("readings a caller asserts at a position", () => {
   });
 });
 
-describe("a hint that cannot be read", () => {
-  /** The message a set of hints fails with. */
-  function refusal(text: string, readings: ReadingHints): string {
-    return assertThrowsError(() => read(text, readings)).message;
-  }
+/** The message a set of hints fails with. */
+function refusal(text: string, readings: ReadingHints): string {
+  return assertThrowsError(() => read(text, readings)).message;
+}
 
+describe("a hint that cannot be read", () => {
   it("rejects a reading that is not pinyin", () => {
     assertStringIncludes(refusal("长", { 长: "nope" }), "is not pinyin: nope");
   });
