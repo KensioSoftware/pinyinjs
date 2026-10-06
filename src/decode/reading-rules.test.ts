@@ -17,6 +17,7 @@ import { decodeRun, decodeRunScored } from "./decode.js";
 import {
   ADJECTIVAL_CHANG,
   ATTESTED_ERHUA,
+  CONCERNING_GAN,
   COUNTED_MEASURE,
   EXPERIENTIAL_GUO,
   MODAL_DE,
@@ -1126,6 +1127,112 @@ describe("还 where it gives something back", () => {
       "wǒ",
       "huán",
       "qián",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for 干, which is stored `gàn` with `gān` as an
+ * alternate.
+ *
+ * 不干 is the untagged key reading `bù gàn` that would carry the verb into the
+ * frame, and 干部 the tagged word that keeps a 干 after 无 its own.
+ */
+const ganDictionary = dictionaryOf([
+  entry("这", "zhè", { partOfSpeech: "r", frequency: 60_000 }),
+  entry("你", "nǐ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("们", "men", { partOfSpeech: "k", frequency: 40_000 }),
+  entry("他们", "tā men", { partOfSpeech: "r", frequency: 60_000 }),
+  entry("不", "bù", { partOfSpeech: "d", frequency: 80_000 }),
+  entry("了", "le", { partOfSpeech: "ul", frequency: 90_000 }),
+  entry("的", "de", { partOfSpeech: "uj", frequency: 95_000 }),
+  entry("事", "shì", { partOfSpeech: "n", frequency: 40_000 }),
+  entry("在", "zài", { partOfSpeech: "p", frequency: 80_000 }),
+  entry("什么", "shén me", { partOfSpeech: "r", frequency: 40_000 }),
+  entry("与", "yǔ", { partOfSpeech: "p", frequency: 40_000 }),
+  entry("无", "wú", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("卿", "qīng", { partOfSpeech: "n", frequency: 300 }),
+  entry("何", "hé", { partOfSpeech: "r", frequency: 9000 }),
+  entry("干", "gàn", {
+    partOfSpeech: "v",
+    frequency: 20_000,
+    alternates: [reading("gān")],
+  }),
+  entry("不干", "bù gàn", { frequency: 9000 }),
+  entry("部", "bù", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("干部", "gàn bù", { partOfSpeech: "n", frequency: 9000 }),
+]);
+
+describe("干 where it means to concern", () => {
+  /** How a run of the 干 cases reads, word by word. */
+  function readGan(run: string, rules = READING_RULES): readonly string[] {
+    return decodeRun(ganDictionary, run, rules).map((word) =>
+      word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+    );
+  }
+
+  it("reads 不干你的事 as gān", () => {
+    assertArrayEquals(readGan("这不干你的事"), [
+      "zhè",
+      "bù",
+      "gān",
+      "nǐ",
+      "de",
+      "shì",
+    ]);
+  });
+
+  it("reads gàn through 不干 without the rule, which is the bug", () => {
+    assertArrayEquals(readGan("这不干你的事", []), [
+      "zhè",
+      "bùgàn",
+      "nǐ",
+      "de",
+      "shì",
+    ]);
+  });
+
+  it("reads it gān with a plural pronoun and no 的", () => {
+    assertArrayEquals(readGan("不干他们事"), ["bù", "gān", "tāmen", "shì"]);
+  });
+
+  it("reads it gān in a question about the pronoun", () => {
+    assertArrayEquals(readGan("干你什么事"), ["gān", "nǐ", "shénme", "shì"]);
+  });
+
+  it("reads it gān in 干卿何事 and after 无", () => {
+    assertArrayEquals(readGan("干卿何事"), ["gān", "qīng", "hé", "shì"]);
+    assertArrayEquals(readGan("与你无干"), ["yǔ", "nǐ", "wú", "gān"]);
+  });
+
+  it("leaves the verb where no 不 or question frames it", () => {
+    // 你干你的事 tells someone to get on with their own work.
+    assertArrayEquals(readGan("你干你的事"), ["nǐ", "gàn", "nǐ", "de", "shì"]);
+    assertArrayEquals(readGan("你在干什么事"), [
+      "nǐ",
+      "zài",
+      "gàn",
+      "shénme",
+      "shì",
+    ]);
+  });
+
+  it("leaves 不干 the verb where no pronoun follows", () => {
+    assertArrayEquals(readGan("我不干了"), ["wǒ", "bùgàn", "le"]);
+  });
+
+  it("leaves a tagged word after 无 to read itself", () => {
+    assertArrayEquals(readGan("无干部"), ["wú", "gànbù"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readGan("干你什么事", [CONCERNING_GAN]), [
+      "gān",
+      "nǐ",
+      "shénme",
+      "shì",
     ]);
   });
 });

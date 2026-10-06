@@ -382,7 +382,25 @@ The default character reading is `hái`, the adverb. The full tier holds 还钱,
 
 The objects are listed by hand. jieba tags 有点, 客气 and 问 as nouns, and 还 in front of each of those is the adverb. The object must also stand clear of a tagged word of its own, which keeps 还书法 `hái`. In 88,866 corpus lines and both CPP splits, the rule changed 5 standard-tier readings and all 5 were corrections.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB` and `RETURNING_HUAN`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="gan-as-to-concern"></a>
+
+### 干 as "to concern"
+
+The rule selects `gān` when 干 means to concern or to have to do with:
+
+```ts
+convert(dictionary, "这不干你的事！"); // "Zhè bù gān nǐ de shì!"
+convert(dictionary, "干你什么事"); // "gān nǐ shénme shì"
+convert(dictionary, "你干你的事"); // "nǐ gàn nǐ de shì"
+```
+
+干 is stored `gàn` (to do), with `gān` as an alternate. The "to concern" sense appears in four frames, and the rule matches each as characters: 不干你的事 (or 不干我事), 干你什么事 (or 干你屁事), 干卿何事 and 与你无干. A pronoun after 干 is not enough on its own. 你干你的事 tells someone to get on with their own work, and it stays `gàn`.
+
+The full tier holds 无干 and 干卿底事 as words, and the standard tier holds neither. A tagged word starting at the 干 keeps its own reading, so 无干部 stays `wú gànbù`. In 88,866 corpus lines and both CPP splits, the rule changed 2 readings in each tier and both were corrections.
+
+The same frames keep 干 as 干 in [script conversion](../script-conversion/).
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN` and `CONCERNING_GAN`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
