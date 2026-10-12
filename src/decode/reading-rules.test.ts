@@ -19,6 +19,7 @@ import {
   ATTESTED_ERHUA,
   CONCERNING_GAN,
   COUNTED_MEASURE,
+  COUNTING_ZHI,
   EXPERIENTIAL_GUO,
   MODAL_DE,
   PARTICLE_DE,
@@ -1233,6 +1234,154 @@ describe("干 where it means to concern", () => {
       "nǐ",
       "shénme",
       "shì",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for 只, which is stored `zhǐ` with `zhī` as an
+ * alternate.
+ *
+ * 只是, 只有 and 只会 are the tagged words that keep the adverb after 这, and
+ * 唯一, 一半 and 第三 the words that can hold a numeral in front of a 只.
+ */
+const zhiDictionary = dictionaryOf([
+  entry("只", "zhǐ", {
+    partOfSpeech: "d",
+    frequency: 40_000,
+    alternates: [reading("zhī")],
+  }),
+  entry("一", "yī", { partOfSpeech: "m", frequency: 90_000 }),
+  entry("二", "èr", { partOfSpeech: "m", frequency: 30_000 }),
+  entry("三", "sān", { partOfSpeech: "m", frequency: 30_000 }),
+  entry("十", "shí", { partOfSpeech: "m", frequency: 30_000 }),
+  entry("两", "liǎng", { partOfSpeech: "m", frequency: 40_000 }),
+  entry("几", "jǐ", { partOfSpeech: "m", frequency: 30_000 }),
+  entry("半", "bàn", { partOfSpeech: "m", frequency: 20_000 }),
+  entry("多", "duō", { partOfSpeech: "m", frequency: 50_000 }),
+  entry("少", "shǎo", { partOfSpeech: "a", frequency: 20_000 }),
+  entry("多少", "duō shǎo", { partOfSpeech: "m", frequency: 9000 }),
+  entry("每", "měi", { partOfSpeech: "r", frequency: 20_000 }),
+  entry("第", "dì", { partOfSpeech: "m", frequency: 20_000 }),
+  entry("第三", "dì sān", { partOfSpeech: "m", frequency: 3000 }),
+  entry("唯", "wéi", { partOfSpeech: "d", frequency: 2000 }),
+  entry("唯一", "wéi yī", { partOfSpeech: "b", frequency: 9000 }),
+  entry("一半", "yī bàn", { partOfSpeech: "m", frequency: 9000 }),
+  entry("这", "zhè", { partOfSpeech: "r", frequency: 60_000 }),
+  entry("那", "nà", { partOfSpeech: "r", frequency: 40_000 }),
+  entry("哪", "nǎ", { partOfSpeech: "r", frequency: 20_000 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("不", "bù", { partOfSpeech: "d", frequency: 80_000 }),
+  entry("是", "shì", { partOfSpeech: "v", frequency: 90_000 }),
+  entry("有", "yǒu", { partOfSpeech: "v", frequency: 80_000 }),
+  entry("会", "huì", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("想", "xiǎng", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("吃", "chī", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("的", "de", { partOfSpeech: "uj", frequency: 95_000 }),
+  entry("个", "gè", { partOfSpeech: "q", frequency: 90_000 }),
+  entry("只是", "zhǐ shì", { partOfSpeech: "c", frequency: 9000 }),
+  entry("只有", "zhǐ yǒu", { partOfSpeech: "c", frequency: 9000 }),
+  entry("只会", "zhǐ huì", { partOfSpeech: "d", frequency: 900 }),
+  entry("猫", "māo", { partOfSpeech: "n", frequency: 9000 }),
+  entry("狗", "gǒu", { partOfSpeech: "n", frequency: 9000 }),
+  entry("鸡", "jī", { partOfSpeech: "n", frequency: 9000 }),
+  entry("黑", "hēi", { partOfSpeech: "a", frequency: 9000 }),
+  entry("胖", "pàng", { partOfSpeech: "a", frequency: 3000 }),
+  entry("母", "mǔ", { partOfSpeech: "ng", frequency: 3000 }),
+]);
+
+/** How a run of the 只 cases reads, word by word. */
+function readZhi(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(zhiDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
+
+describe("只 where it is a measure word", () => {
+  it("reads 只 as zhī after a numeral", () => {
+    assertArrayEquals(readZhi("三只猫"), ["sān", "zhī", "māo"]);
+    assertArrayEquals(readZhi("两只狗"), ["liǎng", "zhī", "gǒu"]);
+    assertArrayEquals(readZhi("十只鸡"), ["shí", "zhī", "jī"]);
+  });
+
+  it("reads zhǐ after a numeral without the rule, which is the bug", () => {
+    assertArrayEquals(readZhi("三只猫", []), ["sān", "zhǐ", "māo"]);
+  });
+
+  it("reads it zhī after a number of several characters", () => {
+    assertArrayEquals(readZhi("二十三只猫"), [
+      "èr",
+      "shí",
+      "sān",
+      "zhī",
+      "māo",
+    ]);
+    assertArrayEquals(readZhi("十几只狗"), ["shí", "jǐ", "zhī", "gǒu"]);
+  });
+
+  it("reads it zhī after 几, 多少, 半 and 每", () => {
+    assertArrayEquals(readZhi("几只狗"), ["jǐ", "zhī", "gǒu"]);
+    assertArrayEquals(readZhi("多少只鸡"), ["duōshǎo", "zhī", "jī"]);
+    assertArrayEquals(readZhi("半只鸡"), ["bàn", "zhī", "jī"]);
+    assertArrayEquals(readZhi("每只狗"), ["měi", "zhī", "gǒu"]);
+  });
+
+  it("reads it zhī after an approximate number", () => {
+    assertArrayEquals(readZhi("十多只鸡"), ["shí", "duō", "zhī", "jī"]);
+  });
+
+  it("reads it zhī after an ordinal", () => {
+    assertArrayEquals(readZhi("第三只猫"), ["dìsān", "zhī", "māo"]);
+  });
+
+  it("takes 只是 apart where a numeral counts the 只", () => {
+    // 两只是母的 is "two of them are female".
+    assertArrayEquals(readZhi("两只是母的"), [
+      "liǎng",
+      "zhī",
+      "shì",
+      "mǔ",
+      "de",
+    ]);
+  });
+
+  it("reads it zhī after a demonstrative with a noun to count", () => {
+    assertArrayEquals(readZhi("这只猫"), ["zhè", "zhī", "māo"]);
+    assertArrayEquals(readZhi("那只黑狗"), ["nà", "zhī", "hēi", "gǒu"]);
+    assertArrayEquals(readZhi("哪只狗"), ["nǎ", "zhī", "gǒu"]);
+  });
+
+  it("reads it zhī after a demonstrative closing the run", () => {
+    assertArrayEquals(readZhi("他是那只"), ["tā", "shì", "nà", "zhī"]);
+  });
+
+  it("leaves the adverb after a demonstrative where a word claims the 只", () => {
+    assertArrayEquals(readZhi("这只是猫"), ["zhè", "zhǐshì", "māo"]);
+    assertArrayEquals(readZhi("那只有猫"), ["nà", "zhǐyǒu", "māo"]);
+    assertArrayEquals(readZhi("这只会"), ["zhè", "zhǐhuì"]);
+  });
+
+  it("leaves the adverb after a demonstrative with a verb after it", () => {
+    // 这只想吃 is "this only wants to eat", and no word holds 只想.
+    assertArrayEquals(readZhi("这只想吃"), ["zhè", "zhǐ", "xiǎng", "chī"]);
+  });
+
+  it("leaves the adverb where nothing counts the 只", () => {
+    assertArrayEquals(readZhi("他只有一个"), ["tā", "zhǐyǒu", "yī", "gè"]);
+    assertArrayEquals(readZhi("不只"), ["bù", "zhǐ"]);
+    assertArrayEquals(readZhi("只是"), ["zhǐshì"]);
+  });
+
+  it("leaves the adverb where a word holds the numeral", () => {
+    assertArrayEquals(readZhi("唯一只有"), ["wéiyī", "zhǐyǒu"]);
+    assertArrayEquals(readZhi("一半只是"), ["yībàn", "zhǐshì"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readZhi("两只猫", [COUNTING_ZHI]), [
+      "liǎng",
+      "zhī",
+      "māo",
     ]);
   });
 });

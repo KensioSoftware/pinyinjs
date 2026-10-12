@@ -40,6 +40,8 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "我得去银行还钱", pinyin: "wǒ děi qù yínháng huán qián", script: "Hans", tags: ["polyphone"] },
   { hanzi: "他数了数桌上的数字", pinyin: "tā shǔ le shǔ zhuō shàng de shùzì", script: "Hans", tags: ["polyphone"] },
   { hanzi: "这不干你的事", pinyin: "zhè bù gān nǐ de shì", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "九只猫很胖", pinyin: "jiǔ zhī māo hěn pàng", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "他只有一个", pinyin: "tā zhǐyǒu yí gè", script: "Hans", tags: ["polyphone"] },
   { hanzi: "长城", pinyin: "Chángchéng", script: "Hans", tags: ["polyphone", "proper-noun"] },
   { hanzi: "长大", pinyin: "zhǎngdà", script: "Hans", tags: ["polyphone"] },
   { hanzi: "重要", pinyin: "zhòngyào", script: "Hans", tags: ["polyphone"] },

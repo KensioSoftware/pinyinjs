@@ -365,6 +365,25 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "无干部"), "wú gànbù");
     });
 
+    it("reads 只 as zhī where a number or a demonstrative counts it", () => {
+      assertIdentical(convert(dictionary, "三只猫"), "sān zhī māo");
+      assertIdentical(convert(dictionary, "这只猫"), "zhè zhī māo");
+      assertIdentical(convert(dictionary, "他只有一个"), "tā zhǐyǒu yí gè");
+      assertIdentical(
+        convert(dictionary, "这只是个玩笑"),
+        "zhè zhǐshì gè wánxiào",
+      );
+      assertIdentical(convert(dictionary, "3只猫"), "sān zhī māo");
+      assertIdentical(
+        convert(dictionary, "这只会导致争论"),
+        "zhè zhǐ huì dǎozhì zhēnglùn",
+      );
+      assertIdentical(
+        convert(dictionary, "去那只要五分钟"),
+        "qù nà zhǐyào wǔ fēnzhōng",
+      );
+    });
+
     it("reads 教 as jiāo where it teaches and jiào where it does not", () => {
       assertIdentical(
         convert(dictionary, "他在北京大学教了三年书。"),
@@ -1231,6 +1250,7 @@ describe("the examples in docs/", () => {
         ["干部", "幹部"],
         ["干扰", "干擾"],
         ["一只猫", "一隻貓"],
+        ["三只猫", "三隻貓"],
         ["只有", "只有"],
       ] as const;
       for (const [hans, hant] of rows) {
