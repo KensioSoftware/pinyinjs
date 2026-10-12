@@ -6,6 +6,7 @@ import { TEACHING_JIAO } from "./jiao-rule.js";
 import { SEPARATED_COMPOUND } from "./split-rule.js";
 import { RETURNING_HUAN } from "./huan-rule.js";
 import { CONCERNING_GAN } from "./gan-rule.js";
+import { COUNTING_ZHI } from "./zhi-rule.js";
 import { REDUPLICATED_VERB } from "./reduplication-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
@@ -15,6 +16,7 @@ export { TEACHING_JIAO } from "./jiao-rule.js";
 export { SEPARATED_COMPOUND } from "./split-rule.js";
 export { RETURNING_HUAN } from "./huan-rule.js";
 export { CONCERNING_GAN } from "./gan-rule.js";
+export { COUNTING_ZHI } from "./zhi-rule.js";
 export { REDUPLICATED_VERB } from "./reduplication-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
@@ -169,4 +171,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   REDUPLICATED_VERB,
   RETURNING_HUAN,
   CONCERNING_GAN,
+  COUNTING_ZHI,
 ];

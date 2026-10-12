@@ -400,7 +400,32 @@ The full tier holds 无干 and 干卿底事 as words, and the standard tier hold
 
 The same frames keep 干 as 干 in [script conversion](../script-conversion/).
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN` and `CONCERNING_GAN`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="zhi-as-a-measure-word"></a>
+
+### 只 as a measure word
+
+The rule selects `zhī` when a number or a demonstrative counts 只:
+
+```ts
+convert(dictionary, "三只猫"); // "sān zhī māo"
+convert(dictionary, "这只猫"); // "zhè zhī māo"
+convert(dictionary, "他只有一个"); // "tā zhǐyǒu yí gè", the adverb
+convert(dictionary, "这只是个玩笑"); // "zhè zhǐshì gè wánxiào"
+```
+
+只 is stored `zhǐ` (only), with `zhī` as an alternate. 一只 and 几只 are dictionary words and read `zhī` through the word. Other counted forms, such as 三只, 两只 and 这只, have no entry.
+
+A numeral, 几, 半, 每 or 多少 before 只 selects `zhī` whatever follows. In 另外两只是母的 (the other two are female), the rule takes 只是 apart. Approximate numbers (十多只, 百余只) and ordinals (第三只) count as well. A numeral inside a tagged word belongs to that word, so 唯一只有 keeps `zhǐyǒu`.
+
+After 这, 那 and 哪, the adverb is the commoner reading. The rule selects `zhī` there only when a noun, an adjective or the end of the run follows. A word starting at 只 that reads `zhǐ` keeps the adverb, as in 这只是, 那只有 and 去那只要五分钟. A verb after 只 does the same, as in 这只会导致争论.
+
+Numbers written in digits are read before the rule runs, so 3只猫 gives `sān zhī māo`.
+
+In 88,866 corpus lines and both CPP splits, the rule changed 119 readings in the full tier, 126 in the standard tier and 262 in the core tier. All but three are corrections. 后半只计 (standard and core) and 凡百只务实行 (core) have no word holding the numeral. The rule misses 这只表多少钱, where 表 is tagged as a verb.
+
+The reading also selects 隻 in [script conversion](../script-conversion/), so 三只猫 becomes 三隻貓.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN` and `COUNTING_ZHI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
