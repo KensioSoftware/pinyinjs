@@ -35,13 +35,13 @@
   "script": {
     "file": "script.map",
     "toTraditional": 5944,
-    "toSimplified": 6117,
+    "toSimplified": 6113,
     "traditionalWords": 2390,
-    "simplifiedWords": 849,
+    "simplifiedWords": 662,
     "hansOnly": 5818,
     "hantOnly": 5566,
-    "bytes": 293592,
-    "compressedBytes": 100572
+    "bytes": 290109,
+    "compressedBytes": 99089
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",

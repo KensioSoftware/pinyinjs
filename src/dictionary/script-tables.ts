@@ -28,7 +28,22 @@ export function buildScriptTables(
   const toTraditionalCounts = new Map<string, ByReading>();
   const toSimplifiedCounts = new Map<string, ByReading>();
 
-  for (const entry of entries) {
+  // A 简体 headword written with a 繁體 variant glyph is left out of the
+  // pairings and the word exceptions. The phrase corpus spells a few hundred
+  // headwords that way (山峯, 鹫峯寺, 写字枱). Counted as 简体, they made the
+  // word table turn 山峰 into 山峯 and gave 峰 the rival form 峯. Lookup folds
+  // these glyphs before it converts anything.
+  //
+  // One-character entries stay. Four of the variant glyphs (捝, 涚, 蒀 and 棁)
+  // are the 简体 forms OpenCC gives for 挩, 涗, 蒕 and 梲, and their own
+  // entries are what pair them.
+  const evidence = entries.filter(
+    (entry) =>
+      toCharacters(entry.hans).length < 2 ||
+      toCanonicalGlyphs(entry.hans) === entry.hans,
+  );
+
+  for (const entry of evidence) {
     for (const { hans, hant, key } of pairingsOf(entry)) {
       tally(toTraditionalCounts, hans, hant, key, 1);
       tally(toSimplifiedCounts, hant, hans, key, 1);
@@ -49,7 +64,7 @@ export function buildScriptTables(
   // every 和 to it, against the thousands of words that say otherwise.
   const traditionalWords = new Map<string, string>();
   const simplifiedWords = new Map<string, string>();
-  for (const entry of entries) {
+  for (const entry of evidence) {
     if (toCharacters(entry.hans).length < 2) {
       continue;
     }

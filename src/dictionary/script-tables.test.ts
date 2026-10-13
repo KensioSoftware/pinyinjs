@@ -126,6 +126,21 @@ describe("script tables", () => {
       );
     });
 
+    it("takes no evidence from a 简体 headword spelled with a 繁體 variant", () => {
+      // The phrase corpus writes 山峯 as a 简体 headword. 峯 is a variant glyph
+      // of 峰, which 简体 never writes, so the pairing says nothing about 简体.
+      const tables = buildScriptTables([
+        entry("山", "山", "shan1"),
+        entry("峰", "峰", "feng1"),
+        entry("山峰", "山峰", "shan1 feng1"),
+        entry("山峯", "山峰", "shan1 feng1"),
+      ]);
+      assertFalse(tables.simplifiedWords.has("山峰"));
+      assertFalse(tables.traditionalWords.has("山峯"));
+      assertFalse(tables.toSimplified.has("峰"));
+      assertFalse(tables.toTraditional.has("峯"));
+    });
+
     it("skips an entry whose two scripts differ in length", () => {
       const tables = buildScriptTables([
         ...ENTRIES,
