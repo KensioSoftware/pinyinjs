@@ -138,6 +138,17 @@ describe("script conversion", () => {
       assertIdentical(convert("乾燥", "zh-Hans"), "干燥");
       assertIdentical(convert("乾隆", "zh-Hans"), "乾隆");
     });
+
+    it("leaves 简体 words alone that the phrase corpus spells with 峯", () => {
+      // The phrase corpus writes 山峯 and 高峯 as 简体 headwords. 峯 is a 繁體
+      // variant of 峰, and 简体 output keeps 峰.
+      for (const word of ["高峰", "山峰", "峰会", "早高峰地铁里人太多了。"]) {
+        assertIdentical(
+          toScript(dictionary, tables, word, { to: "zh-Hans", from: "Hant" }),
+          word,
+        );
+      }
+    });
   });
 
   describe("regional 繁體 orthography", () => {
