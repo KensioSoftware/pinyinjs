@@ -31,7 +31,7 @@ importers:
         version: 9.3.1
       fta-cli:
         specifier: ^3.0.0
-        version: 3.0.1
+        version: 3.1.0
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
@@ -1111,8 +1111,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  fta-cli@3.0.1:
-    resolution: {integrity: sha512-Nm03+vurWkzWj/SEiOof+8zDAbp/0+gDttW5+gIVe4Qxg4uOTlQm+IbHyXM+QptCfywj0/h4U37NsnybaG9z6Q==}
+  fta-cli@3.1.0:
+    resolution: {integrity: sha512-l1BUxXSW+oq/uOY9/8aQNW8aNwnywFpnAgB7vW2c2SLJ54DoDgxPy/3gm0yb1Lkm7KZKv/v6GCKJuGJC3JioRw==}
     hasBin: true
 
   function-timeout@1.0.2:
@@ -3065,7 +3065,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fta-cli@3.0.1: {}
+  fta-cli@3.1.0: {}
 
   function-timeout@1.0.2: {}
 
