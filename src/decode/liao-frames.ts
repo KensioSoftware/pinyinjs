@@ -2,6 +2,7 @@
  * Whether a 了 closes a potential complement, as in 吃得了.
  */
 import { toCharacters } from "../script/characters.js";
+import { obtainsAt } from "./obtain-frames.js";
 import {
   type EdgeContext,
   tagOf,
@@ -101,11 +102,16 @@ const LEXICAL_STEMS = new Set([
  * 吃得了 is "able to eat it all" and reads `chī de liǎo`, the positive of
  * 吃不了. The verb in front of the 得 has to be a word of its own, so a verb
  * that makes a word with the 得 keeps the aspect 了 unless it is listed in
- * {@link POTENTIAL_STEMS}. 得了吧 and 他得了病 have no verb in front of the 得.
+ * {@link POTENTIAL_STEMS}. 得了吧 and 他得了病 have no verb in front of the 得,
+ * and in 确诊得了肺炎 the illness after the 了 makes the 得 "to contract".
  */
 export function isPotentialAt(context: EdgeContext, at: number): boolean {
   const { characters } = context;
-  if (characters[at] !== "了" || characters[at - 1] !== "得") {
+  if (
+    characters[at] !== "了" ||
+    characters[at - 1] !== "得" ||
+    obtainsAt(context, at - 1)
+  ) {
     return false;
   }
   const lexical = wordsEndingAt(context, at).some(

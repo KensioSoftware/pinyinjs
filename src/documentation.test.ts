@@ -552,6 +552,46 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "我受不了了"), "wǒ shòubùliǎo le");
     });
 
+    it("reads 得了 as dé le where it obtains an illness, a score or a prize", () => {
+      assertIdentical(
+        convert(dictionary, "他上周被确诊得了肺炎"),
+        "tā shàngzhōu bèi quèzhěn dé le fèiyán",
+      );
+      assertIdentical(
+        convert(dictionary, "我们不应该歧视得了精神病的人"),
+        "wǒmen bù yīnggāi qíshì dé le jīngshénbìng de rén",
+      );
+      assertIdentical(
+        convert(dictionary, "我邻居得了焦虑症"),
+        "wǒ línjū dé le jiāolǜzhèng",
+      );
+      assertIdentical(convert(dictionary, "他得了感冒"), "tā dé le gǎnmào");
+      assertIdentical(
+        convert(dictionary, "他这次考试得了几分"),
+        "tā zhècì kǎoshì dé le jǐfēn",
+      );
+      assertIdentical(
+        convert(dictionary, "我们队得了冠军"),
+        "wǒmen duì dé le guànjūn",
+      );
+      // A potential complement where the object is the same kind of thing.
+      assertIdentical(convert(dictionary, "他治得了病"), "tā zhì de liǎo bìng");
+      assertIdentical(
+        convert(dictionary, "你拿得了冠军吗"),
+        "nǐ ná de liǎo guànjūn ma",
+      );
+      // And the potential complements the rule must leave alone.
+      assertIdentical(convert(dictionary, "吃得了吗"), "chī de liǎo ma");
+      assertIdentical(convert(dictionary, "帮得了我"), "bāng de liǎo wǒ");
+      assertIdentical(
+        convert(dictionary, "这条裤子我现在穿得了了"),
+        "zhè tiáo kùzi wǒ xiànzài chuān de liǎo le",
+      );
+      assertIdentical(convert(dictionary, "得了吧"), "déleba");
+      assertIdentical(convert(dictionary, "获得了"), "huòdéle");
+      assertIdentical(convert(dictionary, "受不了了"), "shòubùliǎo le");
+    });
+
     it("reads 弹 as tán where it is playing", () => {
       assertIdentical(
         convert(dictionary, "他会弹一点儿古筝。"),
