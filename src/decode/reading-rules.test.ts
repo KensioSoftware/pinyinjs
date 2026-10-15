@@ -22,6 +22,7 @@ import {
   COUNTING_ZHI,
   EXPERIENTIAL_GUO,
   MODAL_DE,
+  OBTAINING_DE,
   PARTICLE_DE,
   PLAYING_TAN,
   POTENTIAL_LIAO,
@@ -1426,6 +1427,28 @@ const liaoDictionary = dictionaryOf([
   entry("受得了", "shòu de liǎo", { partOfSpeech: "v", frequency: 900 }),
   entry("获得", "huò dé", { partOfSpeech: "v", frequency: 9000 }),
   entry("病", "bìng", { partOfSpeech: "n", frequency: 9000 }),
+  entry("病人", "bìng rén", { partOfSpeech: "n", frequency: 9000 }),
+  entry("人", "rén", { partOfSpeech: "n", frequency: 90_000 }),
+  entry("确", "què", { partOfSpeech: "d", frequency: 5000 }),
+  entry("诊", "zhěn", { partOfSpeech: "v", frequency: 2000 }),
+  entry("确诊", "què zhěn", { partOfSpeech: "v", frequency: 2000 }),
+  entry("肺", "fèi", { partOfSpeech: "n", frequency: 2000 }),
+  entry("炎", "yán", { partOfSpeech: "ng", frequency: 2000 }),
+  entry("肺炎", "fèi yán", { partOfSpeech: "n", frequency: 2000 }),
+  entry("感", "gǎn", { partOfSpeech: "v", frequency: 9000 }),
+  entry("冒", "mào", { partOfSpeech: "v", frequency: 3000 }),
+  entry("感冒", "gǎn mào", { partOfSpeech: "v", frequency: 3000 }),
+  entry("治", "zhì", { partOfSpeech: "v", frequency: 5000 }),
+  entry("帮", "bāng", { partOfSpeech: "v", frequency: 9000 }),
+  entry("几", "jǐ", { partOfSpeech: "m", frequency: 20_000 }),
+  entry("分", "fēn", { partOfSpeech: "q", frequency: 20_000 }),
+  entry("部", "bù", { partOfSpeech: "q", frequency: 20_000 }),
+  entry("部分", "bù fen", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("拿", "ná", { partOfSpeech: "v", frequency: 9000 }),
+  entry("冠", "guàn", { partOfSpeech: "ng", frequency: 2000 }),
+  entry("军", "jūn", { partOfSpeech: "n", frequency: 9000 }),
+  entry("冠军", "guàn jūn", { partOfSpeech: "n", frequency: 5000 }),
+  entry("奖", "jiǎng", { partOfSpeech: "n", frequency: 5000 }),
   entry("吧", "ba", { partOfSpeech: "y", frequency: 20_000 }),
   entry("吗", "ma", { partOfSpeech: "y", frequency: 20_000 }),
 ]);
@@ -1479,6 +1502,53 @@ describe("了 closing a potential complement", () => {
       "chī",
       "de",
       "liǎo",
+    ]);
+  });
+});
+
+describe("得 obtaining an illness, a score or a prize", () => {
+  it("reads 得了 dé le before an illness after a verb", () => {
+    assertArrayEquals(readLiao("确诊得了肺炎"), ["quèzhěn", "déle", "fèiyán"]);
+  });
+
+  it("reads it dé le before an illness with no verb in front", () => {
+    assertArrayEquals(readLiao("他得了感冒"), ["tā", "déle", "gǎnmào"]);
+    assertArrayEquals(readLiao("他得了病"), ["tā", "déle", "bìng"]);
+  });
+
+  it("reads it dé le before a score or a prize", () => {
+    assertArrayEquals(readLiao("他得了几分"), ["tā", "déle", "jǐ", "fēn"]);
+    assertArrayEquals(readLiao("他得了冠军"), ["tā", "déle", "guànjūn"]);
+    assertArrayEquals(readLiao("他得了奖"), ["tā", "déle", "jiǎng"]);
+  });
+
+  it("leaves the potential complement after a verb that treats or wins", () => {
+    assertArrayEquals(readLiao("治得了病"), ["zhì", "de", "liǎo", "bìng"]);
+    assertArrayEquals(readLiao("拿得了冠军"), ["ná", "de", "liǎo", "guànjūn"]);
+  });
+
+  it("leaves the potential complement before what is not an illness or a score", () => {
+    assertArrayEquals(readLiao("帮得了病人"), [
+      "bāng",
+      "de",
+      "liǎo",
+      "bìngrén",
+    ]);
+    assertArrayEquals(readLiao("吃得了部分"), ["chī", "de", "liǎo", "bùfen"]);
+  });
+
+  it("keeps the potential complement rule out of the frame", () => {
+    assertArrayEquals(
+      readLiao("确诊得了肺炎", [POTENTIAL_LIAO]),
+      readLiao("确诊得了肺炎", []),
+    );
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readLiao("他得了感冒", [OBTAINING_DE]), [
+      "tā",
+      "déle",
+      "gǎnmào",
     ]);
   });
 });

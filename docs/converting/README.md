@@ -320,6 +320,28 @@ The 了 after `liǎo` keeps its aspect reading, so 我受不了了 reads `shòub
 
 In 88,866 corpus lines, the rule changed 12 readings in the full tier, 14 in the standard tier and 15 in the core tier. All but one are corrections. In 你去办公室睡得了呗 the 得了 means "and be done with it", and neither reading was right. No sentence in either CPP split changed.
 
+<a id="de-obtaining"></a>
+
+### 得 as "to obtain"
+
+The rule selects `dé le` for 得了 when an illness, a score or a prize follows:
+
+```ts
+convert(dictionary, "他上周被确诊得了肺炎"); // "tā shàngzhōu bèi quèzhěn dé le fèiyán"
+convert(dictionary, "我邻居得了焦虑症"); // "wǒ línjū dé le jiāolǜzhèng"
+convert(dictionary, "他得了感冒"); // "tā dé le gǎnmào"
+convert(dictionary, "他这次考试得了几分"); // "tā zhècì kǎoshì dé le jǐfēn"
+convert(dictionary, "他治得了病"); // "tā zhì de liǎo bìng", a potential complement
+```
+
+得 is stored as the particle `de`, so a bare 得 read `de` here before. After a verb, the potential complement rule read it `de liǎo`, as in 确诊得了肺炎. That rule now leaves this frame to this one.
+
+The object is matched by its characters, so the core tier reads it the same way. An illness ends in a character such as 病, 症, 炎 or 癌, or is one of a short list (感冒, 流感, 中风 and others). 病人, 病房 and 病情 are excluded. A score is a count followed by 分 (but not 分钟 or 分之), and a prize is 奖, a placing such as 第三名, or a word such as 冠军 or 金牌. The object has to end within four characters of the 了, and 的 or a sentence-final particle closes it.
+
+Some verbs take these objects as a potential complement. 治, 医, 看 and 控制 come before illnesses (他治得了病, 他控制得了病情), and 拿 and 考 before prizes (你拿得了冠军吗). The 得 after them keeps the particle reading.
+
+Over the same 88,866 corpus lines, the rule changed 35 readings in the full tier, 35 in the standard tier and 46 in the core tier. Every one is a correction from `de` to `dé`. Eleven of the core tier's are 获得了冠军 and the like, which read `huò de le` there. No label in either CPP split falls on a 得 the rule moves.
+
 ### Experiential 过
 
 The rule selects neutral-tone 过 after a verb when it marks a past experience:

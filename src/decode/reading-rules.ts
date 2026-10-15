@@ -8,6 +8,7 @@ import { RETURNING_HUAN } from "./huan-rule.js";
 import { CONCERNING_GAN } from "./gan-rule.js";
 import { COUNTING_ZHI } from "./zhi-rule.js";
 import { POTENTIAL_LIAO } from "./liao-rule.js";
+import { OBTAINING_DE } from "./obtain-rule.js";
 import { REDUPLICATED_VERB } from "./reduplication-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
@@ -19,6 +20,7 @@ export { RETURNING_HUAN } from "./huan-rule.js";
 export { CONCERNING_GAN } from "./gan-rule.js";
 export { COUNTING_ZHI } from "./zhi-rule.js";
 export { POTENTIAL_LIAO } from "./liao-rule.js";
+export { OBTAINING_DE } from "./obtain-rule.js";
 export { REDUPLICATED_VERB } from "./reduplication-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
@@ -175,4 +177,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   CONCERNING_GAN,
   COUNTING_ZHI,
   POTENTIAL_LIAO,
+  OBTAINING_DE,
 ];
