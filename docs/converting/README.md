@@ -294,7 +294,31 @@ convert(dictionary, "他算得上一个作家"); // "tā suàn de shàng yí gè
 convert(dictionary, "取得上级批准"); // "qǔdé shàngjí pīzhǔn", the word
 ```
 
-Both sides are checked. A verb before 得 excludes 只得上山, where 得 belongs to an adverb. The complement must stand alone, which excludes 取得上级批准, where 上 belongs to 上级. Ambiguous 了 and 过 are excluded because they also mark aspect.
+Both sides are checked. A verb before 得 excludes 只得上山, where 得 belongs to an adverb. The complement must stand alone, which excludes 取得上级批准, where 上 belongs to 上级. Ambiguous 了 and 过 are excluded because they also mark aspect. 了 has a rule of its own, described next.
+
+<a id="liao-in-potential-complements"></a>
+
+### 了 in potential complements
+
+The rule selects `liǎo` for 了 after a verb and 得:
+
+```ts
+convert(dictionary, "你吃得了吗？"); // "Nǐ chī de liǎo ma?"
+convert(dictionary, "我觉得他们来得了"); // "wǒ juéde tāmen lái de liǎo"
+convert(dictionary, "这条裤子我现在穿得了了"); // "zhè tiáo kùzi wǒ xiànzài chuān de liǎo le"
+convert(dictionary, "他获得了冠军"); // "tā huòdéle guànjūn", aspect
+convert(dictionary, "得了吧"); // "déleba", the word
+```
+
+了 is stored `le` (aspect), with `liǎo` and `liào` as alternates. 吃不了 and 受不了 read `liǎo` through 不了, which is a dictionary word. 吃得了 has no entry, and 得了 is itself a word read `dé le`.
+
+The rule needs a verb before 得. A pronoun or a noun there leaves 得了 alone, as in 得了吧 and 他得了病. Modal and phase verbs are excluded (他可能得了感冒, 我开始得了流感), and so are nouns made from verbs (他考试得了一百分).
+
+Many verbs make a word with 得, such as 获得, 取得, 记得 and 觉得. The 了 after these marks aspect, so the rule leaves them alone. 来得 and 算得 are exceptions, since 来得了 and 这算得了什么 are potential complements. The core tier holds no words, so a fixed list of these verbs stands in for the dictionary there.
+
+The 了 after `liǎo` keeps its aspect reading, so 我受不了了 reads `shòubùliǎo le`.
+
+In 88,866 corpus lines, the rule changed 12 readings in the full tier, 14 in the standard tier and 15 in the core tier. All but one are corrections. In 你去办公室睡得了呗 the 得了 means "and be done with it", and neither reading was right. No sentence in either CPP split changed.
 
 ### Experiential 过
 
@@ -425,7 +449,7 @@ In 88,866 corpus lines and both CPP splits, the rule changed 119 readings in the
 
 The reading also selects 隻 in [script conversion](../script-conversion/), so 三只猫 becomes 三隻貓.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN` and `COUNTING_ZHI`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI` and `POTENTIAL_LIAO`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

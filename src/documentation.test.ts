@@ -531,6 +531,27 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("reads the 了 of a potential complement as liǎo", () => {
+      assertIdentical(
+        convert(dictionary, "你吃得了吗？"),
+        "Nǐ chī de liǎo ma?",
+      );
+      assertIdentical(
+        convert(dictionary, "我觉得他们来得了"),
+        "wǒ juéde tāmen lái de liǎo",
+      );
+      assertIdentical(
+        convert(dictionary, "这条裤子我现在穿得了了"),
+        "zhè tiáo kùzi wǒ xiànzài chuān de liǎo le",
+      );
+      assertIdentical(
+        convert(dictionary, "他获得了冠军"),
+        "tā huòdéle guànjūn",
+      );
+      assertIdentical(convert(dictionary, "得了吧"), "déleba");
+      assertIdentical(convert(dictionary, "我受不了了"), "wǒ shòubùliǎo le");
+    });
+
     it("reads 弹 as tán where it is playing", () => {
       assertIdentical(
         convert(dictionary, "他会弹一点儿古筝。"),
