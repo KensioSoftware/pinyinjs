@@ -24,6 +24,7 @@ import {
   MODAL_DE,
   PARTICLE_DE,
   PLAYING_TAN,
+  POTENTIAL_LIAO,
   READING_RULES,
   REDUPLICATED_VERB,
   RETURNING_HUAN,
@@ -1382,6 +1383,102 @@ describe("只 where it is a measure word", () => {
       "liǎng",
       "zhī",
       "māo",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for 了, which is stored `le` with `liǎo` and `liào`
+ * as alternates.
+ *
+ * 得了 and 了了 are the words a potential complement has to be taken out of,
+ * and 受得了 is one that holds the whole complement.
+ * 来得 and 获得 are verb-and-得 words, and 赢 is a verb with no 赢得 entry, as
+ * in the core tier.
+ */
+const liaoDictionary = dictionaryOf([
+  entry("了", "le", {
+    partOfSpeech: "ul",
+    frequency: 90_000,
+    alternates: [reading("liǎo"), reading("liào")],
+  }),
+  entry("得", "de", {
+    partOfSpeech: "ud",
+    frequency: 60_000,
+    alternates: [reading("dé"), reading("děi")],
+  }),
+  entry("得了", "dé le", { partOfSpeech: "l", frequency: 3000 }),
+  entry("了了", "liǎo liǎo", { partOfSpeech: "v", frequency: 300 }),
+  entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("吃", "chī", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("来", "lái", { partOfSpeech: "v", frequency: 60_000 }),
+  entry("穿", "chuān", { partOfSpeech: "zg", frequency: 5000 }),
+  entry("获", "huò", { partOfSpeech: "v", frequency: 5000 }),
+  entry("赢", "yíng", { partOfSpeech: "v", frequency: 5000 }),
+  entry("能", "néng", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("可", "kě", { partOfSpeech: "c", frequency: 30_000 }),
+  entry("可能", "kě néng", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("考", "kǎo", { partOfSpeech: "v", frequency: 5000 }),
+  entry("试", "shì", { partOfSpeech: "v", frequency: 5000 }),
+  entry("考试", "kǎo shì", { partOfSpeech: "vn", frequency: 9000 }),
+  entry("来得", "lái de", { partOfSpeech: "v", frequency: 3000 }),
+  entry("受", "shòu", { partOfSpeech: "v", frequency: 9000 }),
+  entry("受得了", "shòu de liǎo", { partOfSpeech: "v", frequency: 900 }),
+  entry("获得", "huò dé", { partOfSpeech: "v", frequency: 9000 }),
+  entry("病", "bìng", { partOfSpeech: "n", frequency: 9000 }),
+  entry("吧", "ba", { partOfSpeech: "y", frequency: 20_000 }),
+  entry("吗", "ma", { partOfSpeech: "y", frequency: 20_000 }),
+]);
+
+/** How a run of the 了 cases reads, word by word. */
+function readLiao(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(liaoDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
+
+describe("了 closing a potential complement", () => {
+  it("reads it liǎo after a verb and 得", () => {
+    assertArrayEquals(readLiao("吃得了吗"), ["chī", "de", "liǎo", "ma"]);
+  });
+
+  it("reads it le where the rule is not applied", () => {
+    assertArrayEquals(readLiao("吃得了吗", []), ["chī", "déle", "ma"]);
+  });
+
+  it("keeps a word that holds the whole complement", () => {
+    assertArrayEquals(readLiao("受得了吗"), ["shòudeliǎo", "ma"]);
+  });
+
+  it("takes 来得 apart", () => {
+    assertArrayEquals(readLiao("来得了"), ["lái", "de", "liǎo"]);
+  });
+
+  it("takes 了了 apart and leaves the second 了 as aspect", () => {
+    assertArrayEquals(readLiao("穿得了了"), ["chuān", "de", "liǎo", "le"]);
+  });
+
+  it("leaves 得了 alone where no verb stands before it", () => {
+    assertArrayEquals(readLiao("得了吧"), readLiao("得了吧", []));
+    assertArrayEquals(readLiao("他得了病"), readLiao("他得了病", []));
+  });
+
+  it("leaves 得了 alone after a modal or a noun made from a verb", () => {
+    assertArrayEquals(readLiao("可能得了病"), readLiao("可能得了病", []));
+    assertArrayEquals(readLiao("能得了病"), readLiao("能得了病", []));
+    assertArrayEquals(readLiao("考试得了"), readLiao("考试得了", []));
+  });
+
+  it("leaves the aspect 了 after a verb that makes a word with 得", () => {
+    assertArrayEquals(readLiao("获得了"), readLiao("获得了", []));
+    assertArrayEquals(readLiao("赢得了"), readLiao("赢得了", []));
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readLiao("吃得了", [POTENTIAL_LIAO]), [
+      "chī",
+      "de",
+      "liǎo",
     ]);
   });
 });
