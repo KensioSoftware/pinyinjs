@@ -16,10 +16,10 @@ importers:
         version: 7.1.0(semantic-release@25.0.9(@typescript/typescript6@6.0.2)(supports-color@7.2.0))(supports-color@7.2.0)
       '@types/lodash':
         specifier: ^4.17.24
-        version: 4.17.25
+        version: 4.17.26
       '@types/node':
         specifier: ^26.0.0
-        version: 26.6.4
+        version: 26.6.5
       '@typescript/native':
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
@@ -31,7 +31,7 @@ importers:
         version: 9.3.1
       fta-cli:
         specifier: ^3.0.0
-        version: 3.0.1
+        version: 3.1.0
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
@@ -52,7 +52,7 @@ importers:
         version: '@typescript/typescript6@6.0.2'
       vitest:
         specifier: ^4.1.10
-        version: 4.1.11(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0))
+        version: 4.1.11(@types/node@26.6.5)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0))
 
 packages:
 
@@ -631,11 +631,11 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/lodash@4.17.25':
-    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
+  '@types/lodash@4.17.26':
+    resolution: {integrity: sha512-48NWfiY6oNcKOh47Z4h+sIvwcQR91h6KPhaYKgeMIrkT2jV82Gy90SErj60vW8jQbeMSOSbhIv3bZ7JoqPPVhA==}
 
-  '@types/node@26.6.4':
-    resolution: {integrity: sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg==}
+  '@types/node@26.6.5':
+    resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1111,8 +1111,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  fta-cli@3.0.1:
-    resolution: {integrity: sha512-Nm03+vurWkzWj/SEiOof+8zDAbp/0+gDttW5+gIVe4Qxg4uOTlQm+IbHyXM+QptCfywj0/h4U37NsnybaG9z6Q==}
+  fta-cli@3.1.0:
+    resolution: {integrity: sha512-l1BUxXSW+oq/uOY9/8aQNW8aNwnywFpnAgB7vW2c2SLJ54DoDgxPy/3gm0yb1Lkm7KZKv/v6GCKJuGJC3JioRw==}
     hasBin: true
 
   function-timeout@1.0.2:
@@ -2642,9 +2642,9 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/lodash@4.17.25': {}
+  '@types/lodash@4.17.26': {}
 
-  '@types/node@26.6.4':
+  '@types/node@26.6.5':
     dependencies:
       undici-types: 8.9.0
 
@@ -2726,7 +2726,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0))
+      vitest: 4.1.11(@types/node@26.6.5)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0))
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -2737,13 +2737,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.11(vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0))':
+  '@vitest/mocker@4.1.11(vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.2.0(@types/node@26.6.4)(jiti@2.7.0)
+      vite: 8.2.0(@types/node@26.6.5)(jiti@2.7.0)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -3065,7 +3065,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fta-cli@3.0.1: {}
+  fta-cli@3.1.0: {}
 
   function-timeout@1.0.2: {}
 
@@ -3914,7 +3914,7 @@ snapshots:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
 
-  vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0):
+  vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -3922,14 +3922,14 @@ snapshots:
       rolldown: 1.2.1
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.6.4
+      '@types/node': 26.6.5
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vitest@4.1.11(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0)):
+  vitest@4.1.11(@types/node@26.6.5)(@vitest/coverage-v8@4.1.11)(vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@8.2.0(@types/node@26.6.4)(jiti@2.7.0))
+      '@vitest/mocker': 4.1.11(vite@8.2.0(@types/node@26.6.5)(jiti@2.7.0))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -3946,10 +3946,10 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.0(@types/node@26.6.4)(jiti@2.7.0)
+      vite: 8.2.0(@types/node@26.6.5)(jiti@2.7.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 26.6.4
+      '@types/node': 26.6.5
       '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
     transitivePeerDependencies:
       - msw
