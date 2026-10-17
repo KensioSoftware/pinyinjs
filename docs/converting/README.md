@@ -243,6 +243,21 @@ convert(dictionary, "那条河长300公里"); // "nà tiáo hé cháng sānbǎi 
 
 Measurements must express distance or duration. A number alone is insufficient because it may count something else, as in 新长两个校区 or 总会长一职.
 
+Other contexts mark a span of time or a change in length:
+
+```ts
+convert(dictionary, "长时间看手机会损伤眼睛"); // "cháng shíjiān kàn shǒujī huì sǔnshāng yǎnjing"
+convert(dictionary, "东北的冬天又长又冷"); // "Dōngběi de dōngtiān yòu cháng yòu lěng"
+convert(dictionary, "白天日益变长"); // "báitiān rìyì biàn cháng"
+convert(dictionary, "时间长了"); // "shíjiān chángle"
+convert(dictionary, "时间比我想的长"); // "shíjiān bǐ wǒ xiǎng de cháng"
+convert(dictionary, "宽松的长外套"); // "kuānsōng de cháng wàitào"
+```
+
+A span of time after 长 (时间, 时期, 周末, 假期) makes it a length. jieba counts 长时间 as a word, and neither CC-CEDICT nor `large_pinyin.txt` gives it a reading. A 长 between the two halves of 又…又 is the first of two qualities. A 长 that ends its clause is a length after a verb of becoming (变, 变得), after a span or a time word as its subject (时间, 日子, 距离, 冬天) or after a 比 earlier in the run. That 比 has to stand alone, which leaves 比作 and 比较 out, and the 长 cannot be followed by 的. 头发长了 is the same shape as 时间长了 with a thing that grows, so the subject decides it. A 的 in front and a noun after make 长 attributive, as a 量词 or 有 in front does.
+
+In 88,866 lines these contexts changed 9 readings in the full tier, 10 in the standard tier and 18 in the core tier. All are corrections except one in the core tier, 菲利普的长子, where that tier has no word 长子. Among the corrections are 长时间驾车, 女人通常比男人寿命长 and 公园的长椅. CPP accuracy is unchanged.
+
 Some patterns require context on both sides:
 
 ```ts

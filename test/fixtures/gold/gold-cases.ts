@@ -59,6 +59,13 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "他得了感冒", pinyin: "tā dé le gǎnmào", script: "Hans", tags: ["polyphone"] },
   { hanzi: "长城", pinyin: "Chángchéng", script: "Hans", tags: ["polyphone", "proper-noun"] },
   { hanzi: "长大", pinyin: "zhǎngdà", script: "Hans", tags: ["polyphone"] },
+  // 长 measuring a span: 长时间, 又长又冷, 变长, 时间长了, 比…长 and 的长外套.
+  { hanzi: "东北的冬天又长又冷", pinyin: "Dōngběi de dōngtiān yòu cháng yòu lěng", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "长时间看手机会损伤眼睛", pinyin: "cháng shíjiān kàn shǒujī huì sǔnshāng yǎnjing", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "夏天来了，白天日益变长", pinyin: "xiàtiān láile, báitiān rìyì biàn cháng", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "时间长了，我就无聊了", pinyin: "shíjiān chángle, wǒ jiù wúliáole", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "跨境运输的时间比我想的长", pinyin: "kuàjìng yùnshū de shíjiān bǐ wǒ xiǎng de cháng", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "她穿了一件宽松的长外套", pinyin: "tā chuān le yí jiàn kuānsōng de cháng wàitào", script: "Hans", tags: ["polyphone"] },
   { hanzi: "重要", pinyin: "zhòngyào", script: "Hans", tags: ["polyphone"] },
   { hanzi: "重复", pinyin: "chóngfù", script: "Hans", tags: ["polyphone"] },
   { hanzi: "还给", pinyin: "huán gěi", script: "Hans", tags: ["polyphone"] },

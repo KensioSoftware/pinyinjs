@@ -44,7 +44,14 @@ export function isPredicated(context: EdgeContext): boolean {
   if (!SCOPING.has(characters[edge.from - 1] ?? "")) {
     return false;
   }
-  const after = characters[edge.to];
+  return closesClause(context);
+}
+
+/**
+ * Whether a 长 ends its clause, with at most a closing particle after it.
+ */
+export function closesClause(context: EdgeContext): boolean {
+  const after = context.characters[context.edge.to];
   return after === undefined || CLOSING.has(after);
 }
 
@@ -57,6 +64,15 @@ const MEASURE = "q";
  * The tag prefix a noun carries, which is what an attributive 长 modifies.
  */
 const NOUN_TAG = "n";
+
+/**
+ * The particle that hands a noun phrase its modifier.
+ *
+ * 宽松的长外套 and 你的长周末. A noun after a 的 and a 长 is what the 长
+ * describes, since a verb after a 的 would need a subject the 的 has already
+ * spent.
+ */
+const POSSESSIVE = "的";
 
 /**
  * The mark that makes the number after it a position rather than a count.
@@ -108,6 +124,7 @@ export function isAttributive(context: EdgeContext): boolean {
     return false;
   }
   return wordsEndingAt(context, edge.from).some(
-    (word) => word === "有" || tagOf(context, word) === MEASURE,
+    (word) =>
+      word === "有" || word === POSSESSIVE || tagOf(context, word) === MEASURE,
   );
 }
