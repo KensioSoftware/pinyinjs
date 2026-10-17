@@ -1029,8 +1029,9 @@ describe("a verb said twice around 了 or 一", () => {
   });
 
   it("leaves a tagged word starting at the second half alone", () => {
-    // 数了数字 counted the digits, and 数字 is `shùzì`.
-    assertArrayEquals(readTwice("数了数字"), ["shù", "le", "shùzì"]);
+    // 数了数字 counted the digits, and 数字 is `shùzì`. The first 数 is
+    // VERBAL_READING's, which reads it `shǔ` before its 了.
+    assertArrayEquals(readTwice("数了数字"), ["shǔ", "le", "shùzì"]);
   });
 
   it("takes the reading a word over the infix would carry in", () => {

@@ -351,7 +351,7 @@ describe("the examples in docs/", () => {
         convert(dictionary, "他弹了弹烟灰"),
         "tā tánle tán yānhuī",
       );
-      assertIdentical(convert(dictionary, "数了数字"), "shù le shùzì");
+      assertIdentical(convert(dictionary, "数了数字"), "shǔ le shùzì");
     });
 
     it("reads 还 as huán where it gives something back", () => {
@@ -377,6 +377,31 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "干你什么事"), "gān nǐ shénme shì");
       assertIdentical(convert(dictionary, "你干你的事"), "nǐ gàn nǐ de shì");
       assertIdentical(convert(dictionary, "无干部"), "wú gànbù");
+    });
+
+    it("reads nine characters with the verb's reading where the verb is meant", () => {
+      const rows = [
+        ["我妈妈量了我的体温", "wǒ māma liáng le wǒ de tǐwēn"],
+        ["他的词汇量很大", "tā de cíhuì liàng hěn dà"],
+        ["你能数到十吗", "nǐ néng shǔ dào shí ma"],
+        ["请把音量调低一点", "qǐng bǎ yīnliàng tiáo dī yìdiǎn"],
+        ["请系好安全带", "qǐng jì hǎo ānquándài"],
+        ["月球围着地球转", "yuèqiú wéizhe dìqiú zhuàn"],
+        ["把桩钉进地里", "bǎ zhuāng dìng jìn dìlǐ"],
+        ["树上结满了果实", "shù shàng jiē mǎnle guǒshí"],
+        ["我们照了一张相", "wǒmen zhào le yì zhāng xiàng"],
+        ["味道很冲", "wèidao hěn chòng"],
+      ] as const;
+      for (const [text, pinyin] of rows) {
+        assertIdentical(convert(dictionary, text), pinyin);
+      }
+    });
+
+    it("keeps xì for 系 in 联系 where the core tier lacks the word", () => {
+      assertIdentical(
+        convert(coreDictionary, "我们联系上他们"),
+        "wǒmen lián xì shàng tāmen",
+      );
     });
 
     it("reads 只 as zhī where a number or a demonstrative counts it", () => {
@@ -1319,7 +1344,7 @@ describe("the examples in docs/", () => {
       );
     });
 
-    it("splits 干 three ways and 只 two, as the table lists", () => {
+    it("splits 干 three ways and 只 and 系 two, as the table lists", () => {
       const rows = [
         ["干燥", "乾燥"],
         ["干部", "幹部"],
@@ -1327,6 +1352,8 @@ describe("the examples in docs/", () => {
         ["一只猫", "一隻貓"],
         ["三只猫", "三隻貓"],
         ["只有", "只有"],
+        ["系领带", "繫領帶"],
+        ["历史系", "歷史系"],
       ] as const;
       for (const [hans, hant] of rows) {
         assertIdentical(

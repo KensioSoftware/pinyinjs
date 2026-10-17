@@ -7,7 +7,8 @@
 import { isSameSyllable } from "../dictionary/entry.js";
 import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
 import { toCharacters } from "../script/characters.js";
-import { readSyllable, type Syllable } from "../syllable/syllable.js";
+import type { Syllable } from "../syllable/syllable.js";
+import { VERBAL_READINGS } from "./reduplication-readings.js";
 import {
   type EdgeContext,
   type EdgeRule,
@@ -24,50 +25,6 @@ import {
  * {@link reduplicatedAt} turns that shape away by the numeral in front.
  */
 const INFIX = new Set(["了", "一"]);
-
-/**
- * The polyphones whose verbal reading is not their default.
- *
- * The default is the reading a character takes in most text. For these that
- * reading is a noun (数 `shù`, 种 `zhǒng`), an adjective (凉 `liáng`) or the
- * reading their compounds take (教 `jiào`, 弹 `dàn`, 削 `xuē`). A
- * reduplicated character is a verb, and the verbal reading is the one it
- * wants.
- *
- * 卷 is in for its tail. Its default is already `juǎn`, and 卷一卷 read the
- * second half `juàn` off 一卷, a word the dictionary tags `m`.
- *
- * Written out by hand because the dictionary has no tag per reading. The
- * nearest thing it holds is the reduplicated word itself, and that is the
- * wrong evidence. Of the 19 AA keys in the standard tier whose first syllable
- * differs from the character's default, 数数 (in both scripts) is the only
- * verb said twice. The rest are literary reduplicatives (查查 `zhāzhā`, 拜拜 `báibái`, 累累
- * `léiléi`), and reading 查一查 off 查查 would turn a correct `chá` into `zhā`.
- */
-const VERBAL_READINGS: ReadonlyMap<string, Syllable> = new Map(
-  (
-    [
-      ["数", "shǔ"],
-      ["數", "shǔ"],
-      ["凉", "liàng"],
-      ["涼", "liàng"],
-      ["种", "zhòng"],
-      ["種", "zhòng"],
-      ["教", "jiāo"],
-      ["弹", "tán"],
-      ["彈", "tán"],
-      ["卷", "juǎn"],
-      ["削", "xiāo"],
-    ] as const
-  ).map(([character, text]) => {
-    const syllable = readSyllable(text);
-    /* c8 ignore next 3 -- every reading above is a syllable */
-    if (syllable === undefined) {
-      throw new Error(`${text} is not a syllable`);
-    }
-    return [character, syllable];
-  }),
-);
 
 /**
  * Whether a tagged word of more than one character starts or ends at a
@@ -158,7 +115,7 @@ function readsAgainst(context: EdgeContext): boolean {
  * The same shape split other verbs down the middle. 弹了弹 read `tán le dàn`,
  * because the 弹 rule saw the 了 after the first half and nothing after the
  * second. 教了教 read `jiāo le jiào` for the same reason. See
- * {@link VERBAL_READINGS} for the characters and {@link reduplicatedAt} for
+ * {@link import("./reduplication-readings.js").VERBAL_READINGS} for the characters and {@link reduplicatedAt} for
  * the shapes turned away.
  *
  * Over 88,866 lines of Tatoeba and zh.wikipedia, A了A and A一A appear 107

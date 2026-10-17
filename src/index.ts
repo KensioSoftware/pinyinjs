@@ -205,6 +205,7 @@ export {
   SEPARATED_COMPOUND,
   TAXI_DI,
   TEACHING_JIAO,
+  VERBAL_READING,
 } from "./decode/reading-rules.js";
 
 export { readingCost, shortestPath, spacingCost } from "./decode/viterbi.js";
