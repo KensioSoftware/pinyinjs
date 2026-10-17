@@ -372,7 +372,7 @@ convert(dictionary, "我吃过饭了。"); // "Wǒ chīguo fàn le."
 convert(dictionary, "他经过我家"); // "tā jīngguò wǒjiā", the word
 ```
 
-The default reading is `guò`. A verbal word ending immediately before 过 supports its use as an aspect marker, as in 去过, 见过 and 听说过.
+The default reading is `guò`. A verbal word ending immediately before 过 supports its use as an aspect marker, as in 去过, 见过 and 听说过. jieba tags 没 as a verb, and the rule makes an exception for it. In 考试没过 (failed the exam) 过 is the verb `guò`.
 
 The rule also removes conflicting untagged pairs. Longer dictionary words retain their readings, including 睡过头, 过马路 and 反应过度.
 
@@ -532,7 +532,41 @@ In 88,866 corpus lines and both CPP splits, the rule changed 83 readings in the 
 
 The `jì` reading selects 繫 in [script conversion](../script-conversion/), so 他不会系领带 becomes 他不會繫領帶.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE` and `VERBAL_READING`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="pairs-nobody-counted"></a>
+
+### Function words inside pairs nobody counted
+
+The rule keeps a common function word at its usual reading when a pair that no corpus counts would give it a rare one:
+
+```ts
+convert(dictionary, "气球胀得太大，会破的"); // "qìqiú zhàng de tài dà, huì pò de"
+convert(dictionary, "书架上都是书"); // "shūjià shàng dōu shì shū"
+convert(dictionary, "汤里放点葱会更香"); // "tāng lǐ fàng diǎn cōng huì gèng xiāng"
+convert(dictionary, "我到家给你打电话"); // "wǒ dào jiā gěi nǐ dǎdiànhuà"
+```
+
+The decoder charges per word, so a dictionary pair beats its two characters read apart. Most pairs agree with their characters. Some hold a sense the language barely uses, and they carry a rare reading into an everyday sentence. 破的 is _to hit the target_ (`pò dì`), 上都 is the Yuan summer capital (`Shàngdū`), 更香 is an incense clock (`gēngxiāng`) and 家给 comes from the idiom 家给人足 (`jiā jǐ`).
+
+The rule removes a two-character pair in the lowest three frequency buckets (one jieba never counted) when it gives one of these characters its rare reading:
+
+| Character | Usual reading | Rare reading   | Pair |
+| --------- | ------------- | -------------- | ---- |
+| 的        | `de`          | `dì`, `dí`     | 破的 |
+| 着        | `zhe`         | `zhuó`, `zhāo` | 着笔 |
+| 给        | `gěi`         | `jǐ`           | 家给 |
+| 更        | `gèng`        | `gēng`         | 更香 |
+| 都        | `dōu`         | `dū`           | 上都 |
+| 没        | `méi`         | `mò`           | 没过 |
+| 间        | `jiān`        | `jiàn`         | 有间 |
+| 赚        | `zhuàn`       | `zuàn`         | 赚得 |
+
+kHanyuPinlu counts each usual reading at thirty or more times the rare one. 着 keeps `zháo`, which 睡不着 needs.
+
+Counted words keep their readings (目的, 首都, 京都), and so do longer words (知更鸟, 漫无目的地). Except for 的 and 着, each character is only taken from one side of a pair. Compounds such as 都护, 间日, 俸给 and 淹没 have the rare reading on the other side. A pair ending in 都 stays a name at the end of the run or before a noun (称为魔都, 金中都故城). A pair of 更 and a bare verb stays the compound _to change_ (更变).
+
+In 88,866 corpus lines the rule changed 25 runs in the full tier, and all 25 were corrections. Over both CPP splits it changed 32 runs, two of them wrongly (官员俸给 and 北魏国都代郡). The standard and core tiers hold none of these pairs, so nothing changes there.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING` and `DOMINANT_READING`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

@@ -6,6 +6,7 @@ import {
 import { describe, it } from "vitest";
 
 import {
+  costOfBucket,
   countForQuantising,
   derivedWordCharge,
   FREQUENCY_BUCKETS,
@@ -147,6 +148,16 @@ describe("FrequencyTable", () => {
       // several of equal total likelihood.
       const table = FrequencyTable.build([1_000_000]);
       assertTrue(table.costOf(0) > 0);
+    });
+
+    it("charges what costOfBucket says for the bucket an entry is in", () => {
+      const table = FrequencyTable.build([0, 3, 1_000_000]);
+      for (const index of [0, 1, 2]) {
+        assertIdentical(
+          table.costOf(index),
+          costOfBucket(table.bucketOf(index)),
+        );
+      }
     });
 
     it("charges the most for an entry it does not know", () => {

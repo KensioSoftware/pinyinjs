@@ -72,6 +72,16 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "这幢楼以前是医院", pinyin: "zhè zhuàng lóu yǐqián shì yīyuàn", script: "Hans", tags: ["polyphone"] },
   { hanzi: "他一直咳", pinyin: "tā yìzhí ké", script: "Hans", tags: ["polyphone"] },
   { hanzi: "你的衬衫脏了", pinyin: "nǐ de chènshān zāngle", script: "Hans", tags: ["polyphone"] },
+  // Pairs nobody counted that read a function word its rare way: 没过, 上都,
+  // 更香, 家给, 赚得, 着笔, 破的 and 有间.
+  { hanzi: "他考试没过", pinyin: "tā kǎoshì méiguò", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "书架上都是书", pinyin: "shūjià shàng dōu shì shū", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "汤里放点葱会更香", pinyin: "tāng lǐ fàng diǎn cōng huì gèng xiāng", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "我到家给你打电话", pinyin: "wǒ dào jiā gěi nǐ dǎdiànhuà", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "这比我赚得多", pinyin: "zhè bǐ wǒ zhuàn de duō", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "他嘴里叼着笔", pinyin: "tā zuǐlǐ diāo zhe bǐ", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "气球胀得太大，会破的", pinyin: "qìqiú zhàng de tài dà, huì pò de", script: "Hans", tags: ["polyphone", "segmentation"] },
+  { hanzi: "楼下有间小房子出租", pinyin: "lóuxià yǒu jiān xiǎofángzi chūzū", script: "Hans", tags: ["polyphone", "segmentation"] },
   { hanzi: "觉得", pinyin: "juéde", script: "Hans", tags: ["polyphone", "neutral-tone"] },
   { hanzi: "大夫", pinyin: "dàifu", script: "Hans", tags: ["polyphone", "source-defect"] },
   // Words CC-CEDICT reads two ways, where the phrase corpus wrote the full-tone

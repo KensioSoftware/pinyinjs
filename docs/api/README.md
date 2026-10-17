@@ -67,7 +67,7 @@ The reading rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
 `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`,
 `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`,
 `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`,
-`POTENTIAL_LIAO`, `OBTAINING_DE` and `VERBAL_READING`.
+`POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING` and `DOMINANT_READING`.
 `decodeRun` and `decodeRunScored` accept a custom rule list, including `[]` to
 disable rules. Rule helpers include `applyEdgeRules`, `wordEndingAt`,
 `wordsEndingAt`, `wordStartingAt`, `wordsStartingAt` and `tagOf`, with the types

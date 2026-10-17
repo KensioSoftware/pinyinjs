@@ -3,6 +3,7 @@ import { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 import { TAXI_DI } from "./taxi-rule.js";
 import { EXPERIENTIAL_GUO } from "./guo-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
+import { DOMINANT_READING } from "./dominant-rule.js";
 import { SEPARATED_COMPOUND } from "./split-rule.js";
 import { RETURNING_HUAN } from "./huan-rule.js";
 import { CONCERNING_GAN } from "./gan-rule.js";
@@ -16,6 +17,7 @@ export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
 export { EXPERIENTIAL_GUO } from "./guo-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
+export { DOMINANT_READING } from "./dominant-rule.js";
 export { SEPARATED_COMPOUND } from "./split-rule.js";
 export { RETURNING_HUAN } from "./huan-rule.js";
 export { CONCERNING_GAN } from "./gan-rule.js";
@@ -181,4 +183,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   POTENTIAL_LIAO,
   OBTAINING_DE,
   VERBAL_READING,
+  DOMINANT_READING,
 ];
