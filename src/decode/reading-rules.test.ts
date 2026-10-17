@@ -239,6 +239,21 @@ const changDictionary = dictionaryOf([
   // part of speech, and the only member of its paradigm — 越高 and 越好 are
   // absent here as they are there.
   entry("越长", "yuè cháng", { frequency: 400 }),
+  // The span contexts: a span after the 长, a 又…又 around it, a verb of
+  // becoming in front, a span or a time word as its subject, and a 比 that
+  // compares where 比作 does not.
+  entry("时间", "shí jiān", { partOfSpeech: "n", frequency: 30_000 }),
+  entry("看", "kàn", { partOfSpeech: "v", frequency: 60_000 }),
+  entry("又", "yòu", { partOfSpeech: "d", frequency: 40_000 }),
+  entry("冷", "lěng", { partOfSpeech: "a", frequency: 9000 }),
+  entry("变", "biàn", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("出", "chū", { partOfSpeech: "v", frequency: 50_000 }),
+  entry("冬天", "dōng tiān", { partOfSpeech: "t", frequency: 3000 }),
+  entry("比", "bǐ", { partOfSpeech: "p", frequency: 40_000 }),
+  entry("比作", "bǐ zuò", { partOfSpeech: "v", frequency: 600 }),
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 90_000 }),
+  entry("树", "shù", { partOfSpeech: "n", frequency: 9000 }),
+  entry("外套", "wài tào", { partOfSpeech: "n", frequency: 2000 }),
 ]);
 
 /**
@@ -695,6 +710,43 @@ describe("长 as an adjective", () => {
     const settled = grown.confidence[0];
     assertNonNullable(settled, "with a confidence for its one syllable");
     assertTrue(isUncertain(settled));
+  });
+
+  it("reads cháng in front of a span of time", () => {
+    assertArrayEquals(readChang("长时间看"), ["cháng", "shíjiān", "kàn"]);
+    assertArrayEquals(readChang("长时间看", []), ["zhǎng", "shíjiān", "kàn"]);
+  });
+
+  it("reads cháng between the two halves of 又…又", () => {
+    assertArrayEquals(readChang("又长又冷"), ["yòu", "cháng", "yòu", "lěng"]);
+  });
+
+  it("reads cháng for what something became, at the end of the clause", () => {
+    assertArrayEquals(readChang("变长了"), ["biàn", "cháng", "le"]);
+    assertArrayEquals(readChang("变长出"), ["biàn", "zhǎng", "chū"]);
+  });
+
+  it("reads cháng after a span or a time word that ends the clause", () => {
+    assertArrayEquals(readChang("时间长了"), ["shíjiān", "cháng", "le"]);
+    assertArrayEquals(readChang("冬天长"), ["dōngtiān", "cháng"]);
+    assertArrayEquals(readChang("头发长了"), ["tóufa", "zhǎng", "le"]);
+  });
+
+  it("reads cháng at the end of a comparison a 比 sets up", () => {
+    assertArrayEquals(readChang("时间比我长"), [
+      "shíjiān",
+      "bǐ",
+      "wǒ",
+      "cháng",
+    ]);
+  });
+
+  it("leaves the 长 after a 比 that opens a longer word", () => {
+    assertArrayEquals(readChang("比作树长"), ["bǐzuò", "shù", "zhǎng"]);
+  });
+
+  it("reads cháng between a 的 and the noun it describes", () => {
+    assertArrayEquals(readChang("他的长外套"), ["tā", "de", "cháng", "wàitào"]);
   });
 });
 

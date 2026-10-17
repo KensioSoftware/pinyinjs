@@ -8,6 +8,13 @@
 import type { Syllable } from "../syllable/syllable.js";
 import { isCompared, isMeasured } from "./chang-complement.js";
 import { isAttributive, isPredicated } from "./chang-context.js";
+import {
+  isBecome,
+  isComparedWith,
+  isCoordinated,
+  isSpanAhead,
+  isSpanMeasured,
+} from "./chang-span.js";
 import { type EdgeContext, type EdgeRule, wordsEndingAt } from "./rules.js";
 
 /**
@@ -195,6 +202,11 @@ export const ADJECTIVAL_CHANG: EdgeRule = {
     if (
       isPredicated(context) ||
       isAttributive(context) ||
+      isSpanAhead(context) ||
+      isCoordinated(context) ||
+      isBecome(context) ||
+      isSpanMeasured(context) ||
+      isComparedWith(context) ||
       isCompared(context) ||
       isMeasured(context)
     ) {
