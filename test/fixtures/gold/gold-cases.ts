@@ -138,6 +138,10 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "我教英语", pinyin: "wǒ jiāo Yīngyǔ", script: "Hans", tags: ["polyphone", "rule-override"] },
   { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
   { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
+  // 好学 is studious said of a person and easy to learn said of a language.
+  { hanzi: "德语好学吗", pinyin: "Déyǔ hǎo xué ma", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "只要你好好学中文", pinyin: "zhǐyào nǐ hǎohǎo xué Zhōngwén", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "聪明好学", pinyin: "cōngming hào xué", script: "Hans", tags: ["polyphone"] },
 
   // ── 过: the experiential marker is toneless ────────────────
   { hanzi: "他去过法国。", pinyin: "Tā qùguo Fǎguó.", script: "Hans", tags: ["polyphone", "rule-override", "neutral-tone", "sentence"] },

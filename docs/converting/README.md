@@ -598,7 +598,23 @@ Counted words keep their readings (目的, 首都, 京都), and so do longer wor
 
 In 88,866 corpus lines the rule changed 25 runs in the full tier, and all 25 were corrections. Over both CPP splits it changed 32 runs, two of them wrongly (官员俸给 and 北魏国都代郡). The standard and core tiers hold none of these pairs, so nothing changes there.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING` and `DOMINANT_READING`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="hao-as-easy"></a>
+
+### 好学 as "easy to learn"
+
+The rule takes the word 好学 apart where it means easy to learn:
+
+```ts
+convert(dictionary, "德语好学吗"); // "Déyǔ hǎo xué ma"
+convert(dictionary, "只要你好好学中文"); // "zhǐyào nǐ hǎohǎo xué Zhōngwén"
+convert(dictionary, "聪明好学"); // "cōngming hào xué", studious
+```
+
+The dictionary holds 好学 as `hào xué` (studious), the sense jieba counts. After a language name ending in 语 or 文, 好学 is easy to learn, since a language cannot be studious. After another 好, the first 好 of 好好 takes it. Removing the word leaves `hǎo` and `xué`.
+
+In 88,866 corpus lines the rule changed 5 readings in the full tier and 3 in the standard tier, all corrections. Nothing changed in the core tier or on CPP.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING` and `EASY_HAO`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
