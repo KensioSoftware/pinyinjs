@@ -24,7 +24,7 @@ toScript(dictionary, tables, "头发", { to: "zh-Hant" }); // "頭髮"
 toScript(dictionary, tables, "出发", { to: "zh-Hant" }); // "出發"
 ```
 
-For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and 出发 (`chūfā`) select the appropriate form. Readings also distinguish forms of 干 and 只:
+For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and 出发 (`chūfā`) select the appropriate form. Readings also distinguish forms of 干, 只 and 系:
 
 | Text   | Reading     | 繁體   |
 | ------ | ----------- | ------ |
@@ -34,6 +34,8 @@ For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and �
 | 一只猫 | `yìzhīmāo`  | 一隻貓 |
 | 三只猫 | `sānzhīmāo` | 三隻貓 |
 | 只有   | `zhǐyǒu`    | 只有   |
+| 系领带 | `jìlǐngdài` | 繫領帶 |
+| 历史系 | `lìshǐxì`   | 歷史系 |
 
 This can resolve a character even when the script-conversion tables do not contain the complete phrase.
 

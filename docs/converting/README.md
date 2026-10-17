@@ -430,9 +430,9 @@ convert(dictionary, "他弹了弹烟灰"); // "tā tánle tán yānhuī"
 
 数 is stored `shù`, the noun, with `shǔ` as an alternate. 数数 is a dictionary word, but 了 between the halves hides it, and each 数 fell back on `shù`. The same shape split other verbs down the middle. 弹了弹 read `tán le dàn` and 教了教 `jiāo le jiào`.
 
-The rule covers 数, 凉, 种, 教, 弹, 卷 and 削 (with their 繁體 forms). Each has a verb reading that differs from its default or from a word that reaches into the shape (一卷 in 卷一卷). The list is written by hand. The dictionary has no tag per reading, and the reduplicated words it does hold are mostly literary (查查 is `zhāzhā`, and reading 查一查 off it would be wrong).
+The rule covers 数, 凉, 种, 教, 弹, 卷, 削, 量 and 转 (with their 繁體 forms). Each has a verb reading that differs from its default or from a word that reaches into the shape (一卷 in 卷一卷). The list is written by hand. The dictionary has no tag per reading, and the reduplicated words it does hold are mostly literary (查查 is `zhāzhā`, and reading 查一查 off it would be wrong).
 
-A numeral in front turns the shape away, since 一卷一卷 counts rolls. A tagged word claiming either half does too, which keeps 数了数字 as `shù le shùzì`. The 107 matches across 88,866 corpus lines already read both halves alike, and the rule moves none of them.
+A numeral in front turns the shape away, since 一卷一卷 counts rolls. A tagged word claiming either half does too, which keeps the 数字 of 数了数字 (counted the digits) `shùzì`. Its first 数 reads `shǔ` through the [verbal reading](#verbs-with-a-reading-of-their-own) rule. Across 88,866 corpus lines, the 107 matches for the first seven characters already read both halves alike. 量 and 转 came later. The rule moves both halves of 他转了转他的眼睛 (twice in the corpus) and the second 量 of 護士用溫度計量了量他的體溫.
 
 ### 还 as a verb
 
@@ -491,7 +491,48 @@ In 88,866 corpus lines and both CPP splits, the rule changed 119 readings in the
 
 The reading also selects 隻 in [script conversion](../script-conversion/), so 三只猫 becomes 三隻貓.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI` and `POTENTIAL_LIAO`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="verbs-with-a-reading-of-their-own"></a>
+
+### Verbs with a reading of their own
+
+Nine characters read differently as verbs. The rule selects the verb's reading where the words around the character show the verb:
+
+```ts
+convert(dictionary, "我妈妈量了我的体温"); // "wǒ māma liáng le wǒ de tǐwēn"
+convert(dictionary, "他的词汇量很大"); // "tā de cíhuì liàng hěn dà"
+convert(dictionary, "你能数到十吗"); // "nǐ néng shǔ dào shí ma"
+convert(dictionary, "请把音量调低一点"); // "qǐng bǎ yīnliàng tiáo dī yìdiǎn"
+convert(dictionary, "请系好安全带"); // "qǐng jì hǎo ānquándài"
+convert(dictionary, "月球围着地球转"); // "yuèqiú wéizhe dìqiú zhuàn"
+convert(dictionary, "把桩钉进地里"); // "bǎ zhuāng dìng jìn dìlǐ"
+convert(dictionary, "树上结满了果实"); // "shù shàng jiē mǎnle guǒshí"
+convert(dictionary, "我们照了一张相"); // "wǒmen zhào le yì zhāng xiàng"
+convert(dictionary, "味道很冲"); // "wèidao hěn chòng"
+```
+
+Each character is stored with the reading its compounds take most often (量 `liàng` from 数量 and 质量, 系 `xì` from 关系). A compound carries its own reading, so the default decides only the character standing alone, and in running text that is often the verb.
+
+| Character | Verb    | Selected where                                                                              | Left alone       |
+| --------- | ------- | ------------------------------------------------------------------------------------------- | ---------------- |
+| 量        | `liáng` | 了, 着, 一下 or 一次 follows, or a measurement (体温, 宽度), or 请 or 正在 comes before     | 词汇量, 信息量   |
+| 数        | `shǔ`   | 到, 了, 过 or 一下 follows, or 开始, 会 or 能 comes before                                  | 数十人, 数小时   |
+| 调        | `tiáo`  | a direction follows (调低, 调高, 调亮, 调快), or 过音 or 杯                                 | 调往广州         |
+| 系        | `jì`    | a complement (系好, 系紧, 系在) or what is tied (系领带, 系安全带) follows                  | 历史系           |
+| 转        | `zhuàn` | the clause goes round something (绕着, 围着) or 在 comes before, or 起来, 得 or laps follow | 天气转凉, 转火车 |
+| 钉        | `dìng`  | a complement (钉进, 钉在) or 十字架 follows, or 被 comes before                             | 一根钉           |
+| 结        | `jiē`   | the object within five words is fruit (果实, 桃)                                            | 结了婚, 结冰     |
+| 相        | `xiàng` | 照 comes before with only aspect, a count or 的 between                                     | 互相             |
+| 冲        | `chòng` | a degree adverb comes before and the clause ends                                            | 冲过来           |
+
+A tagged word holding the character with another reading keeps that reading, unless a commoner tagged word crosses it (冷气调高 holds 气调, and 冷气 is the word the decode takes). Each character also has the neighbours that make a compound the smaller tiers lack. The rule leaves the character alone beside one of them, so 我们联系上他们 keeps `xì` in the core tier, which holds no 联系.
+
+Unihan gives 繫 no `jì` and 釘 no `dìng`, so the rule leaves those two forms alone. A 衝 that is strong reads `chòng` the same way 冲 does. The [reduplicated verb](#reduplicated-verbs) rule reads 量了量 and 转了转 with the verb's reading too.
+
+In 88,866 corpus lines and both CPP splits, the rule changed 83 readings in the full tier, 94 in the standard tier and 152 in the core tier. One is wrong in every tier, the 调大脊 of an article on roof tiles, where 调 is a transfer. CPP accuracy rose from 91.82% to 91.86%.
+
+The `jì` reading selects 繫 in [script conversion](../script-conversion/), so 他不会系领带 becomes 他不會繫領帶.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE` and `VERBAL_READING`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

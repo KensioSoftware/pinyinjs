@@ -10,6 +10,7 @@ import { COUNTING_ZHI } from "./zhi-rule.js";
 import { POTENTIAL_LIAO } from "./liao-rule.js";
 import { OBTAINING_DE } from "./obtain-rule.js";
 import { REDUPLICATED_VERB } from "./reduplication-rule.js";
+import { VERBAL_READING } from "./verbal-rule.js";
 
 export { MODAL_DE, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
@@ -22,6 +23,7 @@ export { COUNTING_ZHI } from "./zhi-rule.js";
 export { POTENTIAL_LIAO } from "./liao-rule.js";
 export { OBTAINING_DE } from "./obtain-rule.js";
 export { REDUPLICATED_VERB } from "./reduplication-rule.js";
+export { VERBAL_READING } from "./verbal-rule.js";
 import { toCharacters } from "../script/characters.js";
 import {
   type EdgeContext,
@@ -178,4 +180,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   COUNTING_ZHI,
   POTENTIAL_LIAO,
   OBTAINING_DE,
+  VERBAL_READING,
 ];
