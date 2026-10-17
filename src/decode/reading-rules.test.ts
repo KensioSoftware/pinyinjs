@@ -6,6 +6,7 @@ import {
 import {
   assertArrayEquals,
   assertArrayLength,
+  assertIdentical,
   assertNonNullable,
   assertTrue,
 } from "@kensio/smartass";
@@ -1011,6 +1012,176 @@ describe("a 离合词 a 量词 has been pushed into", () => {
       "gè",
       "jià",
     ]);
+  });
+});
+
+/**
+ * A dictionary for the 离合词 parted by more than a 个.
+ *
+ * 觉 and 假 stored with their 离合词 readings as alternates, the way the real
+ * dictionary stores them, and the words that have to keep the rule away: 觉得
+ * claiming its 觉, 坐下, 拿来 and 干吗 tagged verbs with no object in them, the
+ * noun 打场, and 还钱 behind an adverb the tags could call a verb.
+ */
+const partedDictionary = dictionaryOf([
+  entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
+  entry("了", "le", { partOfSpeech: "ul", frequency: 90_000 }),
+  entry("的", "de", { partOfSpeech: "uj", frequency: 90_000 }),
+  entry("不", "bù", { partOfSpeech: "d", frequency: 80_000 }),
+  entry("着", "zhe", {
+    partOfSpeech: "uz",
+    frequency: 40_000,
+    alternates: [reading("zháo")],
+  }),
+  entry("个", "gè", { partOfSpeech: "q", frequency: 90_000 }),
+  entry("好", "hǎo", { partOfSpeech: "a", frequency: 50_000 }),
+  entry("三", "sān", { partOfSpeech: "m", frequency: 30_000 }),
+  entry("百", "bǎi", { partOfSpeech: "m", frequency: 9000 }),
+  entry("天", "tiān", { partOfSpeech: "q", frequency: 30_000 }),
+  entry("小时", "xiǎo shí", { partOfSpeech: "n", frequency: 9000 }),
+  entry("下", "xià", {
+    partOfSpeech: "f",
+    frequency: 40_000,
+    alternates: [reading("xia")],
+  }),
+  entry("睡", "shuì", { partOfSpeech: "v", frequency: 9000 }),
+  entry("觉", "jué", {
+    partOfSpeech: "v",
+    frequency: 9000,
+    alternates: [reading("jiào")],
+  }),
+  entry("睡觉", "shuì jiào", { partOfSpeech: "v", frequency: 9000 }),
+  entry("觉得", "jué de", { partOfSpeech: "v", frequency: 30_000 }),
+  entry("请", "qǐng", { partOfSpeech: "v", frequency: 20_000 }),
+  entry("假", "jiǎ", {
+    partOfSpeech: "n",
+    frequency: 9000,
+    alternates: [reading("jià")],
+  }),
+  entry("请假", "qǐng jià", { partOfSpeech: "v", frequency: 900 }),
+  entry("钱", "qián", { partOfSpeech: "n", frequency: 9000 }),
+  entry("拿", "ná", { partOfSpeech: "v", frequency: 9000 }),
+  entry("来", "lái", {
+    partOfSpeech: "v",
+    frequency: 90_000,
+    alternates: [reading("lai")],
+  }),
+  entry("拿来", "ná lai", { partOfSpeech: "v", frequency: 900 }),
+  // The threshing floor, a noun, where the 场 behind it is a noun as well.
+  entry("打", "dǎ", { partOfSpeech: "v", frequency: 40_000 }),
+  entry("场", "chǎng", {
+    partOfSpeech: "n",
+    frequency: 9000,
+    alternates: [reading("cháng")],
+  }),
+  entry("打场", "dǎ cháng", { partOfSpeech: "n", frequency: 100 }),
+  entry("坐", "zuò", { partOfSpeech: "v", frequency: 9000 }),
+  entry("坐下", "zuò xia", { partOfSpeech: "v", frequency: 900 }),
+  entry("干", "gàn", {
+    partOfSpeech: "v",
+    frequency: 9000,
+    alternates: [reading("gān")],
+  }),
+  entry("吗", "ma", {
+    partOfSpeech: "y",
+    frequency: 40_000,
+    alternates: [reading("má")],
+  }),
+  entry("干吗", "gàn má", { partOfSpeech: "v", frequency: 900 }),
+  entry("还", "hái", {
+    partOfSpeech: "v",
+    frequency: 40_000,
+    alternates: [reading("huán")],
+  }),
+  entry("够", "gòu", { partOfSpeech: "v", frequency: 9000 }),
+  entry("还钱", "huán qián", { partOfSpeech: "v", frequency: 900 }),
+]);
+
+/** How a run of the parted cases reads, word by word. */
+function readParted(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(partedDictionary, run, rules).map((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)).join(""),
+  );
+}
+
+/** How the last character of a run of the parted cases reads. */
+function lastOf(run: string, rules = READING_RULES): string | undefined {
+  return decodeRun(partedDictionary, run, rules)
+    .at(-1)
+    ?.reading.map((syllable) => writeSyllable(syllable))
+    .at(-1);
+}
+
+describe("a 离合词 parted by more than a 个", () => {
+  it("carries the reading across a potential complement", () => {
+    assertIdentical(lastOf("我睡不着觉"), "jiào");
+  });
+
+  it("reads the default jué without the rule, which is the bug", () => {
+    assertIdentical(lastOf("我睡不着觉", []), "jué");
+  });
+
+  it("carries it across aspect and a count of time", () => {
+    assertIdentical(lastOf("睡了三个小时觉"), "jiào");
+    assertIdentical(lastOf("请了三天假"), "jià");
+  });
+
+  it("carries it across aspect alone", () => {
+    assertIdentical(lastOf("请了假"), "jià");
+  });
+
+  it("carries it across a 个 with the 好 the sleep was", () => {
+    assertIdentical(lastOf("睡了个好觉"), "jiào");
+  });
+
+  it("carries it across a bare 天", () => {
+    assertIdentical(lastOf("请了天假"), "jià");
+  });
+
+  it("declines an infix the pattern does not admit", () => {
+    // 下 counts only behind a numeral, since a bare 下 is a direction.
+    assertIdentical(lastOf("睡下觉"), "jué");
+  });
+
+  it("declines a head further back than the widest infix", () => {
+    assertIdentical(lastOf("睡了三百三十三个小时觉"), "jué");
+  });
+
+  it("leaves a word starting at the tail to the decode", () => {
+    assertArrayEquals(readParted("我睡了觉得"), ["wǒ", "shuì", "le", "juéde"]);
+  });
+
+  it("declines a pair that is not tagged as a verb", () => {
+    assertIdentical(lastOf("打了场"), "chǎng");
+  });
+
+  it("declines a tail that is a direction tagged as a verb", () => {
+    assertIdentical(lastOf("拿了来"), "lái");
+  });
+
+  it("declines where the tail runs on into a noun", () => {
+    assertIdentical(readParted("请了假钱").at(-2), "jiǎ");
+  });
+
+  it("declines where the tail runs on into an attributive 的", () => {
+    assertIdentical(readParted("请了假的").at(-2), "jiǎ");
+  });
+
+  it("declines a tail that is a direction rather than an object", () => {
+    assertIdentical(lastOf("坐了下"), "xià");
+  });
+
+  it("declines a tail that is a particle rather than an object", () => {
+    assertIdentical(lastOf("干了吗"), "ma");
+  });
+
+  it("settles the tail and never the head", () => {
+    // 还钱 is a tagged verb behind 不够, and the 还 is still.
+    assertIdentical(readParted("还不够钱")[0], "hái");
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertIdentical(lastOf("我睡不着觉", [SEPARATED_COMPOUND]), "jiào");
   });
 });
 

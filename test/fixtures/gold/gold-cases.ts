@@ -145,6 +145,15 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // the sentence would have said spelled out.
   { hanzi: "那条河长300公里。", pinyin: "Nà tiáo hé cháng sānbǎi gōnglǐ.", script: "Hans", tags: ["polyphone", "rule-override", "numbers", "sentence"] },
 
+  // ── A 离合词 parted by more than a 个 keeps its reading ───────
+  { hanzi: "我睡不着觉。", pinyin: "Wǒ shuì bù zháo jiào.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "我只睡了三个小时觉。", pinyin: "Wǒ zhǐ shuìle sān gè xiǎoshí jiào.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "我睡了个好觉。", pinyin: "Wǒ shuìle gè hǎo jiào.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "他请了假。", pinyin: "Tā qǐngle jià.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "她请了天假。", pinyin: "Tā qǐngle tiān jià.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
+  { hanzi: "我觉得很好。", pinyin: "Wǒ juéde hěn hǎo.", script: "Hans", tags: ["polyphone", "sentence"] },
+  { hanzi: "它们是假的。", pinyin: "Tāmen shì jiǎ de.", script: "Hans", tags: ["polyphone", "sentence"] },
+
   // ── 一 sandhi ─────────────────────────────────────────────
   { hanzi: "一个", pinyin: "yí gè", script: "Hans", tags: ["sandhi-yi"] },
   { hanzi: "一天", pinyin: "yì tiān", script: "Hans", tags: ["sandhi-yi"] },
