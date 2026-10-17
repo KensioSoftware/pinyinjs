@@ -334,6 +334,15 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("reads 好学 as easy to learn after a language or a 好", () => {
+      assertIdentical(convert(dictionary, "德语好学吗"), "Déyǔ hǎo xué ma");
+      assertIdentical(
+        convert(dictionary, "只要你好好学中文"),
+        "zhǐyào nǐ hǎohǎo xué Zhōngwén",
+      );
+      assertIdentical(convert(dictionary, "聪明好学"), "cōngming hào xué");
+    });
+
     it("reads a character on its own by its free reading, and its compounds by theirs", () => {
       assertIdentical(
         convert(dictionary, "我给你剥橙子"),

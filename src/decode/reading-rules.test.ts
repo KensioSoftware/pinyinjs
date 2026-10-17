@@ -22,6 +22,7 @@ import {
   COUNTED_MEASURE,
   COUNTING_ZHI,
   DOMINANT_READING,
+  EASY_HAO,
   EXPERIENTIAL_GUO,
   MODAL_DE,
   OBTAINING_DE,
@@ -1896,6 +1897,65 @@ describe("a pair nobody counted reading a function word its rare way", () => {
       "huì",
       "gèng",
       "xiāng",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for 好学, held `hào xué` as the real one holds it,
+ * with a language and a person to say it of and the 好好 that runs into it.
+ */
+const haoDictionary = dictionaryOf([
+  entry("好", "hǎo", {
+    partOfSpeech: "a",
+    frequency: 60_000,
+    alternates: [reading("hào")],
+  }),
+  entry("学", "xué", { partOfSpeech: "v", frequency: 30_000 }),
+  entry("好学", "hào xué", { hant: "好學", partOfSpeech: "n", frequency: 40 }),
+  entry("好好", "hǎo hǎo", { partOfSpeech: "d", frequency: 3000 }),
+  entry("吗", "ma", { partOfSpeech: "y", frequency: 40_000 }),
+  entry("德语", "dé yǔ", { partOfSpeech: "nz", frequency: 300 }),
+  entry("聪明", "cōng ming", { partOfSpeech: "a", frequency: 3000 }),
+]);
+
+/** How a run of the 好学 cases reads, syllable by syllable. */
+function readHao(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(haoDictionary, run, rules).flatMap((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)),
+  );
+}
+
+describe("好学 where it means easy to learn", () => {
+  it("reads hǎo xué after a language", () => {
+    assertArrayEquals(readHao("德语好学吗"), ["dé", "yǔ", "hǎo", "xué", "ma"]);
+  });
+
+  it("reads the word without the rule, which is the bug", () => {
+    assertArrayEquals(readHao("德语好学吗", []), [
+      "dé",
+      "yǔ",
+      "hào",
+      "xué",
+      "ma",
+    ]);
+  });
+
+  it("gives the second 好 of 好好 back to the first", () => {
+    assertArrayEquals(readHao("好好学"), ["hǎo", "hǎo", "xué"]);
+  });
+
+  it("keeps studious when it is said of a person", () => {
+    assertArrayEquals(readHao("聪明好学"), ["cōng", "ming", "hào", "xué"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readHao("德语好学吗", [EASY_HAO]), [
+      "dé",
+      "yǔ",
+      "hǎo",
+      "xué",
+      "ma",
     ]);
   });
 });

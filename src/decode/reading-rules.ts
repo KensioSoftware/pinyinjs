@@ -157,9 +157,9 @@ export const COUNTED_MEASURE: EdgeRule = {
   },
 };
 
-import { ADJECTIVAL_CHANG, PLAYING_TAN } from "./polyphone-rules.js";
+import { ADJECTIVAL_CHANG, EASY_HAO, PLAYING_TAN } from "./polyphone-rules.js";
 
-export { ADJECTIVAL_CHANG, PLAYING_TAN } from "./polyphone-rules.js";
+export { ADJECTIVAL_CHANG, EASY_HAO, PLAYING_TAN } from "./polyphone-rules.js";
 
 /**
  * The rules the lattice decode applies, in order.
@@ -184,4 +184,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   OBTAINING_DE,
   VERBAL_READING,
   DOMINANT_READING,
+  EASY_HAO,
 ];
