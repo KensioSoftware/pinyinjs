@@ -1,8 +1,9 @@
 /**
- * How a 离合词 is read once a 量词 has been pushed into the middle of it.
+ * How a 离合词 is read once something has been pushed into the middle of it.
  *
- * 请假 is one word and carries one reading. 请个假 is the same word with a
- * classifier inside it, and the halves are left standing on their own.
+ * 请假 is one word and carries one reading. 请个假, 请了假 and 请了三天假 are
+ * the same word with a classifier, an aspect particle or a count inside it, and
+ * the halves are left standing on their own.
  */
 import { isSameSyllable } from "../dictionary/entry.js";
 import { toCharacters } from "../script/characters.js";
@@ -13,6 +14,7 @@ import {
   tagOf,
   wordsStartingAt,
 } from "./rules.js";
+import { widelySeparatedSyllableAt } from "./split-infix.js";
 
 /**
  * The classifier that separates the halves, in both scripts.
@@ -102,7 +104,7 @@ function separatedSyllableAt(
 ): Syllable | undefined {
   const separated = separatedAt(context, at);
   if (separated === undefined) {
-    return undefined;
+    return widelySeparatedSyllableAt(context, at);
   }
   const { word, offset } = separated;
   const entry = context.dictionary.lookup(word);
@@ -178,6 +180,17 @@ function carriesReading(
  * default, and they are led by 认为, 获得, 关系 and 告诉, none of which any 个
  * can be pushed into. The rule never reaches them, since it fires on a 个 that
  * is written rather than on a pair that exists.
+ *
+ * The halves come apart around more than a 个, and 睡不着觉, 睡了八个小时觉,
+ * 放三天假 and 请了假 all read their tail by its character default the way
+ * 请个假 did. {@link widelySeparatedSyllableAt} reads the tail across those,
+ * through an infix spelled out in `split-infix.ts` and under tighter conditions,
+ * since a head that far back is more often an accident. Over the 88,866 lines
+ * and both CPP splits, 241,680 Han runs, it changes 35 decodes and all 35 are
+ * corrections. 24 are 觉 to `jiào`, 7 假 to `jià`, 3 血 to `xiě` (流了血, 吐了血)
+ * and one the 肚 of 下過肚 to `dù`. Over the 例句 library ChineseBoost publishes it
+ * changes 27, all corrections, 25 of them 觉 and 假, and the other two 理了发
+ * and 咳出了血. CPP's labelled polyphones hold at 91.86%.
  */
 export const SEPARATED_COMPOUND: EdgeRule = {
   name: "separated-compound",

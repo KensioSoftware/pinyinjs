@@ -418,6 +418,23 @@ Only 个 is supported as the inserted measure word. Other classifier tags also o
 
 In 88,866 lines, the complete conditions matched three phrases, 请个假, 打个折 and 睡個覺. All three were corrections.
 
+The halves also come apart around an aspect particle, a complement or a count. The rule reads the tail across those as well:
+
+```ts
+convert(dictionary, "我睡不着觉。"); // "Wǒ shuì bù zháo jiào."
+convert(dictionary, "我只睡了三个小时觉。"); // "Wǒ zhǐ shuìle sān gè xiǎoshí jiào."
+convert(dictionary, "他请了假。"); // "Tā qǐngle jià."
+convert(dictionary, "我觉得很好。"); // "Wǒ juéde hěn hǎo.", 觉得 keeps its word
+```
+
+The inserted material has to match a short pattern. The verb half may take 了 or 过, a potential complement such as 不着 or 得了, or a result such as 够了. The object half may take a count (个, 个好, 三天, 天, 八个小时, 一会儿, 一下 or 点). 下 and 年 count only after a numeral, so a bare directional 下 is left alone.
+
+The conditions are tighter than for 个. The pair itself must be tagged as a verb, and the noun 打场 never qualifies. The tail must be tagged as a noun or verb. That excludes the 吗 of 干吗 and the 下 of 坐下, and 来 and 去 are excluded by name. The tail must not run on into a noun or an attributive 的, as 假 does in 放了假钱. Only the tail is settled. A head found across a complement can be an adverb, as 还 is in 还不够钱.
+
+Over the 88,866 lines and both CPP splits (241,680 Han runs), this changed 35 conversions and all 35 were corrections. 24 were 觉 to `jiào` and 7 were 假 to `jià`. The others were 血 to `xiě` in 流了血 and 吐了血, and 肚 to `dù` in 下過肚. CPP's labelled polyphones held at 91.86%.
+
+假 used as a noun with no verb in front, as in 五天带薪假, still reads `jiǎ`. So does 假花, because the dictionary tags 花 as a verb.
+
 ### Reduplicated verbs
 
 A verb said twice around 了 or 一 takes its verb reading on both halves:
