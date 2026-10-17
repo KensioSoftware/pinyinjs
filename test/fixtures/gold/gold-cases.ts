@@ -57,6 +57,11 @@ export const GOLD_CASES: readonly GoldCase[] = [
   { hanzi: "会计", pinyin: "kuàijì", script: "Hans", tags: ["polyphone"] },
   { hanzi: "开会", pinyin: "kāihuì", script: "Hans", tags: ["polyphone"] },
   { hanzi: "睡觉", pinyin: "shuìjiào", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "我给你剥橙子", pinyin: "wǒ gěi nǐ bāo chéngzi", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "你帮我削一个苹果", pinyin: "nǐ bāng wǒ xiāo yí gè píngguǒ", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "这幢楼以前是医院", pinyin: "zhè zhuàng lóu yǐqián shì yīyuàn", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "他一直咳", pinyin: "tā yìzhí ké", script: "Hans", tags: ["polyphone"] },
+  { hanzi: "你的衬衫脏了", pinyin: "nǐ de chènshān zāngle", script: "Hans", tags: ["polyphone"] },
   { hanzi: "觉得", pinyin: "juéde", script: "Hans", tags: ["polyphone", "neutral-tone"] },
   { hanzi: "大夫", pinyin: "dàifu", script: "Hans", tags: ["polyphone", "source-defect"] },
   // Words CC-CEDICT reads two ways, where the phrase corpus wrote the full-tone

@@ -30,4 +30,13 @@ export const CHARACTER_READINGS: readonly BuildAssertion[] = [
   reads("子", "zǐ", "and a suffix sense is not a claim about the character"),
   reads("夫", "fū", "nor is 大夫's and 丈夫's reduction"),
   reads("吗", "ma", "but a 语气词 CC-CEDICT reads 轻声 alone keeps it"),
+  // FREE_READINGS: the free verb or classifier leads, and the compounds that
+  // ranked the other reading first keep it.
+  reads("剥", "bāo", "the free verb, not 剥削's bō"),
+  reads("剥削", "bō xuē", "and the compounds keep the literary reading"),
+  reads("切", "qiē", "kHanyuPinlu's qiè is nearly all 一切"),
+  reads("一切", "yī qiè", "which keeps it"),
+  reads("幢", "zhuàng", "the classifier, not 经幢's banner"),
+  reads("脏", "zāng", "dirty, not the organ"),
+  reads("心脏", "xīn zàng", "which 心脏 keeps"),
 ];

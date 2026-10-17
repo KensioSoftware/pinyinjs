@@ -248,11 +248,10 @@ describe("script conversion", () => {
     it("names the character's own form where that is what it beat", () => {
       // 万 is 萬 counting and stays 万 in the surname 万俟, so the form the
       // character was already written as is one of the two it was chosen
-      // between. 准 and 划 are the same shape, against 准將 and 划船.
+      // between. 准 is the same shape, against 准將.
       for (const [text, to] of [
         ["万", "萬"],
         ["准", "準"],
-        ["划", "劃"],
       ] as const) {
         const [choice] = toScriptPieces(dictionary, tables, text, {
           to: "zh-Hant",
