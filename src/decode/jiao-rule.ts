@@ -4,6 +4,7 @@
  * Teaching takes an object or is followed by aspect, and only a verb takes
  * either, so the tags around it are the evidence.
  */
+import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import {
   ASPECT,
@@ -12,7 +13,7 @@ import {
   type EdgeRule,
   tagOf,
   wordEndingAt,
-  wordStartingAt,
+  wordsStartingAt,
 } from "./rules.js";
 
 /**
@@ -32,6 +33,35 @@ export function isJiao(syllable: Syllable | undefined): boolean {
  * only 教 with a place tag after it over the corpus is 教青局, an office.
  */
 export const TAUGHT_TAGS = new Set(["r", "n", "nz", "nr", "nt", "ng"]);
+
+/**
+ * What a 教 that is teaching a skill governs: the verb for the skill.
+ *
+ * 教游泳, 教阅读, 教唱歌. jieba tags 游泳 `vn` and 阅读 `v`, and a verb word
+ * after a bare 教 is what is taught. A single character is not enough. The
+ * core tier holds no 教育, 教练 or 教会, and the 育, 练 and 会 after its bare
+ * 教 are the second halves of those words.
+ */
+const SKILL_TAGS = new Set(["v", "vn"]);
+
+/**
+ * Whether a word names something a 教 can teach: a person, a thing or a skill.
+ */
+function isTaught(context: EdgeContext, word: string): boolean {
+  const tag = tagOf(context, word);
+  return (
+    TAUGHT_TAGS.has(tag) ||
+    (SKILL_TAGS.has(tag) && toCharacters(word).length > 1)
+  );
+}
+
+/**
+ * The particle that turns what is before it into an adverb of the verb after.
+ *
+ * jieba tags 地 `uv` along with the other particles, and a verb does follow
+ * this one: 她兢兢业业地教了多年书.
+ */
+const ADVERBIAL = "地";
 
 /**
  * The words that can only be governing a verb, whatever comes after them.
@@ -77,13 +107,13 @@ const GOVERNING = new Set([
  */
 export function isTeachingAt(context: EdgeContext, at: number): boolean {
   const before = wordEndingAt(context, at);
-  if (tagOf(context, before).startsWith(PARTICLE_TAG)) {
+  if (before !== ADVERBIAL && tagOf(context, before).startsWith(PARTICLE_TAG)) {
     return false;
   }
   return (
     GOVERNING.has(before ?? "") ||
     ASPECT.has(context.characters[at + 1] ?? "") ||
-    TAUGHT_TAGS.has(tagOf(context, wordStartingAt(context, at + 1)))
+    wordsStartingAt(context, at + 1).some((word) => isTaught(context, word))
   );
 }
 
@@ -113,6 +143,11 @@ export function isTeachingAt(context: EdgeContext, at: number): boolean {
  * 17 it leaves, 8 are right — 诸教中, 教外别传, 董教总, 风教, 教青局 twice, a
  * 教室 reached through a bad split, and a 教 used as a bare noun — and 9 are
  * misses, where jieba tags the object something this does not name.
+ *
+ * {@link SKILL_TAGS}, the adverbial 地 and asking every word after the 教
+ * rather than the longest came later still, from a page of example sentences
+ * (教游泳, 教孩子们, 兢兢业业地教了). Over the same lines they move 3 more in
+ * the full tier and 2 in the standard tier, all corrections.
  *
  * {@link GOVERNING} is four of that 162 and was added later: 能教教我,
  * 要教一節課, 也會教像拉丁語, 這在學校是不教的. 有 is pointedly outside it,

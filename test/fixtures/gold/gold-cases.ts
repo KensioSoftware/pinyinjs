@@ -136,6 +136,9 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // ── 教: jiāo teaches, jiào is the noun and the compounds ──
   { hanzi: "他在北京大学教了三年书。", pinyin: "Tā zài Běijīng Dàxué jiāole sān nián shū.", script: "Hans", tags: ["polyphone", "rule-override", "sentence"] },
   { hanzi: "我教英语", pinyin: "wǒ jiāo Yīngyǔ", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "私塾先生教孩子们写字", pinyin: "sīshú xiānsheng jiāo háizimen xiězì", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "学校下学期会开课教游泳", pinyin: "xuéxiào xià xuéqī huì kāikè jiāo yóuyǒng", script: "Hans", tags: ["polyphone", "rule-override"] },
+  { hanzi: "她兢兢业业地教了多年书", pinyin: "tā jīngjīng-yèyè de jiāole duōnián shū", script: "Hans", tags: ["polyphone", "rule-override"] },
   { hanzi: "教育", pinyin: "jiàoyù", script: "Hans", tags: ["polyphone"] },
   { hanzi: "宗教", pinyin: "zōngjiào", script: "Hans", tags: ["polyphone"] },
 
