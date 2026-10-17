@@ -12,6 +12,7 @@ import {
   isNeutralAlone,
   resolveFrequencyTones,
 } from "./frequency-tones.js";
+import { leadWithFreeReading } from "./free-readings.js";
 import type { CedictEntry } from "../sources/cedict.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { readAlignedReading, readDictionaryReading } from "./reading.js";
@@ -74,6 +75,8 @@ export function buildCharacterDefaults(
   // Unihan ranks the readings and the corpus re-ranks the ones it has seen: a
   // character's default is whichever of its readings the dictionary's own words
   // spend the most of jieba's corpus on, and Unihan's order decides the rest.
+  // A character listed in FREE_READINGS then leads with the reading it takes
+  // standing alone, which neither ranking can see.
   const mass = countCorpusMass({ phrase, cedict, jieba }, traditional);
   const defaults = new Map<string, readonly Syllable[]>();
   let reducedNeutrals = 0;
@@ -96,7 +99,10 @@ export function buildCharacterDefaults(
     if (parsed.length > 0) {
       defaults.set(
         character,
-        rankByCorpusMass(character, parsed, readings.fields, mass),
+        leadWithFreeReading(
+          character,
+          rankByCorpusMass(character, parsed, readings.fields, mass),
+        ),
       );
     }
   }

@@ -315,6 +315,20 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("reads a character on its own by its free reading, and its compounds by theirs", () => {
+      assertIdentical(
+        convert(dictionary, "我给你剥橙子"),
+        "wǒ gěi nǐ bāo chéngzi",
+      );
+      assertIdentical(convert(dictionary, "剥削"), "bōxuē");
+      assertIdentical(
+        convert(dictionary, "把土豆切一下"),
+        "bǎ tǔdòu qiē yíxià",
+      );
+      assertIdentical(convert(dictionary, "一切"), "yíqiè");
+      assertIdentical(convert(dictionary, "这幢楼"), "zhè zhuàng lóu");
+    });
+
     it("reads 得 the three ways the page shows", () => {
       assertIdentical(convert(dictionary, "我得走了"), "wǒ děi zǒule");
       assertIdentical(convert(dictionary, "他跑得很快"), "tā pǎo de hěn kuài");

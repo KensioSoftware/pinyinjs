@@ -113,6 +113,26 @@ Characters can have several readings. 行 has `xíng`, `háng`, `héng` and `hà
 
 Selecting readings also requires finding word boundaries. 南京市长江大桥 can be split as 南京市 / 长江 / 大桥 or 南京 / 市长 / 江大桥. The two splits give 长 different readings (`cháng` and `zhǎng`).
 
+<a id="a-character-on-its-own"></a>
+
+## A character on its own
+
+A character that forms a word by itself takes its default reading, the first in `readingsOf`. Most defaults are ranked by how often the sources saw each reading, and those counts include the character inside words. For most characters that ranking is also right when the character stands alone. A few characters have a literary reading in their compounds and an everyday one as a free verb or classifier, and for those it is wrong. 剥削 and 剥夺 make 剥 `bō`, while someone peeling an orange says `bāo`. 一切 makes 切 `qiè`, and 切土豆 is `qiē`.
+
+Those characters lead with the reading they take on their own. Their compounds are dictionary words and keep their own readings:
+
+```ts
+convert(dictionary, "我给你剥橙子"); // "wǒ gěi nǐ bāo chéngzi"
+convert(dictionary, "剥削"); // "bōxuē"
+convert(dictionary, "把土豆切一下"); // "bǎ tǔdòu qiē yíxià"
+convert(dictionary, "一切"); // "yíqiè"
+convert(dictionary, "这幢楼"); // "zhè zhuàng lóu"
+```
+
+The list is 幢 `zhuàng`, 抡 `lūn`, 剥 `bāo`, 削 `xiāo`, 铺 `pū`, 咳 `ké`, 哄 `hǒng`, 刨 `páo`, 攒 `zǎn`, 绷 `bēng`, 翘 `qiào`, 划 `huá`, 曲 `qǔ`, 切 `qiē`, 嚼 `jiáo`, 倔 `juè`, 脏 `zāng`, 挣 `zhèng` and 漂 `piāo`, with the 繁體 forms Unihan gives the same reading. Each entry is a judgement about how the character is used on its own. The list leaves out characters with two common free uses, such as 卡 (`kǎ`, a card, and `qiǎ`, stuck). It also leaves out characters that names and transliterations use on their own, such as 勒 (`lēi` in 勒得难受, `lè` in 达勒姆) and 盛 (`chéng` in 盛汤, the surname `Shèng`). Context rules suit those better.
+
+On the 20,139 labelled polyphones in CPP, the change fixed 66 more readings than it broke, almost all of them 幢, 翘, 咳 and 刨. It broke readings of 攒 in the architectural 攒尖 and of 抡 in personal names, which the dictionary does not hold.
+
 <a id="what-the-decoder-does"></a>
 
 ## How the decoder selects readings
@@ -486,7 +506,7 @@ convertGreedily(dictionary, "研究生命起源"); // "yánjiūshēng mìng qǐy
 
 In this example, the greedy decoder selects 研究生 because it is longer. The syllables remain correct, but the word spacing changes.
 
-On 20,139 hand-labelled polyphonic characters, `convert` scored 91.30% accuracy and `convertGreedily` scored 91.08%. The lattice corrected 72 greedy errors and introduced 28 others. Use `convert` for normal conversion. The repository commands `pnpm accuracy` and `pnpm polyphones` compare both algorithms.
+On 20,139 hand-labelled polyphonic characters, `convert` scored 91.82% accuracy and `convertGreedily` scored 91.58%. The lattice corrected 87 greedy errors and introduced 39 others. Use `convert` for normal conversion. The repository commands `pnpm accuracy` and `pnpm polyphones` compare both algorithms.
 
 <!-- card
 ```ts
