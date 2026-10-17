@@ -30,6 +30,16 @@ const MARKER = new Set(["过", "過"]);
 const VERB_TAG = "v";
 
 /**
+ * The negator jieba tags a verb, in both scripts.
+ *
+ * 没 is *not have* as well as *not*, so the tag is right, and the 过 after it
+ * is still the verb. 考试没过 failed the exam: aspect comes after the verb it
+ * marks, and 没 is the negation in front of one, so 没去过 has its 过 after
+ * 去. 没有过 is untouched, since 有 is the verb there.
+ */
+const NEGATOR = new Set(["没", "沒"]);
+
+/**
  * Whether a syllable is toneless `guo`, the reading the marker takes.
  */
 function isGuo(syllable: Syllable | undefined): boolean {
@@ -48,6 +58,9 @@ function isGuo(syllable: Syllable | undefined): boolean {
  * 巴黎.
  */
 function isVerbEndingAt(context: EdgeContext, at: number): boolean {
+  if (NEGATOR.has(context.characters[at - 1] ?? "")) {
+    return false;
+  }
   return wordsEndingAt(context, at).some((word) =>
     tagOf(context, word).startsWith(VERB_TAG),
   );

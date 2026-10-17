@@ -123,6 +123,17 @@ export function derivedWordCharge(total: number, highest: number): number {
 }
 
 /**
+ * The decoding cost of a frequency bucket.
+ *
+ * What {@link FrequencyTable.costOf} answers for an entry in that bucket, for a
+ * caller that wants to ask about a bucket rather than an entry: a rule asking
+ * whether an edge is one nobody counted compares its cost against this.
+ */
+export function costOfBucket(bucket: number): number {
+  return MAX_BUCKET - bucket + WORD_CHARGE;
+}
+
+/**
  * Quantised word frequencies, packed two to a byte.
  *
  * Frequencies are stored on a log scale because that is how they are used: the
@@ -222,7 +233,7 @@ export class FrequencyTable {
    * every extra word in a path pays the charge again.
    */
   costOf(index: number): number {
-    return MAX_BUCKET - this.bucketOf(index) + WORD_CHARGE;
+    return costOfBucket(this.bucketOf(index));
   }
 
   /**

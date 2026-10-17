@@ -21,6 +21,7 @@ import {
   CONCERNING_GAN,
   COUNTED_MEASURE,
   COUNTING_ZHI,
+  DOMINANT_READING,
   EXPERIENTIAL_GUO,
   MODAL_DE,
   OBTAINING_DE,
@@ -310,6 +311,8 @@ const tanDictionary = dictionaryOf([
 const guoDictionary = dictionaryOf([
   entry("我", "wǒ", { partOfSpeech: "r", frequency: 80_000 }),
   entry("不", "bù", { partOfSpeech: "d", frequency: 70_000 }),
+  // The negator jieba tags a verb, as it tags the real one.
+  entry("没", "méi", { hant: "沒", partOfSpeech: "v", frequency: 50_000 }),
   entry("过", "guò", {
     hant: "過",
     partOfSpeech: "ug",
@@ -831,6 +834,12 @@ describe("过 where it marks experiential aspect", () => {
   it("keeps guò where the word in front is not a verb", () => {
     // 不过 is an adverb and a 过, and neither of them takes aspect.
     assertArrayEquals(readGuo("不过"), ["bù", "guò"]);
+  });
+
+  it("keeps guò after 没, which negates a verb rather than being one", () => {
+    assertArrayEquals(readGuo("我没过"), ["wǒ", "méi", "guò"]);
+    assertArrayEquals(readGuo("我沒過"), ["wǒ", "méi", "guò"]);
+    assertArrayEquals(readGuo("我没去过"), ["wǒ", "méi", "qù", "guo"]);
   });
 
   it("sees a verb a longer word has swallowed", () => {
@@ -1773,6 +1782,120 @@ describe("得 obtaining an illness, a score or a prize", () => {
       "tā",
       "déle",
       "gǎnmào",
+    ]);
+  });
+});
+
+/**
+ * A dictionary of its own for the pairs nobody counted.
+ *
+ * Each function word is stored with its usual reading first and its rare one
+ * as an alternate, and each pair carries the rare one at a count of zero, the
+ * way a pair only `large_pinyin.txt` or CC-CEDICT holds arrives. 目的 is the
+ * counted word that keeps its `dì`, and 魔都 and 停更 the pairs whose rare
+ * reading stands on the side it belongs.
+ */
+const dominantDictionary = dictionaryOf([
+  entry("会", "huì", { partOfSpeech: "v", frequency: 60_000 }),
+  // Rare enough that 破 and 的 together cost more than the pair, as they do in
+  // the real dictionary.
+  entry("破", "pò", { partOfSpeech: "v", frequency: 500 }),
+  entry("的", "de", {
+    partOfSpeech: "uj",
+    frequency: 95_000,
+    alternates: [reading("dì"), reading("dí")],
+  }),
+  entry("破的", "pò dì"),
+  entry("目", "mù", { partOfSpeech: "n", frequency: 5000 }),
+  entry("目的", "mù dì", { partOfSpeech: "n", frequency: 9000 }),
+  entry("书", "shū", { partOfSpeech: "n", frequency: 20_000 }),
+  entry("上", "shàng", { partOfSpeech: "f", frequency: 80_000 }),
+  entry("都", "dōu", {
+    partOfSpeech: "d",
+    frequency: 60_000,
+    alternates: [reading("dū")],
+  }),
+  entry("是", "shì", { partOfSpeech: "v", frequency: 90_000 }),
+  entry("上都", "shàng dū", { isProperNoun: true, frequency: 3 }),
+  entry("魔", "mó", { partOfSpeech: "n", frequency: 3000 }),
+  entry("魔都", "mó dū", { isProperNoun: true, frequency: 3 }),
+  entry("更", "gèng", {
+    partOfSpeech: "d",
+    frequency: 30_000,
+    alternates: [reading("gēng")],
+  }),
+  entry("香", "xiāng", { partOfSpeech: "a", frequency: 5000 }),
+  entry("更香", "gēng xiāng"),
+  entry("停", "tíng", { partOfSpeech: "v", frequency: 9000 }),
+  entry("停更", "tíng gēng"),
+  entry("赚", "zhuàn", {
+    hant: "賺",
+    partOfSpeech: "v",
+    frequency: 3000,
+    alternates: [reading("zuàn")],
+  }),
+  entry("得", "de", { partOfSpeech: "ud", frequency: 60_000 }),
+  entry("赚得", "zuàn de", { hant: "賺得" }),
+]);
+
+/**
+ * How a run of the uncounted pairs reads, syllable by syllable.
+ *
+ * Syllables rather than words, since what the rule settles is the reading. The
+ * spacing decode prices a pair nobody counted dearly and splits 魔都 whether
+ * the rule runs or not.
+ */
+function readDominant(run: string, rules = READING_RULES): readonly string[] {
+  return decodeRun(dominantDictionary, run, rules).flatMap((word) =>
+    word.reading.map((syllable) => writeSyllable(syllable)),
+  );
+}
+
+describe("a pair nobody counted reading a function word its rare way", () => {
+  it("reads 的 de after a verb a pair would have taken", () => {
+    assertArrayEquals(readDominant("会破的"), ["huì", "pò", "de"]);
+  });
+
+  it("reads the pair without the rule, which is the bug", () => {
+    assertArrayEquals(readDominant("会破的", []), ["huì", "pò", "dì"]);
+  });
+
+  it("reads 都 dōu after a 方位词 a name would have taken", () => {
+    assertArrayEquals(readDominant("书上都是书"), [
+      "shū",
+      "shàng",
+      "dōu",
+      "shì",
+      "shū",
+    ]);
+  });
+
+  it("reads 更 gèng in front of what it raises", () => {
+    assertArrayEquals(readDominant("会更香"), ["huì", "gèng", "xiāng"]);
+  });
+
+  it("reads 赚 zhuàn, in either script", () => {
+    assertArrayEquals(readDominant("赚得"), ["zhuàn", "de"]);
+    assertArrayEquals(readDominant("賺得"), ["zhuàn", "de"]);
+  });
+
+  it("leaves a counted word its rare reading", () => {
+    assertArrayEquals(readDominant("目的"), ["mù", "dì"]);
+  });
+
+  it("leaves a name ending in 都 at the end of the run", () => {
+    assertArrayEquals(readDominant("魔都"), ["mó", "dū"]);
+  });
+
+  it("leaves a pair 更 closes its gēng", () => {
+    assertArrayEquals(readDominant("停更"), ["tíng", "gēng"]);
+  });
+
+  it("applies on its own as well as beside the other rules", () => {
+    assertArrayEquals(readDominant("会更香", [DOMINANT_READING]), [
+      "huì",
+      "gèng",
+      "xiāng",
     ]);
   });
 });

@@ -315,6 +315,25 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("keeps a function word its usual reading inside a pair nobody counted", () => {
+      assertIdentical(
+        convert(dictionary, "气球胀得太大，会破的"),
+        "qìqiú zhàng de tài dà, huì pò de",
+      );
+      assertIdentical(
+        convert(dictionary, "书架上都是书"),
+        "shūjià shàng dōu shì shū",
+      );
+      assertIdentical(
+        convert(dictionary, "汤里放点葱会更香"),
+        "tāng lǐ fàng diǎn cōng huì gèng xiāng",
+      );
+      assertIdentical(
+        convert(dictionary, "我到家给你打电话"),
+        "wǒ dào jiā gěi nǐ dǎdiànhuà",
+      );
+    });
+
     it("reads a character on its own by its free reading, and its compounds by theirs", () => {
       assertIdentical(
         convert(dictionary, "我给你剥橙子"),
