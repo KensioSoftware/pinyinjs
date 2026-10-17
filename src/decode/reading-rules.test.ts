@@ -84,6 +84,16 @@ const dictionary = dictionaryOf([
   entry("书", "shū", { partOfSpeech: "n", frequency: 20_000 }),
   entry("育", "yù", { frequency: 5000 }),
   entry("教育", "jiào yù", { partOfSpeech: "vn", frequency: 9000 }),
+  // What a 教 teaches beyond a person or a noun: a pair carrying no tag around
+  // a tagged noun, a skill that is a verb, and the single verb character a
+  // tier without 教练 leaves after a bare 教.
+  entry("孩子", "hái zi", { partOfSpeech: "n", frequency: 9000 }),
+  entry("孩子们", "hái zi men", { frequency: 3000 }),
+  entry("游泳", "yóu yǒng", { partOfSpeech: "vn", frequency: 3000 }),
+  entry("练", "liàn", { partOfSpeech: "v", frequency: 5000 }),
+  // The adverbial particle, which a verb follows.
+  entry("认真", "rèn zhēn", { partOfSpeech: "ad", frequency: 5000 }),
+  entry("地", "de", { partOfSpeech: "uv", frequency: 60_000 }),
   entry("他", "tā", { partOfSpeech: "r", frequency: 80_000 }),
   entry("来教", "lái jiào", { frequency: 30_000 }),
   entry("宗", "zōng", { frequency: 2000 }),
@@ -430,6 +440,22 @@ describe("教 where it is teaching", () => {
     // 他怎么教: the object is what usually says a 教 is teaching, and here
     // there is none, so the near side has to.
     assertArrayEquals(read("他怎么教"), ["tā", "zěnme", "jiāo"]);
+  });
+
+  it("reads it jiāo in front of a tagged noun an untagged pair wraps", () => {
+    assertArrayEquals(read("教孩子们"), ["jiāo", "háizimen"]);
+  });
+
+  it("reads it jiāo in front of a skill", () => {
+    assertArrayEquals(read("教游泳"), ["jiāo", "yóuyǒng"]);
+  });
+
+  it("leaves a single verb character after it to the word it would make", () => {
+    assertArrayEquals(read("教练"), ["jiào", "liàn"]);
+  });
+
+  it("reads it jiāo after the adverbial 地", () => {
+    assertArrayEquals(read("认真地教了"), ["rènzhēn", "de", "jiāo", "le"]);
   });
 
   it("takes the jiào a two-character reading would carry in", () => {

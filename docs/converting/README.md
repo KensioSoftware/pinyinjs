@@ -191,6 +191,16 @@ convert(dictionary, "这在学校是不教的"); // "zhè zài xuéxiào shì b�
 
 In 88,866 lines, the rule changed 162 of 181 standalone 教 readings, with three incorrect changes. The exceptions were nominal compounds that resembled verbs with objects. 有 is excluded from the modal set to preserve 有教无类 (`yǒujiào wúlèi`).
 
+A skill counts as an object when it is a verb of two or more characters, as in 教游泳 and 教阅读. A single verb character does not count, since the core tier has no 教育 or 教练 and leaves 育 and 练 after a bare 教. Every word starting after 教 is checked, so the tagged 孩子 inside the untagged 孩子们 counts. The adverbial 地 does not rule the verb out the way other particles do:
+
+```ts
+convert(dictionary, "私塾先生教孩子们写字"); // "sīshú xiānsheng jiāo háizimen xiězì"
+convert(dictionary, "她教阅读和写作"); // "tā jiāo yuèdú hé xiězuò"
+convert(dictionary, "她兢兢业业地教了多年书"); // "tā jīngjīng-yèyè de jiāole duōnián shū"
+```
+
+These three changes moved 3 more readings in the full tier, 2 in the standard tier and none in the core tier, all corrections. On CPP two unlabelled nominal compounds read `jiāo` wrongly (宗教法教禁止 and 中华理教总会), and labelled accuracy is unchanged.
+
 ### Dictionary-supported erhua
 
 The rule joins 儿 to the preceding syllable when their dictionary entry specifies an r-suffix:
