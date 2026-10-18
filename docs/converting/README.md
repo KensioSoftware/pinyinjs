@@ -641,7 +641,23 @@ The dictionary holds 好学 as `hào xué` (studious), the sense jieba counts. A
 
 In 88,866 corpus lines the rule changed 5 readings in the full tier and 3 in the standard tier, all corrections. Nothing changed in the core tier or on CPP.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING` and `EASY_HAO`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="mei-as-adjective"></a>
+
+### 美的 as an adjective and its 的
+
+The rule takes the word 美的 apart where 美 is the adjective _beautiful_:
+
+```ts
+convert(dictionary, "她是一个非常美的女人"); // "tā shì yí gè fēicháng Měi de nǚrén"
+convert(dictionary, "多美的日出啊"); // "duō Měi de rìchū a"
+convert(dictionary, "美的空调很好用"); // "Měidí kōngtiáo hěn hǎo yòng", the brand
+```
+
+The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. After a degree word (最, 很, 更, 非常, 这么, 多 and others) or a 是, 美 is graded or asserted, and a company name takes neither. Removing the word leaves 美 and the particle 的, read `de`. (美 on its own is still capitalised, because the dictionary also holds it as the short name of the United States.)
+
+Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 美的 as the name in 28 runs, and none was the company. The rule changes 26 of them, all corrections. The two it leaves are 对美的感受 and 凡美的事物, where 美 is the noun _beauty_.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO` and `ADJECTIVAL_MEI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
