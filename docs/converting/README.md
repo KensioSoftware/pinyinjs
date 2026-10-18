@@ -653,7 +653,7 @@ convert(dictionary, "多美的日出啊"); // "duō Měi de rìchū a"
 convert(dictionary, "美的空调很好用"); // "Měidí kōngtiáo hěn hǎo yòng", the brand
 ```
 
-The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. After a degree word (最, 很, 更, 非常, 这么, 多 and others) or a 是, 美 is graded or asserted, and a company name takes neither. Removing the word leaves 美 and the particle 的, read `de`. (美 on its own is still capitalised, because the dictionary also holds it as the short name of the United States.)
+The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. After a degree word (最, 很, 更, 非常, 这么, 多 and others), 美 is graded, and a company name takes none of them. After a 是, 美 is asserted unless a noun follows, so 都是美的 splits and 这是美的冰箱 keeps the brand. Removing the word leaves 美 and the particle 的, read `de`. (美 on its own is still capitalised, because the dictionary also holds it as the short name of the United States.)
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 美的 as the name in 28 runs, and none was the company. The rule changes 26 of them, all corrections. The two it leaves are 对美的感受 and 凡美的事物, where 美 is the noun _beauty_.
 
