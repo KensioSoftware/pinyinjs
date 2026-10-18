@@ -886,6 +886,19 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "青山公路"), "qīngshān gōnglù");
     });
 
+    it("drops a jieba tag nothing else backs, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "她只是个小姑娘"),
+        "tā zhǐshì gè xiǎogūniáng",
+      );
+      assertIdentical(
+        convert(dictionary, "我有一只黑狗"),
+        "wǒ yǒu yìzhī hēigǒu",
+      );
+      assertIdentical(convert(dictionary, "梁山伯"), "Liángshānbó");
+      assertIdentical(convert(dictionary, "肯塔基州"), "Kěntǎjī Zhōu");
+    });
+
     it("capitalises the 称呼语 in front of a surname", () => {
       assertIdentical(
         convert(
@@ -1065,9 +1078,12 @@ describe("the examples in docs/", () => {
     });
 
     it("writes the gaps the page admits to", () => {
-      // jieba tags 无缝钢管 nz, so it capitalises where it should not — and
-      // 6.1.6 wants it split, which is the gap the page measures out.
-      assertIdentical(convert(dictionary, "无缝钢管"), "Wúfènggāngguǎn");
+      // 6.1.6 wants 无缝钢管 split, which is the gap the page measures out.
+      assertIdentical(convert(dictionary, "无缝钢管"), "wúfènggāngguǎn");
+      // jieba tags 美梦 nz and 美 starts names, and CC-CEDICT only holds 新店
+      // as a district.
+      assertIdentical(convert(dictionary, "美梦"), "Měimèng");
+      assertIdentical(convert(dictionary, "新店开张"), "Xīndiàn kāizhāng");
     });
   });
 

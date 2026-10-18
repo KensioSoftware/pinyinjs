@@ -13,16 +13,16 @@
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1379773,
-      "compressedBytes": 380563
+      "bytes": 1377483,
+      "compressedBytes": 380427
     },
     "full": {
       "entries": 461555,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9136462,
-      "compressedBytes": 2400272
+      "bytes": 9115622,
+      "compressedBytes": 2398864
     }
   },
   "counts": {
