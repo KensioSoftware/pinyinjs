@@ -666,7 +666,22 @@ The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. Aft
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 美的 as the name in 28 runs, and none was the company. The rule changes 26 of them, all corrections. The two it leaves are 对美的感受 and 凡美的事物, where 美 is the noun _beauty_.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO` and `ADJECTIVAL_MEI`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="dou-in-hua-dou"></a>
+
+### 花都 as flowers and 都
+
+The rule takes the word 花都 apart where 都 is the adverb _all_:
+
+```ts
+convert(dictionary, "花都开了"); // "huā dōu kāile"
+convert(dictionary, "我们去花都机场"); // "wǒmen qù Huādū jīchǎng", the district
+```
+
+The dictionary holds 花都 as a proper noun, the Guangzhou district `Huādū`. Where a noun follows (花都区, 花都机场), the rule keeps the name. Anywhere else, 都 sums up the flowers and reads `dōu`.
+
+Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 花都 as the name in 11 runs. The rule changes all 11, and none was the district.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI` and `SUMMING_DOU`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
