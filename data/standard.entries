@@ -50497,8 +50497,8 @@ he2 qu1		ns
 		s
 		n
 		n
-		ns
-		ns
+		ns	p
+		ns	p
 		n
 		ns
 		ns
@@ -62930,8 +62930,8 @@ zhu4		v
 		v
 		nr
 		v
-		nr
-		nr
+		nr	p
+		nr	p
 		nr
 		nr
 		v
@@ -80291,8 +80291,8 @@ hao2		n
 yu4		ns
 		n
 		n
-		ns
-		ns
+		ns	p
+		ns	p
 		ns
 		ns
 zhu1		n
@@ -86997,7 +86997,7 @@ jin1 fa4		nz
 		n
 		n
 		n
-		ns
+		ns	p
 		n
 		n
 		nr	p1
@@ -88848,7 +88848,7 @@ chang2 ning2		ns	p
 chang2 kuan1		v
 chang2 wei3		ns
 chang2 shan1		ns
-chang2 dao3		ns
+chang2 dao3		ns	p
 chang2 qi2		ns	p
 chang2 ling3		ns	p
 chang2 gong1		n
@@ -89005,7 +89005,7 @@ chang2 kuan1		v
 chang2 shou4		ns
 chang2 wei3		ns
 chang2 shan1		ns
-chang2 dao3		ns
+chang2 dao3		ns	p
 chang2 ling3		ns	p
 chang2 qi2		ns	p
 chang2 gong1		n

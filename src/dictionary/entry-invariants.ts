@@ -33,12 +33,20 @@ export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
   {
     // The veto only demotes. These stay proper nouns, and 人民政府 is the
     // control that shows the veto still fires on an institution. CC-CEDICT
-    // has no 梁山伯 or 肯塔基州, which keep the flag on 梁 and on 肯塔基.
-    description: "齐白石, 国务院, 湖北, 梁山伯 and 肯塔基州 stay proper nouns",
+    // has no 梁山伯 or 肯塔基州, which keep the flag on 梁 and on 肯塔基, and
+    // no 长岛 or 静安寺, which keep it by being listed.
+    description:
+      "齐白石, 国务院, 湖北, 梁山伯, 肯塔基州, 长岛 and 静安寺 stay proper nouns",
     check: (dictionary: BuiltDictionary): string | undefined => {
-      const wrong = ["齐白石", "国务院", "湖北", "梁山伯", "肯塔基州"].filter(
-        (word) => dictionary.get(word)?.isProperNoun !== true,
-      );
+      const wrong = [
+        "齐白石",
+        "国务院",
+        "湖北",
+        "梁山伯",
+        "肯塔基州",
+        "长岛",
+        "静安寺",
+      ].filter((word) => dictionary.get(word)?.isProperNoun !== true);
       return wrong.length === 0
         ? undefined
         : `no longer proper nouns: ${wrong.join(", ")}`;

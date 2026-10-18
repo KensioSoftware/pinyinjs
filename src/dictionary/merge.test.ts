@@ -1002,6 +1002,20 @@ describe("merging the sources", () => {
       assertTrue(byWord.get("梁山伯")?.isProperNoun ?? false);
     });
 
+    it("keeps a listed name that neither test would keep", () => {
+      // 静 starts far more ordinary words than names, and CC-CEDICT has no
+      // 静安寺 or 静安 to open it with. Jing'an Temple is listed.
+      const { byWord } = merge({
+        phrase: new Map([["静安寺", ["jìng", "ān", "sì"]]]),
+        jieba: new Map([
+          ["静安寺", { frequency: 30, partOfSpeech: "ns" }],
+          ["静止", { frequency: 3000, partOfSpeech: "v" }],
+          ["静电", { frequency: 2000, partOfSpeech: "n" }],
+        ]),
+      });
+      assertTrue(byWord.get("静安寺")?.isProperNoun ?? false);
+    });
+
     it("keeps a place that opens with a name CC-CEDICT capitalises", () => {
       // 肯 starts ordinary words, but 肯塔基 is Kentucky.
       const { byWord } = merge({

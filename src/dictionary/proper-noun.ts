@@ -25,6 +25,7 @@ import {
 } from "../sources/cedict.js";
 import { isProperNounTag, type JiebaEntry } from "../sources/jieba.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { KEPT_NAMES } from "./kept-names.js";
 import { leadsNames, type NameMassTable } from "./name-mass.js";
 
 /**
@@ -129,7 +130,8 @@ export function nameLookupOf(
  * A name starts with a character that starts names, which is the same test a
  * single character has to pass ({@link leadsNames}). 韦, 令 and 洪 pass, and
  * 小, 老, 黑 and 换 do not. A place that is a known name plus a generic, such
- * as 肯塔基州, 长野县 or 静安寺, keeps the flag on the name it opens with.
+ * as 肯塔基州 or 长野县, keeps the flag on the name it opens with. The few
+ * names that pass neither test are listed in {@link KEPT_NAMES}.
  */
 function isUnlistedName(
   word: string,
@@ -139,6 +141,7 @@ function isUnlistedName(
   const characters = toCharacters(word);
   const head = characters[0] ?? "";
   return (
+    KEPT_NAMES.has(word) ||
     leadsNames(nameMass, head, lookup.frequencyOf(head)) ||
     characters
       .slice(2)
