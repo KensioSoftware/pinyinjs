@@ -12,6 +12,7 @@ import { repairConstituentReadings } from "./constituent-repair.js";
 import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
 import { countNameMass } from "./name-mass.js";
+import { nameLookupOf } from "./proper-noun.js";
 import { carryToTraditional } from "./traditional-carry.js";
 import type { MergeResult, MergeSources, WordSources } from "./merge-types.js";
 
@@ -47,6 +48,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     phrase,
     jieba: sources.jieba,
     nameMass: countNameMass(sources.jieba),
+    names: nameLookupOf(sources.jieba, cedictByWord),
     unihanReadings: sources.unihanReadings,
     traditional,
     defaults,

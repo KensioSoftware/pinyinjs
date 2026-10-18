@@ -16,11 +16,13 @@ export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
         : "北京 is not marked as a proper noun",
   },
   {
-    // jieba tags all four of these a proper noun; CC-CEDICT writes their
-    // pinyin in lower case, and the decoder capitalises straight off this bit.
-    description: "沙发, 城市, 阿姨 and 长大 are not proper nouns",
+    // jieba tags all of these a proper noun, and the decoder capitalises
+    // straight off this bit. CC-CEDICT writes the first four in lower case
+    // and has no entry at all for 小姑娘 or 老先生.
+    description:
+      "沙发, 城市, 阿姨, 长大, 小姑娘 and 老先生 are not proper nouns",
     check: (dictionary: BuiltDictionary): string | undefined => {
-      const wrong = ["沙发", "城市", "阿姨", "长大"].filter(
+      const wrong = ["沙发", "城市", "阿姨", "长大", "小姑娘", "老先生"].filter(
         (word) => dictionary.get(word)?.isProperNoun === true,
       );
       return wrong.length === 0
@@ -30,10 +32,11 @@ export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
   },
   {
     // The veto only demotes. These stay proper nouns, and 人民政府 is the
-    // control that shows the veto still fires on an institution.
-    description: "齐白石, 国务院 and 湖北 stay proper nouns",
+    // control that shows the veto still fires on an institution. CC-CEDICT
+    // has no 梁山伯 or 肯塔基州, which keep the flag on 梁 and on 肯塔基.
+    description: "齐白石, 国务院, 湖北, 梁山伯 and 肯塔基州 stay proper nouns",
     check: (dictionary: BuiltDictionary): string | undefined => {
-      const wrong = ["齐白石", "国务院", "湖北"].filter(
+      const wrong = ["齐白石", "国务院", "湖北", "梁山伯", "肯塔基州"].filter(
         (word) => dictionary.get(word)?.isProperNoun !== true,
       );
       return wrong.length === 0

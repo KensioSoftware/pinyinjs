@@ -978,6 +978,51 @@ describe("merging the sources", () => {
       assertTrue(byWord.get("京都")?.isProperNoun ?? false);
     });
 
+    it("drops a tag CC-CEDICT cannot veto where no name starts that way", () => {
+      // CC-CEDICT has no 小姑娘, so nothing lowercase can veto jieba's `nr`.
+      // 小 starts far more ordinary words than names.
+      const { byWord } = merge({
+        phrase: new Map([["小姑娘", ["xiǎo", "gū", "niáng"]]]),
+        jieba: new Map([
+          ["小姑娘", { frequency: 891, partOfSpeech: "nr" }],
+          ["小时", { frequency: 30_000, partOfSpeech: "n" }],
+        ]),
+      });
+      assertFalse(byWord.get("小姑娘")?.isProperNoun ?? true);
+    });
+
+    it("keeps a tag CC-CEDICT cannot veto where the name starts like one", () => {
+      const { byWord } = merge({
+        phrase: new Map([["梁山伯", ["liáng", "shān", "bó"]]]),
+        jieba: new Map([
+          ["梁山伯", { frequency: 50, partOfSpeech: "nr" }],
+          ["梁启超", { frequency: 2000, partOfSpeech: "nr" }],
+        ]),
+      });
+      assertTrue(byWord.get("梁山伯")?.isProperNoun ?? false);
+    });
+
+    it("keeps a place that opens with a name CC-CEDICT capitalises", () => {
+      // 肯 starts ordinary words, but 肯塔基 is Kentucky.
+      const { byWord } = merge({
+        phrase: new Map([
+          ["肯塔基州", ["kěn", "tǎ", "jī", "zhōu"]],
+          ["肯塔基", ["kěn", "tǎ", "jī"]],
+        ]),
+        cedict: [
+          cedictEntry("肯塔基", "肯塔基", "Ken3 ta3 ji1", {
+            isProperNoun: true,
+            definitions: ["Kentucky, US state"],
+          }),
+        ],
+        jieba: new Map([
+          ["肯塔基州", { frequency: 20, partOfSpeech: "ns" }],
+          ["肯定", { frequency: 20_000, partOfSpeech: "v" }],
+        ]),
+      });
+      assertTrue(byWord.get("肯塔基州")?.isProperNoun ?? false);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

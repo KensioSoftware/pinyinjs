@@ -123,6 +123,11 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("湖北", "hú běi", { isProperNoun: true, partOfSpeech: "ns" }),
   entry("保安", "bǎo ān", { isProperNoun: true, partOfSpeech: "nz" }),
   entry("京都", "jīng dū", { isProperNoun: true, partOfSpeech: "ns" }),
+  entry("梁山伯", "liáng shān bó", { isProperNoun: true, partOfSpeech: "nr" }),
+  entry("肯塔基州", "kěn tǎ jī zhōu", {
+    isProperNoun: true,
+    partOfSpeech: "ns",
+  }),
   entry("三亚", "sān yà", {
     hant: "三亞",
     isProperNoun: true,
