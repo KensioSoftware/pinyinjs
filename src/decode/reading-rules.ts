@@ -1,6 +1,7 @@
 import { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 import { TAXI_DI } from "./taxi-rule.js";
 import { COUNTED_MEASURE } from "./measure-rule.js";
+import { COUNTED_GE } from "./ge-rule.js";
 import { EXPERIENTIAL_GUO } from "./guo-rule.js";
 import { TEACHING_JIAO } from "./jiao-rule.js";
 import { DOMINANT_READING } from "./dominant-rule.js";
@@ -16,6 +17,7 @@ import { VERBAL_READING } from "./verbal-rule.js";
 export { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
 export { COUNTED_MEASURE } from "./measure-rule.js";
+export { COUNTED_GE } from "./ge-rule.js";
 export { EXPERIENTIAL_GUO } from "./guo-rule.js";
 export { TEACHING_JIAO } from "./jiao-rule.js";
 export { DOMINANT_READING } from "./dominant-rule.js";
@@ -58,6 +60,7 @@ export const READING_RULES: readonly EdgeRule[] = [
   TEACHING_JIAO,
   ATTESTED_ERHUA,
   COUNTED_MEASURE,
+  COUNTED_GE,
   ADJECTIVAL_CHANG,
   PLAYING_TAN,
   EXPERIENTIAL_GUO,
