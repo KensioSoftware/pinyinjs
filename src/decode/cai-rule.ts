@@ -10,8 +10,8 @@ import {
   type EdgeContext,
   type EdgeRule,
   tagOf,
-  wordStartingAt,
   wordsEndingAt,
+  wordsStartingAt,
 } from "./rules.js";
 
 /**
@@ -62,8 +62,10 @@ function isNoun(context: EdgeContext, from: number, to: number): boolean {
   ) {
     return true;
   }
-  const next = wordStartingAt(context, to);
-  return next === undefined || AFTER_NOUN.has(next);
+  // Every word starting there is asked, since the longest hides the one the
+  // rule is looking for: 音乐才能是否可以培养 has 是否 wrapped around its 是.
+  const next = wordsStartingAt(context, to);
+  return next.length === 0 || next.some((word) => AFTER_NOUN.has(word));
 }
 
 /**

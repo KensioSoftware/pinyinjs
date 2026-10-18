@@ -62,6 +62,7 @@ describe("才能 where 能 is the modal", () => {
       "你很有才能",
       "她具有語言學習的卓越才能",
       "音乐才能是可以培养出来的",
+      "音乐才能是否可以培养",
       "她的唱歌才能非常出众",
     ]) {
       assertArrayEquals(talentIn(run), ["才能"]);
