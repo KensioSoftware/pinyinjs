@@ -706,7 +706,7 @@ The noun is kept after a 的 or a 有 (他的才能, 富有才能), and before a
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 才能 as the noun in 184 runs. The rule splits 164 of them, and one is wrong (他的钢琴才能为他在音乐专家中赢得了美名, talent before a 为).
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

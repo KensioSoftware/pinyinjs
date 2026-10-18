@@ -66,7 +66,7 @@ For direct access to the decoder, use `buildLattice`, `allEdges`, `cutPoints`,
 The reading rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
 `POTENTIAL_DE`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`,
 `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`,
-`REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`,
+`REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`,
 `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`.
 `decodeRun` and `decodeRunScored` accept a custom rule list, including `[]` to
 disable rules. Rule helpers include `applyEdgeRules`, `wordEndingAt`,
