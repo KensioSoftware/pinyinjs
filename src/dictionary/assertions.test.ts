@@ -124,8 +124,6 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("保安", "bǎo ān", { isProperNoun: true, partOfSpeech: "nz" }),
   entry("京都", "jīng dū", { isProperNoun: true, partOfSpeech: "ns" }),
   entry("梁山伯", "liáng shān bó", { isProperNoun: true, partOfSpeech: "nr" }),
-  entry("长岛", "cháng dǎo", { isProperNoun: true, partOfSpeech: "ns" }),
-  entry("静安寺", "jìng ān sì", { isProperNoun: true, partOfSpeech: "ns" }),
   entry("肯塔基州", "kěn tǎ jī zhōu", {
     isProperNoun: true,
     partOfSpeech: "ns",
