@@ -226,6 +226,15 @@ For example, 三个人 contains 三 + 个 + 人. The rule prevents the noun 个�
 
 In 88,866 lines, this changed 53 conversions, with three incorrect changes where a numeral-like prefix was not counting. It corrected one pronunciation, the 天 in 下了两天雨.
 
+Two 量词 that the dictionary does not tag `q`, 本 and 堵, are also kept out of a proper noun next to a number:
+
+```ts
+convert(dictionary, "随便选三本书"); // "suíbiàn xuǎn sān běn shū", not the surname 三本
+convert(dictionary, "工人正在用砖盖一堵墙"); // "gōngrén zhèngzài yòng zhuān gài yì dǔ qiáng"
+```
+
+A title after the name (先生, 小姐, 老师 and others) keeps it, as in 三本先生. Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, this changes 13 runs, all of them counts.
+
 ### 长 as an adjective
 
 The rule selects `cháng` when context indicates length, including a preceding degree adverb:
@@ -657,7 +666,7 @@ The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. Aft
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 美的 as the name in 28 runs, and none was the company. The rule changes 26 of them, all corrections. The two it leaves are 对美的感受 and 凡美的事物, where 美 is the noun _beauty_.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO` and `ADJECTIVAL_MEI`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO` and `ADJECTIVAL_MEI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
