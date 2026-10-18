@@ -15,6 +15,7 @@ import { POTENTIAL_LIAO } from "./liao-rule.js";
 import { OBTAINING_DE } from "./obtain-rule.js";
 import { REDUPLICATED_VERB } from "./reduplication-rule.js";
 import { VERBAL_READING } from "./verbal-rule.js";
+import { LOCATIVE_SHANG_PU } from "./pu-rule.js";
 
 export { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
@@ -33,6 +34,7 @@ export { POTENTIAL_LIAO } from "./liao-rule.js";
 export { OBTAINING_DE } from "./obtain-rule.js";
 export { REDUPLICATED_VERB } from "./reduplication-rule.js";
 export { VERBAL_READING } from "./verbal-rule.js";
+export { LOCATIVE_SHANG_PU } from "./pu-rule.js";
 import type { EdgeRule } from "./rules.js";
 import { ATTESTED_ERHUA } from "./erhua-rule.js";
 
@@ -74,6 +76,7 @@ export const READING_RULES: readonly EdgeRule[] = [
   SEPARATED_COMPOUND,
   REDUPLICATED_VERB,
   RETURNING_HUAN,
+  LOCATIVE_SHANG_PU,
   CONCERNING_GAN,
   COUNTING_ZHI,
   POTENTIAL_LIAO,
