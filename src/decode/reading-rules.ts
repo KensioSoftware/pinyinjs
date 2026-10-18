@@ -37,6 +37,7 @@ import {
   ADJECTIVAL_MEI,
   EASY_HAO,
   PLAYING_TAN,
+  SUMMING_DOU,
 } from "./polyphone-rules.js";
 
 export {
@@ -44,6 +45,7 @@ export {
   ADJECTIVAL_MEI,
   EASY_HAO,
   PLAYING_TAN,
+  SUMMING_DOU,
 } from "./polyphone-rules.js";
 
 /**
@@ -72,4 +74,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   DOMINANT_READING,
   EASY_HAO,
   ADJECTIVAL_MEI,
+  SUMMING_DOU,
 ];
