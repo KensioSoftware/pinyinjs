@@ -899,6 +899,12 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "肯塔基州"), "Kěntǎjī Zhōu");
     });
 
+    it("skips a capitalised bound form, as the page shows", () => {
+      assertIdentical(convert(dictionary, "她很美。"), "Tā hěn měi.");
+      assertIdentical(convert(dictionary, "我去过美国。"), "Wǒ qùguo Měiguó.");
+      assertIdentical(convert(dictionary, "奥布莱恩"), "ào Bùlái'ēn");
+    });
+
     it("capitalises the 称呼语 in front of a surname", () => {
       assertIdentical(
         convert(

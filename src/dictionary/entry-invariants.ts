@@ -46,15 +46,17 @@ export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
   },
   {
     // A capitalised sense that only says `see 長壽區|长寿区` is the district's
-    // capital, not the word's. 保安 and 京都 are the control: both hold a
-    // lowercase sense too, and both state their proper noun rather than
-    // pointing at it.
-    description: "长寿, 友谊 and 温泉 are not proper nouns, 保安 and 京都 are",
+    // capital, not the word's. 美's is a bound form, the 美 of 美元 and 中美.
+    // 保安 and 京都 are the control: both hold a lowercase sense too, and both
+    // state their proper noun rather than pointing at it. 江 holds a surname
+    // beside its bound form.
+    description:
+      "长寿, 友谊, 温泉 and 美 are not proper nouns, 保安, 京都 and 江 are",
     check: (dictionary: BuiltDictionary): string | undefined => {
-      const wrong = ["长寿", "友谊", "温泉"].filter(
+      const wrong = ["长寿", "友谊", "温泉", "美"].filter(
         (word) => dictionary.get(word)?.isProperNoun === true,
       );
-      const missing = ["保安", "京都"].filter(
+      const missing = ["保安", "京都", "江"].filter(
         (word) => dictionary.get(word)?.isProperNoun !== true,
       );
       if (wrong.length > 0) {
