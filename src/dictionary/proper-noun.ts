@@ -6,7 +6,8 @@
  * 城市, 阿姨, 智能卡 and 花生仁 are all tagged nr or nz, and the decoder
  * capitalises straight off this bit.
  *
- * Only the senses that state a meaning are read for the veto. A capitalised
+ * Only the senses that state a meaning of the word standing alone are read for
+ * the veto. A capitalised
  * cross-reference carries the capital of the entry it points at, and reading it
  * as the word's own put a capital on 长寿, 友谊, 温泉 and 115 other keys. See
  * {@link statedOf}.
@@ -18,6 +19,7 @@ import {
 } from "../script/characters.js";
 import {
   type CedictEntry,
+  isBound,
   isStated,
   nameBoundariesOf,
 } from "../sources/cedict.js";
@@ -155,12 +157,17 @@ function isUnlistedName(
  * the flag their stated senses earn. See
  * {@link import("../sources/cedict.js").isStated}.
  *
+ * A bound form states a meaning, but not one the characters carry standing
+ * alone. 美 is the 美 of 中美 and 美元 in its capitalised sense, and that
+ * sense is all `(bound form)`. Read as stated, it capitalised 她很美 as `tā
+ * hěn Měi`. See {@link import("../sources/cedict.js").isBound}.
+ *
  * The fallback is what keeps a headword whose every sense refers on. 三亚 is
  * only ever `see 三亞市|三亚市`, and with nothing stated the cross-reference is
  * all the evidence there is. 2,347 flagged keys are in that position, among
  * them 七台河, 三门峡 and 上饶.
  */
 function statedOf(entries: readonly CedictEntry[]): readonly CedictEntry[] {
-  const stated = entries.filter((entry) => isStated(entry));
+  const stated = entries.filter((entry) => isStated(entry) && !isBound(entry));
   return stated.length > 0 ? stated : entries;
 }

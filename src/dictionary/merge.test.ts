@@ -1023,6 +1023,53 @@ describe("merging the sources", () => {
       assertTrue(byWord.get("肯塔基州")?.isProperNoun ?? false);
     });
 
+    it("lets a lowercase sense veto a capital that is only a bound form", () => {
+      // 美 is the USA only inside 美元 or 中美. Standing alone it is beautiful,
+      // and the name mass from 美国 would otherwise keep the capital.
+      const { byWord, result } = merge({
+        unihanReadings: new Map([["美", unihan(["měi"])]]),
+        cedict: [
+          cedictEntry("美", "美", "Mei3", {
+            isProperNoun: true,
+            definitions: [
+              "(bound form) the Americas (abbr. for 美洲[Mei3 zhou1])",
+              "(bound form) USA (abbr. for 美國|美国[Mei3 guo2])",
+            ],
+          }),
+          cedictEntry("美", "美", "mei3", {
+            definitions: ["beautiful", "very satisfactory; good"],
+          }),
+        ],
+        jieba: new Map([
+          ["美", { frequency: 16_809, partOfSpeech: "ns" }],
+          ["美国", { frequency: 36_089, partOfSpeech: "ns" }],
+        ]),
+      });
+      assertFalse(byWord.get("美")?.isProperNoun ?? true);
+      assertIdentical(result.stats.properNounVetoes, 1);
+    });
+
+    it("keeps a capital where a bound form sits beside a free sense", () => {
+      // 江 is a bound form for the Yangtze and also a surname, which is free.
+      const { byWord } = merge({
+        unihanReadings: new Map([["江", unihan(["jiāng"])]]),
+        cedict: [
+          cedictEntry("江", "江", "Jiang1", {
+            isProperNoun: true,
+            definitions: ["surname Jiang", "(bound form) Yangtze River"],
+          }),
+          cedictEntry("江", "江", "jiang1", {
+            definitions: ["river", "CL:條|条[tiao2],道[dao4]"],
+          }),
+        ],
+        jieba: new Map([
+          ["江", { frequency: 9000, partOfSpeech: "nr" }],
+          ["江泽民", { frequency: 20_000, partOfSpeech: "nr" }],
+        ]),
+      });
+      assertTrue(byWord.get("江")?.isProperNoun ?? false);
+    });
+
     it("leaves a jieba proper noun CC-CEDICT also capitalises", () => {
       const { byWord, result } = merge({
         phrase: new Map([["北京", ["běi", "jīng"]]]),

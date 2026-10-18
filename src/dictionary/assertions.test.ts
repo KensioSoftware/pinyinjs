@@ -128,6 +128,7 @@ const SOUND: readonly DictionaryEntry[] = [
     isProperNoun: true,
     partOfSpeech: "ns",
   }),
+  entry("江", "jiāng", { isProperNoun: true, partOfSpeech: "nr" }),
   entry("三亚", "sān yà", {
     hant: "三亞",
     isProperNoun: true,

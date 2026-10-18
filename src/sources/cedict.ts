@@ -199,6 +199,22 @@ export function isStated(entry: CedictEntry): boolean {
 }
 
 /**
+ * Whether every definition of an entry is a bound form.
+ *
+ * CC-CEDICT marks a sense that never stands as a word on its own with
+ * `(bound form)`. 美 is `[Mei3] /(bound form) the Americas/(bound form) USA/`.
+ * That is the 美 of 美元 and 中美, and a 美 standing alone is beautiful.
+ */
+export function isBound(entry: CedictEntry): boolean {
+  return (
+    entry.definitions.length > 0 &&
+    entry.definitions.every((definition) =>
+      definition.startsWith("(bound form)"),
+    )
+  );
+}
+
+/**
  * Where CC-CEDICT's own capitalisation divides a proper noun into its parts.
  *
  * GB/T 16159 5.1 writes the parts of a proper name apart, and CC-CEDICT marks

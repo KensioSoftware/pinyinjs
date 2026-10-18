@@ -136,6 +136,15 @@ convert(dictionary, "我们的友谊很深。"); // "Wǒmen de yǒuyì hěn shē
 
 This removed flags from 118 keys, including 友谊, 温泉 and 白云. It corrected about two thirds of the affected corpus cases. It can also remove a needed capital when a longer place name is missing from the dictionary, such as 青山公路.
 
+Bound forms are excluded from the check in the same way. CC-CEDICT marks the capitalised senses of 美 as `(bound form)` (the 美 of 美元 and 中美), and the lowercase sense is beautiful. A bare 美 is lowercase, and words that contain it keep their own flag.
+
+```ts
+convert(dictionary, "她很美。"); // "Tā hěn měi."
+convert(dictionary, "我去过美国。"); // "Wǒ qùguo Měiguó."
+```
+
+The same applies to 奥, whose capitalised senses (Austria and the Olympics) are bound forms too. A transliterated name that starts with 奥 and has no dictionary entry loses its first capital, as in 奥布莱恩 (`ào Bùlái'ēn`). 美 for the US loses its capital where it stands alone, as in 驻美 and 美日.
+
 If all senses are cross-references, their capitalisation is used. This applies to 2,347 flagged keys, including 三亚, 上饶 and 三门峡.
 
 Single-character names require an additional frequency check. A character must occur more often at the start of names than in ordinary words, including its standalone occurrences. This helps distinguish a surname such as 李 from a common word that can also be a surname, such as 连.

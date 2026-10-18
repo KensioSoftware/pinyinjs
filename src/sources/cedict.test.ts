@@ -11,6 +11,7 @@ import { describe, it } from "vitest";
 
 import {
   type CedictEntry,
+  isBound,
   isStated,
   nameBoundariesOf,
   parseCedict,
@@ -160,6 +161,29 @@ describe("CC-CEDICT source", () => {
       const entry = sense("Li3 yue1");
       assertNonNullable(entry);
       assertTrue(isStated(entry));
+    });
+  });
+
+  describe("whether a sense is only a bound form", () => {
+    const senses = parseCedict(
+      [
+        "美 美 [Mei3] /(bound form) the Americas (abbr. for 美洲[Mei3 zhou1])/(bound form) USA (abbr. for 美國|美国[Mei3 guo2])/",
+        "江 江 [Jiang1] /surname Jiang/(bound form) Yangtze River/",
+      ].join("\n"),
+    );
+    const sense = (reading: string): CedictEntry | undefined =>
+      senses.find((entry) => entry.readings.join(" ") === reading);
+
+    it("calls a sense bound where every definition is", () => {
+      const entry = sense("Mei3");
+      assertNonNullable(entry);
+      assertTrue(isBound(entry));
+    });
+
+    it("leaves a sense free where any definition stands alone", () => {
+      const entry = sense("Jiang1");
+      assertNonNullable(entry);
+      assertFalse(isBound(entry));
     });
   });
 
