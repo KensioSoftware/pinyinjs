@@ -1,17 +1,20 @@
 /**
- * Whether a 上铺 is the upper bunk or a 上 closing a place before the verb 铺.
+ * The rules for 铺 the verb: whether a 上铺 is the upper bunk or a 上 closing
+ * a place before the verb, and the reading of a 铺 an aspect particle follows.
  *
  * The bunk is a noun: 我睡上铺, 我的床位是上铺. The same two characters are as
  * often the end of a place and the verb that spreads something over it:
  * 地板上铺着地毯, 床上铺了床单. jieba tags 上铺 `ns`, and the decode read both
  * of those as the bunk.
  */
+import { isSameSyllable } from "../dictionary/entry.js";
 import {
   type EdgeContext,
   type EdgeRule,
   tagOf,
   wordEndingAt,
 } from "./rules.js";
+import { syllableOf } from "./verbal-frame.js";
 
 /** The word in both scripts. */
 const SHANG_PU = new Set(["上铺", "上鋪"]);
@@ -61,5 +64,47 @@ export const LOCATIVE_SHANG_PU: EdgeRule = {
       PLACE_TAGS.test(tagOf(context, place))
       ? "forbid"
       : "keep";
+  },
+};
+
+/** The character in both scripts. */
+const PU = new Set(["铺", "鋪"]);
+
+/** The aspect particles, which only a verb takes. */
+const ASPECT = new Set(["着", "著", "了", "过", "過"]);
+
+/** The verb's reading. */
+const SPREAD = syllableOf("pū");
+
+/**
+ * A word reading 铺 as anything but `pū` before an aspect particle is taken
+ * off the lattice.
+ *
+ * `pù` is the shop and the bed, and a noun takes no 着 or 过. The phrase corpus
+ * holds 铺着 `pù zhe` and 铺过 `pù guò` all the same, and the full tier keeps
+ * both as words, so 地板上铺着地毯 came out `dìbǎn shàng pùzhe dìtǎn` once
+ * {@link LOCATIVE_SHANG_PU} had split the 上铺. Without the word, 铺 reads as
+ * the verb it is stored as, and the particle as a word of its own. 铺过 already
+ * read `pū` through {@link import("./guo-rule.js").EXPERIENTIAL_GUO}, and is here
+ * so that it does not depend on that.
+ *
+ * The particle has to follow the 铺 inside the word. 店铺 and 床铺 are nouns
+ * whatever comes after them.
+ */
+export const SPREADING_PU: EdgeRule = {
+  name: "spreading-pu",
+  verdictFor: ({ edge, characters }: EdgeContext) => {
+    for (let at = edge.from; at < edge.to - 1; at++) {
+      const here = edge.reading[at - edge.from];
+      if (
+        PU.has(characters[at] ?? "") &&
+        ASPECT.has(characters[at + 1] ?? "") &&
+        here !== undefined &&
+        !isSameSyllable(here, SPREAD)
+      ) {
+        return "forbid";
+      }
+    }
+    return "keep";
   },
 };
