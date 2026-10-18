@@ -756,7 +756,22 @@ The dictionary holds 东西 as `dōngxi`, the thing, and the compass sense in lo
 
 In 88,866 corpus lines the rule changed one reading in each of the standard and full tiers, and over both CPP splits it changed 20 in each, all corrections.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="pu-before-an-aspect-particle"></a>
+
+### 铺 before an aspect particle
+
+The rule reads 铺 as the verb `pū` where 着 or 过 follows it:
+
+```ts
+convert(dictionary, "地板上铺着地毯。"); // "Dìbǎn shàng pūzhe dìtǎn."
+convert(dictionary, "这家店铺着火了"); // "zhè jiā diànpù zháohuǒle"
+```
+
+The phrase corpus holds 铺着 as `pù zhe` and 铺过 as `pù guò`, and the full tier keeps both as words. `pù` is the shop or the bed, a noun, and a noun takes no aspect particle. The rule takes any word off the lattice that reads 铺 some other way before 着, 了 or 过 inside the same word. 铺 then reads as a word of its own, stored as `pū`. 店铺 and 床铺 end at the 铺, so whatever follows them leaves them alone.
+
+Over the 71 distinct runs holding 铺 in Tatoeba and the Chinese Boost example sentences, the rule changed 2 in the full tier (地板上铺着地毯, in each script), both corrections. The core and standard tiers are unchanged.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

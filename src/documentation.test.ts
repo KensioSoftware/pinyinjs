@@ -315,6 +315,17 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("reads 铺 before an aspect particle the way the context rules page shows", () => {
+      assertIdentical(
+        convert(dictionary, "地板上铺着地毯。"),
+        "Dìbǎn shàng pūzhe dìtǎn.",
+      );
+      assertIdentical(
+        convert(dictionary, "这家店铺着火了"),
+        "zhè jiā diànpù zháohuǒle",
+      );
+    });
+
     it("reads 着, 的确实 and 东西 the way the context rules page shows", () => {
       assertIdentical(
         convert(dictionary, "他着急得睡不着。"),
