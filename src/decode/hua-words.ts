@@ -152,6 +152,10 @@ export const RECEIVING = new Set([
   "聽不懂",
   "判断",
   "判斷",
+  "印证",
+  "印證",
+  "证实",
+  "證實",
   "记得",
   "記得",
   "因为",
@@ -172,3 +176,69 @@ export const RECEIVING_TAIL = new Set(["了", "完"]);
  * When the words were said, which a conditional cannot be about: 刚才的话.
  */
 export const EARLIER = new Set(["刚才", "剛才", "刚刚", "剛剛"]);
+
+/**
+ * The adjectives that describe what was said, 刻薄的话 and 难听的话.
+ *
+ * Only adjectives that hardly describe a person or a state. 你累的话 and
+ * 你无聊的话 are conditionals, so 累 and 无聊 stay out.
+ */
+export const OF_SPEECH = new Set([
+  "刻薄",
+  "卑鄙",
+  "愚蠢",
+  "蠢",
+  "难听",
+  "難聽",
+  "好听",
+  "好聽",
+  "动听",
+  "動聽",
+  "中听",
+  "中聽",
+  "粗鲁",
+  "粗魯",
+  "粗俗",
+  "下流",
+  "肉麻",
+  "恶毒",
+  "惡毒",
+  "刺耳",
+  "尖酸",
+  "伤人",
+  "傷人",
+]);
+
+/** The degree an adjective of speech can carry: 很蠢, 最愚蠢, 这么卑鄙. */
+export const DEGREE = new Set([
+  "很",
+  "最",
+  "更",
+  "太",
+  "多么",
+  "多麼",
+  "如此",
+  ...MANNER,
+]);
+
+/**
+ * The verbs of explaining that follow the words something is put in:
+ * 用通俗的话解释, 用简练的话介绍.
+ */
+export const EXPLAINING = [
+  "解释",
+  "解釋",
+  "介绍",
+  "介紹",
+  "说",
+  "說",
+  "讲",
+  "講",
+  "表达",
+  "表達",
+  "描述",
+  "概括",
+  "回答",
+  "写",
+  "寫",
+];

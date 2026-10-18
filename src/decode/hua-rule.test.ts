@@ -86,6 +86,46 @@ describe("的话 where 话 is the noun", () => {
     assertArrayEquals(wordsOf("法官认真听完了我的话").slice(-2), ["的", "话"]);
   });
 
+  it("splits words a verb takes as its object", () => {
+    assertArrayEquals(wordsOf("事实印证了老师的话").slice(-2), ["的", "话"]);
+  });
+
+  it("splits words described as speech", () => {
+    // Given an adjective of speech after a speaker or a verb of speaking
+    // When each run is decoded
+    // Then 的 and 话 are words of their own
+    assertArrayEquals(wordsOf("他刻薄的话让我很难受").slice(2, 4), [
+      "的",
+      "话",
+    ]);
+    assertArrayEquals(wordsOf("你怎么能说出这么卑鄙的话").slice(-2), [
+      "的",
+      "话",
+    ]);
+    assertArrayEquals(wordsOf("我刚说了很蠢的话").slice(-2), ["的", "话"]);
+    assertArrayEquals(wordsOf("那是我说过的最愚蠢的话了").slice(-3, -1), [
+      "的",
+      "话",
+    ]);
+  });
+
+  it("splits the words something is explained in", () => {
+    // Given 用 a kind of words, and a verb of explaining after them
+    // When each run is decoded
+    // Then 的 and 话 are words of their own
+    for (const run of [
+      "请用通俗的话再说一遍",
+      "请用通俗的话解释一下",
+      "请用简练的话介绍一下",
+      "你能用更简单的话做解释吗",
+    ]) {
+      assertArrayEquals(
+        wordsOf(run).filter((word) => word === "的话"),
+        [],
+      );
+    }
+  });
+
   it("keeps the conditional", () => {
     // Given 的话 closing a condition
     // When each run is decoded
@@ -102,6 +142,12 @@ describe("的话 where 话 is the noun", () => {
       "这样的话我们会浪费很多时间",
       "有些人不来的话",
       "他的话",
+      "太贵的话我就不买了",
+      "你累的话就休息一下",
+      "用电脑的话就快多了",
+      "用别人的钱的话就要还",
+      "你无聊的话可以看书",
+      "简单的话就自己做吧",
     ]) {
       assertArrayEquals(
         wordsOf(run).filter((word) => word === "的话"),
