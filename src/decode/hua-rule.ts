@@ -25,6 +25,7 @@ import {
   RECEIVING_TAIL,
   EARLIER,
 } from "./hua-words.js";
+import { describesSpeech, explainsIn } from "./hua-modified.js";
 import { at, followsSpeaking, isCounted, saysKind } from "./hua-speaking.js";
 
 /**
@@ -74,7 +75,8 @@ function isOwned(context: EdgeContext, from: number, to: number): boolean {
  * The conditional is the default, since it is what the word is, and the rule
  * names the contexts where it cannot be: a 吗 or 里 after the 话, a time the
  * words were said, a verb of speaking before the 的, a kind of words that verb
- * is saying, a 句 counting them, or a person whose words they are. Taking the edge away leaves 的 and 话
+ * is saying, a 句 counting them, an adjective of speech, the words something
+ * is explained in, or a person whose words they are. Taking the edge away leaves 的 and 话
  * to read as themselves, which they already did, so this changes the spacing
  * and the segmentation rather than any syllable: `shuō de huà`, not
  * `shuō dehuà`.
@@ -96,6 +98,8 @@ export const NOUN_HUA: EdgeRule = {
       followsSpeaking(context, from) ||
       saysKind(context, from) ||
       isCounted(context, from) ||
+      describesSpeech(context, from) ||
+      explainsIn(context, from, to) ||
       isOwned(context, from, to)
       ? "forbid"
       : "keep";
