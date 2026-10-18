@@ -148,6 +148,17 @@ convert(dictionary, "他很帅"); // "tā hěn shuài"
 
 The check retains 243 of 511 single-character flags. It remains imperfect when a common character frequently starts names. For example, 福 can still be capitalised in 清心的人有福了.
 
+A word that jieba tags as a name and CC-CEDICT does not hold at all has no lowercase sense to remove the flag. Such a word keeps it only if its first character passes the same check, or if it opens with a word that CC-CEDICT capitalises. 小姑娘, 老先生 and 黑狗 lose the flag. 梁山伯 keeps it on 梁, and 肯塔基州 keeps it on 肯塔基.
+
+```ts
+convert(dictionary, "她只是个小姑娘"); // "tā zhǐshì gè xiǎogūniáng"
+convert(dictionary, "我有一只黑狗"); // "wǒ yǒu yìzhī hēigǒu"
+convert(dictionary, "梁山伯"); // "Liángshānbó"
+convert(dictionary, "肯塔基州"); // "Kěntǎjī Zhōu"
+```
+
+This removed the flag from 6,284 keys. About one in eight is a real name. Some start with a character that also opens ordinary words (琵琶湖, 祝英台, 何仙姑), and some are an administrative place whose own name has no entry (闸北区, 胶南市).
+
 `Lǐ Huá` is produced from two individually flagged characters because 李华 has no dictionary entry. The result follows dictionary tags, without recognising the full text as a person's name.
 
 Names whose characters lack the flag may remain lowercase. This affects 42 of the first hundred surnames in 百家姓:
@@ -163,7 +174,7 @@ Check name capitalisation when presenting converted text to readers.
 
 Simplified and traditional forms share proper-noun flags derived from jieba. See [shared tags and counts](../scripts-and-locales/#tags-frequency-and-names).
 
-Incorrect source tags can also cause unwanted capitals. For example, jieba tags 无缝钢管 as `nz`, producing `Wúfènggāngguǎn`.
+Incorrect source tags can also cause unwanted capitals. jieba tags 美梦 as `nz`, and 美 starts more names than ordinary words, producing `Měimèng`. CC-CEDICT only holds 新店 as a district of New Taipei, so 新店开张 is `Xīndiàn kāizhāng`.
 
 ### The parts of a proper name are written apart
 
@@ -265,7 +276,7 @@ PinyinJS implements part of GB/T 16159. Known gaps include:
 
 | GB/T 16159 says                                           | What happens now          |
 | --------------------------------------------------------- | ------------------------- |
-| 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `Wúfènggāngguǎn`, unsplit |
+| 4+ syllable compounds split: 无缝钢管 → `wúfèng gāngguǎn` | `wúfènggāngguǎn`, unsplit |
 | 成语 outside the curated list                             | written solid, no hyphen  |
 
 These cases require boundaries that the available dictionary data cannot reliably supply.

@@ -79,7 +79,12 @@ describe("美的 where 美 is the adjective", () => {
     // Given 美的 with no degree word or 是 in front of it
     // When each run is decoded
     // Then 美的 stays one word
-    for (const run of ["美的空调很好用", "我买了一台美的冰箱"]) {
+    for (const run of [
+      "美的空调很好用",
+      "我买了一台美的冰箱",
+      "这是美的冰箱",
+      "这是美的牌冰箱",
+    ]) {
       assertArrayEquals(
         wordsOf(run).filter((word) => word === "美的"),
         ["美的"],

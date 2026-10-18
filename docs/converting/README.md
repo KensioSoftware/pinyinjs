@@ -226,6 +226,16 @@ For example, 三个人 contains 三 + 个 + 人. The rule prevents the noun 个�
 
 In 88,866 lines, this changed 53 conversions, with three incorrect changes where a numeral-like prefix was not counting. It corrected one pronunciation, the 天 in 下了两天雨.
 
+A bare 个 with no number also counts one person after a verb that introduces somebody (有, 找, 叫, 请, 雇, 换 or 派, with or without a 了):
+
+```ts
+convert(dictionary, "门口有个人"); // "ménkǒu yǒu gè rén", somebody
+convert(dictionary, "我只是想找个人说说话"); // "wǒ zhǐshì xiǎng zhǎo gè rén shuō shuōhuà"
+convert(dictionary, "我有个人问题"); // "wǒ yǒu gèrén wèntí", personal
+```
+
+A noun after 个人 keeps the word, since 个人 is then the modifier _personal_. Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, this splits 12 of the 61 runs holding 个人, all of them somebody. It leaves a rough number in front (十几个人, 一百多个人) alone. Removing the word there moves the 个 onto the 几.
+
 ### 长 as an adjective
 
 The rule selects `cháng` when context indicates length, including a preceding degree adverb:
@@ -653,7 +663,7 @@ convert(dictionary, "多美的日出啊"); // "duō Měi de rìchū a"
 convert(dictionary, "美的空调很好用"); // "Měidí kōngtiáo hěn hǎo yòng", the brand
 ```
 
-The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. After a degree word (最, 很, 更, 非常, 这么, 多 and others) or a 是, 美 is graded or asserted, and a company name takes neither. Removing the word leaves 美 and the particle 的, read `de`. (美 on its own is still capitalised, because the dictionary also holds it as the short name of the United States.)
+The dictionary holds 美的 as a proper noun, the appliance maker `Měidí`. After a degree word (最, 很, 更, 非常, 这么, 多 and others), 美 is graded, and a company name takes none of them. After a 是, 美 is asserted unless a noun follows, so 都是美的 splits and 这是美的冰箱 keeps the brand. Removing the word leaves 美 and the particle 的, read `de`. (美 on its own is still capitalised, because the dictionary also holds it as the short name of the United States.)
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 美的 as the name in 28 runs, and none was the company. The rule changes 26 of them, all corrections. The two it leaves are 对美的感受 and 凡美的事物, where 美 is the noun _beauty_.
 
@@ -687,7 +697,7 @@ The noun is kept after a 的 or a 有 (他的才能, 富有才能), and before a
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 才能 as the noun in 184 runs. The rule splits 164 of them, and one is wrong (他的钢琴才能为他在音乐专家中赢得了美名, talent before a 为).
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

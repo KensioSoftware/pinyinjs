@@ -10,6 +10,7 @@ import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
 import type { Syllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
 import type { NameMassTable } from "./name-mass.js";
+import type { NameLookup } from "./proper-noun.js";
 import type { TraditionalTable } from "./traditional-table.js";
 
 /**
@@ -103,6 +104,8 @@ export interface WordSources {
   readonly jieba: ReadonlyMap<string, JiebaEntry>;
   /** What each character heads in jieba's word list, for {@link import("./proper-noun.js").properNounOf}. */
   readonly nameMass: NameMassTable;
+  /** What the merge can read of other words, for the same. */
+  readonly names: NameLookup;
   readonly unihanReadings: ReadonlyMap<string, UnihanReadings>;
   readonly traditional: TraditionalTable;
   readonly defaults: ReadonlyMap<string, readonly Syllable[]>;
