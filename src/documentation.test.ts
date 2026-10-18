@@ -484,6 +484,30 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("splits 的话 where 话 is the noun", () => {
+      assertIdentical(
+        convert(dictionary, "他说的话不是真的。"),
+        "Tā shuō de huà bú shì zhēnde.",
+      );
+      assertIdentical(
+        convert(dictionary, "你应该听妈妈的话。"),
+        "Nǐ yīnggāi tīng māma de huà.",
+      );
+      assertIdentical(
+        convert(dictionary, "你听得懂从我嘴里出来的话吗？"),
+        "Nǐ tīngdedǒng cóng wǒ zuǐlǐ chūlái de huà ma?",
+      );
+      // The conditional, which the rule leaves as one word.
+      assertIdentical(
+        convert(dictionary, "下雨的话，明天的出游就取消吧。"),
+        "Xiàyǔ dehuà, míngtiān de chūyóu jiù qǔxiāo ba.",
+      );
+      assertIdentical(
+        convert(dictionary, "我这么说的话是不是像个傻瓜？"),
+        "Wǒ zhème shuō dehuà shìbúshì xiàng gè shǎguā?",
+      );
+    });
+
     it("reads 的 as dī only where the taxi word stands", () => {
       assertIdentical(
         convert(dictionary, "打的去旅馆吧。"),

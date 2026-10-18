@@ -330,6 +330,23 @@ Candidates such as 的真, 的卡, 的筆 and 的這 can incorrectly cross a gra
 
 In 88,866 lines, the rule corrected 40 runs. Some corrections also changed spacing, including the former single-word output `deduì` for 你說的對.
 
+### 的话 as the particle and the noun
+
+的话 is a word, the conditional _if_ at the end of 要是下雨的话. The same two characters are as often the particle 的 and the noun 话 (_words_) it modifies. The rule keeps the word and splits it where 话 is the noun:
+
+```ts
+convert(dictionary, "他说的话不是真的。"); // "Tā shuō de huà bú shì zhēnde."
+convert(dictionary, "你应该听妈妈的话。"); // "Nǐ yīnggāi tīng māma de huà."
+convert(dictionary, "下雨的话，明天的出游就取消吧。"); // "Xiàyǔ dehuà, míngtiān de chūyóu jiù qǔxiāo ba."
+convert(dictionary, "我这么说的话是不是像个傻瓜？"); // "Wǒ zhème shuō dehuà shìbúshì xiàng gè shǎguā?"
+```
+
+话 is the noun when a 吗 or 里 follows it, when a verb of speaking comes before the 的 (说的话, 所说的话, 说过的话, 说这样的话), when a 句 counts it, when 刚才 or 刚刚 is when the words were said, and when a person owns them. An owner counts when it opens the run with more of the clause after it (他的话让我吃惊), or when it is the object of a verb that takes words, such as 听, 相信, 把 or 因为 (听老师的话, 不听我的话). 这么说的话 and 要我说的话 stay conditional.
+
+The readings are the same either way. The rule changes the segmentation and the spacing, so 出来的话吗 is `chūlái de huà ma` where it was `chūlái dehuà ma`.
+
+The full tier read 463 of the 475 runs holding 的话 in Tatoeba, zh.wikipedia and the Chinese Boost example sentences as the conditional. The rule splits 195 of them. One is wrong, 她的话是有那么几个缺点, where 她的话 is a topic (_as for her_). It leaves nouns it cannot see from these contexts, such as 他刻薄的话 and 请用通俗的话.
+
 ### 得 in potential complements
 
 The rule selects neutral-tone 得 between a verb and a potential complement:

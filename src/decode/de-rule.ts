@@ -221,3 +221,5 @@ export const PARTICLE_DE: EdgeRule = {
     return MODIFIED_TAGS.test(tagOf(context, before)) ? "forbid" : "keep";
   },
 };
+
+export { NOUN_HUA } from "./hua-rule.js";
