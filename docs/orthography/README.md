@@ -166,7 +166,7 @@ convert(dictionary, "梁山伯"); // "Liángshānbó"
 convert(dictionary, "肯塔基州"); // "Kěntǎjī Zhōu"
 ```
 
-This removed the flag from 6,284 keys. About one in eight is a real name. Some start with a character that also opens ordinary words (琵琶湖, 祝英台, 何仙姑), and some are an administrative place whose own name has no entry (闸北区, 胶南市).
+This removed the flag from 6,284 keys. About one in eight is a real name. Some start with a character that also opens ordinary words (琵琶湖, 祝英台, 何仙姑), and some are an administrative place whose own name has no entry (闸北区, 胶南市). The names found in the Chinese Boost 例句 and Tatoeba (长岛, 静安寺, 琵琶湖 and a few more) are listed in `src/dictionary/kept-names.ts` and keep the flag.
 
 `Lǐ Huá` is produced from two individually flagged characters because 李华 has no dictionary entry. The result follows dictionary tags, without recognising the full text as a person's name.
 
