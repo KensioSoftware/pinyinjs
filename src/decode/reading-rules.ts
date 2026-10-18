@@ -16,6 +16,9 @@ import { OBTAINING_DE } from "./obtain-rule.js";
 import { REDUPLICATED_VERB } from "./reduplication-rule.js";
 import { VERBAL_READING } from "./verbal-rule.js";
 import { LOCATIVE_SHANG_PU } from "./pu-rule.js";
+import { RESULTATIVE_ZHAO } from "./zhao-rule.js";
+import { VERBAL_DE_QUESHI } from "./dique-rule.js";
+import { COMPASS_DONGXI } from "./dongxi-rule.js";
 
 export { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
@@ -35,6 +38,9 @@ export { OBTAINING_DE } from "./obtain-rule.js";
 export { REDUPLICATED_VERB } from "./reduplication-rule.js";
 export { VERBAL_READING } from "./verbal-rule.js";
 export { LOCATIVE_SHANG_PU } from "./pu-rule.js";
+export { RESULTATIVE_ZHAO } from "./zhao-rule.js";
+export { VERBAL_DE_QUESHI } from "./dique-rule.js";
+export { COMPASS_DONGXI } from "./dongxi-rule.js";
 import type { EdgeRule } from "./rules.js";
 import { ATTESTED_ERHUA } from "./erhua-rule.js";
 
@@ -80,6 +86,7 @@ export const READING_RULES: readonly EdgeRule[] = [
   CONCERNING_GAN,
   COUNTING_ZHI,
   POTENTIAL_LIAO,
+  RESULTATIVE_ZHAO,
   OBTAINING_DE,
   VERBAL_READING,
   DOMINANT_READING,
@@ -87,4 +94,6 @@ export const READING_RULES: readonly EdgeRule[] = [
   ADJECTIVAL_MEI,
   SUMMING_DOU,
   MODAL_CAI,
+  VERBAL_DE_QUESHI,
+  COMPASS_DONGXI,
 ];

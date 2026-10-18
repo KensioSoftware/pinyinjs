@@ -90,7 +90,7 @@ const POTENTIAL_STEMS = new Set(["来得", "來得", "算得"]);
  * obtaining (获得, 赢得, 谋得). The rest are verbs of knowing (记得, 懂得,
  * 晓得), the verbs 使得, 值得, 显得, 变得, 免得, 舍得 and 懒得, and 有得.
  */
-const LEXICAL_STEMS = new Set([
+export const LEXICAL_STEMS: ReadonlySet<string> = new Set([
   ...toCharacters("获獲取赢贏夺奪谋謀求博购購征挣掙争爭赚賺"),
   ...toCharacters("记記觉覺懂晓曉认認"),
   ...toCharacters("使值显顯变變免舍捨懒懶有"),
