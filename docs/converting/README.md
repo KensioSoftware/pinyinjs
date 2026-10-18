@@ -691,7 +691,22 @@ The dictionary holds 花都 as a proper noun, the Guangzhou district `Huādū`. 
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 花都 as the name in 11 runs. The rule changes all 11, and none was the district.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI` and `SUMMING_DOU`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="cai-as-modal"></a>
+
+### 才能 as 才 and the modal 能
+
+The rule takes the word 才能 (_talent_) apart where 才 is the adverb _only then_ and 能 the modal _can_:
+
+```ts
+convert(dictionary, "怎样才能提高爆发力。"); // "Zěnyàng cái néng tígāo bàofālì."
+convert(dictionary, "你很有才能。"); // "Nǐ hěn yǒu cáinéng.", talent
+```
+
+The noun is kept after a 的 or a 有 (他的才能, 富有才能), and before a 的, a 是, a degree word such as 很 or 非常, or the end of the run. Everywhere else 能 has a verb to be the modal of. Where a tagged word already ends at the 才 (处方才能买, where 方才 is also a word), the rule leaves the decode as it was. The readings are `cái néng` either way, so only the segmentation and spacing change.
+
+Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 才能 as the noun in 184 runs. The rule splits 164 of them, and one is wrong (他的钢琴才能为他在音乐专家中赢得了美名, talent before a 为).
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
