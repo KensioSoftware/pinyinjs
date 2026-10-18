@@ -20,11 +20,9 @@ function wordsOf(run: string, withRule = true): readonly string[] {
   return decodeRun(dictionary, run, rules).map((word) => word.text);
 }
 
-/** The proper nouns a run decodes to. */
+/** The words a run decodes to that join a number to its 量词. */
 function namesIn(run: string): readonly string[] {
-  return decodeRun(dictionary, run)
-    .filter((word) => word.isProperNoun)
-    .map((word) => word.text);
+  return wordsOf(run).filter((word) => ["三本", "堵墙", "堵牆"].includes(word));
 }
 
 describe("a proper noun read across a number and its 量词", () => {

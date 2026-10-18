@@ -28,6 +28,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     phrase,
     jieba,
     nameMass,
+    names,
     unihanReadings,
     traditional,
     defaults,
@@ -90,6 +91,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     senses,
     reading,
     nameMass,
+    names,
   );
 
   // ── Polyphone priors, for single characters only ──────────

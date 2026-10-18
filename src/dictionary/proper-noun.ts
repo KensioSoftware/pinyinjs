@@ -11,7 +11,11 @@
  * as the word's own put a capital on 长寿, 友谊, 温泉 and 115 other keys. See
  * {@link statedOf}.
  */
-import { characterCount, isSingleCharacter } from "../script/characters.js";
+import {
+  characterCount,
+  isSingleCharacter,
+  toCharacters,
+} from "../script/characters.js";
 import {
   type CedictEntry,
   isStated,
@@ -58,6 +62,7 @@ export function properNounOf(
   senses: readonly CedictEntry[],
   reading: readonly Syllable[],
   nameMass: NameMassTable,
+  lookup: NameLookup,
 ): ProperNoun {
   const partOfSpeech = jiebaEntry?.partOfSpeech ?? "";
   const proposed =
@@ -68,8 +73,9 @@ export function properNounOf(
           statedOf(senses).some((entry) => entry.isProperNoun));
   const isProperNoun =
     proposed &&
-    (!isSingleCharacter(word) ||
-      leadsNames(nameMass, word, jiebaEntry?.frequency ?? 0));
+    (isSingleCharacter(word)
+      ? leadsNames(nameMass, word, jiebaEntry?.frequency ?? 0)
+      : senses.length > 0 || isUnlistedName(word, nameMass, lookup));
   const isAligned = characterCount(word) === reading.length;
   const boundaries =
     isProperNoun && isAligned
@@ -82,6 +88,62 @@ export function properNounOf(
     boundaries,
     isVetoed: isProperNounTag(partOfSpeech) && !isProperNoun,
   };
+}
+
+/**
+ * What the merge can say about other words while it settles one.
+ */
+export interface NameLookup {
+  /** jieba's count for a character standing on its own. */
+  readonly frequencyOf: (character: string) => number;
+  /** Whether CC-CEDICT capitalises a sense of the word. */
+  readonly isCapitalised: (word: string) => boolean;
+}
+
+/**
+ * Read other words' counts and capitals off the indexed sources.
+ */
+export function nameLookupOf(
+  jieba: ReadonlyMap<string, JiebaEntry>,
+  cedictByWord: ReadonlyMap<string, readonly CedictEntry[]>,
+): NameLookup {
+  return {
+    frequencyOf: (character) => jieba.get(character)?.frequency ?? 0,
+    isCapitalised: (word) =>
+      (cedictByWord.get(word) ?? []).some((entry) => entry.isProperNoun),
+  };
+}
+
+/**
+ * Whether a word jieba tags as a name, and CC-CEDICT does not hold at all, is
+ * one.
+ *
+ * jieba tags about 89,000 such words `nr`, `ns`, `nt` or `nz`. Most are names
+ * (韦小宝, 令狐冲, 洪七公), and plenty are ordinary words that happened to be
+ * tagged: 小姑娘, 老先生, 黑狗, 换衣服, 静静. With no CC-CEDICT entry there is
+ * no lowercase sense to veto the tag, and 她只是个小姑娘 came out `tā zhǐshì
+ * gè Xiǎogūniang`.
+ *
+ * A name starts with a character that starts names, which is the same test a
+ * single character has to pass ({@link leadsNames}). 韦, 令 and 洪 pass, and
+ * 小, 老, 黑 and 换 do not. A place that is a known name plus a generic, such
+ * as 肯塔基州, 长野县 or 静安寺, keeps the flag on the name it opens with.
+ */
+function isUnlistedName(
+  word: string,
+  nameMass: NameMassTable,
+  lookup: NameLookup,
+): boolean {
+  const characters = toCharacters(word);
+  const head = characters[0] ?? "";
+  return (
+    leadsNames(nameMass, head, lookup.frequencyOf(head)) ||
+    characters
+      .slice(2)
+      .some((_, at) =>
+        lookup.isCapitalised(characters.slice(0, at + 2).join("")),
+      )
+  );
 }
 
 /**
