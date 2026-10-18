@@ -315,6 +315,31 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("reads 着, 的确实 and 东西 the way the context rules page shows", () => {
+      assertIdentical(
+        convert(dictionary, "他着急得睡不着。"),
+        "Tā zháojí de shuì bù zháo.",
+      );
+      assertIdentical(convert(dictionary, "这谁管得着"), "zhè shéi guǎndezháo");
+      assertIdentical(convert(dictionary, "我不着急"), "wǒ bù zháojí");
+      assertIdentical(
+        convert(dictionary, "他说的确实在理。"),
+        "Tā shuō de quèshí zài lǐ.",
+      );
+      assertIdentical(
+        convert(dictionary, "我的确实在不知道"),
+        "wǒ dí quèshí zài bù zhīdào",
+      );
+      assertIdentical(
+        convert(dictionary, "这条路是东西走向的。"),
+        "Zhè tiáo lù shì Dōng xī zǒuxiàng de.",
+      );
+      assertIdentical(
+        convert(dictionary, "这东西两块钱"),
+        "zhè dōngxi liǎng kuài qián",
+      );
+    });
+
     it("keeps a function word its usual reading inside a pair nobody counted", () => {
       assertIdentical(
         convert(dictionary, "气球胀得太大，会破的"),

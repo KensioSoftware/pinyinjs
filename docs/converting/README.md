@@ -706,7 +706,57 @@ The noun is kept after a 的 or a 有 (他的才能, 富有才能), and before a
 
 Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences, the full tier read 才能 as the noun in 184 runs. The rule splits 164 of them, and one is wrong (他的钢琴才能为他在音乐专家中赢得了美名, talent before a 为).
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU` and `MODAL_CAI`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="zhao-as-a-result"></a>
+
+### 着 as a result
+
+The rule selects `zháo` for 着 after a verb and 不 or 得:
+
+```ts
+convert(dictionary, "他着急得睡不着。"); // "Tā zháojí de shuì bù zháo."
+convert(dictionary, "这谁管得着"); // "zhè shéi guǎndezháo"
+convert(dictionary, "我不着急"); // "wǒ bù zháojí"
+```
+
+着 is stored `zhe`, the aspect particle. The full tier holds 不着 as a word read `bù zháo`. The standard and core tiers do not, and read 睡不着 as `shuì bù zhe`. The rule makes both agree with full. 用得着 and 管得着 read `zháo` in every tier.
+
+The 不 or 得 has to stand alone, which keeps the aspect 着 of 取得着 (the core tier, which has no words, checks the 了 rule's list of verbs that make a word with 得). The 着 has to stand alone too, which keeps 不着急. No longer word may start at the 不, which keeps 说话不着边际 `bù zhuó`. The verb is a word jieba tags as one, or one of 用, 够, 轮 and 等, which it tags otherwise.
+
+In 88,866 corpus lines the rule changed 28 readings in the standard tier and 35 in the core tier, all corrections. The full tier and both CPP splits are unchanged.
+
+<a id="de-before-queshi"></a>
+
+### 的 before 确实
+
+The rule takes the word 的确 apart where a verb comes before it and 实 after it:
+
+```ts
+convert(dictionary, "他说的确实在理。"); // "Tā shuō de quèshí zài lǐ."
+convert(dictionary, "我的确实在不知道"); // "wǒ dí quèshí zài bù zhīdào"
+```
+
+的确实 can be 的确 and a word starting with 实, or 的 and 确实. After a verb the 的 closes a 的 phrase (说的, 做的) and reads `de`, and 确 belongs to 确实. After a noun or a pronoun the adverb stays, as in 战争的确实在 and 我的确实在. The verb is the longest word ending before the 的. The 争 of 战争 does not count.
+
+The one 的确实 in 88,866 corpus lines and both CPP splits is 战争的确实在, which the rule leaves alone.
+
+<a id="dongxi-as-directions"></a>
+
+### 东西 as east and west
+
+The rule takes the word 东西 apart where it names the two directions:
+
+```ts
+convert(dictionary, "这条路是东西走向的。"); // "Zhè tiáo lù shì Dōng xī zǒuxiàng de."
+convert(dictionary, "这东西两块钱"); // "zhè dōngxi liǎng kuài qián"
+```
+
+The dictionary holds 东西 as `dōngxi`, the thing, and the compass sense in longer words such as 东西方 and 各奔东西. The rule reads the directions before 走向 or 方向, before 两 and a side (东西两侧, 东西两端, 东西两厢), and before a 向 followed by 的 or the end of the run (东西向的街道). 把东西向他扔过去 is the thing.
+
+东 and 西 then read as words of their own and are written apart. A lone 东 is capitalised because the dictionary marks it as a proper noun (the surname Dong), as it does in 往东走.
+
+In 88,866 corpus lines the rule changed one reading in each of the standard and full tiers, and over both CPP splits it changed 20 in each, all corrections.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
