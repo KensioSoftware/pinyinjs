@@ -349,6 +349,25 @@ Candidates such as 的真, 的卡, 的筆 and 的這 can incorrectly cross a gra
 
 In 88,866 lines, the rule corrected 40 runs. Some corrections also changed spacing, including the former single-word output `deduì` for 你說的對.
 
+<a id="particles-after-a-verb"></a>
+
+### 得, 着, 了 and 地 after a verb or an adjective
+
+The rules prevent an untagged candidate from combining a particle with the start of the following word, the same way the 的 rule does:
+
+```ts
+convert(dictionary, "他冻得直发抖。"); // "Tā dòng de zhí fādǒu."
+convert(dictionary, "她算账算得很精细。"); // "Tā suànzhàng suàn de hěn jīngxì."
+convert(dictionary, "她手里拿着花。"); // "Tā shǒulǐ názhe huā."
+convert(dictionary, "她惆怅地望着窗外。"); // "Tā chóuchàng de wàngzhe chuāng wài."
+```
+
+The full tier holds keys such as 得直 (`dé zhí`), 着花 (`zháo huā`), 了债 (`liǎo zhài`) and 地望 (`dì wàng`). Each reads the particle as it reads at the head of a phrase. After a verb or an adjective, 得 is the complement particle and 着 and 了 are aspect particles. The rules forbid those keys there. 地 is forbidden after an adjective or an adverb only, since 地 after a verb is usually the ground (发射到地球轨道). Tagged words such as 得到, 着急 and 了解 are retained. 过 is left out, because 怕过马路 needs its `guò`.
+
+jieba counted 算得 and tagged it a verb read `suàn dé`, "to count as". Before an adverb, a degree word, an adjective or 跟 and 比, the rule takes the word apart and reads the 得 as the particle. 这算得什么 keeps the word.
+
+Over the 88,612 Tatoeba sentences and the 43,367 Chinese Boost example sentences, the four rules changed 17 runs in the full tier. 16 are corrections, and in the other one only 工夫 moved to its neutral tone. The core and standard tiers are unchanged.
+
 ### 的话 as the particle and the noun
 
 的话 is a word, the conditional _if_ at the end of 要是下雨的话. The same two characters are as often the particle 的 and the noun 话 (_words_) it modifies. The rule keeps the word and splits it where 话 is the noun:
@@ -771,7 +790,7 @@ The phrase corpus holds 铺着 as `pù zhe` and 铺过 as `pù guò`, and the fu
 
 Over the 71 distinct runs holding 铺 in Tatoeba and the Chinese Boost example sentences, the rule changed 2 in the full tier (地板上铺着地毯, in each script), both corrections. The core and standard tiers are unchanged.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `TAXI_DI`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

@@ -1,4 +1,6 @@
 import { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+import { CALCULATING_SUAN, COMPLEMENT_DE } from "./complement-rule.js";
+import { ADVERBIAL_DI, ASPECTUAL_PARTICLE } from "./particle-rule.js";
 import { TAXI_DI } from "./taxi-rule.js";
 import { COUNTED_MEASURE } from "./measure-rule.js";
 import { COUNTED_GE } from "./ge-rule.js";
@@ -21,6 +23,8 @@ import { VERBAL_DE_QUESHI } from "./dique-rule.js";
 import { COMPASS_DONGXI } from "./dongxi-rule.js";
 
 export { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
+export { CALCULATING_SUAN, COMPLEMENT_DE } from "./complement-rule.js";
+export { ADVERBIAL_DI, ASPECTUAL_PARTICLE } from "./particle-rule.js";
 export { TAXI_DI } from "./taxi-rule.js";
 export { COUNTED_MEASURE } from "./measure-rule.js";
 export { COUNTED_GE } from "./ge-rule.js";
@@ -69,6 +73,10 @@ export const READING_RULES: readonly EdgeRule[] = [
   MODAL_DE,
   PARTICLE_DE,
   POTENTIAL_DE,
+  COMPLEMENT_DE,
+  CALCULATING_SUAN,
+  ASPECTUAL_PARTICLE,
+  ADVERBIAL_DI,
   TAXI_DI,
   NOUN_HUA,
   TEACHING_JIAO,
