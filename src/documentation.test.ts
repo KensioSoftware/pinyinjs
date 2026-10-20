@@ -326,6 +326,25 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("reads particles after a verb the way the context rules page shows", () => {
+      assertIdentical(
+        convert(dictionary, "他冻得直发抖。"),
+        "Tā dòng de zhí fādǒu.",
+      );
+      assertIdentical(
+        convert(dictionary, "她算账算得很精细。"),
+        "Tā suànzhàng suàn de hěn jīngxì.",
+      );
+      assertIdentical(
+        convert(dictionary, "她手里拿着花。"),
+        "Tā shǒulǐ názhe huā.",
+      );
+      assertIdentical(
+        convert(dictionary, "她惆怅地望着窗外。"),
+        "Tā chóuchàng de wàngzhe chuāng wài.",
+      );
+    });
+
     it("reads 着, 的确实 and 东西 the way the context rules page shows", () => {
       assertIdentical(
         convert(dictionary, "他着急得睡不着。"),
