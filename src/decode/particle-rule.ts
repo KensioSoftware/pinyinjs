@@ -3,7 +3,7 @@
  * 地.
  *
  * {@link import("./de-rule.js").PARTICLE_DE} and
- * {@link import("./de-rule.js").COMPLEMENT_DE} settle the same fault for 的 and
+ * {@link import("./complement-rule.js").COMPLEMENT_DE} settle the same fault for 的 and
  * 得: the full tier keeps keys no source tagged, many of them from the phrase
  * corpus, and one that starts at a particle reads that particle as whatever it
  * is at the head of a phrase.
