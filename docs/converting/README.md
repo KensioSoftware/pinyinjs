@@ -790,7 +790,22 @@ The phrase corpus holds 铺着 as `pù zhe` and 铺过 as `pù guò`, and the fu
 
 Over the 71 distinct runs holding 铺 in Tatoeba and the Chinese Boost example sentences, the rule changed 2 in the full tier (地板上铺着地毯, in each script), both corrections. The core and standard tiers are unchanged.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI` and `COMPASS_DONGXI`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="changyong-as-often-use"></a>
+
+### 常用 as 常 and the verb 用
+
+The rule takes the word 常用 (_in common use_) apart where 常 is the adverb _often_ and 用 the verb _use_:
+
+```ts
+convert(dictionary, "我常用微博看新闻。"); // "Wǒ cháng yòng Wēibó kàn xīnwén."
+convert(dictionary, "你知道哪些常用的汉字吗"); // "nǐ zhīdào nǎxiē chángyòng de hànzì ma"
+```
+
+The adjective is kept after a verb (掌握常用词汇), a degree word such as 很, 最 or 越来越, a 是 or a measure word (一个常用工具, 哪些常用的). It is also kept before a 的, a 于 (常用于), a 词, 字 or 语 (常用词), or the end of the run, and at the start of the run. Everywhere else 用 has an object. Where a tagged word other than an adverb already ends at the 常 (文学作品中常用夜来香, where 中常 is also a word), the rule leaves the decode as it was. An adverb may take it, and 时常常用古书 reads 时 常常 用. The readings are `cháng yòng` either way, so only the segmentation and spacing change.
+
+Over 189,517 distinct Han runs from Tatoeba and the Chinese Boost example sentences, the full tier read 常用 as the adjective in 27 runs. The rule splits 14 of them, all corrections, and the standard tier changes the same 14. Of the 13 it leaves joined, 12 are the adjective. The other is 文学作品中常用夜来香来象征思念与柔情, held back by 中常. 我常用词典查生词 is also left joined, since 词 follows. The core tier has no 常用 to split.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI` and `VERBAL_CHANGYONG`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
