@@ -16,7 +16,7 @@ import { describe, it } from "vitest";
 
 import { writeSyllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
-import { COLUMN, PROPER_NOUN_FLAG } from "./artifact-format.js";
+import { COLUMN, decodeTaiwan, PROPER_NOUN_FLAG } from "./artifact-format.js";
 import { countForQuantising, FrequencyTable } from "./frequency-table.js";
 import { WordCounts } from "./word-counts.js";
 import { isSingleCharacter, toCharacters } from "../script/characters.js";
@@ -172,9 +172,19 @@ class Tier {
    * zh-TW column is a delta, and an absent one means the locales agree.
    */
   taiwanReading(word: string): string | undefined {
-    return decodeReading(this.columns(word)?.[1] ?? "")
-      ?.map((syllable) => writeSyllable(syllable))
+    return decodeTaiwan(this.columns(word)?.[1] ?? "")
+      .tw?.map((syllable) => writeSyllable(syllable))
       .join(" ");
+  }
+
+  /**
+   * A word's other 國語 readings, which hold for one of its senses only.
+   */
+  taiwanAlternates(word: string): readonly string[] {
+    return (decodeTaiwan(this.columns(word)?.[1] ?? "").twAlternates ?? []).map(
+      (alternate) =>
+        alternate.map((syllable) => writeSyllable(syllable)).join(" "),
+    );
   }
 }
 
@@ -353,11 +363,50 @@ describe("the committed dictionary", () => {
       // 简体 forms they simplify to: 沈 is `chén` under 沉, 誰 `shéi` under 谁.
       assertUndefined(full.taiwanReading("沈"));
       assertUndefined(full.taiwanReading("誰"));
-      // A real delta leaves no such trace. Nothing in 普通话 reads 和 `hàn`,
-      // 期 `qí` or 垃 `lè`.
-      assertIdentical(full.taiwanReading("和"), "hàn");
+      // A real delta leaves no such trace. Nothing in 普通话 reads 期 `qí`
+      // or 垃 `lè`.
       assertIdentical(full.taiwanReading("期"), "qí");
       assertIdentical(full.taiwanReading("垃"), "lè");
+    });
+
+    it("reads a word as 教育部's dictionaries do", () => {
+      // Each of these used to come out with the 普通话 reading, because
+      // CC-CEDICT marks no `Taiwan pr.` on them.
+      assertIdentical(full.taiwanReading("星期"), "xīng qí");
+      assertIdentical(full.taiwanReading("危险"), "wéi xiǎn");
+      assertIdentical(full.taiwanReading("企业"), "qì yè");
+      assertIdentical(full.taiwanReading("期待"), "qí dài");
+      assertIdentical(full.taiwanReading("研究"), "yán jiù");
+      assertIdentical(full.taiwanReading("頭髮"), "tóu fǎ");
+      assertIdentical(full.taiwanReading("头发"), "tóu fǎ");
+    });
+
+    it("leaves a word 教育部 reads as 普通话 does alone", () => {
+      assertUndefined(full.taiwanReading("银行"));
+      assertUndefined(full.taiwanReading("和平"));
+      assertUndefined(full.taiwanReading("东西"));
+    });
+
+    it("keeps a sense's reading off the bare character", () => {
+      // CC-CEDICT hangs each of these on one sense: 和 `hàn` on the
+      // conjunction, 从 `zòng` on 侍從, 署 `shù` on signing, 胜 `shēng` on
+      // being able to bear. The character on its own reads as in 普通话, and
+      // the sense's reading is offered beside it.
+      for (const [character, alternate] of [
+        ["和", "hàn"],
+        ["从", "zòng"],
+        ["署", "shù"],
+        ["胜", "shēng"],
+      ] as const) {
+        assertUndefined(full.taiwanReading(character));
+        assertArrayIncludes(full.taiwanAlternates(character), alternate);
+      }
+      assertUndefined(full.taiwanReading("长"));
+    });
+
+    it("prefers the 普通话 reading of a word it cannot tell apart", () => {
+      assertUndefined(full.taiwanReading("相亲"));
+      assertArrayEquals(full.taiwanAlternates("相亲"), ["xiàng qīn"]);
     });
 
     it("takes the note from a sense that reads the way the entry does", () => {

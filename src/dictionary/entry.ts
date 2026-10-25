@@ -11,6 +11,14 @@ export interface EntryReadings {
   readonly cn: readonly Syllable[];
   /** 國語, only when it differs from {@link EntryReadings.cn}. */
   readonly tw?: readonly Syllable[];
+  /**
+   * Other 國語 readings, which hold for one sense only.
+   *
+   * The default stays {@link EntryReadings.tw}, or {@link EntryReadings.cn}
+   * where that is absent, because nothing at the word says which sense a
+   * given occurrence is: 和 is `hé` with `hàn` here.
+   */
+  readonly twAlternates?: readonly (readonly Syllable[])[];
 }
 
 /**

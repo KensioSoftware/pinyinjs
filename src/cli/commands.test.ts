@@ -155,6 +155,15 @@ describe("writing JSON", () => {
       taiwanReading: "lè sè",
       otherReadings: [],
     });
+    assertObjectEquals(await json("lookup", "和"), {
+      word: "和",
+      found: true,
+      reading: "hé",
+      partOfSpeech: "",
+      isProperNoun: false,
+      otherReadings: [],
+      otherTaiwanReadings: ["hàn"],
+    });
     assertObjectEquals(await json("lookup", "囧"), {
       word: "囧",
       found: false,
@@ -191,7 +200,7 @@ describe("writing JSON", () => {
   it("reports what is loaded", async () => {
     assertObjectEquals(await json("info", "--tier", "core"), {
       tier: "core",
-      keys: 33,
+      keys: 34,
       attestedSyllables: 415,
       inventorySpellings: 424,
     });
@@ -587,6 +596,13 @@ describe("the lookup command", () => {
     assertArrayEquals(await cli("lookup", "垃圾"), [
       "垃圾  lā jī",
       "  zh-TW  lè sè",
+    ]);
+  });
+
+  it("reports a Taiwan reading that holds for one sense", async () => {
+    assertArrayEquals(await cli("lookup", "和"), [
+      "和  hé",
+      "  zh-TW also  hàn",
     ]);
   });
 

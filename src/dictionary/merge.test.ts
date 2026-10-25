@@ -12,6 +12,11 @@ import { describe, it } from "vitest";
 
 import type { CedictEntry } from "../sources/cedict.js";
 import type { JiebaEntry } from "../sources/jieba.js";
+import {
+  type MoeReading,
+  parseMoeReadings,
+  preferReadings,
+} from "../sources/moe.js";
 import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
 import { writeSyllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
@@ -48,6 +53,51 @@ function sources(overrides: Partial<MergeSources> = {}): MergeSources {
     jieba: new Map<string, JiebaEntry>(),
     ...overrides,
   };
+}
+
+/**
+ * Lines written `headword | order | reading`, as the table the build caches.
+ */
+function table(lines: readonly string[]): string {
+  return lines.map((line) => line.replaceAll(" | ", "\t")).join("\n");
+}
+
+/**
+ * 教育部's readings, the concise dictionary's first.
+ */
+function moe(
+  concise: readonly string[],
+  revised: readonly string[] = [],
+): ReadonlyMap<string, readonly MoeReading[]> {
+  return preferReadings(
+    parseMoeReadings(table(concise), "concise"),
+    parseMoeReadings(table(revised), "revised"),
+  );
+}
+
+/**
+ * A word's zh-TW reading, written back out.
+ */
+function taiwan(
+  byWord: ReadonlyMap<string, DictionaryEntry>,
+  word: string,
+): string | undefined {
+  return byWord
+    .get(word)
+    ?.readings.tw?.map((syllable) => writeSyllable(syllable))
+    .join(" ");
+}
+
+/**
+ * A word's other zh-TW readings, written back out.
+ */
+function taiwanAlternates(
+  byWord: ReadonlyMap<string, DictionaryEntry>,
+  word: string,
+): readonly string[] {
+  return (byWord.get(word)?.readings.twAlternates ?? []).map((alternate) =>
+    alternate.map((syllable) => writeSyllable(syllable)).join(" "),
+  );
 }
 
 /**
@@ -758,8 +808,9 @@ describe("merging the sources", () => {
       assertUndefined(byWord.get("从")?.readings.tw);
     });
 
-    it("keeps a character's note where the entry leads with it", () => {
-      // 和's `hàn` is the conjunction, which is what a bare 和 nearly always is.
+    it("offers a character's note on its leading sense as an alternate", () => {
+      // 和's `hàn` is the conjunction, and the conjunction is `hé` in Taipei
+      // too. Taking the note made every 和 no word covered read `hàn`.
       const { byWord } = merge({
         phrase: new Map([["和", ["hé"]]]),
         cedict: [
@@ -769,13 +820,22 @@ describe("merging the sources", () => {
           }),
         ],
       });
-      assertIdentical(
-        byWord
-          .get("和")
-          ?.readings.tw?.map((s) => writeSyllable(s))
-          .join(""),
-        "hàn",
-      );
+      assertUndefined(taiwan(byWord, "和"));
+      assertArrayEquals(taiwanAlternates(byWord, "和"), ["hàn"]);
+    });
+
+    it("offers a note on a later sense as an alternate too", () => {
+      const { byWord } = merge({
+        phrase: new Map([["署", ["shǔ"]]]),
+        cedict: [
+          cedictEntry("署", "署", "shu3", {
+            taiwanReadings: ["shu4"],
+            taiwanScope: "sense",
+          }),
+        ],
+      });
+      assertUndefined(taiwan(byWord, "署"));
+      assertArrayEquals(taiwanAlternates(byWord, "署"), ["shù"]);
     });
 
     it("keeps a sense-scoped note on a word", () => {
@@ -811,6 +871,197 @@ describe("merging the sources", () => {
         ],
       });
       assertUndefined(byWord.get("着")?.readings.tw);
+    });
+  });
+
+  describe("zh-TW readings from 教育部", () => {
+    it("takes the dictionary's reading of a word", () => {
+      const { byWord, result } = merge({
+        phrase: new Map([["星期", ["xīng", "qī"]]]),
+        cedict: [cedictEntry("星期", "星期", "xing1 qi1")],
+        moe: moe(["星期 | 0 | xīng qí"]),
+      });
+      assertIdentical(taiwan(byWord, "星期"), "xīng qí");
+      assertIdentical(result.stats.standardTaiwanReadings, 1);
+    });
+
+    it("finds the word under its 繁體 spelling", () => {
+      const { byWord } = merge({
+        phrase: new Map([["危险", ["wēi", "xiǎn"]]]),
+        cedict: [cedictEntry("危險", "危险", "wei1 xian3")],
+        moe: moe(["危險 | 0 | wéi xiǎn"]),
+      });
+      assertIdentical(taiwan(byWord, "危险"), "wéi xiǎn");
+    });
+
+    it("gives a full tone where 普通话 has the neutral one", () => {
+      const { byWord } = merge({
+        unihanReadings: CHARACTERS,
+        unihanVariants: VARIANTS,
+        phrase: new Map([["头发", ["tóu", "fa"]]]),
+        cedict: [cedictEntry("頭髮", "头发", "tou2 fa5")],
+        moe: moe(["頭髮 | 0 | tóu fǎ"]),
+      });
+      assertIdentical(taiwan(byWord, "头发"), "tóu fǎ");
+    });
+
+    it("stores nothing where the dictionary reads the word as 普通话 does", () => {
+      // Even where CC-CEDICT says otherwise: the standard has the last word.
+      const { byWord } = merge({
+        phrase: new Map([["迫击炮", ["pǎi", "jī", "pào"]]]),
+        cedict: [
+          cedictEntry("迫擊砲", "迫击炮", "pai3 ji1 pao4", {
+            taiwanReadings: ["po4", "ji2", "pao4"],
+          }),
+        ],
+        moe: moe(["迫擊砲 | 0 | pǎi jī pào"]),
+      });
+      assertUndefined(taiwan(byWord, "迫击炮"));
+    });
+
+    it("keeps the 普通话 reading where one of a word's readings is it", () => {
+      // 相親 is `xiāngqīn`, mutually close, and `xiàngqīn`, the matchmaking
+      // meeting. Nothing at the word says which a given 相亲 is.
+      const { byWord } = merge({
+        phrase: new Map([["相亲", ["xiāng", "qīn"]]]),
+        cedict: [
+          cedictEntry("相親", "相亲", "xiang1 qin1", {
+            taiwanReadings: ["xiang4", "qin1"],
+            taiwanScope: "sense",
+          }),
+        ],
+        moe: moe(["相親 | 1 | xiāng qīn", "相親 | 2 | xiàng qīn"]),
+      });
+      assertUndefined(taiwan(byWord, "相亲"));
+      assertArrayEquals(taiwanAlternates(byWord, "相亲"), ["xiàng qīn"]);
+    });
+
+    it("counts a variant reading as one of the word's readings", () => {
+      // 熟悉 is `shóuxī`, with `shúxī` as its 讀音.
+      const { byWord } = merge({
+        phrase: new Map([["熟悉", ["shú", "xī"]]]),
+        moe: moe(["熟悉 | 0 | shóu xī | shú xī"]),
+      });
+      assertUndefined(taiwan(byWord, "熟悉"));
+      assertArrayEquals(taiwanAlternates(byWord, "熟悉"), ["shóu xī"]);
+    });
+
+    it("keeps the 普通话 reading where one is another 普通话 sense", () => {
+      // 那些 is `nǎxiē`, the 哪些 sense, and `nàxiē`. CC-CEDICT reads 那些
+      // `nàxiē` and the entry holds the colloquial `nèixiē`.
+      const { byWord } = merge({
+        phrase: new Map([["那些", ["nèi", "xiē"]]]),
+        cedict: [cedictEntry("那些", "那些", "na4 xie1")],
+        moe: moe(["那些 | 1 | nǎ xiē", "那些 | 2 | nà xiē"]),
+      });
+      assertUndefined(taiwan(byWord, "那些"));
+    });
+
+    it("takes the reading most like the entry's from several", () => {
+      // 那裡 is `nǎlǐ`, the 哪裡 sense, and `nàlǐ`.
+      const { byWord } = merge({
+        phrase: new Map([["那里", ["nà", "li"]]]),
+        cedict: [cedictEntry("那裡", "那里", "na4 li5")],
+        moe: moe(["那裡 | 1 | nǎ lǐ", "那裡 | 2 | nà lǐ"]),
+      });
+      assertIdentical(taiwan(byWord, "那里"), "nà lǐ");
+      assertArrayEquals(taiwanAlternates(byWord, "那里"), ["nǎ lǐ"]);
+    });
+
+    it("lets a word only the revised dictionary lists move its tones", () => {
+      const { byWord } = merge({
+        phrase: new Map([["期盼", ["qī", "pàn"]]]),
+        moe: moe([], ["期盼 | 0 | qí pàn"]),
+      });
+      assertIdentical(taiwan(byWord, "期盼"), "qí pàn");
+    });
+
+    it("refuses that word a change of sound", () => {
+      // The revised dictionary lists 五百 only as `wǔ bó`.
+      const { byWord } = merge({
+        phrase: new Map([["五百", ["wǔ", "bǎi"]]]),
+        moe: moe([], ["五百 | 0 | wǔ bó"]),
+      });
+      assertUndefined(taiwan(byWord, "五百"));
+    });
+
+    it("never asks the dictionary for a word's 简体 spelling", () => {
+      // 听 is a 繁體 character of its own, and 听听 is a word of its own too.
+      const { byWord } = merge({
+        unihanReadings: new Map([["听", unihan(["tīng"])]]),
+        unihanVariants: {
+          simplified: new Map(),
+          traditional: new Map([["听", ["聽"]]]),
+        },
+        phrase: new Map([["听听", ["tīng", "tīng"]]]),
+        moe: moe(["听听 | 0 | yǐn yǐn"]),
+      });
+      assertUndefined(taiwan(byWord, "听听"));
+    });
+
+    it("leaves out a reading the inventory does not know", () => {
+      const { byWord } = merge({
+        phrase: new Map([["孿生", ["luán", "shēng"]]]),
+        moe: moe(["孿生 | 0 | lüan shēng"]),
+      });
+      assertUndefined(taiwan(byWord, "孿生"));
+    });
+
+    it("confirms a character's note that it lists", () => {
+      const { byWord } = merge({
+        phrase: new Map([["期", ["qī"]]]),
+        cedict: [cedictEntry("期", "期", "qi1", { taiwanReadings: ["qi2"] })],
+        moe: moe(["期 | 1 | qí", "期 | 2 | jī"]),
+      });
+      assertIdentical(taiwan(byWord, "期"), "qí");
+    });
+
+    it("drops a character's note it lists no such reading for", () => {
+      const { byWord } = merge({
+        phrase: new Map([["俄", ["é"]]]),
+        cedict: [cedictEntry("俄", "俄", "e2", { taiwanReadings: ["e4"] })],
+        moe: moe(["俄 | 0 | é"]),
+      });
+      assertUndefined(taiwan(byWord, "俄"));
+    });
+
+    it("checks a character against the revised dictionary too", () => {
+      // The concise dictionary lists 亞 as `yà` alone.
+      const { byWord } = merge({
+        phrase: new Map([["亚", ["yà"]]]),
+        cedict: [cedictEntry("亞", "亚", "ya4", { taiwanReadings: ["ya3"] })],
+        moe: moe(["亞 | 0 | yà"], ["亞 | 1 | yà", "亞 | 2 | yǎ"]),
+      });
+      assertIdentical(taiwan(byWord, "亚"), "yǎ");
+    });
+
+    it("never gives a character a reading no note gives it", () => {
+      // 差 is listed without the `chà` that 普通话 reads it, which says
+      // nothing about how 國語 reads it.
+      const { byWord } = merge({
+        phrase: new Map([["差", ["chà"]]]),
+        moe: moe(["差 | 1 | chā", "差 | 2 | cuō"]),
+      });
+      assertUndefined(taiwan(byWord, "差"));
+    });
+
+    it("composes nothing for a compound the dictionary lists", () => {
+      // 垃圾 carries a delta, and 垃圾桶 would inherit it — but 教育部 lists
+      // 垃圾桶 itself, and its say is final.
+      const { byWord } = merge({
+        unihanReadings: new Map([
+          ["垃", unihan(["lā"])],
+          ["圾", unihan(["jī"])],
+          ["桶", unihan(["tǒng"])],
+        ]),
+        phrase: new Map([
+          ["垃圾", ["lā", "jī"]],
+          ["垃圾桶", ["lā", "jī", "tǒng"]],
+        ]),
+        moe: moe(["垃圾 | 0 | lè sè", "垃圾桶 | 0 | lā jī tǒng"]),
+      });
+      assertIdentical(taiwan(byWord, "垃圾"), "lè sè");
+      assertUndefined(taiwan(byWord, "垃圾桶"));
     });
   });
 

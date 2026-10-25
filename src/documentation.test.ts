@@ -2362,6 +2362,41 @@ describe("the examples in docs/", () => {
       assertTrue(variant.cost > traditional.cost);
     });
 
+    it("reads a word as the ministry's dictionaries do", () => {
+      assertIdentical(
+        convert(dictionary, "星期", { locale: "zh-TW" }),
+        "xīngqí",
+      );
+      assertIdentical(
+        convert(dictionary, "頭髮", { locale: "zh-TW" }),
+        "tóufǎ",
+      );
+      assertIdentical(
+        convert(dictionary, "危險", { locale: "zh-TW" }),
+        "wéixiǎn",
+      );
+    });
+
+    it("lists a reading that holds for one sense as an alternate", () => {
+      const entry = dictionary.lookup("和");
+      assertNonNullable(entry);
+      assertIdentical(written(entry.reading), "hé");
+      assertUndefined(entry.taiwanReading);
+      assertArrayEquals(
+        (entry.taiwanAlternates ?? []).map((alternate) => written(alternate)),
+        ["hàn"],
+      );
+      const relative = dictionary.lookup("相親");
+      assertNonNullable(relative);
+      assertIdentical(written(relative.reading), "xiāng qīn");
+      assertArrayEquals(
+        (relative.taiwanAlternates ?? []).map((alternate) =>
+          written(alternate),
+        ),
+        ["xiàng qīn"],
+      );
+    });
+
     // The page's point is what a *missing* key costs, so the assertion is on
     // the reading the character-by-character fallback would give: 重 alone is
     // `zhòng`, and only the entry says this word takes `chóng`.
@@ -3031,9 +3066,17 @@ describe("the examples in docs/", () => {
     });
 
     it("shows the Taiwan reading on its own line", async () => {
-      assertArrayEquals(await cli("lookup", "垃圾"), [
-        "垃圾  lā jī  n",
-        "  zh-TW  lè sè",
+      assertArrayEquals(await cli("lookup", "头发"), [
+        "头发  tóu fa  n",
+        "  zh-TW  tóu fǎ",
+      ]);
+    });
+
+    it("shows a Taiwan reading for one sense as an alternate", async () => {
+      assertArrayEquals(await cli("lookup", "和"), [
+        "和  hé  c",
+        "  zh-TW also  hàn",
+        "  also   huo, hè, hú, huó, huò, he",
       ]);
     });
 

@@ -13,7 +13,9 @@ import { KeyIndex } from "./key-index.js";
 import {
   ALTERNATE,
   COLUMN,
+  decodeAlternates,
   decodeReading,
+  decodeTaiwan,
   type DictionaryArtifact,
   encodeReading,
   LINE,
@@ -76,23 +78,19 @@ export function readArtifact(
     if (cn === undefined) {
       throw new Error(`artifact entry for ${key} has no readable reading`);
     }
-    const tw = decodeReading(taiwan);
 
     // The artifact stores keys, not pairs, so a key read back is both scripts
     // as far as it knows. See buildArtifact for what that leaves out and why.
     entries.push({
       hans: key,
       hant: key,
-      readings: { cn, ...(tw !== undefined && { tw }) },
+      readings: { cn, ...decodeTaiwan(taiwan) },
       frequency: frequencies.bucketOf(at),
       partOfSpeech,
       isProperNoun: flags.includes(PROPER_NOUN_FLAG),
       ...(nameBoundaries.length > 0 && { nameBoundaries }),
       ...(alternates !== "" && {
-        alternates: alternates
-          .split(ALTERNATE)
-          .map((text) => decodeReading(text))
-          .filter((decoded) => decoded !== undefined),
+        alternates: decodeAlternates(alternates.split(ALTERNATE)),
       }),
     });
   }

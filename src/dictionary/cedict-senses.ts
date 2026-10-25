@@ -134,9 +134,10 @@ export function isOwnSense(
  * it to the headword made 我从北京来 read `wǒ zòng Běijīng lái`. 會 (`huǐ`, only
  * 一會兒), 勞 (`lào`, only 慰勞) and 燥 (`sào`, only 肉燥) are the same shape.
  *
- * A note the entry leads with is kept, because the leading sense is what the
- * character means with nothing to narrow it: 和's `hàn` is on the conjunction,
- * which is what a bare 和 almost always is.
+ * A note the entry leads with is no different. 和's `hàn` sits on the
+ * conjunction, and 教育部 lists 和 first as `hé` with `hàn` fifth: the
+ * conjunction is `hé` in Taipei too, and `hàn` is one way of saying it. Taking
+ * the note made 和平 come out `hànpíng` wherever no word covered it.
  *
  * **Only a character is tested this way.** Its entry is what every occurrence
  * no longer word covers falls back to, so it has to carry the reading that
@@ -149,5 +150,9 @@ export function isSenseScopedNote(
   word: string,
   sense: CedictEntry | undefined,
 ): boolean {
-  return sense?.taiwanScope === "sense" && isSingleCharacter(word);
+  return (
+    sense?.taiwanScope !== undefined &&
+    sense.taiwanScope !== "entry" &&
+    isSingleCharacter(word)
+  );
 }

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 
+import { tabulateMoeWorkbook } from "../../src/sources/moe-workbook.js";
 import { readZipEntries } from "./zip.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -71,7 +72,59 @@ export const SOURCE_FILES = {
   traditionalToSimplified: "TSCharacters.txt",
   taiwanVariants: "TWVariants.txt",
   hongKongVariants: "HKVariants.txt",
+  moeConcise: "moe-concised-readings.tsv",
+  moeRevised: "moe-revised-readings.tsv",
 } as const;
+
+/**
+ * The releases of 教育部's two dictionaries this build reads.
+ *
+ * Dated, because the ministry publishes each release under its own name and
+ * leaves the old ones up. Moving to a newer one is an edit here and a
+ * `--refresh`.
+ */
+const MOE_RELEASES = {
+  concise: "dict_concised_2014_20260929",
+  revised: "dict_revised_2015_20260929",
+} as const;
+
+/**
+ * Where the ministry publishes them.
+ */
+const MOE_DOWNLOADS =
+  "https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download";
+
+/**
+ * Take the readings out of one 教育部 download, caching them as `name`.
+ *
+ * The download is a zip holding a workbook, which is itself a zip of XML. Only
+ * the worksheet and its string table are opened, and only the readings are
+ * kept — see `src/sources/moe.ts`.
+ */
+function moeReadingsOf(
+  release: string,
+  name: string,
+): SourceDownload["extract"] {
+  return (downloaded: Buffer): Map<string, Buffer> => {
+    const workbook = [...readZipEntries(downloaded)].find(
+      ([member]) => member === `${release}.xlsx`,
+    )?.[1];
+    if (workbook === undefined) {
+      throw new Error(`${release}.zip holds no workbook`);
+    }
+    const members = readZipEntries(workbook);
+    const sharedStrings = members.get("xl/sharedStrings.xml");
+    const sheet = members.get("xl/worksheets/sheet1.xml");
+    if (sharedStrings === undefined || sheet === undefined) {
+      throw new Error(`${release}.xlsx is missing its worksheet`);
+    }
+    const table = tabulateMoeWorkbook(
+      sharedStrings.toString("utf8"),
+      sheet.toString("utf8"),
+    );
+    return new Map([[name, Buffer.from(table)]]);
+  };
+}
 
 /**
  * Where OpenCC's dictionary tables are published.
@@ -179,6 +232,31 @@ export const SOURCES: readonly Source[] = [
       url: `${OPENCC_DICTIONARIES}/${name}`,
       extract: verbatim(name),
     })),
+  },
+  {
+    // Attributed in the form each dictionary's 公眾授權使用說明 asks for: the
+    // ministry, the title, the release and the dictionary's own site.
+    name:
+      "中華民國教育部（Ministry of Education, R.O.C.）。" +
+      `《國語辭典簡編本》（版本編號：${MOE_RELEASES.concise.replace("dict_concised_", "")}）網址：https://dict.concised.moe.edu.tw/ ` +
+      "and " +
+      `《重編國語辭典修訂本》（版本編號：${MOE_RELEASES.revised.replace("dict_revised_", "")}）網址：https://dict.revised.moe.edu.tw/`,
+    licence:
+      "CC BY-ND 3.0 TW; only the 漢語拼音 reading of each headword is read, and no definition, example or other text of either dictionary is taken",
+    provides:
+      "the 國語 readings that make up the zh-TW locale, at word level and as a check on the character-level notes",
+    downloads: [
+      {
+        download: `${MOE_RELEASES.concise}.zip`,
+        url: `${MOE_DOWNLOADS}/${MOE_RELEASES.concise}.zip`,
+        extract: moeReadingsOf(MOE_RELEASES.concise, SOURCE_FILES.moeConcise),
+      },
+      {
+        download: `${MOE_RELEASES.revised}.zip`,
+        url: `${MOE_DOWNLOADS}/${MOE_RELEASES.revised}.zip`,
+        extract: moeReadingsOf(MOE_RELEASES.revised, SOURCE_FILES.moeRevised),
+      },
+    ],
   },
 ];
 

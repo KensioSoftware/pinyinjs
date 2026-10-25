@@ -29,8 +29,8 @@ export class CharacterReadings {
    * glyph form is matched by the readings of the Taiwan-standard key it folds
    * to rather than by nothing.
    *
-   * The 國語 reading goes on the end where it differs, so that 圾 answers to
-   * `se` as well as to `ji`. A search box is not the place to insist on one
+   * The 國語 readings go on the end where they differ, so that 圾 answers to
+   * `se` as well as to `ji` and 和 to `han` as well as to `he`. A search box is not the place to insist on one
    * standard: somebody typing what they say is not typing it wrongly, and the
    * decoder's own reading is what ranks the two afterwards.
    */
@@ -42,12 +42,16 @@ export class CharacterReadings {
     /* c8 ignore next -- only ever asked about a character that is there */
     const character = toCanonicalGlyphs(this.#characters[at] ?? "");
     const found = this.#dictionary.readingsOf(character);
-    const taiwan = this.#dictionary.lookup(character)?.taiwanReading;
-    const readings =
-      taiwan === undefined ||
-      found.some((reading) => isSameReading(reading, taiwan))
-        ? found
-        : [...found, taiwan];
+    const entry = this.#dictionary.lookup(character);
+    const readings = [...found];
+    for (const taiwan of [
+      ...(entry?.taiwanReading === undefined ? [] : [entry.taiwanReading]),
+      ...(entry?.taiwanAlternates ?? []),
+    ]) {
+      if (!readings.some((reading) => isSameReading(reading, taiwan))) {
+        readings.push(taiwan);
+      }
+    }
     this.#readings[at] = readings;
     return readings;
   }

@@ -102,14 +102,17 @@ score. All conversion flags also apply.
 ```console
 $ pinyinjs lookup 头发
 头发  tóu fa  n
+  zh-TW  tóu fǎ
 
-$ pinyinjs lookup 垃圾
-垃圾  lā jī  n
-  zh-TW  lè sè
+$ pinyinjs lookup 和
+和  hé  c
+  zh-TW also  hàn
+  also   huo, hè, hú, huó, huò, he
 ```
 
 Prints the word, its 普通话 reading and jieba part-of-speech tag. A 國語
-reading appears separately when it differs. Both scripts are accepted as keys.
+reading appears separately when it differs. A 國語 reading that holds for one
+sense only appears as `zh-TW also`, and as `otherTaiwanReadings` in the JSON. Both scripts are accepted as keys.
 
 ### match
 

@@ -11,7 +11,7 @@ import { type DictionaryEntry, isSameReading } from "./entry.js";
 import { readAlignedReading } from "./reading.js";
 import { cedictReadingsOf } from "./cedict-senses.js";
 import { traditionalFormOf } from "./traditional-form.js";
-import { taiwanReadingOf } from "./taiwan-reading.js";
+import { settleTaiwanReading } from "./taiwan-settle.js";
 import { properNounOf } from "./proper-noun.js";
 import { settleReading } from "./word-reading.js";
 import { type MergedWord, NO_TALLY, type WordSources } from "./merge-types.js";
@@ -29,7 +29,6 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     jieba,
     nameMass,
     names,
-    unihanReadings,
     traditional,
     defaults,
   } = sources;
@@ -65,21 +64,22 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
   const aligned = settled.aligned;
 
   // ── 繁體: taken from CC-CEDICT, derived where it is silent ─
-  const { senses, hant, hantVariants, isDerived } = traditionalFormOf(
+  const form = traditionalFormOf(
     word,
     cedictEntries,
     reading,
     aligned,
     traditional,
   );
+  const { senses, hant, hantVariants, isDerived } = form;
 
   // ── zh-TW delta ───────────────────────────────────────────
-  const taiwan = taiwanReadingOf(
+  const taiwan = settleTaiwanReading(
     word,
-    senses,
+    form,
     senseReadings,
     reading,
-    unihanReadings.get(word),
+    sources,
   );
 
   // ── Frequency, part of speech and the proper noun bit ─────
@@ -107,7 +107,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
     hans: word,
     hant,
     ...(hantVariants.length > 0 && { hantVariants }),
-    readings: { cn: reading, ...(taiwan !== undefined && { tw: taiwan }) },
+    readings: { cn: reading, ...taiwan.readings },
     frequency: jiebaEntry?.frequency ?? 0,
     partOfSpeech: jiebaEntry?.partOfSpeech ?? "",
     isProperNoun,
@@ -127,7 +127,7 @@ export function mergeWord(word: string, sources: WordSources): MergedWord {
       derivedTraditional: isDerived ? 1 : 0,
       scriptPairs: hant === word ? 0 : 1,
       variantSpellings: hantVariants.length > 0 ? 1 : 0,
-      taiwanReadings: taiwan === undefined ? 0 : 1,
+      ...taiwan.tally,
       properNounVetoes: isVetoed ? 1 : 0,
       nameBoundaries: boundaries.length > 0 ? 1 : 0,
       characters: isCharacter ? 1 : 0,

@@ -22,6 +22,7 @@ import {
   COLUMN,
   type DictionaryArtifact,
   encodeReading,
+  encodeTaiwan,
   LINE,
   PROPER_NOUN_FLAG,
 } from "./artifact-format.js";
@@ -116,7 +117,7 @@ export function buildArtifact(
     lines.push(
       trimColumns([
         isDerivable(key, reading, defaults) ? "" : reading,
-        entry.readings.tw === undefined ? "" : encodeReading(entry.readings.tw),
+        encodeTaiwan(entry.readings),
         entry.partOfSpeech,
         entry.isProperNoun
           ? PROPER_NOUN_FLAG +

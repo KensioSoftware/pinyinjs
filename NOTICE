@@ -41,6 +41,13 @@ Source:   https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary
 Licence:  Apache-2.0
 Provides: the 简体 ↔ 繁體 character tables, and the Taiwan and Hong Kong glyph form tables that separate 裡 from 裏 and 群 from 羣
 
+## 中華民國教育部（Ministry of Education, R.O.C.）。《國語辭典簡編本》（版本編號：2014_20260929）網址：https://dict.concised.moe.edu.tw/ and 《重編國語辭典修訂本》（版本編號：2015_20260929）網址：https://dict.revised.moe.edu.tw/
+
+Source:   https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download/dict_concised_2014_20260929.zip
+          https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download/dict_revised_2015_20260929.zip
+Licence:  CC BY-ND 3.0 TW; only the 漢語拼音 reading of each headword is read, and no definition, example or other text of either dictionary is taken
+Provides: the 國語 readings that make up the zh-TW locale, at word level and as a check on the character-level notes
+
 ## Comparison of Standard Chinese transcription systems (Wikipedia)
 
 Source:   https://en.wikipedia.org/wiki/Comparison_of_Standard_Chinese_transcription_systems

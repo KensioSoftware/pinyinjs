@@ -4,7 +4,6 @@
  * The proper noun bit and the 繁體 form are both derived rather than taken from
  * one source, so each is asserted where the derivation is known to be delicate.
  */
-import { writeSyllable } from "../syllable/syllable.js";
 import type { BuildAssertion, BuiltDictionary } from "./built-dictionary.js";
 
 export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
@@ -78,30 +77,6 @@ export const ENTRY_INVARIANTS: readonly BuildAssertion[] = [
       return wrong.length === 0
         ? undefined
         : `no longer proper nouns: ${wrong.join(", ")}`;
-    },
-  },
-  {
-    // The gap composeLocaleDeltas closes, and the two ways it must not close
-    // it. 運行狀況 contains the marked word 行狀 and cuts elsewhere; 一个个地
-    // ends in a character whose delta is a different sense of 地 entirely.
-    description:
-      "垃圾分類 inherits 垃圾's 國語 reading, 運行狀況 inherits nothing",
-    check: (dictionary: BuiltDictionary): string | undefined => {
-      const taiwan = (word: string): string | undefined =>
-        dictionary
-          .get(word)
-          ?.readings.tw?.map((syllable) => writeSyllable(syllable))
-          .join(" ");
-      const composed = taiwan("垃圾分类");
-      if (composed !== "lè sè fēn lèi") {
-        return `垃圾分类 reads ${composed ?? "nothing"} in zh-TW, expected lè sè fēn lèi`;
-      }
-      const wrong = ["运行状况", "一个个地", "相亲相爱"].filter(
-        (word) => taiwan(word) !== undefined,
-      );
-      return wrong.length === 0
-        ? undefined
-        : `composed a zh-TW reading for: ${wrong.join(", ")}`;
     },
   },
   {

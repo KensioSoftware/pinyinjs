@@ -6,66 +6,11 @@
  * anything, which is what separates them from `explain` and `syllable`.
  */
 import { applySandhi } from "../decode/sandhi.js";
-import type { Dictionary } from "../dictionary/dictionary.js";
 import { readWord } from "../syllable/split.js";
 import { convertOptions } from "./arguments.js";
-import { type Painter, PLAIN } from "./colour.js";
-import {
-  type Command,
-  dictionaryOf,
-  type Reported,
-  written,
-} from "./command.js";
-
-/**
- * What the dictionary holds for a word.
- */
-function entryFound(
-  dictionary: Dictionary,
-  word: string,
-  paint: Painter,
-): Reported {
-  const entry = dictionary.lookup(word);
-  if (entry === undefined) {
-    return {
-      lines: [`${word}  not in the dictionary`],
-      data: { word, found: false },
-    };
-  }
-
-  const tags = [
-    entry.partOfSpeech,
-    entry.isProperNoun ? "proper noun" : "",
-  ].filter((tag) => tag !== "");
-  const others = dictionary.readingsOf(word).slice(1);
-
-  return {
-    lines: [
-      `${word}  ${written(entry.reading, paint)}${tags.length > 0 ? `  ${tags.join(", ")}` : ""}`,
-      ...(entry.taiwanReading === undefined
-        ? []
-        : [`  zh-TW  ${written(entry.taiwanReading, paint)}`]),
-      ...(others.length > 0
-        ? [
-            `  also   ${others
-              .map((reading) => written(reading, paint))
-              .join(", ")}`,
-          ]
-        : []),
-    ],
-    data: {
-      word,
-      found: true,
-      reading: written(entry.reading, PLAIN),
-      partOfSpeech: entry.partOfSpeech,
-      isProperNoun: entry.isProperNoun,
-      ...(entry.taiwanReading !== undefined && {
-        taiwanReading: written(entry.taiwanReading, PLAIN),
-      }),
-      otherReadings: others.map((reading) => written(reading, PLAIN)),
-    },
-  };
-}
+import { PLAIN } from "./colour.js";
+import { type Command, dictionaryOf, written } from "./command.js";
+import { entryFound } from "./lookup-entry.js";
 
 /**
  * Look words up in the dictionary.

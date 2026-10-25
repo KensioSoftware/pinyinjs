@@ -10,6 +10,7 @@
 import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
 import { decodeReading } from "./artifact.js";
+import { decodeTaiwan } from "./artifact-format.js";
 import { nameBoundariesIn, PROPER_NOUN_FLAG } from "./artifact-format.js";
 
 /**
@@ -21,6 +22,14 @@ export interface WordEntry {
   readonly reading: readonly Syllable[];
   /** 國語 reading, absent when it does not differ. */
   readonly taiwanReading?: readonly Syllable[];
+  /**
+   * Other 國語 readings, which hold for one sense of the word only.
+   *
+   * 和 is `hé` in both locales and is also `hàn` in 國語 when it joins two
+   * nouns; nothing at the word says which a given 和 is, so the default
+   * stays and `hàn` is offered here. Absent when there are none.
+   */
+  readonly taiwanAlternates?: readonly (readonly Syllable[])[];
   readonly partOfSpeech: string;
   readonly isProperNoun: boolean;
   /**
@@ -64,13 +73,15 @@ export function decodeEntry(
           .join(" ")
       : reading;
   const decoded = decodeReading(encoded) ?? [];
-  const taiwanReading = decodeReading(taiwan);
+  const { tw: taiwanReading, twAlternates: taiwanAlternates } =
+    decodeTaiwan(taiwan);
   const nameBoundaries = nameBoundariesIn(flags);
 
   return {
     word,
     reading: decoded,
     ...(taiwanReading !== undefined && { taiwanReading }),
+    ...(taiwanAlternates !== undefined && { taiwanAlternates }),
     partOfSpeech,
     isProperNoun: flags.includes(PROPER_NOUN_FLAG),
     ...(nameBoundaries.length > 0 && { nameBoundaries }),

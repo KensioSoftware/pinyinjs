@@ -97,9 +97,14 @@ const ROUNDS = 4;
  *
  * What survives all three is a homograph the data cannot see, which is what
  * {@link LOCALE_COMPOSITION_EXCLUSIONS} is for.
+ *
+ * `isStandard` names the compounds a dictionary of the standard already
+ * settles, which are never composed: its word for a compound outranks
+ * anything inferred from the compound's parts.
  */
 export function composeLocaleDeltas(
   entries: readonly DictionaryEntry[],
+  isStandard: (entry: DictionaryEntry) => boolean = () => false,
 ): LocaleComposition {
   const index = new ConstituentIndex(entries);
 
@@ -121,6 +126,7 @@ export function composeLocaleDeltas(
   const candidates = entries.filter(
     (entry) =>
       entry.readings.tw === undefined &&
+      !isStandard(entry) &&
       isComposable(entry) &&
       hasMarkedConstituent(entry.hans, marked),
   );

@@ -415,7 +415,10 @@ describe("the examples in README.md", () => {
     });
 
     it("looks a word up as the README shows", async () => {
-      assertArrayEquals(await cli("lookup", "头发"), ["头发  tóu fa  n"]);
+      assertArrayEquals(await cli("lookup", "头发"), [
+        "头发  tóu fa  n",
+        "  zh-TW  tóu fǎ",
+      ]);
     });
 
     it("filters by a pinyin query as the README shows", async () => {
@@ -918,6 +921,22 @@ describe("the examples in README.md", () => {
     it("reads Hong Kong 繁體 exactly as its Taiwan spelling", () => {
       assertIdentical(convert(dictionary, "羣眾"), convert(dictionary, "群眾"));
       assertIdentical(convert(dictionary, "麪包"), convert(dictionary, "麵包"));
+    });
+
+    it("reads Taiwan's words as the README shows", () => {
+      const tw = { locale: "zh-TW" } as const;
+      assertIdentical(convert(dictionary, "星期", tw), "xīngqí");
+      assertIdentical(convert(dictionary, "頭髮", tw), "tóufǎ");
+      assertIdentical(convert(dictionary, "他和我", tw), "tā hé wǒ");
+      assertIdentical(
+        dictionary
+          .lookup("和")
+          ?.taiwanAlternates?.map((reading) =>
+            reading.map((syllable) => writeSyllable(syllable)).join(" "),
+          )
+          .join(","),
+        "hàn",
+      );
     });
 
     it("converts orthography and not vocabulary", () => {

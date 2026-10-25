@@ -345,6 +345,12 @@ export const GOLD_CASES: readonly GoldCase[] = [
   // is `cóng` in Taipei as in Beijing.
   { hanzi: "我從北京來", pinyin: "wǒ cóng Běijīng lái", script: "Hant", locale: "zh-TW", tags: ["locale"] },
   { hanzi: "他很會說話", pinyin: "tā hěn huì shuōhuà", script: "Hant", locale: "zh-TW", tags: ["locale"] },
-  // What a real delta looks like beside them.
-  { hanzi: "他和我", pinyin: "tā hàn wǒ", script: "Hant", locale: "zh-TW", tags: ["locale"] },
+  // 和 is the same shape. CC-CEDICT's `hàn` sits on the conjunction, and
+  // 教育部 lists the conjunction under `hé` first with `hàn` as a reading of
+  // its own; the standard reading is the one a locale defaults to.
+  { hanzi: "他和我", pinyin: "tā hé wǒ", script: "Hant", locale: "zh-TW", tags: ["locale"] },
+  // What a real delta looks like beside them: words CC-CEDICT marks no
+  // `Taiwan pr.` on, read as 教育部 reads them.
+  { hanzi: "下星期見", pinyin: "xiàxīngqí jiàn", script: "Hant", locale: "zh-TW", tags: ["locale"] },
+  { hanzi: "這很危險", pinyin: "zhè hěn wéixiǎn", script: "Hant", locale: "zh-TW", tags: ["locale"] },
 ];
