@@ -11,6 +11,7 @@ import type { BuildAssertion } from "./built-dictionary.js";
 import { CHARACTER_READINGS } from "./character-readings.js";
 import { ENTRY_INVARIANTS } from "./entry-invariants.js";
 import { INVENTORY_INVARIANTS } from "./inventory-invariants.js";
+import { LOCALE_INVARIANTS } from "./locale-invariants.js";
 import { TONE_INVARIANTS } from "./tone-invariants.js";
 import { WORD_READINGS } from "./word-readings.js";
 
@@ -19,5 +20,6 @@ export const BUILD_ASSERTIONS: readonly BuildAssertion[] = [
   ...CHARACTER_READINGS,
   ...TONE_INVARIANTS,
   ...ENTRY_INVARIANTS,
+  ...LOCALE_INVARIANTS,
   ...INVENTORY_INVARIANTS,
 ];

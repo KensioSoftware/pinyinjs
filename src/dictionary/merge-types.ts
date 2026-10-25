@@ -5,6 +5,7 @@
  * importing the merge itself.
  */
 import type { CedictEntry } from "../sources/cedict.js";
+import type { MoeReading } from "../sources/moe.js";
 import type { JiebaEntry } from "../sources/jieba.js";
 import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
 import type { Syllable } from "../syllable/syllable.js";
@@ -22,6 +23,11 @@ export interface MergeSources {
   readonly phrase: ReadonlyMap<string, readonly string[]>;
   readonly cedict: readonly CedictEntry[];
   readonly jieba: ReadonlyMap<string, JiebaEntry>;
+  /**
+   * 教育部's readings, keyed by 繁體 headword. Absent, the zh-TW locale knows
+   * only what CC-CEDICT and Unihan mark.
+   */
+  readonly moe?: ReadonlyMap<string, readonly MoeReading[]>;
 }
 
 /**
@@ -58,6 +64,8 @@ export interface MergeStats {
   readonly repairedConstituents: number;
   /** Entries carrying a zh-TW reading delta a source stated. */
   readonly taiwanReadings: number;
+  /** Of those, the ones 教育部's dictionary settled. */
+  readonly standardTaiwanReadings: number;
   /** Compounds given a zh-TW delta composed from their constituents. */
   readonly composedTaiwanReadings: number;
   /**
@@ -109,6 +117,7 @@ export interface WordSources {
   readonly unihanReadings: ReadonlyMap<string, UnihanReadings>;
   readonly traditional: TraditionalTable;
   readonly defaults: ReadonlyMap<string, readonly Syllable[]>;
+  readonly moe: ReadonlyMap<string, readonly MoeReading[]>;
 }
 
 /**
@@ -126,6 +135,7 @@ export interface WordTally {
   readonly scriptPairs: number;
   readonly variantSpellings: number;
   readonly taiwanReadings: number;
+  readonly standardTaiwanReadings: number;
   readonly properNounVetoes: number;
   readonly nameBoundaries: number;
   readonly characters: number;
@@ -143,6 +153,7 @@ export const NO_TALLY: WordTally = {
   scriptPairs: 0,
   variantSpellings: 0,
   taiwanReadings: 0,
+  standardTaiwanReadings: 0,
   properNounVetoes: 0,
   nameBoundaries: 0,
   characters: 0,
@@ -172,6 +183,8 @@ export function addTally(total: WordTally, tally: WordTally): WordTally {
     scriptPairs: total.scriptPairs + tally.scriptPairs,
     variantSpellings: total.variantSpellings + tally.variantSpellings,
     taiwanReadings: total.taiwanReadings + tally.taiwanReadings,
+    standardTaiwanReadings:
+      total.standardTaiwanReadings + tally.standardTaiwanReadings,
     properNounVetoes: total.properNounVetoes + tally.properNounVetoes,
     nameBoundaries: total.nameBoundaries + tally.nameBoundaries,
     characters: total.characters + tally.characters,

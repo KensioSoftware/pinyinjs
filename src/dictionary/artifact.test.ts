@@ -180,6 +180,15 @@ describe("dictionary artifacts", () => {
       assertStringIncludes(lineFor("垃圾", withTaiwan), "le4 se4");
     });
 
+    it("stores a zh-TW alternate after the delta", () => {
+      const withAlternate = [
+        entry("和", "hé", {
+          readings: { cn: reading("hé"), twAlternates: [reading("hàn")] },
+        }),
+      ];
+      assertStringIncludes(lineFor("和", withAlternate), "\t,han4");
+    });
+
     it("trims trailing empty columns, which is most lines", () => {
       assertFalse(lineFor("头").endsWith("\t"));
     });
@@ -290,6 +299,40 @@ describe("dictionary artifacts", () => {
       ];
       const found = entryFor(buildArtifact(withTaiwan), "垃圾");
       assertIdentical(encodeReading(found.readings.tw ?? []), "le4 se4");
+    });
+
+    it("recovers a zh-TW delta and its alternates", () => {
+      const withBoth = [
+        entry("那里", "nà li", {
+          readings: {
+            cn: reading("nà li"),
+            tw: reading("nà lǐ"),
+            twAlternates: [reading("nǎ lǐ")],
+          },
+        }),
+      ];
+      const found = entryFor(buildArtifact(withBoth), "那里");
+      assertIdentical(encodeReading(found.readings.tw ?? []), "na4 li3");
+      assertArrayEquals(
+        (found.readings.twAlternates ?? []).map((alternate) =>
+          encodeReading(alternate),
+        ),
+        ["na3 li3"],
+      );
+    });
+
+    it("recovers an alternate where there is no delta", () => {
+      const withAlternate = [
+        entry("和", "hé", {
+          readings: { cn: reading("hé"), twAlternates: [reading("hàn")] },
+        }),
+      ];
+      const found = entryFor(buildArtifact(withAlternate), "和");
+      assertUndefined(found.readings.tw);
+      assertIdentical(
+        encodeReading(found.readings.twAlternates?.[0] ?? []),
+        "han4",
+      );
     });
 
     it("reports a key as both scripts, since pairing is not stored", () => {

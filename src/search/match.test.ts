@@ -153,6 +153,16 @@ describe("matching every reading a character has", () => {
     assertTrue(mainland.score > taiwan.score);
   });
 
+  it("matches a 國語 reading that holds for one sense only", () => {
+    // 和 is hé in both locales and hàn as well in 國語 when it joins two nouns.
+    const both = dictionaryOf([
+      entry("和", "hé", {
+        readings: { cn: reading("hé"), twAlternates: [reading("hàn")] },
+      }),
+    ]);
+    assertNonNullable(match(both, "我和你", "han"));
+  });
+
   it("prefers the likelier reading where the text says nothing", () => {
     // 行 standing alone is xíng, and both queries match it. Nothing here has
     // settled anything, so the dictionary's own order is what is left.

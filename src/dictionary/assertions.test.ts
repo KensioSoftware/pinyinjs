@@ -97,7 +97,16 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("东西方", "dōng xī fāng", { hant: "東西方" }),
   entry("银行", "yín háng", { hant: "銀行" }),
   entry("行长", "háng zhǎng", { hant: "行長" }),
-  entry("头发", "tóu fa", { hant: "頭髮" }),
+  entry("头发", "tóu fa", {
+    hant: "頭髮",
+    readings: { cn: reading("tóu fa"), tw: reading("tóu fǎ") },
+  }),
+  entry("星期", "xīng qī", {
+    readings: { cn: reading("xīng qī"), tw: reading("xīng qí") },
+  }),
+  entry("和", "hé", {
+    readings: { cn: reading("hé"), twAlternates: [reading("hàn")] },
+  }),
   entry("还是", "hái shi", { hant: "還是" }),
   entry("重复", "chóng fù", { hant: "重複", hantVariants: ["重覆"] }),
   entry("下面", "xià miàn", { hantVariants: ["下麵"] }),
@@ -281,12 +290,34 @@ describe("build assertions", () => {
     it("catches a 繁體 form derived from the wrong variant", () => {
       const failures = checkBuild(
         SOUND.map((held) =>
-          held.hans === "头发"
-            ? entry("头发", "tóu fa", { hant: "頭發" })
-            : held,
+          held.hans === "头发" ? { ...held, hant: "頭發" } : held,
         ),
       );
       assertTrue(failures.some((failure) => failure.includes("expected 頭髮")));
+    });
+
+    it("catches a zh-TW reading the standard does not give", () => {
+      const failures = checkBuild(
+        SOUND.map((held) =>
+          held.hans === "和"
+            ? { ...held, readings: { cn: reading("hé"), tw: reading("hàn") } }
+            : held,
+        ),
+      );
+      assertTrue(failures.some((failure) => failure.includes("和 reads hàn")));
+    });
+
+    it("catches a word that lost its zh-TW reading", () => {
+      const failures = checkBuild(
+        SOUND.map((held) =>
+          held.hans === "星期"
+            ? { ...held, readings: { cn: reading("xīng qī") } }
+            : held,
+        ),
+      );
+      assertTrue(
+        failures.some((failure) => failure.includes("星期 as nothing")),
+      );
     });
 
     it("catches a syllable that is not in the inventory", () => {

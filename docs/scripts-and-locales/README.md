@@ -99,11 +99,51 @@ entry?.reading; // lā jī
 entry?.taiwanReading; // lè sè
 ```
 
-`taiwanReading` is absent when the readings agree.
+`taiwanReading` is absent when the readings agree. An absent reading can be
+trusted to mean that Taiwan reads the word as the mainland does.
 
-The readings come from CC-CEDICT’s `Taiwan pr.` annotations and Unihan’s dual
-`kMandarin` values. Some compound readings are derived from their constituent
-words.
+The readings come from the Taiwan Ministry of Education's two dictionaries of
+the 國語 standard, 《國語辭典簡編本》 and 《重編國語辭典修訂本》. Where the
+concise dictionary lists a word, its reading settles the entry. A word only the
+revised dictionary lists may change its tones and keep its sounds, because that
+dictionary records classical words under the same characters as current ones
+(it lists 五百 only as `wǔ bó`).
+
+```ts
+convert(dictionary, "星期", { locale: "zh-TW" }); // "xīngqí"
+convert(dictionary, "頭髮", { locale: "zh-TW" }); // "tóufǎ"
+convert(dictionary, "危險", { locale: "zh-TW" }); // "wéixiǎn"
+```
+
+A word the ministry's dictionaries leave out falls back to CC-CEDICT's
+`Taiwan pr.` annotations and Unihan's dual `kMandarin` values. Some compound
+readings are derived from their constituent words.
+
+Only the reading of each headword is taken from the ministry's dictionaries.
+See [dictionaries](../dictionaries/#taiwan-readings-source) for the licence
+and why the readings alone are used.
+
+<a id="taiwan-alternates"></a>
+
+### Readings that hold for one sense
+
+Some words have a Taiwan reading for one sense only. 和 is `hé` in both
+locales, and is also `hàn` when it joins two nouns. A word on its own gives
+the decoder no way to tell which sense it is, so the default stays and the
+other reading is listed in `taiwanAlternates`:
+
+```ts
+const entry = dictionary.lookup("和");
+entry?.reading; // hé
+entry?.taiwanReading; // undefined
+entry?.taiwanAlternates; // [hàn]
+```
+
+A word with several readings in the ministry's dictionary works the same way
+when one of them is the mainland reading. 相親 is `xiāngqīn` (mutually close)
+and `xiàngqīn` (a matchmaking meeting), so it keeps `xiāngqīn` and lists
+`xiàngqīn` as the alternate. Pinyin search matches the alternates too, so
+`han` finds 和.
 
 <a id="a-delta-is-a-locale-shift"></a>
 
@@ -144,9 +184,16 @@ within the definition:
 For example, 從 is `zòng` in bound forms such as 侍從 and 從犯. Its common
 uses, including the preposition in 我從北京來, remain `cóng` in Taiwan.
 
-A character entry supplies the fallback reading outside recognised words.
-Taiwan notes on later senses are therefore excluded from that fallback.
-Compounds keep their own readings, so 肉燥麵 still uses `ròusào miàn`.
+A character entry supplies the fallback reading outside recognised words. Only
+a note on the whole entry becomes that fallback. A note inside a sense, the
+leading sense included, becomes an alternate. Compounds keep their own
+readings, so 肉燥麵 still uses `ròusào miàn`.
+
+The ministry's dictionaries then check each character's note. A note giving a
+reading they do not list for the character is dropped (法 `fà` and 俄 `è` go
+this way). They never supply a character's reading by themselves. They list a
+character's readings in the order their entries are written, and that order
+often leads with a literary reading (們 is `mén` before `men`).
 
 This position check applies only to single-character entries. A multi-character
 entry is used when its full spelling matches the input.
@@ -173,9 +220,8 @@ The build derives compound readings when these three conditions hold:
 Single-character readings are excluded from this inference because a character’s
 locale difference may apply only to certain senses.
 
-This leaves a known gap. 星期 remains `xīngqī` under `zh-TW`, although the
-Taiwan Ministry of Education dictionary gives `xīngqí`. A difference recorded
-only on a character does not propagate into compounds.
+A compound the ministry's dictionaries list is never derived. Their reading of
+the compound is used as it stands, including when it matches the mainland.
 
 Some homographs require explicit exclusions in `src/dictionary/locale.ts`.
 For example, 相親’s matchmaking reading must not propagate into 相親相愛.

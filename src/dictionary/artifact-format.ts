@@ -10,7 +10,7 @@ import {
   type Syllable,
   writeSyllable,
 } from "../syllable/syllable.js";
-import type { DictionaryEntry } from "./entry.js";
+import type { DictionaryEntry, EntryReadings } from "./entry.js";
 
 /**
  * Separator between a line's columns.
@@ -120,4 +120,50 @@ export function byCodeUnit(left: string, right: string): number {
  */
 export function traditionalForms(entry: DictionaryEntry): readonly string[] {
   return [entry.hant, ...(entry.hantVariants ?? [])];
+}
+
+/**
+ * Read alternate readings back, dropping any that are malformed.
+ */
+export function decodeAlternates(
+  written: readonly string[],
+): readonly (readonly Syllable[])[] {
+  return written
+    .map((alternate) => decodeReading(alternate))
+    .filter((alternate) => alternate !== undefined);
+}
+
+/**
+ * Write an entry's 國語 column: its delta, then any alternates after it.
+ *
+ * The alternates follow a comma, as a character's alternates do in their own
+ * column. An entry with alternates and no delta writes nothing before the
+ * comma, so 和 is `,han4`: `hé` in both locales, and `hàn` as well in 國語.
+ * They share the column rather than taking one of their own because a few
+ * hundred keys carry any, and a sixth column would cost every line a
+ * separator.
+ */
+export function encodeTaiwan(readings: EntryReadings): string {
+  const delta = readings.tw === undefined ? "" : encodeReading(readings.tw);
+  return [
+    delta,
+    ...(readings.twAlternates ?? []).map((alternate) =>
+      encodeReading(alternate),
+    ),
+  ].join(ALTERNATE);
+}
+
+/**
+ * Read back what {@link encodeTaiwan} wrote.
+ */
+export function decodeTaiwan(
+  text: string,
+): Pick<EntryReadings, "tw" | "twAlternates"> {
+  const [delta = "", ...written] = text.split(ALTERNATE);
+  const tw = decodeReading(delta);
+  const twAlternates = decodeAlternates(written);
+  return {
+    ...(tw !== undefined && { tw }),
+    ...(twAlternates.length > 0 && { twAlternates }),
+  };
 }

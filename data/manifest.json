@@ -5,24 +5,24 @@
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 220457,
-      "compressedBytes": 71570
+      "bytes": 220531,
+      "compressedBytes": 71567
     },
     "standard": {
       "entries": 66969,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1377495,
-      "compressedBytes": 380453
+      "bytes": 1418491,
+      "compressedBytes": 390886
     },
     "full": {
       "entries": 461555,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9115664,
-      "compressedBytes": 2398815
+      "bytes": 9379566,
+      "compressedBytes": 2450150
     }
   },
   "counts": {
@@ -51,7 +51,9 @@
     "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/STCharacters.txt",
     "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TSCharacters.txt",
     "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TWVariants.txt",
-    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/HKVariants.txt"
+    "https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/HKVariants.txt",
+    "https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download/dict_concised_2014_20260929.zip",
+    "https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download/dict_revised_2015_20260929.zip"
   ],
   "rejected": 137
 }

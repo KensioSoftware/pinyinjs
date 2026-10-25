@@ -47,6 +47,7 @@ $ pinyinjs explain 银行
 
 $ pinyinjs lookup 头发
 头发  tóu fa  n
+  zh-TW  tóu fǎ
 
 $ pinyinjs match --query bjdx 北京大学 我在北京大学学中文 上海大学
 [北京大学]  7.00
@@ -812,6 +813,21 @@ Both scripts are dictionary keys, so only the locale is an option to pass. Hong
 Kong's 繁體 forms are recognised on the way in, so 羣眾 and 麪包 read exactly as
 群眾 and 麵包 do.
 
+`zh-TW` reads words as the Taiwan Ministry of Education's dictionaries of the
+國語 standard do, for every word they list. A word with no Taiwan reading is
+read the same in both locales.
+
+```ts
+convert(dictionary, "星期", { locale: "zh-TW" }); // "xīngqí"
+convert(dictionary, "頭髮", { locale: "zh-TW" }); // "tóufǎ"
+convert(dictionary, "他和我", { locale: "zh-TW" }); // "tā hé wǒ"
+```
+
+A Taiwan reading that holds for one sense only stays out of the default. 和 is
+`hé` in both locales, and `lookup` lists the `hàn` of the conjunction as
+`taiwanAlternates`. Hong Kong teaches Putonghua to the mainland's readings, so
+Hong Kong text takes `zh-CN`. See [scripts and locales](docs/scripts-and-locales/#the-locale-delta).
+
 ## Simplified and traditional
 
 `toScript` converts between the scripts, and the reading is what makes it
@@ -905,7 +921,7 @@ Every example in this README is executed by `src/readme.test.ts` against the
 committed dictionary, so the two cannot drift apart. Change them together.
 
 The compiled dictionaries in `data/` are committed, so what ships is exactly
-what was tested. `pnpm build:data` fetches the four sources into `.cache/` (~32
+what was tested. `pnpm build:data` fetches the sources into `.cache/` (~41
 MB), merges them, runs the build assertions, and rewrites `data/` and `NOTICE`.
 It fails where it could warn. No artifact is written unless 儿化 is repaired
 both ways, 一 and 不 sandhi is normalised out, every syllable is one the
@@ -913,12 +929,13 @@ inventory knows, and every tier reads back exactly as it was built.
 
 ## Data sources
 
-| Source                                                                | Provides                                              | Licence      |
-| --------------------------------------------------------------------- | ----------------------------------------------------- | ------------ |
-| [Unihan](https://www.unicode.org/charts/unihan.html)                  | character readings, polyphone priors, script variants | Unicode      |
-| [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict)   | 简体/繁體 pairs, 儿化, neutral tones, Taiwan readings | CC BY-SA 4.0 |
-| [phrase-pinyin-data](https://github.com/mozillazg/phrase-pinyin-data) | the bulk of the word readings                         | MIT          |
-| [jieba](https://github.com/fxsjy/jieba)                               | word frequencies and part-of-speech tags              | MIT          |
+| Source                                                                                               | Provides                                              | Licence         |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------- |
+| [Unihan](https://www.unicode.org/charts/unihan.html)                                                 | character readings, polyphone priors, script variants | Unicode         |
+| [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict)                                  | 简体/繁體 pairs, 儿化, neutral tones, Taiwan readings | CC BY-SA 4.0    |
+| [phrase-pinyin-data](https://github.com/mozillazg/phrase-pinyin-data)                                | the bulk of the word readings                         | MIT             |
+| [jieba](https://github.com/fxsjy/jieba)                                                              | word frequencies and part-of-speech tags              | MIT             |
+| [教育部 國語辭典](https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/index.html) | Taiwan (國語) readings, as reading facts only         | CC BY-ND 3.0 TW |
 
 `NOTICE` is generated from the same table the pipeline fetches from.
 
@@ -926,5 +943,7 @@ inventory knows, and every tier reads back exactly as it was built.
 
 `Apache-2.0 AND CC-BY-SA-4.0`, because the package is two things. The code is
 Apache-2.0, and the compiled dictionaries in `data/` are share-alike, CC-CEDICT
-being CC BY-SA 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE), which is
+being CC BY-SA 4.0. The Taiwan readings are taken from the Ministry of
+Education's dictionaries as facts about how each word is read. No definition or
+other text of those dictionaries is in `data/`. See [LICENSE](LICENSE) and [NOTICE](NOTICE), which is
 generated from the sources the pipeline actually fetched.

@@ -100,6 +100,10 @@ export const SAMPLE_ENTRIES: readonly DictionaryEntry[] = [
     readings: { cn: reading("lā jī"), tw: reading("lè sè") },
     frequency: 1165,
   }),
+  // 國語 reads 和 as 普通话 does, and as `hàn` too when it joins two nouns.
+  entry("和", "hé", {
+    readings: { cn: reading("hé"), twAlternates: [reading("hàn")] },
+  }),
 ];
 
 /**

@@ -52,6 +52,7 @@ export function mergeSources(sources: MergeSources): MergeResult {
     unihanReadings: sources.unihanReadings,
     traditional,
     defaults,
+    moe: sources.moe ?? new Map(),
   };
   const { entries, rejected, counts } = mergeWords(
     wordList(phrase, defaults, cedictByWord, cedictByHant),
@@ -76,7 +77,14 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // Last, because it segments each compound against the finished entries: the
   // readings, both scripts' keys and the frequencies all have to be settled
   // before a compound can be asked what it is made of.
-  const localised = composeLocaleDeltas(held.entries);
+  // A word 教育部 lists has had its say, including where it said the word
+  // reads as in 普通话, so only the words it leaves out are composed.
+  const moe = sources.moe ?? new Map();
+  const localised = composeLocaleDeltas(held.entries, (entry) =>
+    [entry.hant, ...(entry.hantVariants ?? [])].some((spelling) =>
+      moe.has(spelling),
+    ),
+  );
 
   // ── 繁體 spellings given their 简体 word's tag and count ────
   // Last, and over the finished key set, because the pairing it reads is the

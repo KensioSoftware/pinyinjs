@@ -92,14 +92,15 @@ Both simplified and traditional spellings are searchable keys. Traditional words
 
 ### WordEntry
 
-| Field           | Type          | Is                                                                |
-| --------------- | ------------- | ----------------------------------------------------------------- |
-| `word`          | `string`      | the key as stored                                                 |
-| `reading`       | `Syllable[]`  | the 普通话 reading                                                |
-| `taiwanReading` | `Syllable[]`? | the 國語 reading, absent when it does not differ                  |
-| `partOfSpeech`  | `string`      | jieba's tag, or `""` where there is none                          |
-| `isProperNoun`  | `boolean`     | drives capitalisation                                             |
-| `cost`          | `number`      | decoding cost, quantised from corpus frequency; lower is likelier |
+| Field              | Type            | Is                                                                 |
+| ------------------ | --------------- | ------------------------------------------------------------------ |
+| `word`             | `string`        | the key as stored                                                  |
+| `reading`          | `Syllable[]`    | the 普通话 reading                                                 |
+| `taiwanReading`    | `Syllable[]`?   | the 國語 reading, absent when it does not differ                   |
+| `taiwanAlternates` | `Syllable[][]`? | other 國語 readings that hold for one sense only, such as 和 `hàn` |
+| `partOfSpeech`     | `string`        | jieba's tag, or `""` where there is none                           |
+| `isProperNoun`     | `boolean`       | drives capitalisation                                              |
+| `cost`             | `number`        | decoding cost, quantised from corpus frequency; lower is likelier  |
 
 `lookup` returns `undefined` when a word is absent. `partOfSpeech` may be empty because only jieba-sourced entries have tags. Traditional characters inherit the tags of their paired simplified forms. See [shared tags and counts](../scripts-and-locales/#tags-frequency-and-names).
 
@@ -196,14 +197,50 @@ syllables  415 attested, 424 spellings in the inventory
 
 ## Where the data comes from
 
-| Source                                                                | Provides                                              | Licence      |
-| --------------------------------------------------------------------- | ----------------------------------------------------- | ------------ |
-| [Unihan](https://www.unicode.org/charts/unihan.html)                  | character readings, polyphone priors, script variants | Unicode      |
-| [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict)   | 简体/繁體 pairs, 儿化, neutral tones, Taiwan readings | CC BY-SA 4.0 |
-| [phrase-pinyin-data](https://github.com/mozillazg/phrase-pinyin-data) | the bulk of the word readings                         | MIT          |
-| [jieba](https://github.com/fxsjy/jieba)                               | word frequencies and part-of-speech tags              | MIT          |
+| Source                                                                                               | Provides                                              | Licence         |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------- |
+| [Unihan](https://www.unicode.org/charts/unihan.html)                                                 | character readings, polyphone priors, script variants | Unicode         |
+| [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict)                                  | 简体/繁體 pairs, 儿化, neutral tones, Taiwan readings | CC BY-SA 4.0    |
+| [phrase-pinyin-data](https://github.com/mozillazg/phrase-pinyin-data)                                | the bulk of the word readings                         | MIT             |
+| [jieba](https://github.com/fxsjy/jieba)                                                              | word frequencies and part-of-speech tags              | MIT             |
+| [教育部 國語辭典](https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/index.html) | Taiwan (國語) readings, as reading facts only         | CC BY-ND 3.0 TW |
 
 Compiled dictionaries are committed and tested with the library. The code uses Apache-2.0, and the data artifacts use CC BY-SA 4.0 because they include CC-CEDICT data.
+
+<a id="taiwan-readings-source"></a>
+
+### Taiwan readings
+
+The `zh-TW` readings come from the Taiwan Ministry of Education's two
+dictionaries of the 國語 standard, 《國語辭典簡編本》 and 《重編國語辭典修訂本》.
+CC-CEDICT's `Taiwan pr.` notes cover 543 of its lines, and before this source
+common words such as 星期, 危險 and 頭髮 read under `zh-TW` exactly as on the
+mainland.
+
+These sources were considered:
+
+| Source                                  | Licence            | Used                                                 |
+| --------------------------------------- | ------------------ | ---------------------------------------------------- |
+| 教育部《國語辭典簡編本》                | CC BY-ND 3.0 TW    | yes, readings only                                   |
+| 教育部《重編國語辭典修訂本》            | CC BY-ND 3.0 TW    | yes, readings only, for words the concise one lacks  |
+| 中華文化總會《兩岸常用詞典》            | CC BY-NC-ND 3.0 TW | no (non-commercial)                                  |
+| Wiktionary's Taiwan pronunciations      | CC BY-SA 4.0       | no (computed by Lua modules, with nothing to export) |
+| moedict and g0v exports of the 國語辭典 | CC BY-ND 3.0 TW    | no (the ministry's own download is the same data)    |
+
+The build reads four columns of each spreadsheet (the headword, the order of
+its readings, its 漢語拼音 and its variant reading). It never parses a
+definition, an example or any other text. `data/` holds a reading only as a
+delta on an entry the other sources define, where 國語 differs from 普通话, in
+this package's own encoding. A word's pronunciation is a fact about the
+language, and no entry of either dictionary is reproduced.
+
+Each dictionary's usage statement (公眾授權使用說明, linked from the download
+page) adds conditions to the licence. It asks for attribution in a set form
+with the release used, which NOTICE gives. It also asks that no entry's 音讀 be
+modified or converted to 简体. This package keys a reading under a word's 简体
+spelling as well as its 繁體 ones, on the position that a reading taken as a
+fact is no use of an entry. Keying the readings under 繁體 spellings only would
+meet the condition at the cost of `zh-TW` on 简体 input.
 
 The dictionary build validates erhua readings, removes applied sandhi from stored 一 and 不, checks the syllable inventory, and verifies that every tier can be read back correctly. A failed validation stops the build.
 

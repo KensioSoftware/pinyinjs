@@ -21,6 +21,7 @@ import { selectTier, TIERS } from "../../src/dictionary/tiers.js";
 import { writeScriptTables } from "../../src/script/conversion.js";
 import { parseCedict } from "../../src/sources/cedict.js";
 import { parseJiebaDictionary } from "../../src/sources/jieba.js";
+import { parseMoeReadings, preferReadings } from "../../src/sources/moe.js";
 import { parseOpenCcTable } from "../../src/sources/opencc.js";
 import { parsePhrasePinyin } from "../../src/sources/phrase-pinyin.js";
 import {
@@ -82,13 +83,18 @@ const sources = {
   phrase: parsePhrasePinyin(await readSource(SOURCE_FILES.phrasePinyin)),
   cedict: parseCedict(await readSource(SOURCE_FILES.cedict)),
   jieba: parseJiebaDictionary(await readSource(SOURCE_FILES.jieba)),
+  moe: preferReadings(
+    parseMoeReadings(await readSource(SOURCE_FILES.moeConcise), "concise"),
+    parseMoeReadings(await readSource(SOURCE_FILES.moeRevised), "revised"),
+  ),
 };
 
 report(
   `  Unihan ${String(sources.unihanReadings.size)} characters, ` +
     `phrase corpus ${String(sources.phrase.size)}, ` +
     `CC-CEDICT ${String(sources.cedict.length)}, ` +
-    `jieba ${String(sources.jieba.size)}`,
+    `jieba ${String(sources.jieba.size)}, ` +
+    `教育部 ${String(sources.moe.size)}`,
 );
 
 // The glyph tables live in src/ as code, so nothing but this would notice an
