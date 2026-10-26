@@ -12,6 +12,7 @@ import type { Syllable } from "../syllable/syllable.js";
 import type { DictionaryEntry } from "./entry.js";
 import type { NameMassTable } from "./name-mass.js";
 import type { NameLookup } from "./proper-noun.js";
+import type { ReferenceReadings } from "./reference-readings.js";
 import type { TraditionalTable } from "./traditional-table.js";
 
 /**
@@ -28,6 +29,11 @@ export interface MergeSources {
    * only what CC-CEDICT and Unihan mark.
    */
   readonly moe?: ReadonlyMap<string, readonly MoeReading[]>;
+  /**
+   * Readings a standard reference dictionary gives that the sources lack.
+   * Absent, the merge reads only what the sources give.
+   */
+  readonly reference?: ReferenceReadings;
 }
 
 /**

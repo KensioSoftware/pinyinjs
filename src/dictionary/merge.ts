@@ -7,7 +7,10 @@
  */
 import { composeLocaleDeltas } from "./locale.js";
 import { indexCedict, senseLookup } from "./cedict-senses.js";
-import { buildCharacterDefaults } from "./character-defaults.js";
+import {
+  buildCharacterDefaults,
+  withReferenceReadings,
+} from "./character-defaults.js";
 import { repairConstituentReadings } from "./constituent-repair.js";
 import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
@@ -28,7 +31,7 @@ export type { MergeResult, MergeSources, MergeStats } from "./merge-types.js";
  * see every entry at once.
  */
 export function mergeSources(sources: MergeSources): MergeResult {
-  const { phrase, cedict } = sources;
+  const { cedict } = sources;
   const cedictByWord = indexCedict(cedict, (entry) => entry.simplified);
   // Only ever read for {@link isOwnSense}. A 繁體-only headword keeps its senses
   // under whichever 简体 form each one simplifies to — 沈 is `chén` under 沉 and
@@ -36,11 +39,21 @@ export function mergeSources(sources: MergeSources): MergeResult {
   // like that already reads in 普通话.
   const cedictByHant = indexCedict(cedict, (entry) => entry.traditional);
 
-  const { traditional, defaults, reducedNeutrals } = buildCharacterDefaults(
-    sources,
-    cedictByWord,
-    cedictByHant,
+  const ranked = buildCharacterDefaults(sources, cedictByWord, cedictByHant);
+  const { traditional, reducedNeutrals } = ranked;
+
+  // ── A reference dictionary's readings, after the sources' ──
+  // After the ranking, so a reading only print attests never sets a default,
+  // and its words are left out of the corpus mass that ranking counts. A word
+  // it reads replaces the phrase corpus's reading.
+  const defaults = withReferenceReadings(
+    ranked.defaults,
+    sources.reference?.characters ?? new Map(),
   );
+  const phrase = new Map([
+    ...sources.phrase,
+    ...(sources.reference?.words ?? []),
+  ]);
 
   const wordSources: WordSources = {
     cedictByWord,

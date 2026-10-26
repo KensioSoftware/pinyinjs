@@ -13,6 +13,7 @@ import {
   WORD_CHARGE,
 } from "../../src/dictionary/frequency-table.js";
 import { mergeSources } from "../../src/dictionary/merge.js";
+import { REFERENCE_READINGS } from "../../src/dictionary/reference-readings.js";
 import { buildScriptTables } from "../../src/dictionary/script-tables.js";
 import { KeyIndex } from "../../src/dictionary/key-index.js";
 import { buildWordCounts } from "../../src/dictionary/word-counts.js";
@@ -87,6 +88,7 @@ const sources = {
     parseMoeReadings(await readSource(SOURCE_FILES.moeConcise), "concise"),
     parseMoeReadings(await readSource(SOURCE_FILES.moeRevised), "revised"),
   ),
+  reference: REFERENCE_READINGS,
 };
 
 report(

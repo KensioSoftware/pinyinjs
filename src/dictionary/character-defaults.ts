@@ -15,6 +15,7 @@ import {
 import { leadWithFreeReading } from "./free-readings.js";
 import type { CedictEntry } from "../sources/cedict.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { isSameReading } from "./entry.js";
 import { readAlignedReading, readDictionaryReading } from "./reading.js";
 import {
   pairScripts,
@@ -108,4 +109,30 @@ export function buildCharacterDefaults(
   }
 
   return { traditional, defaults, reducedNeutrals };
+}
+
+/**
+ * The character defaults with a reference dictionary's readings after them.
+ *
+ * After the ranking, so a reading only print attests never sets a default. A
+ * reading a source already gives is not added twice, and a character no
+ * source reads gets the reference readings alone.
+ */
+export function withReferenceReadings(
+  defaults: ReadonlyMap<string, readonly Syllable[]>,
+  references: ReadonlyMap<string, readonly string[]>,
+): ReadonlyMap<string, readonly Syllable[]> {
+  const extended = new Map(defaults);
+  for (const [character, readings] of references) {
+    const known = extended.get(character) ?? [];
+    const added = readings
+      .map((reading) => characterSyllable(character, reading))
+      .filter((syllable) => syllable !== undefined)
+      .filter(
+        (syllable) =>
+          !known.some((other) => isSameReading([other], [syllable])),
+      );
+    extended.set(character, [...known, ...added]);
+  }
+  return extended;
 }

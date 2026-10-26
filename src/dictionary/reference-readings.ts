@@ -1,0 +1,96 @@
+/**
+ * Readings a standard reference dictionary gives that no source carries.
+ *
+ * Unihan, the phrase corpus and CC-CEDICT between them miss a tail of
+ * readings that print dictionaries list (a character's reading in one literary
+ * word, a surname, a place name, a dialect word). Where a source has the word
+ * and reads it from the character's everyday reading, the printed reading is
+ * the better evidence, and it replaces the corpus's.
+ */
+
+/**
+ * A reference dictionary's readings, by character and by word.
+ */
+export interface ReferenceReadings {
+  readonly characters: ReadonlyMap<string, readonly string[]>;
+  readonly words: ReadonlyMap<string, readonly string[]>;
+}
+
+/**
+ * A character's readings a standard reference dictionary gives and the
+ * sources lack, as tone-marked pinyin.
+ *
+ * They follow every reading a source gives, so they never set a character's
+ * default and only ever stand as alternates. The three characters no source
+ * reads at all take the reading here as their only one. A 繁體 form is listed
+ * beside its 简体 one, since each has a Unihan entry of its own.
+ *
+ * Two dialect readings are left out, 不 `dǔn` in 不子 and 泽 `duó` in 凌泽 (an
+ * icicle). Each character has one reading otherwise, and a second would mark
+ * every free-standing 不, and every 泽 in a given name, uncertain. 不子
+ * carries its reading as a word.
+ */
+const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
+  ["咹", ["ǎn"]],
+  ["㼎", ["báo"]],
+  ["箄", ["bēi"]],
+  ["屏", ["bīng"]], // 屏营
+  ["礤", ["cā"]],
+  ["倡", ["chāng"]], // 倡优
+  ["樘", ["chēng"]],
+  ["𡷫", ["chéng"]], // a surname
+  ["郗", ["chī"]], // a surname
+  ["佁", ["chì"]], // 佁儗
+  ["玼", ["cī"]],
+  ["粢", ["cī"]], // 粢饭
+  ["酂", ["cuán"]], // a place name
+  ["酇", ["cuán"]],
+  ["嵅", ["dǎn", "dǎng"]], // place names in Guangxi
+  ["碴", ["zhǎ"]], // 道碴
+  ["嘚", ["dè"]], // 嘚瑟
+  ["镫", ["dēng"]],
+  ["鐙", ["dēng"]],
+  ["螲", ["dié"]], // 螲𬠅
+  ["𭣧", ["dù"]],
+  ["柂", ["duò"]],
+  ["媠", ["duò"]],
+  ["欸", ["ē", "é", "ě", "è"]],
+  ["噁", ["è"]], // 二噁英
+  ["胲", ["gǎi"]],
+  ["𭥙", ["gǎng"]],
+  ["岗", ["gàng"]], // 岗尖, 岗口儿甜
+  ["崗", ["gàng"]],
+  ["瘩", ["dā"]], // 疙疙瘩瘩, 疙里疙瘩
+  ["𫵼", ["gēng"]],
+  ["碌", ["lū"]], // 骨碌碌
+]);
+
+/**
+ * Words a standard reference dictionary reads, with the reading it gives, as
+ * the phrase corpus writes one. That is a syllable per character, tone-marked,
+ * and unmarked for 轻声. An 儿 read as 儿化 is `r5`, as CC-CEDICT writes it.
+ *
+ * Each either has no source at all or is read in the phrase corpus from its
+ * characters' everyday readings. 凌泽 is left out. It is a dialect word for an
+ * icicle, and as a word it would take every given name 凌泽 apart.
+ */
+const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
+  ["粢饭", ["cī", "fàn"]],
+  ["道碴", ["dào", "zhǎ"]],
+  ["螲𬠅", ["dié", "dāng"]],
+  ["不子", ["dǔn", "zi"]],
+  ["岗尖", ["gàng", "jiān"]],
+  ["岗口儿甜", ["gàng", "kǒu", "r5", "tián"]],
+  ["疙疙瘩瘩", ["gē", "ge", "dā", "dā"]],
+  ["疙里疙瘩", ["gē", "li", "gē", "dā"]],
+  ["骨碌碌", ["gū", "lū", "lū"]],
+  ["骨碌碌地", ["gū", "lū", "lū", "de"]],
+]);
+
+/**
+ * The readings the build adds to the sources.
+ */
+export const REFERENCE_READINGS: ReferenceReadings = {
+  characters: CHARACTER_READINGS,
+  words: WORD_READINGS,
+};
