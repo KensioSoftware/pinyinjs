@@ -159,7 +159,7 @@ Load the dictionary once and keep it. It is immutable and safe to share.
 | ---------- | ------: | ----------------: | ---------------------- |
 | `core`     |  16,970 |             70 KB | single characters only |
 | `standard` |  66,970 |            377 KB | the most common words  |
-| `full`     | 461,555 |          2,378 KB | every word             |
+| `full`     | 461,560 |          2,378 KB | every word             |
 
 `full` is the default. The tiers are nested. A page can load `standard` first,
 convert with it, and reload as `full` arrives.
