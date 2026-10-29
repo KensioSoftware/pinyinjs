@@ -5,31 +5,31 @@
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 220724,
-      "compressedBytes": 71612
+      "bytes": 220846,
+      "compressedBytes": 71677
     },
     "standard": {
       "entries": 66970,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1418684,
-      "compressedBytes": 390798
+      "bytes": 1418806,
+      "compressedBytes": 390873
     },
     "full": {
-      "entries": 461560,
+      "entries": 461562,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9379911,
-      "compressedBytes": 2449557
+      "bytes": 9380086,
+      "compressedBytes": 2449233
     }
   },
   "counts": {
     "file": "full.counts",
     "tier": "full",
-    "keys": 723154,
-    "bytes": 766849,
+    "keys": 723156,
+    "bytes": 766851,
     "compressedBytes": 250587
   },
   "script": {
