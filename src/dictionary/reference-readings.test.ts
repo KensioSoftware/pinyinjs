@@ -71,9 +71,16 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("䏚"), ["chǎo", "miǎo"]);
     assertArrayEquals(readingsOf("玟"), ["wén", "mín"]);
     assertArrayEquals(readingsOf("貉"), ["hé", "háo", "mò"]);
-    assertArrayEquals(readingsOf("郍"), ["nuó", "nà"]);
-    assertArrayEquals(readingsOf("巙"), ["kuí", "náo"]);
     assertArrayEquals(readingsOf("媆"), ["ruǎn", "nèn"]);
+    assertArrayEquals(readingsOf("伮"), ["nǔ", "nú"]);
+    assertArrayEquals(readingsOf("箄"), ["bǐ", "bēi", "pái"]);
+    assertArrayEquals(readingsOf("蒡"), ["bàng", "páng"]);
+    assertArrayEquals(readingsOf("㾦"), ["pèi", "pēi"]);
+    assertArrayEquals(readingsOf("𫔇"), ["bī", "pī"]);
+    assertArrayEquals(readingsOf("芘"), ["bǐ", "pí"]);
+    assertArrayEquals(readingsOf("呇"), ["mèn", "qǐ"]);
+    assertArrayEquals(readingsOf("跂"), ["qí", "qì", "qǐ"]);
+    assertArrayEquals(readingsOf("愒"), ["kài", "hè", "qì"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -100,6 +107,10 @@ describe("readings a reference dictionary gives", () => {
       convert(dictionary, "一丘之貉。貉子的皮很暖。金玟来了。"),
       "Yìqiūzhīhé. Háozi de pí hěn nuǎn. Jīn wén láile.",
     );
+    assertIdentical(
+      convert(dictionary, "牛蒡很好吃。他扑过来了。"),
+      "Niúbàng hěn hǎochī. Tā pū guòlái le.",
+    );
   });
 
   it("gives the 繁體 form the reading its 简体 form gets", () => {
@@ -122,6 +133,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("𫵼"), ["gēng"]);
     assertArrayEquals(readingsOf("𣪘"), ["guǐ"]);
     assertArrayEquals(readingsOf("𥉳"), ["liū"]);
+    assertArrayEquals(readingsOf("𡏋"), ["pǔ"]);
   });
 
   it("lists every reading a character has, where it has several", () => {
@@ -130,16 +142,18 @@ describe("readings a reference dictionary gives", () => {
     // Then each one is there
     assertArrayIncludesAll(readingsOf("嵅"), ["dǎn", "dǎng"]);
     assertArrayIncludesAll(readingsOf("欸"), ["ē", "é", "ě", "è"]);
+    assertArrayEquals(readingsOf("𫪘"), ["ōu", "óu", "ǒu", "òu"]);
   });
 
   it("leaves out a rare reading that would unsettle a common character", () => {
-    // Given 不, 泽, 姆 and 能, each with a dialect or old reading few words use
+    // Given 不, 泽, 姆, 能 and 扑, each with a reading few words use
     // When their readings are listed
     // Then each keeps its one reading, so it stays certain standing alone
     assertArrayEquals(readingsOf("不"), ["bù"]);
     assertArrayEquals(readingsOf("泽"), ["zé"]);
     assertArrayEquals(readingsOf("姆"), ["mǔ"]);
     assertArrayEquals(readingsOf("能"), ["néng"]);
+    assertArrayEquals(readingsOf("扑"), ["pū"]);
   });
 
   it("reads 能 as néng in every tier", async () => {

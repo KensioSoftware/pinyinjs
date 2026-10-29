@@ -26,15 +26,16 @@ export interface ReferenceReadings {
  * beside its 简体 one, since each has a Unihan entry of its own.
  *
  * Three dialect readings are left out, 不 `dǔn` in 不子, 泽 `duó` in 凌泽 (an
- * icicle) and syllabic 姆 `m̄`, along with the old reading 能 `nài`. Each
- * character has one reading otherwise, and a second would mark every
- * free-standing 不 and 能, every 泽 in a given name and every 姆 in a
- * transliterated one uncertain. 不子 carries its reading as a word.
+ * icicle) and syllabic 姆 `m̄`, along with the old reading 能 `nài` and the
+ * surname reading 扑 `pú`. Each character has one reading otherwise, and a
+ * second would mark every free-standing 不, 能 and 扑, every 泽 in a given
+ * name and every 姆 in a transliterated one uncertain. 不子 carries its
+ * reading as a word.
  */
 const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["咹", ["ǎn"]],
   ["㼎", ["báo"]],
-  ["箄", ["bēi"]],
+  ["箄", ["bēi", "pái"]],
   ["屏", ["bīng"]], // 屏营
   ["礤", ["cā"]],
   ["倡", ["chāng"]], // 倡优
@@ -67,7 +68,7 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["𣪘", ["guǐ"]],
   ["亢", ["háng"]], // the throat, in literary use
   ["猲", ["hè"]],
-  ["愒", ["hè"]],
+  ["愒", ["hè", "qì"]],
   ["沕", ["hū"]],
   ["鳠", ["huò"]],
   ["鱯", ["huò"]],
@@ -93,9 +94,16 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["䏚", ["miǎo"]], // a term in Chinese medicine
   ["玟", ["mín"]], // a stone like jade
   ["貉", ["mò"]], // the same as 貊
-  ["郍", ["nà"]], // a surname
-  ["巙", ["náo"]], // in a personal name
   ["媆", ["nèn"]], // the same as 嫩
+  ["伮", ["nú"]],
+  ["𫪘", ["óu", "ǒu", "òu"]], // an interjection
+  ["蒡", ["páng"]], // 蒡葧
+  ["㾦", ["pēi"]],
+  ["𫔇", ["pī"]],
+  ["芘", ["pí"]], // 芘芣
+  ["𡏋", ["pǔ"]],
+  ["呇", ["qǐ"]],
+  ["跂", ["qǐ"]],
   ["箵", ["xǐng"]],
 ]);
 
