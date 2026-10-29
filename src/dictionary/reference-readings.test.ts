@@ -67,6 +67,13 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("澄"), ["chéng", "dèng", "dēng"]);
     assertArrayEquals(readingsOf("亢"), ["kàng", "háng"]);
     assertArrayEquals(readingsOf("癞"), ["lài", "là"]);
+    assertArrayEquals(readingsOf("掹"), ["meng", "měng"]);
+    assertArrayEquals(readingsOf("䏚"), ["chǎo", "miǎo"]);
+    assertArrayEquals(readingsOf("玟"), ["wén", "mín"]);
+    assertArrayEquals(readingsOf("貉"), ["hé", "háo", "mò"]);
+    assertArrayEquals(readingsOf("郍"), ["nuó", "nà"]);
+    assertArrayEquals(readingsOf("巙"), ["kuí", "náo"]);
+    assertArrayEquals(readingsOf("媆"), ["ruǎn", "nèn"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -88,6 +95,10 @@ describe("readings a reference dictionary gives", () => {
     assertIdentical(
       convert(dictionary, "这只癞蛤蟆很大。他头上长了癞。"),
       "Zhè zhī làiháma hěn dà. Tā tóushàng zhǎngle lài.",
+    );
+    assertIdentical(
+      convert(dictionary, "一丘之貉。貉子的皮很暖。金玟来了。"),
+      "Yìqiūzhīhé. Háozi de pí hěn nuǎn. Jīn wén láile.",
     );
   });
 
@@ -121,13 +132,48 @@ describe("readings a reference dictionary gives", () => {
     assertArrayIncludesAll(readingsOf("欸"), ["ē", "é", "ě", "è"]);
   });
 
-  it("leaves out a dialect reading that would unsettle a common character", () => {
-    // Given 不, 泽 and 姆, each with a dialect reading only a few words use
+  it("leaves out a rare reading that would unsettle a common character", () => {
+    // Given 不, 泽, 姆 and 能, each with a dialect or old reading few words use
     // When their readings are listed
     // Then each keeps its one reading, so it stays certain standing alone
     assertArrayEquals(readingsOf("不"), ["bù"]);
     assertArrayEquals(readingsOf("泽"), ["zé"]);
     assertArrayEquals(readingsOf("姆"), ["mǔ"]);
+    assertArrayEquals(readingsOf("能"), ["néng"]);
+  });
+
+  it("reads 能 as néng in every tier", async () => {
+    // Given 能, whose old reading nài is left out
+    // When text using it in words and standing alone is converted on each tier
+    // Then néng is its only reading and every 能 reads néng
+    const expected = {
+      core: "Wǒ néng qù. Néng bù néng? Tā hěn néng gàn. Néng.",
+      standard: "Wǒ néng qù. Néng bùnéng? Tā hěn nénggàn. Néng.",
+      full: "Wǒ néng qù. Néng bùnéng? Tā hěn nénggàn. Néng.",
+    } as const;
+    const tiers = await Promise.all(
+      Object.entries(expected).map(async ([tier, reading]) => ({
+        dictionary: await loadDictionary(
+          fileSource(dataDirectory),
+          tier as keyof typeof expected,
+        ),
+        reading,
+      })),
+    );
+    for (const { dictionary: tierDictionary, reading } of tiers) {
+      assertArrayEquals(
+        tierDictionary
+          .readingsOf("能")
+          .map((syllables) =>
+            syllables.map((syllable) => writeSyllable(syllable)),
+          ),
+        [["néng"]],
+      );
+      assertIdentical(
+        convert(tierDictionary, "我能去。能不能？他很能干。能。"),
+        reading,
+      );
+    }
   });
 
   it("reads a word the corpus read from everyday readings as print does", () => {
