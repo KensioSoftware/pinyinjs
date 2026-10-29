@@ -4,9 +4,11 @@ import {
   assertArrayEquals,
   assertArrayIncludes,
   assertArrayIncludesAll,
+  assertIdentical,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
+import { convert } from "../decode/convert.js";
 import { writeSyllable } from "../syllable/syllable.js";
 import {
   characterSyllable,
@@ -61,6 +63,32 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("倡"), ["chàng", "chāng"]);
     assertArrayEquals(readingsOf("岗"), ["gǎng", "gāng", "gàng"]);
     assertArrayEquals(readingsOf("碌"), ["lù", "liù", "lū"]);
+    assertArrayEquals(readingsOf("乐"), ["lè", "yuè", "lào"]);
+    assertArrayEquals(readingsOf("澄"), ["chéng", "dèng", "dēng"]);
+    assertArrayEquals(readingsOf("亢"), ["kàng", "háng"]);
+    assertArrayEquals(readingsOf("癞"), ["lài", "là"]);
+  });
+
+  it("keeps a common character's everyday reading in words and sentences", () => {
+    // Given common characters with a rare or regional reading added
+    // When text using them in their everyday senses is converted
+    // Then each still reads as it did, in a word and standing alone
+    assertIdentical(
+      convert(dictionary, "我很快乐。音乐会很好听。他姓乐。"),
+      "Wǒ hěn kuàilè. Yīnyuèhuì hěn hǎotīng. Tā xìng lè.",
+    );
+    assertIdentical(
+      convert(dictionary, "湖水很澄清。把水澄一澄。"),
+      "Hú shuǐ hěn chéngqīng. Bǎ shuǐ chéng yì chéng.",
+    );
+    assertIdentical(
+      convert(dictionary, "他的声音高亢激昂。亢姓的人不多。"),
+      "Tā de shēngyīn gāokàng jī'áng. Kàng xìng de rén bù duō.",
+    );
+    assertIdentical(
+      convert(dictionary, "这只癞蛤蟆很大。他头上长了癞。"),
+      "Zhè zhī làiháma hěn dà. Tā tóushàng zhǎngle lài.",
+    );
   });
 
   it("gives the 繁體 form the reading its 简体 form gets", () => {
@@ -69,6 +97,9 @@ describe("readings a reference dictionary gives", () => {
     // Then it has the reading its 简体 form was given
     assertArrayIncludes(readingsOf("崗"), "gàng");
     assertArrayIncludes(readingsOf("酇"), "cuán");
+    assertArrayIncludes(readingsOf("鱯"), "huò");
+    assertArrayIncludes(readingsOf("癩"), "là");
+    assertArrayIncludes(readingsOf("樂"), "lào");
   });
 
   it("reads a character no source reads at all", () => {
@@ -78,6 +109,8 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("𡷫"), ["chéng"]);
     assertArrayEquals(readingsOf("𭥙"), ["gǎng"]);
     assertArrayEquals(readingsOf("𫵼"), ["gēng"]);
+    assertArrayEquals(readingsOf("𣪘"), ["guǐ"]);
+    assertArrayEquals(readingsOf("𥉳"), ["liū"]);
   });
 
   it("lists every reading a character has, where it has several", () => {
@@ -89,11 +122,12 @@ describe("readings a reference dictionary gives", () => {
   });
 
   it("leaves out a dialect reading that would unsettle a common character", () => {
-    // Given 不 and 泽, whose dialect readings only 不子 and 凌泽 use
+    // Given 不, 泽 and 姆, each with a dialect reading only a few words use
     // When their readings are listed
     // Then each keeps its one reading, so it stays certain standing alone
     assertArrayEquals(readingsOf("不"), ["bù"]);
     assertArrayEquals(readingsOf("泽"), ["zé"]);
+    assertArrayEquals(readingsOf("姆"), ["mǔ"]);
   });
 
   it("reads a word the corpus read from everyday readings as print does", () => {

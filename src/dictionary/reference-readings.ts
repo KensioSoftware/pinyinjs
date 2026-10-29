@@ -25,10 +25,10 @@ export interface ReferenceReadings {
  * reads at all take the reading here as their only one. A 繁體 form is listed
  * beside its 简体 one, since each has a Unihan entry of its own.
  *
- * Two dialect readings are left out, 不 `dǔn` in 不子 and 泽 `duó` in 凌泽 (an
- * icicle). Each character has one reading otherwise, and a second would mark
- * every free-standing 不, and every 泽 in a given name, uncertain. 不子
- * carries its reading as a word.
+ * Three dialect readings are left out, 不 `dǔn` in 不子, 泽 `duó` in 凌泽 (an
+ * icicle) and syllabic 姆 `m̄`. Each character has one reading otherwise, and a
+ * second would mark every free-standing 不, every 泽 in a given name and every
+ * 姆 in a transliterated one uncertain. 不子 carries its reading as a word.
  */
 const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["咹", ["ǎn"]],
@@ -50,6 +50,7 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["嘚", ["dè"]], // 嘚瑟
   ["镫", ["dēng"]],
   ["鐙", ["dēng"]],
+  ["澄", ["dēng"]],
   ["螲", ["dié"]], // 螲𬠅
   ["𭣧", ["dù"]],
   ["柂", ["duò"]],
@@ -62,7 +63,32 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["崗", ["gàng"]],
   ["瘩", ["dā"]], // 疙疙瘩瘩, 疙里疙瘩
   ["𫵼", ["gēng"]],
+  ["𣪘", ["guǐ"]],
+  ["亢", ["háng"]], // the throat, in literary use
+  ["猲", ["hè"]],
+  ["愒", ["hè"]],
+  ["沕", ["hū"]],
+  ["鳠", ["huò"]],
+  ["鱯", ["huò"]],
+  ["雘", ["huò"]],
+  ["筊", ["jiǎo"]],
+  ["寁", ["jié"]],
+  ["蹴", ["jiù"]],
+  ["菹", ["jù"]],
+  ["朘", ["juān"]],
+  ["蠼", ["jué"]],
+  ["焅", ["kào"]],
+  ["㲉", ["kòu"]],
+  ["磈", ["kuǐ"]],
+  ["癞", ["là"]], // 癞痢
+  ["癩", ["là"]],
+  ["乐", ["lào"]], // 乐亭, a place name
+  ["樂", ["lào"]],
+  ["嘞", ["lē"]],
+  ["𥉳", ["liū"]],
+  ["蹓", ["liù"]],
   ["碌", ["lū"]], // 骨碌碌
+  ["箵", ["xǐng"]],
 ]);
 
 /**
