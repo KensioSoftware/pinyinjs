@@ -26,9 +26,10 @@ export interface ReferenceReadings {
  * beside its 简体 one, since each has a Unihan entry of its own.
  *
  * Three dialect readings are left out, 不 `dǔn` in 不子, 泽 `duó` in 凌泽 (an
- * icicle) and syllabic 姆 `m̄`. Each character has one reading otherwise, and a
- * second would mark every free-standing 不, every 泽 in a given name and every
- * 姆 in a transliterated one uncertain. 不子 carries its reading as a word.
+ * icicle) and syllabic 姆 `m̄`, along with the old reading 能 `nài`. Each
+ * character has one reading otherwise, and a second would mark every
+ * free-standing 不 and 能, every 泽 in a given name and every 姆 in a
+ * transliterated one uncertain. 不子 carries its reading as a word.
  */
 const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["咹", ["ǎn"]],
@@ -88,6 +89,13 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["𥉳", ["liū"]],
   ["蹓", ["liù"]],
   ["碌", ["lū"]], // 骨碌碌
+  ["掹", ["měng"]],
+  ["䏚", ["miǎo"]], // a term in Chinese medicine
+  ["玟", ["mín"]], // a stone like jade
+  ["貉", ["mò"]], // the same as 貊
+  ["郍", ["nà"]], // a surname
+  ["巙", ["náo"]], // in a personal name
+  ["媆", ["nèn"]], // the same as 嫩
   ["箵", ["xǐng"]],
 ]);
 
