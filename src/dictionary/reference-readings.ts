@@ -30,7 +30,7 @@ export interface ReferenceReadings {
  * surname reading 扑 `pú`. Each character has one reading otherwise, and a
  * second would mark every free-standing 不, 能 and 扑, every 泽 in a given
  * name and every 姆 in a transliterated one uncertain. 不子 carries its
- * reading as a word.
+ * reading as a word. So does 神神道道, the one word that reads 道 as `dāo`.
  */
 const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["咹", ["ǎn"]],
@@ -105,6 +105,9 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["跂", ["qǐ"]],
   ["倩", ["qìng"]], // to ask someone to do something, as in 倩人执笔
   ["桵", ["ruǐ"]], // a tree named in ancient texts
+  ["埫", ["shǎng"]], // the same as 垧
+  ["谌", ["shèn"]], // a surname
+  ["諶", ["shèn"]],
   ["箵", ["xǐng"]],
 ]);
 
@@ -128,6 +131,7 @@ const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["疙里疙瘩", ["gē", "li", "gē", "dā"]],
   ["骨碌碌", ["gū", "lū", "lū"]],
   ["骨碌碌地", ["gū", "lū", "lū", "de"]],
+  ["神神道道", ["shén", "shen", "dāo", "dāo"]],
 ]);
 
 /**

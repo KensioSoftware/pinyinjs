@@ -82,6 +82,8 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("愒"), ["kài", "hè", "qì"]);
     assertArrayEquals(readingsOf("倩"), ["qiàn", "qìng"]);
     assertArrayEquals(readingsOf("桵"), ["ruí", "ruǐ"]);
+    assertArrayEquals(readingsOf("埫"), ["tǎng", "shǎng"]);
+    assertArrayEquals(readingsOf("谌"), ["chén", "shèn"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -131,6 +133,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayIncludes(readingsOf("鱯"), "huò");
     assertArrayIncludes(readingsOf("癩"), "là");
     assertArrayIncludes(readingsOf("樂"), "lào");
+    assertArrayIncludes(readingsOf("諶"), "shèn");
   });
 
   it("reads a character no source reads at all", () => {
@@ -163,6 +166,18 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("姆"), ["mǔ"]);
     assertArrayEquals(readingsOf("能"), ["néng"]);
     assertArrayEquals(readingsOf("扑"), ["pū"]);
+  });
+
+  it("reads 道 as dāo only in 神神道道", () => {
+    // Given 道, whose reading dāo belongs to the one word 神神道道
+    // When 道 and the word are looked up and a sentence using both is converted
+    // Then 道 keeps its own readings and only the word reads dāo
+    assertArrayEquals(readingsOf("道"), ["dào", "dao"]);
+    assertArrayEquals(readingOf("神神道道"), ["shén", "shen", "dāo", "dāo"]);
+    assertIdentical(
+      convert(dictionary, "这个人神神道道的。他知道这条道。"),
+      "Zhège rén shénshen-dāodāo de. Tā zhīdào zhè tiáo dào.",
+    );
   });
 
   it("reads 能 as néng in every tier", async () => {
