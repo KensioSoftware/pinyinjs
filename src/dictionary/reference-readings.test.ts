@@ -72,7 +72,6 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("玟"), ["wén", "mín"]);
     assertArrayEquals(readingsOf("貉"), ["hé", "háo", "mò"]);
     assertArrayEquals(readingsOf("媆"), ["ruǎn", "nèn"]);
-    assertArrayEquals(readingsOf("伮"), ["nǔ", "nú"]);
     assertArrayEquals(readingsOf("箄"), ["bǐ", "bēi", "pái"]);
     assertArrayEquals(readingsOf("蒡"), ["bàng", "páng"]);
     assertArrayEquals(readingsOf("㾦"), ["pèi", "pēi"]);
@@ -81,6 +80,8 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("呇"), ["mèn", "qǐ"]);
     assertArrayEquals(readingsOf("跂"), ["qí", "qì", "qǐ"]);
     assertArrayEquals(readingsOf("愒"), ["kài", "hè", "qì"]);
+    assertArrayEquals(readingsOf("倩"), ["qiàn", "qìng"]);
+    assertArrayEquals(readingsOf("桵"), ["ruí", "ruǐ"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -111,6 +112,14 @@ describe("readings a reference dictionary gives", () => {
       convert(dictionary, "牛蒡很好吃。他扑过来了。"),
       "Niúbàng hěn hǎochī. Tā pū guòlái le.",
     );
+  });
+
+  it("reads 伮 and 㚢 apart", () => {
+    // Given 伮 (亻 beside 奴) and 㚢 (亻 beside 女), easily taken for each other
+    // When their readings are listed
+    // Then 伮 keeps nǔ alone and 㚢 reads nú
+    assertArrayEquals(readingsOf("伮"), ["nǔ"]);
+    assertArrayEquals(readingsOf("㚢"), ["nú"]);
   });
 
   it("gives the 繁體 form the reading its 简体 form gets", () => {

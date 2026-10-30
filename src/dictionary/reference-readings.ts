@@ -95,7 +95,6 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["玟", ["mín"]], // a stone like jade
   ["貉", ["mò"]], // the same as 貊
   ["媆", ["nèn"]], // the same as 嫩
-  ["伮", ["nú"]],
   ["𫪘", ["óu", "ǒu", "òu"]], // an interjection
   ["蒡", ["páng"]], // 蒡葧
   ["㾦", ["pēi"]],
@@ -104,6 +103,8 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["𡏋", ["pǔ"]],
   ["呇", ["qǐ"]],
   ["跂", ["qǐ"]],
+  ["倩", ["qìng"]], // to ask someone to do something, as in 倩人执笔
+  ["桵", ["ruǐ"]], // a tree named in ancient texts
   ["箵", ["xǐng"]],
 ]);
 
