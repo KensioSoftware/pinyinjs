@@ -1503,6 +1503,17 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("writes 裡 for a 里 alone and keeps 里 after a numeral", () => {
+      assertIdentical(
+        toScript(dictionary, scriptTables, "镜子里的我", { to: "zh-Hant" }),
+        "鏡子裡的我",
+      );
+      assertIdentical(
+        toScript(dictionary, scriptTables, "走了十里", { to: "zh-Hant" }),
+        "走了十里",
+      );
+    });
+
     it("keeps 乾 where the reading says it is not 干", () => {
       assertIdentical(
         toScript(dictionary, scriptTables, "乾燥", { to: "zh-Hans" }),

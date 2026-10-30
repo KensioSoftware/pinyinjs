@@ -46,6 +46,13 @@ toScript(dictionary, tables, "这不干你的事", { to: "zh-Hant" }); // "這�
 toScript(dictionary, tables, "与你无干", { to: "zh-Hant" }); // "與你無干"
 ```
 
+里 has the same problem. The unit of distance and the neighbourhood are 里 in both scripts (公里, 邻里, 里程), and the locative after a noun is 裡. Words such as 这里 and 心里 carry their own 繁體 form. A 里 the decoder leaves standing alone takes 裡. It stays 里 after a numeral or a word like 几, 多 or 半, and beside a transliteration syllable that stands alone, as in 克里斯 and 齐里:
+
+```ts
+toScript(dictionary, tables, "镜子里的我", { to: "zh-Hant" }); // "鏡子裡的我"
+toScript(dictionary, tables, "走了十里", { to: "zh-Hant" }); // "走了十里"
+```
+
 <a id="both-directions-need-it"></a>
 
 ## Traditional to simplified conversion

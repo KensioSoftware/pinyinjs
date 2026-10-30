@@ -8,7 +8,8 @@ import { READING_RULES } from "./reading-rules.js";
 import { splitRuns } from "./runs.js";
 
 import { applyRegion } from "./script-region.js";
-import { convertWord, keepConcerning, targetOf } from "./script-words.js";
+import { convertInRun } from "./script-context.js";
+import { keepWord, targetOf } from "./script-words.js";
 import type {
   ScriptChoice,
   ScriptConversion,
@@ -80,12 +81,12 @@ export function toScriptPieces(
       const chosen = applyRegion(
         isSameScript
           ? keepWord(canonical)
-          : keepConcerning(
-              convertWord(table, words, canonical, word.reading),
-              dictionary,
+          : convertInRun(
+              { dictionary, table, words },
+              canonical,
+              word.reading,
               characters,
               from,
-              word.reading,
             ),
         word.reading,
         region,
@@ -98,19 +99,6 @@ export function toScriptPieces(
   }
 
   return { text: converted, choices };
-}
-
-/**
- * Keep a word as it stands, which is what a text already in the target script
- * needs. Every character is locked, because none of them was in question.
- */
-function keepWord(word: string): readonly ScriptChoice[] {
-  return toCharacters(word).map((character) => ({
-    from: character,
-    to: character,
-    evidence: "locked" as const,
-    alternatives: [],
-  }));
 }
 
 /**
