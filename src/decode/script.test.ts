@@ -116,6 +116,53 @@ describe("script conversion", () => {
       assertIdentical(convert("公里", "zh-Hant"), "公里");
     });
 
+    it("writes 裡 for a 里 standing alone after a noun", () => {
+      // No word holds 镜子里, so the 里 is converted alone, where the
+      // character table would take 里 as it does in 公里.
+      assertIdentical(
+        convert("我笑了，镜子里的我没有笑。", "zh-Hant-TW"),
+        "我笑了，鏡子裡的我沒有笑。",
+      );
+      assertIdentical(convert("他在房间里", "zh-Hant"), "他在房間裡");
+      assertIdentical(convert("冰箱里有牛奶", "zh-Hant"), "冰箱裡有牛奶");
+      assertIdentical(convert("这几天里", "zh-Hant"), "這幾天裡");
+      assertIdentical(convert("往里走", "zh-Hant"), "往裡走");
+      assertIdentical(convert("屋子里", "zh-Hant-HK"), "屋子裏");
+    });
+
+    it("keeps 里 where it counts distance or names a neighbourhood", () => {
+      assertIdentical(convert("走了十里", "zh-Hant"), "走了十里");
+      assertIdentical(convert("五十多里", "zh-Hant"), "五十多里");
+      assertIdentical(convert("好几里", "zh-Hant"), "好幾里");
+      assertIdentical(convert("一百公里", "zh-Hant"), "一百公里");
+      assertIdentical(convert("邻里", "zh-Hant"), "鄰里");
+      assertIdentical(convert("里程", "zh-Hant"), "里程");
+      assertIdentical(convert("里长", "zh-Hant"), "里長");
+      // A run starts after a digit, so nothing says what the 里 is inside.
+      assertIdentical(convert("5里", "zh-Hant"), "5里");
+    });
+
+    it("keeps 里 in a foreign name the decode splits up", () => {
+      assertIdentical(convert("克里斯没有车", "zh-Hant"), "克里斯沒有車");
+      assertIdentical(convert("他叫杰弗里", "zh-Hant"), "他叫傑弗里");
+      assertIdentical(convert("齐里吃了桃子", "zh-Hant"), "齊里吃了桃子");
+      assertIdentical(
+        convert("齐莉和里玛喝牛奶", "zh-Hant"),
+        "齊莉和里瑪喝牛奶",
+      );
+    });
+
+    it("writes 裡 after a noun that ends in a name syllable", () => {
+      // 克 and 格 start names, but 坦克 and 表格 are words of their own.
+      assertIdentical(convert("坦克里", "zh-Hant"), "坦克裡");
+      assertIdentical(convert("表格里", "zh-Hant"), "表格裡");
+    });
+
+    it("writes 里 for both senses when converting into 简体", () => {
+      assertIdentical(convert("鏡子裡", "zh-Hans"), "镜子里");
+      assertIdentical(convert("走了十里", "zh-Hans"), "走了十里");
+    });
+
     it("does not convert a rare variant no source writes", () => {
       // Unihan knows 咊 as a variant of 和. Nobody writes it.
       assertIdentical(convert("和平", "zh-Hant"), "和平");
@@ -219,6 +266,17 @@ describe("script conversion", () => {
       assertIdentical(gan.to, "干");
       assertIdentical(gan.evidence, "reading");
       assertArrayEquals(gan.alternatives, ["乾", "幹"]);
+    });
+
+    it("credits the reading where it wrote 裡 for a 里 alone", () => {
+      const { choices } = toScriptPieces(dictionary, tables, "镜子里", {
+        to: "zh-Hant",
+      });
+      const li = choices.at(-1);
+      assertNonNullable(li);
+      assertIdentical(li.to, "裡");
+      assertIdentical(li.evidence, "reading");
+      assertArrayEquals(li.alternatives, ["里"]);
     });
 
     it("credits an attested word above the characters", () => {

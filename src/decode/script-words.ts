@@ -10,7 +10,6 @@ import type {
   ScriptEvidence,
   ScriptTarget,
 } from "./script-types.js";
-import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
 import {
   type CharacterConversion,
@@ -21,7 +20,6 @@ import {
 import { DEFAULT_REGION, type Region } from "../script/glyphs.js";
 import type { Script } from "../script/script.js";
 import type { Syllable } from "../syllable/syllable.js";
-import { CONCERNING, isConcerningAt, isGan } from "./gan-frames.js";
 
 /**
  * The script and region a target names.
@@ -89,43 +87,16 @@ export function convertWord(
 }
 
 /**
- * Keep 干 where it means "to concern".
- *
- * 干 read `gān` is 乾 when it means dry (干燥, 干货) and stays 干 when it means
- * to concern (干扰, 相干), and the syllable cannot tell the two apart. A word
- * settles most of them. A 干 standing alone at `gān` fell back on 乾, which
- * wrote 与你无干 as 與你無乾 and 干卿底事 as 乾卿底事. The frames that read
- * it `gān` in the first place are the ones that decide it here. See
- * {@link isConcerningAt}.
- *
- * `from` is where the word starts in `characters`, which are the whole run's,
- * since the frames reach past the word.
+ * Keep a word as it stands, which is what a text already in the target script
+ * needs. Every character is locked, because none of them was in question.
  */
-export function keepConcerning(
-  choices: readonly ScriptChoice[],
-  dictionary: Dictionary,
-  characters: readonly string[],
-  from: number,
-  reading: readonly Syllable[],
-): readonly ScriptChoice[] {
-  if (reading.length !== choices.length) {
-    return choices;
-  }
-  return choices.map((choice, at) =>
-    choice.from === CONCERNING &&
-    choice.to !== CONCERNING &&
-    isGan(reading[at]) &&
-    isConcerningAt(dictionary, characters, from + at)
-      ? {
-          from: choice.from,
-          to: CONCERNING,
-          evidence: "reading",
-          alternatives: [choice.to, ...choice.alternatives].filter(
-            (form) => form !== CONCERNING,
-          ),
-        }
-      : choice,
-  );
+export function keepWord(word: string): readonly ScriptChoice[] {
+  return toCharacters(word).map((character) => ({
+    from: character,
+    to: character,
+    evidence: "locked" as const,
+    alternatives: [],
+  }));
 }
 
 /**
