@@ -108,6 +108,15 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["埫", ["shǎng"]], // the same as 垧
   ["谌", ["shèn"]], // a surname
   ["諶", ["shèn"]],
+  ["𥆧", ["shùn"]],
+  ["漦", ["sī"]],
+  ["埮", ["tán"]],
+  ["宕", ["tàn"]], // 宕昌, a place name
+  ["𬍡", ["tāng"]],
+  ["媞", ["tí"]], // 媞媞, fair and lovely
+  ["捵", ["tiǎn"]],
+  ["瑹", ["tū"]], // 瑹琈, a kind of jade
+  ["妧", ["wàn"]],
   ["箵", ["xǐng"]],
 ]);
 
@@ -132,6 +141,8 @@ const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["骨碌碌", ["gū", "lū", "lū"]],
   ["骨碌碌地", ["gū", "lū", "lū", "de"]],
   ["神神道道", ["shén", "shen", "dāo", "dāo"]],
+  ["宕昌", ["tàn", "chāng"]],
+  ["瑹琈", ["tū", "fú"]],
 ]);
 
 /**
