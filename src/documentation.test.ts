@@ -345,6 +345,18 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("reads 地 after a reduplication the way the context rules page shows", () => {
+      assertIdentical(
+        convert(dictionary, "她下了水，跟着丈夫一点儿一点儿地学。"),
+        "Tā xià le shuǐ, gēnzhe zhàngfu yìdiǎnr yìdiǎnr de xué.",
+      );
+      assertIdentical(convert(dictionary, "他慢慢地学。"), "Tā mànmàn de xué.");
+      assertIdentical(
+        convert(dictionary, "这里常常地震。"),
+        "Zhèlǐ chángcháng dìzhèn.",
+      );
+    });
+
     it("reads 着, 的确实 and 东西 the way the context rules page shows", () => {
       assertIdentical(
         convert(dictionary, "他着急得睡不着。"),

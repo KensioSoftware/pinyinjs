@@ -8,6 +8,7 @@
  * corpus, and one that starts at a particle reads that particle as whatever it
  * is at the head of a phrase.
  */
+import { toCharacters } from "../script/characters.js";
 import {
   type EdgeContext,
   type EdgeRule,
@@ -86,6 +87,65 @@ const DI = new Set(["地"]);
  */
 const ADVERBIAL_TAGS = /^(?:a|z|d)/u;
 
+/** The numeral that starts a count said twice over: 一点儿一点儿, 一步一步. */
+const ONE = "一";
+
+/**
+ * The tags of a reduplicated word that says how something is done: 慢慢 and
+ * 渐渐 are `d`, 悄悄 and 匆匆 are `z`, and 断断续续 is `i`.
+ */
+const MANNER_TAGS = /^(?:d|z|i)/u;
+
+/**
+ * The reduplicated adverbs that say when or how often rather than how, and
+ * stand in front of a 地震 or a 地铁 as readily as in front of the particle.
+ */
+const TEMPORAL_REDUPLICATIONS = new Set([
+  "常常",
+  "刚刚",
+  "剛剛",
+  "每每",
+  "偏偏",
+  "仅仅",
+  "僅僅",
+  "恰恰",
+]);
+
+/**
+ * Whether the words ending at a position are a reduplication that 地 makes
+ * into an adverbial.
+ *
+ * Two shapes qualify. A count said twice, 一点儿一点儿 or 一步一步, is a
+ * manner of doing something and nothing else. A word that is itself
+ * reduplicated, 慢慢 or 渐渐, qualifies where its tag makes it an adverb of
+ * manner. Repeated characters alone are not enough: 学学 in 大学学地质 ends a
+ * 大学, and the 嚐嚐 of 嚐嚐地道的四川菜 is a verb whose object is 地道.
+ */
+function isReduplicatedBefore(context: EdgeContext, at: number): boolean {
+  const word = wordEndingAt(context, at);
+  if (word === undefined) {
+    return false;
+  }
+  const characters = toCharacters(word);
+  const length = characters.length;
+  if (
+    characters[0] === ONE &&
+    length >= 2 &&
+    context.characters.slice(at - 2 * length, at - length).join("") === word
+  ) {
+    return true;
+  }
+  const isDoubled =
+    (length === 2 || length === 4) &&
+    characters[0] === characters[1] &&
+    characters[2] === characters[3];
+  return (
+    isDoubled &&
+    MANNER_TAGS.test(tagOf(context, word)) &&
+    !TEMPORAL_REDUPLICATIONS.has(word)
+  );
+}
+
 /**
  * A word beginning with 地 does not start where the adverbial particle does.
  *
@@ -93,16 +153,31 @@ const ADVERBIAL_TAGS = /^(?:a|z|d)/u;
  * for a family's place of origin. After an adjective or an adverb 地 is the
  * particle that makes it modify a verb, and reads `de`.
  *
+ * Only an untagged key is forbidden there, since a tagged one such as 地方 can
+ * follow an adjective as a noun: 这么大地方. After a reduplication any key is
+ * forbidden, since the 地 after 一点儿一点儿 or 慢慢 is always the particle.
+ * 跟着丈夫一点儿一点儿地学 and 他慢慢地学 came out `dì xué` on the noun 地学.
+ *
  * Over the 88,612 sentences of Tatoeba and the 43,367 Chinese Boost 例句 it
  * changes 2 runs in the full tier, both corrections: 惆怅地望着 and 悠哉地坐.
+ * The reduplication changes 1 more of the 17,825 distinct runs holding a 地 in
+ * Tatoeba, zh.wikipedia and the 47,848 例句 there are now, also a correction:
+ * 斷斷續續地下了.
  */
 export const ADVERBIAL_DI: EdgeRule = {
   name: "adverbial-di",
   verdictFor: (context: EdgeContext) => {
+    const { characters, edge } = context;
+    if (edge.to - edge.from < 2 || !DI.has(characters[edge.from] ?? "")) {
+      return "keep";
+    }
+    if (isReduplicatedBefore(context, edge.from)) {
+      return "forbid";
+    }
     if (!isUntaggedFrom(context, DI)) {
       return "keep";
     }
-    const before = wordEndingAt(context, context.edge.from);
+    const before = wordEndingAt(context, edge.from);
     return ADVERBIAL_TAGS.test(tagOf(context, before)) ? "forbid" : "keep";
   },
 };
