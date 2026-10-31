@@ -364,6 +364,14 @@ convert(dictionary, "她惆怅地望着窗外。"); // "Tā chóuchàng de wàng
 
 The full tier holds keys such as 得直 (`dé zhí`), 着花 (`zháo huā`), 了债 (`liǎo zhài`) and 地望 (`dì wàng`). Each reads the particle as it reads at the head of a phrase. After a verb or an adjective, 得 is the complement particle and 着 and 了 are aspect particles. The rules forbid those keys there. 地 is forbidden after an adjective or an adverb only, since 地 after a verb is usually the ground (发射到地球轨道). Tagged words such as 得到, 着急 and 了解 are retained. 过 is left out, because 怕过马路 needs its `guò`.
 
+After a reduplication, 地 is the particle whatever word follows it, tagged or not. 跟着丈夫一点儿一点儿地学 and 他慢慢地学 read `de xué`. Before the rule they read the noun 地学 (`dìxué`, geoscience). The reduplication is a count said twice (一点儿一点儿, 一步一步) or a reduplicated adverb of manner (慢慢, 渐渐, 断断续续). Adverbs of time and frequency such as 常常 and 刚刚 are left out. 这里常常地震 keeps its earthquake.
+
+```ts
+convert(dictionary, "她下了水，跟着丈夫一点儿一点儿地学。"); // "Tā xià le shuǐ, gēnzhe zhàngfu yìdiǎnr yìdiǎnr de xué."
+convert(dictionary, "他慢慢地学。"); // "Tā mànmàn de xué."
+convert(dictionary, "这里常常地震。"); // "Zhèlǐ chángcháng dìzhèn."
+```
+
 jieba counted 算得 and tagged it a verb read `suàn dé`, "to count as". Before an adverb, a degree word, an adjective or 跟 and 比, the rule takes the word apart and reads the 得 as the particle. 这算得什么 keeps the word.
 
 Over the 88,612 Tatoeba sentences and the 43,367 Chinese Boost example sentences, the four rules changed 17 runs in the full tier. 16 are corrections, and in the other one only 工夫 moved to its neutral tone. The core and standard tiers are unchanged.

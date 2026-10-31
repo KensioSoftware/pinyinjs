@@ -25,9 +25,13 @@ function readingOf(
   without?: EdgeRule,
 ): string {
   const rules = READING_RULES.filter((rule) => rule !== without);
-  const syllables = decodeRun(dictionary, run, rules).flatMap((word) =>
-    word.reading.map((syllable) => writeSyllable(syllable)),
-  );
+  // A syllable per character, so that the 儿 of 一点儿, folded into the
+  // syllable before it, still counts as a position.
+  const syllables = decodeRun(dictionary, run, rules).flatMap((word) => {
+    const written = word.reading.map((syllable) => writeSyllable(syllable));
+    const folded = toCharacters(word.text).length - written.length;
+    return [...written, ...Array.from({ length: folded }, () => "")];
+  });
   const at = toCharacters(run).findIndex((character) =>
     characters.includes(character),
   );
@@ -102,6 +106,39 @@ describe("地 after an adjective or an adverb", () => {
     assertArrayEquals(
       [readingOf("她惆怅地望着窗外", "地", ADVERBIAL_DI)],
       ["dì"],
+    );
+  });
+
+  it("reads the particle after a reduplication, tagged key or not", () => {
+    // Given 一点儿一点儿地学, 慢慢地学 and 斷斷續續地下, where 地学 and 地下
+    // are tagged words
+    const runs = [
+      "跟着丈夫一点儿一点儿地学",
+      "他慢慢地学",
+      "雨斷斷續續地下了一整天",
+    ];
+    // When each is decoded
+    // Then the 地 is de
+    assertArrayEquals(
+      runs.map((run) => readingOf(run, "地")),
+      ["de", "de", "de"],
+    );
+    // And without the rule 地学 took it
+    assertArrayEquals(
+      [readingOf("跟着丈夫一点儿一点儿地学", "地", ADVERBIAL_DI)],
+      ["dì"],
+    );
+  });
+
+  it("keeps the ground after repeated characters that are no adverb", () => {
+    // Given a frequency adverb before 地震, a verb before 地道 and a 学学 that
+    // ends 大学
+    const runs = ["这里常常地震", "想嚐嚐地道的四川菜", "我哥哥在大学学地质"];
+    // When each is decoded
+    // Then the 地 keeps dì
+    assertArrayEquals(
+      runs.map((run) => readingOf(run, "地")),
+      ["dì", "dì", "dì"],
     );
   });
 
