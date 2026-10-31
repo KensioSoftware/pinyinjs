@@ -61,9 +61,9 @@ Load a dictionary once and reuse it. Dictionaries are immutable and safe to shar
 
 | Tier       | Entries | Download (brotli) | Contains               |
 | ---------- | ------: | ----------------: | ---------------------- |
-| `core`     |  16,972 |             70 KB | single characters only |
-| `standard` |  66,972 |            377 KB | the most common words  |
-| `full`     | 461,564 |          2,378 KB | every word             |
+| `core`     |  16,974 |             70 KB | single characters only |
+| `standard` |  66,974 |            377 KB | the most common words  |
+| `full`     | 461,566 |          2,378 KB | every word             |
 
 `full` is the default tier and provides the most complete word coverage. In a browser, you can start with `standard` and replace it with `full` after the larger tier loads. Each tier includes the entries in the smaller tiers. See [dictionaries](../dictionaries/) for loading and memory usage.
 
