@@ -84,6 +84,15 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("桵"), ["ruí", "ruǐ"]);
     assertArrayEquals(readingsOf("埫"), ["tǎng", "shǎng"]);
     assertArrayEquals(readingsOf("谌"), ["chén", "shèn"]);
+    assertArrayEquals(readingsOf("𥆧"), ["rún", "shùn"]);
+    assertArrayEquals(readingsOf("漦"), ["chí", "sī"]);
+    assertArrayEquals(readingsOf("埮"), ["tàn", "tán"]);
+    assertArrayEquals(readingsOf("宕"), ["dàng", "tàn"]);
+    assertArrayEquals(readingsOf("𬍡"), ["dàng", "tāng"]);
+    assertArrayEquals(readingsOf("媞"), ["shì", "tí"]);
+    assertArrayEquals(readingsOf("捵"), ["chēn", "tiǎn"]);
+    assertArrayEquals(readingsOf("瑹"), ["shū", "tū"]);
+    assertArrayEquals(readingsOf("妧"), ["yuán", "wàn"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -223,6 +232,8 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingOf("道碴"), ["dào", "zhǎ"]);
     assertArrayEquals(readingOf("不子"), ["dǔn", "zi"]);
     assertArrayEquals(readingOf("岗口儿甜"), ["gàng", "kǒur", "tián"]);
+    assertArrayEquals(readingOf("宕昌"), ["tàn", "chāng"]);
+    assertArrayEquals(readingOf("媞媞"), ["tí", "tí"]);
   });
 
   it("adds a word no source has", () => {
@@ -231,6 +242,17 @@ describe("readings a reference dictionary gives", () => {
     // Then each has the printed reading
     assertArrayEquals(readingOf("粢饭"), ["cī", "fàn"]);
     assertArrayEquals(readingOf("螲𬠅"), ["dié", "dāng"]);
+    assertArrayEquals(readingOf("瑹琈"), ["tū", "fú"]);
+  });
+
+  it("reads 宕 as tàn only in the place name 宕昌", () => {
+    // Given 宕, whose reading tàn belongs to the place name 宕昌
+    // When a sentence using the place name and 宕 alone is converted
+    // Then the place name reads tàn and 延宕 keeps dàng
+    assertIdentical(
+      convert(dictionary, "他去过宕昌。事情一再延宕。"),
+      "Tā qùguo tànchāng. Shìqing yízài yándàng.",
+    );
   });
 });
 
