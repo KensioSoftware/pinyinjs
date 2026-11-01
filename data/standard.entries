@@ -9375,7 +9375,6 @@ nei4 ying4		n
 		ns	p
 		ns
 		ns
-		ns
 		n
 		n
 		n
@@ -10080,7 +10079,6 @@ xing1 cheng2		ns	p
 xing4 tou5		v
 xing1 fen4		v
 xing1 fen4 ji4		n
-xing1 xue2		n
 xing1 an1		ns	p
 xing1 shan1		ns	p
 xing1 shan1 xian4		ns	p2
@@ -10107,9 +10105,6 @@ bing1		n
 	bing1 bu4 xie3 ren4	i
 		i
 		n
-bing1 lai2 jiang4 dang3		i
-		n
-		n
 		n
 		n
 		n
@@ -10135,7 +10130,6 @@ bing1 lai2 jiang4 dang3		i
 bing1 bai4 ru2 shan1 dao3		i
 		n
 		n
-bing1 lai2 jiang4 dang3		i
 		n
 		n
 		n
@@ -10346,7 +10340,6 @@ nei4 ying4		n
 		ns	p
 		ns
 		ns
-		ns
 		n
 		n
 		n
@@ -10517,7 +10510,6 @@ jun1 shi4 ji1 di4		n
 		n
 		n
 		n
-		n
 		vn
 		n
 		n
@@ -10644,7 +10636,6 @@ nong2		zg
 		n
 		nr
 nong2 she4		n
-		n
 		n
 nong2 hang2		j
 		n
@@ -20009,6 +20000,7 @@ guo2		n
 		n
 		j
 		n
+guo2 xing1		nr	p
 		s
 		s
 		n
@@ -20330,6 +20322,7 @@ guo2 jia1 fa1 zhan3 ji4 hua4 wei3 yuan2 hui4		nt	p2.4.6
 		n
 		j
 		n
+guo2 xing1		nr	p
 		j
 		n
 		n
@@ -25652,6 +25645,7 @@ zir3		nr
 		n
 		n
 		n
+		nr	p
 		n
 		n
 		n
@@ -28339,6 +28333,7 @@ xiao3 ben3 sheng1 yi5		n
 		n
 		n
 		n
+		nr	p
 		nr
 		n
 		n
@@ -37702,6 +37697,8 @@ la1 gan3		n
 		v
 		nz	p1
 la1 du4 zi5		n
+		nr	p
+		nr	p
 		ns	p
 		ns	p
 		nrt
@@ -41398,6 +41395,7 @@ xiao4				xue2
 xiao4
 wen2		n
 		n
+		nr	p
 		n
 		n
 		n
@@ -41481,6 +41479,7 @@ wen2		n
 		nr
 		n
 		n
+		nr	p
 		n
 		n
 		n
@@ -72252,7 +72251,6 @@ xing1 guo2 xian4		ns	p2
 xing1 cheng2		ns	p
 xing1 fen4		v
 xing1 fen4 ji4		n
-xing1 xue2		n
 xing1 an1		ns	p
 xing1 shan1		ns	p
 xing1 shan1 xian4		ns	p2
@@ -72722,6 +72720,7 @@ ai4 ha3 mai4 de2		nrt
 		nr
 		n
 		n
+		nr	p
 		nr	p1
 nai3		x
 tiao2
@@ -82631,7 +82630,6 @@ jun1 shi4 ji1 di4		n
 		n
 		n
 		n
-		n
 		vn
 		n
 		n
@@ -83693,7 +83691,6 @@ nong2
 		n
 		nr
 nong2 she4		n
-		n
 		n
 		n
 nong2 hang2		j

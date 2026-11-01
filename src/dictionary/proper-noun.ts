@@ -101,6 +101,8 @@ export interface NameLookup {
   readonly frequencyOf: (character: string) => number;
   /** Whether CC-CEDICT capitalises a sense of the word. */
   readonly isCapitalised: (word: string) => boolean;
+  /** Whether the word is a given name the sources lack. */
+  readonly isGivenName: (word: string) => boolean;
 }
 
 /**
@@ -109,11 +111,13 @@ export interface NameLookup {
 export function nameLookupOf(
   jieba: ReadonlyMap<string, JiebaEntry>,
   cedictByWord: ReadonlyMap<string, readonly CedictEntry[]>,
+  givenNames: ReadonlyMap<string, readonly string[]> = new Map(),
 ): NameLookup {
   return {
     frequencyOf: (character) => jieba.get(character)?.frequency ?? 0,
     isCapitalised: (word) =>
       (cedictByWord.get(word) ?? []).some((entry) => entry.isProperNoun),
+    isGivenName: (word) => givenNames.has(word),
   };
 }
 
@@ -131,7 +135,9 @@ export function nameLookupOf(
  * single character has to pass ({@link leadsNames}). 韦, 令 and 洪 pass, and
  * 小, 老, 黑 and 换 do not. A place that is a known name plus a generic, such
  * as 肯塔基州 or 长野县, keeps the flag on the name it opens with. The few
- * names that pass neither test are listed in {@link KEPT_NAMES}.
+ * names that pass neither test are listed in {@link KEPT_NAMES}, and a given
+ * name the sources lack altogether in
+ * {@link import("./given-names.js").GIVEN_NAMES}.
  */
 function isUnlistedName(
   word: string,
@@ -142,6 +148,7 @@ function isUnlistedName(
   const head = characters[0] ?? "";
   return (
     KEPT_NAMES.has(word) ||
+    lookup.isGivenName(word) ||
     leadsNames(nameMass, head, lookup.frequencyOf(head)) ||
     characters
       .slice(2)

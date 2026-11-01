@@ -382,6 +382,17 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("takes 文书 apart after a language name, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "有很多中文书。"),
+        "Yǒu hěn duō Zhōngwén shū.",
+      );
+      assertIdentical(
+        convert(dictionary, "他写了法律文书。"),
+        "Tā xiěle fǎlǜ wénshū.",
+      );
+    });
+
     it("keeps a function word its usual reading inside a pair nobody counted", () => {
       assertIdentical(
         convert(dictionary, "气球胀得太大，会破的"),
@@ -843,6 +854,17 @@ describe("the examples in docs/", () => {
   });
 
   describe("options", () => {
+    it("spaces after a closing mark and capitalises quoted speech", () => {
+      assertIdentical(
+        convert(dictionary, "“我会回来，”汤姆说。"),
+        "“Wǒ huì huílai,” Tāngmǔ shuō.",
+      );
+      assertIdentical(
+        convert(dictionary, "拉胡尔说：“你好。”"),
+        "Lāhú'ěr shuō: “Nǐ hǎo.”",
+      );
+    });
+
     it("writes Latin punctuation by default and keeps it when asked", () => {
       assertIdentical(convert(dictionary, "北京。"), "Běijīng.");
       assertIdentical(
@@ -964,6 +986,18 @@ describe("the examples in docs/", () => {
       );
       assertIdentical(convert(dictionary, "梁山伯"), "Liángshānbó");
       assertIdentical(convert(dictionary, "肯塔基州"), "Kěntǎjī Zhōu");
+    });
+
+    it("reads a listed given name as one name, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "文东今天来了。"),
+        "Wéndōng jīntiān láile.",
+      );
+      assertIdentical(
+        convert(dictionary, "小美的妈妈生病了。"),
+        "Xiǎoměi de māma shēngbìng le.",
+      );
+      assertIdentical(convert(dictionary, "拉胡尔来了。"), "Lāhú'ěr láile.");
     });
 
     it("skips a capitalised bound form, as the page shows", () => {
@@ -2112,7 +2146,7 @@ describe("the examples in docs/", () => {
     it("counts keys rather than entries", () => {
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(dictionary.size, 723_160);
+      assertIdentical(dictionary.size, 723_168);
     });
 
     it("returns undefined for a word it does not have", () => {
@@ -2157,7 +2191,7 @@ describe("the examples in docs/", () => {
       );
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(standard.size, 98_003);
+      assertIdentical(standard.size, 98_000);
       assertIdentical(convert(standard, "银行"), "yínháng");
       assertIdentical(convert(standard, "我要去北京。"), "Wǒ yào qù Běijīng.");
     });

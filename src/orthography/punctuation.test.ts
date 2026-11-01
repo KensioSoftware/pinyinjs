@@ -23,6 +23,27 @@ describe("rewriting punctuation in the Latin script", () => {
     assertIdentical(toLatinPunctuation("hǎo。"), "hǎo.");
   });
 
+  it("gives a mark no space before a closing quotation mark or bracket", () => {
+    // Given a full stop inside a quotation, and a comma inside a bracket
+    // When the punctuation is rewritten
+    // Then the closing mark follows straight on
+    assertIdentical(toLatinPunctuation("“nǐ hǎo。”"), "“nǐ hǎo.”");
+    assertIdentical(toLatinPunctuation("「nǐ hǎo！」"), "「nǐ hǎo!」");
+    assertIdentical(toLatinPunctuation("（hǎo，hǎo）"), "（hǎo, hǎo）");
+  });
+
+  it("spaces what follows from the closing mark instead", () => {
+    // Given a comma inside a quotation, with the sentence going on after it
+    // When the punctuation is rewritten
+    // Then the space the comma carried comes after the closing mark
+    assertIdentical(
+      toLatinPunctuation("“wǒ huì huílai，”Tāngmǔ shuō。"),
+      "“wǒ huì huílai,” Tāngmǔ shuō.",
+    );
+    assertIdentical(toLatinPunctuation("（hǎo。）Zhè"), "（hǎo.） Zhè");
+    assertIdentical(toLatinPunctuation("（“hǎo。”）Zhè"), "（“hǎo.”） Zhè");
+  });
+
   it("does not double a space that is already there", () => {
     assertIdentical(toLatinPunctuation("hǎo。 Xià"), "hǎo. Xià");
   });
@@ -32,6 +53,7 @@ describe("rewriting punctuation in the Latin script", () => {
     // with a bracket, and the quotation styles do not correspond one to one.
     assertIdentical(toLatinPunctuation("《Běijīng》"), "《Běijīng》");
     assertIdentical(toLatinPunctuation("“hǎo”"), "“hǎo”");
+    assertIdentical(toLatinPunctuation("”hǎo"), "”hǎo");
   });
 
   it("leaves text with nothing to rewrite exactly as it was", () => {
@@ -55,6 +77,15 @@ describe("rewriting punctuation across separate parts", () => {
       "hǎo",
       ", ",
       "shìjiè",
+    ]);
+  });
+
+  it("moves the space past a closing mark in the next part", () => {
+    assertArrayEquals(toLatinPunctuationParts(["hǎo", "，", "”", "tā"]), [
+      "hǎo",
+      ",",
+      "” ",
+      "tā",
     ]);
   });
 

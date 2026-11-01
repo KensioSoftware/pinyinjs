@@ -75,6 +75,34 @@ describe("capitalisation", () => {
       assertIdentical(capitaliseSentences('  "hǎo."'), '  "Hǎo."');
     });
 
+    it("capitalises speech a colon introduces", () => {
+      // Given quoted speech after a colon, in either script's marks
+      // When the sentences are capitalised
+      // Then the first word inside the quotation takes a capital
+      assertIdentical(
+        capitaliseSentences("tā shuō：“nǐ hǎo。”"),
+        "Tā shuō：“Nǐ hǎo。”",
+      );
+      assertIdentical(
+        capitaliseSentences("tā shuō: “nǐ hǎo.”"),
+        "Tā shuō: “Nǐ hǎo.”",
+      );
+      assertIdentical(
+        capitaliseSentences("tā shuō：「nǐ hǎo。」"),
+        "Tā shuō：「Nǐ hǎo。」",
+      );
+    });
+
+    it("leaves a word quoted inside a sentence in small letters", () => {
+      // Given a quotation no colon introduces
+      // When the sentences are capitalised
+      // Then the word inside it keeps its small letter
+      assertIdentical(
+        capitaliseSentences("tā shuō “hǎo” zì."),
+        "Tā shuō “hǎo” zì.",
+      );
+    });
+
     it("leaves a word already capitalised as it is", () => {
       assertIdentical(capitaliseSentences("Běijīng."), "Běijīng.");
     });

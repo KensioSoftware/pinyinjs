@@ -22,6 +22,7 @@ import { RESULTATIVE_ZHAO } from "./zhao-rule.js";
 import { VERBAL_DE_QUESHI } from "./dique-rule.js";
 import { COMPASS_DONGXI } from "./dongxi-rule.js";
 import { VERBAL_CHANGYONG } from "./changyong-rule.js";
+import { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 
 export { MODAL_DE, NOUN_HUA, PARTICLE_DE, POTENTIAL_DE } from "./de-rule.js";
 export { CALCULATING_SUAN, COMPLEMENT_DE } from "./complement-rule.js";
@@ -47,6 +48,7 @@ export { RESULTATIVE_ZHAO } from "./zhao-rule.js";
 export { VERBAL_DE_QUESHI } from "./dique-rule.js";
 export { COMPASS_DONGXI } from "./dongxi-rule.js";
 export { VERBAL_CHANGYONG } from "./changyong-rule.js";
+export { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 import type { EdgeRule } from "./rules.js";
 import { ATTESTED_ERHUA } from "./erhua-rule.js";
 
@@ -108,4 +110,5 @@ export const READING_RULES: readonly EdgeRule[] = [
   VERBAL_DE_QUESHI,
   COMPASS_DONGXI,
   VERBAL_CHANGYONG,
+  LANGUAGE_WENSHU,
 ];

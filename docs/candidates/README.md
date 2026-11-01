@@ -33,8 +33,8 @@ Build cost and retained memory depend on the dictionary tier:
 | tier       |    keys | readings |  build | heap on top of the dictionary |
 | ---------- | ------: | -------: | -----: | ----------------------------: |
 | `core`     |  16,981 |      408 |   4 ms |                       0.04 MB |
-| `standard` |  98,003 |   39,167 |  62 ms |                       0.37 MB |
-| `full`     | 723,160 |  201,378 | 510 ms |                       2.03 MB |
+| `standard` |  98,000 |   39,167 |  62 ms |                       0.37 MB |
+| `full`     | 723,168 |  201,378 | 510 ms |                       2.03 MB |
 
 These measurements are from a machine about 2.5 times as fast as a mid-range laptop. Building `full` can take around a second on a mid-range phone. Entry counts change when the dictionary is rebuilt.
 
@@ -171,7 +171,7 @@ homophonesOf(index, "银行", { script: { prefer: "Hans", tables } }); // []
 
 ## Canonical character forms
 
-`Dictionary.lookup` normalises regional traditional forms before searching. For example, 裏面 resolves to 裡面 and 中峯 to 中峰. In the measured `full` tier, 281 of 723,160 keys resolve to another spelling.
+`Dictionary.lookup` normalises regional traditional forms before searching. For example, 裏面 resolves to 裡面 and 中峯 to 中峰. In the measured `full` tier, 281 of 723,168 keys resolve to another spelling.
 
 Returning those raw keys could associate a word with the wrong reading. For example, 校覈 derives `xiào hé` from individual characters, while its canonical entry 校核 reads `jiào hé`.
 

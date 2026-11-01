@@ -168,6 +168,16 @@ convert(dictionary, "肯塔基州"); // "Kěntǎjī Zhōu"
 
 This removed the flag from 6,284 keys. About one in eight is a real name. Some start with a character that also opens ordinary words (琵琶湖, 祝英台, 何仙姑), and some are an administrative place whose own name has no entry (闸北区, 胶南市). The names found in the Chinese Boost 例句 and Tatoeba (长岛, 静安寺, 琵琶湖 and a few more) are listed in `src/dictionary/kept-names.ts` and keep the flag.
 
+A given name that no source lists decodes a character at a time. 文东 came out `Wén Dōng`, with 东 flagged as a place, and 小美的 lost its 美 to 美的, the company Midea, and read the 的 `dí`. The given names found in the Chinese Boost graded reading are listed in `src/dictionary/given-names.ts`, which enters each as a person's name, one word with one capital:
+
+```ts
+convert(dictionary, "文东今天来了。"); // "Wéndōng jīntiān láile."
+convert(dictionary, "小美的妈妈生病了。"); // "Xiǎoměi de māma shēngbìng le."
+convert(dictionary, "拉胡尔来了。"); // "Lāhú'ěr láile."
+```
+
+Each is entered at a count of 100, within the range jieba counts the given names it does list. That is enough to keep 小美 whole against 美的 and to leave 美国兴起 as 美国 兴起. 新雨 and 爱雪 are names in the same series and are not listed, since 一场新雨 (_a fresh rain_) and 我爱雪 (_I love snow_) took them.
+
 `Lǐ Huá` is produced from two individually flagged characters because 李华 has no dictionary entry. The result follows dictionary tags, without recognising the full text as a person's name.
 
 Names whose characters lack the flag may remain lowercase. This affects 42 of the first hundred surnames in 百家姓:
@@ -263,7 +273,17 @@ convert(dictionary, "北京。"); // "Běijīng."
 convert(dictionary, "北京。", { punctuation: "keep" }); // "Běijīng。"
 ```
 
-Brackets and quotation marks are left alone under either setting.
+Brackets and quotation marks are left alone under either setting. A mark inside a closing quotation mark or bracket stays against it, and its space moves past the closing mark:
+
+```ts
+convert(dictionary, "“我会回来，”汤姆说。"); // "“Wǒ huì huílai,” Tāngmǔ shuō."
+```
+
+Speech that a colon introduces starts with a capital, as a sentence does. A word quoted inside a sentence keeps its small letter:
+
+```ts
+convert(dictionary, "拉胡尔说：“你好。”"); // "Lāhú'ěr shuō: “Nǐ hǎo.”"
+```
 
 ## 儿 and 儿化
 

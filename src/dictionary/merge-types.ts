@@ -34,6 +34,12 @@ export interface MergeSources {
    * Absent, the merge reads only what the sources give.
    */
   readonly reference?: ReferenceReadings;
+  /**
+   * Given names the sources lack, with their readings. See
+   * {@link import("./given-names.js").GIVEN_NAMES}. Absent, a name is only
+   * what the sources make one.
+   */
+  readonly givenNames?: ReadonlyMap<string, readonly string[]>;
 }
 
 /**

@@ -33,6 +33,26 @@ const LATIN_PUNCTUATION = new Map<string, string>([
 const SPACE_AFTER = new Set([".", ",", ";", ":", "?", "!"]);
 
 /**
+ * Marks that close something, which take the space of a mark just inside them.
+ *
+ * 你好。” ends with the full stop inside the quotation, so `nǐ hǎo.”` keeps
+ * the two together, and whatever follows is spaced from the closing mark
+ * instead: “我会回来，”汤姆说 is `“Wǒ huì huílai,” Tāngmǔ shuō`.
+ */
+const CLOSING = new Set([
+  "”",
+  "’",
+  "」",
+  "』",
+  "）",
+  ")",
+  "》",
+  "〉",
+  "】",
+  "]",
+]);
+
+/**
  * Rewrite Chinese punctuation in the Latin script.
  *
  * Spacing changes with the script and not only the character: full-width marks
@@ -58,16 +78,40 @@ export function toLatinPunctuationParts(
 }
 
 /**
+ * Whether a space belongs after the character at a position, given what
+ * follows it.
+ */
+function isSpacedBefore(next: string | undefined): boolean {
+  return next !== undefined && next !== " " && !CLOSING.has(next);
+}
+
+/**
+ * Whether the closing marks ending at a position close straight after a
+ * full-width mark that takes a space.
+ */
+function closesSpacedMark(characters: readonly string[], at: number): boolean {
+  let before = at - 1;
+  while (CLOSING.has(characters[before] ?? "")) {
+    before--;
+  }
+  const latin = LATIN_PUNCTUATION.get(characters[before] ?? "");
+  return latin !== undefined && SPACE_AFTER.has(latin);
+}
+
+/**
  * Rewrite each Chinese mark in the Latin script, character by character.
  */
 const latinCharacters: RewriteCharacters = (characters) =>
   characters.map((character, at) => {
+    const next = characters[at + 1];
+    if (CLOSING.has(character)) {
+      return closesSpacedMark(characters, at) && isSpacedBefore(next)
+        ? `${character} `
+        : character;
+    }
     const latin = LATIN_PUNCTUATION.get(character);
     if (latin === undefined) {
       return character;
     }
-    const next = characters[at + 1];
-    return SPACE_AFTER.has(latin) && next !== undefined && next !== " "
-      ? `${latin} `
-      : latin;
+    return SPACE_AFTER.has(latin) && isSpacedBefore(next) ? `${latin} ` : latin;
   });
