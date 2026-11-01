@@ -104,6 +104,10 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("烜"), ["xuǎn", "xuān"]);
     assertArrayEquals(readingsOf("伭"), ["xián", "xuán"]);
     assertArrayEquals(readingsOf("咉"), ["yāng", "yǎng"]);
+    assertArrayEquals(readingsOf("徼"), ["jiǎo", "jiào", "yāo"]);
+    assertArrayEquals(readingsOf("欹"), ["qī", "yī"]);
+    assertArrayEquals(readingsOf("儗"), ["nǐ", "yì"]);
+    assertArrayEquals(readingsOf("圝"), ["luán", "yóu"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -245,6 +249,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingOf("岗口儿甜"), ["gàng", "kǒur", "tián"]);
     assertArrayEquals(readingOf("宕昌"), ["tàn", "chāng"]);
     assertArrayEquals(readingOf("媞媞"), ["tí", "tí"]);
+    assertArrayEquals(readingOf("佁儗"), ["chì", "yì"]);
   });
 
   it("adds a word no source has", () => {
@@ -257,6 +262,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingOf("䩺靴"), ["wēng", "xuē"]);
     assertArrayEquals(readingOf("蒠菜"), ["xī", "cài"]);
     assertArrayEquals(readingOf("咉咽"), ["yǎng", "yè"]);
+    assertArrayEquals(readingOf("圝子"), ["yóu", "zi"]);
   });
 
   it("reads 宕 as tàn only in the place name 宕昌", () => {

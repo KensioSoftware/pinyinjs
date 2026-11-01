@@ -2146,7 +2146,7 @@ describe("the examples in docs/", () => {
     it("counts keys rather than entries", () => {
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(dictionary.size, 723_168);
+      assertIdentical(dictionary.size, 723_169);
     });
 
     it("returns undefined for a word it does not have", () => {
