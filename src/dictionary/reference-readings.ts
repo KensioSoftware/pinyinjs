@@ -118,10 +118,16 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["瑹", ["tū"]], // 瑹琈, a kind of jade
   ["妧", ["wàn"]],
   ["蜼", ["wěi"]], // a long-tailed monkey, in literary use
-  ["𰽷", ["wèi"]], // an old kind of 鼎
+  ["𬭬", ["wèi"]], // an old kind of 鼎
   ["鐬", ["wèi"]],
   ["玹", ["xián"]], // a surname
+  ["恔", ["xiào"]], // pleased, content
+  ["狌", ["xīng"]], // a variant of 猩
   ["箵", ["xǐng"]],
+  ["淢", ["xù"]], // flowing water
+  ["烜", ["xuān"]],
+  ["伭", ["xuán"]], // a surname
+  ["咉", ["yǎng"]], // 咉咽, water held back
 ]);
 
 /**
@@ -149,6 +155,7 @@ const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["瑹琈", ["tū", "fú"]],
   ["䩺靴", ["wēng", "xuē"]],
   ["蒠菜", ["xī", "cài"]],
+  ["咉咽", ["yǎng", "yè"]],
 ]);
 
 /**
