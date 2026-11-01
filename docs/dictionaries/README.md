@@ -38,9 +38,9 @@ Serve the package's `data/` directory at that URL. The server can apply Brotli c
 
 | Tier       | Entries | Download (brotli) | Contains               |
 | ---------- | ------: | ----------------: | ---------------------- |
-| `core`     |  16,974 |             70 KB | single characters only |
-| `standard` |  66,974 |            377 KB | the most common words  |
-| `full`     | 461,572 |          2,378 KB | every word             |
+| `core`     |  16,975 |             70 KB | single characters only |
+| `standard` |  66,975 |            377 KB | the most common words  |
+| `full`     | 461,573 |          2,378 KB | every word             |
 
 `full` is the default tier and provides the most complete word coverage. It is a suitable default for servers and applications that need uncommon names or vocabulary.
 
@@ -68,7 +68,7 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 
 Use `core` when download size is the main constraint and character-level readings are sufficient.
 
-The table counts dictionary entries. `dictionary.size` counts searchable keys, including separate traditional spellings. The key counts are 16,981 for `core`, 98,000 for `standard` and 723,169 for `full`.
+The table counts dictionary entries. `dictionary.size` counts searchable keys, including separate traditional spellings. The key counts are 16,982 for `core`, 98,001 for `standard` and 723,170 for `full`.
 
 ## Querying directly
 
@@ -85,7 +85,7 @@ dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
 dictionary.frequencyOf("头发"); // 9, how common it is, 0 rarest to 15
-dictionary.size; // 723169, keys in the full tier, not entries
+dictionary.size; // 723170, keys in the full tier, not entries
 ```
 
 Both simplified and traditional spellings are searchable keys. Traditional words are looked up directly. See [scripts and locales](../scripts-and-locales/) for script handling and regional readings.
@@ -191,7 +191,7 @@ Word entries are decoded on first access. Loading the dictionary does not decode
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,169
+keys       723,170
 syllables  415 attested, 424 spellings in the inventory
 ```
 

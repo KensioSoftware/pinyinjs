@@ -1,36 +1,36 @@
 {
   "tiers": {
     "core": {
-      "entries": 16974,
+      "entries": 16975,
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 221113,
-      "compressedBytes": 71820
+      "bytes": 221148,
+      "compressedBytes": 71953
     },
     "standard": {
-      "entries": 66974,
+      "entries": 66975,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1418993,
-      "compressedBytes": 391206
+      "bytes": 1419029,
+      "compressedBytes": 391042
     },
     "full": {
-      "entries": 461572,
+      "entries": 461573,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9380605,
-      "compressedBytes": 2450132
+      "bytes": 9380664,
+      "compressedBytes": 2450257
     }
   },
   "counts": {
     "file": "full.counts",
     "tier": "full",
-    "keys": 723169,
-    "bytes": 766864,
-    "compressedBytes": 250373
+    "keys": 723170,
+    "bytes": 766865,
+    "compressedBytes": 250517
   },
   "script": {
     "file": "script.map",

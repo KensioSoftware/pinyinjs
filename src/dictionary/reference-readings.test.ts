@@ -108,6 +108,9 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("欹"), ["qī", "yī"]);
     assertArrayEquals(readingsOf("儗"), ["nǐ", "yì"]);
     assertArrayEquals(readingsOf("圝"), ["luán", "yóu"]);
+    assertArrayEquals(readingsOf("䈅"), ["yù", "yuè"]);
+    assertArrayEquals(readingsOf("鲗"), ["zéi", "zé"]);
+    assertArrayEquals(readingsOf("䇲"), ["cè", "jiā", "zhé"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
@@ -250,6 +253,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingOf("宕昌"), ["tàn", "chāng"]);
     assertArrayEquals(readingOf("媞媞"), ["tí", "tí"]);
     assertArrayEquals(readingOf("佁儗"), ["chì", "yì"]);
+    assertArrayEquals(readingOf("着哩"), ["zhe", "li"]);
   });
 
   it("adds a word no source has", () => {
@@ -263,6 +267,7 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingOf("蒠菜"), ["xī", "cài"]);
     assertArrayEquals(readingOf("咉咽"), ["yǎng", "yè"]);
     assertArrayEquals(readingOf("圝子"), ["yóu", "zi"]);
+    assertArrayEquals(readingOf("䇲子"), ["zhé", "zi"]);
   });
 
   it("reads 宕 as tàn only in the place name 宕昌", () => {
