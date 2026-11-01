@@ -813,7 +813,18 @@ The adjective is kept after a verb (掌握常用词汇), a degree word such as �
 
 Over 189,517 distinct Han runs from Tatoeba and the Chinese Boost example sentences, the full tier read 常用 as the adjective in 27 runs. The rule splits 14 of them, all corrections, and the standard tier changes the same 14. Of the 13 it leaves joined, 12 are the adjective. The other is 文学作品中常用夜来香来象征思念与柔情, held back by 中常. 我常用词典查生词 is also left joined, since 词 follows. The core tier has no 常用 to split.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI` and `VERBAL_CHANGYONG`. `applyEdgeRules` applies a list to the candidate graph.
+### 文书 after a language name
+
+文书 is a word, _a document_, and 中文书 (_a book in Chinese_) is not. 中 on its own is common enough that 中 + 文书 cost less than 中文 + 书. The sentence read as a middle document, and 中文 lost the capital a language name takes. The rule takes 文书 apart where its 文 closes a listed language name ending in 文, such as 中文, 日文 or 外文:
+
+```ts
+convert(dictionary, "有很多中文书。"); // "Yǒu hěn duō Zhōngwén shū."
+convert(dictionary, "他写了法律文书。"); // "Tā xiěle fǎlǜ wénshū."
+```
+
+Over the 88,612 distinct Chinese sentences in Tatoeba, 12 contain 文书 or 文書. The rule changes five, all 中文书 or 中文書 and all corrections. 日文 stays lower case after the split, since jieba tags it as an ordinary noun.
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG` and `LANGUAGE_WENSHU`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

@@ -13,24 +13,24 @@
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1419050,
-      "compressedBytes": 391167
+      "bytes": 1418970,
+      "compressedBytes": 391282
     },
     "full": {
-      "entries": 461566,
+      "entries": 461571,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9380417,
-      "compressedBytes": 2450386
+      "bytes": 9380565,
+      "compressedBytes": 2450590
     }
   },
   "counts": {
     "file": "full.counts",
     "tier": "full",
-    "keys": 723160,
-    "bytes": 766855,
-    "compressedBytes": 250437
+    "keys": 723168,
+    "bytes": 766863,
+    "compressedBytes": 250492
   },
   "script": {
     "file": "script.map",

@@ -257,7 +257,7 @@ pronunciation alone cannot choose between them. See
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,160
+keys       723,168
 syllables  415 attested, 424 spellings in the inventory
 ```
 

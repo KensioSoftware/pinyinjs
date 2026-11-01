@@ -17,6 +17,16 @@ export type CapitalStyle = "auto" | "proper" | "none";
 const SENTENCE_ENDINGS = new Set([".", "!", "?", "。", "！", "？"]);
 
 /**
+ * Marks a colon introduces quoted speech with: 他说：“你好。”
+ */
+const COLONS = new Set([":", "："]);
+
+/**
+ * Quotation marks that open a quotation, in either script.
+ */
+const OPENING_QUOTES = new Set(["“", "‘", "「", "『"]);
+
+/**
  * A digit either side of a full stop, which is what makes it a decimal point.
  */
 const DIGIT = /\d/u;
@@ -74,6 +84,11 @@ export function capitaliseWord(text: string): string {
  * Anything that is not a letter — an opening bracket, a quotation mark, a space
  * — is passed over rather than ending the search, so a sentence inside brackets
  * still capitalises.
+ *
+ * Speech a colon introduces is a sentence of its own, so 拉胡尔说：“你好。” is
+ * `Lāhú'ěr shuō: “Nǐ hǎo.”`. Only a colon before the opening mark starts one.
+ * A word quoted in the middle of a sentence, as in 他说“好”字, keeps the
+ * small letter it would have had without the marks.
  */
 export function capitaliseSentences(text: string): string {
   /* c8 ignore next -- rewriteParts returns one part for each it was given */
@@ -97,14 +112,22 @@ export function capitaliseSentenceParts(
  */
 const capitaliseCharacters: RewriteCharacters = (characters) => {
   let isPending = true;
+  let previous = "";
 
   return characters.map((character, at) => {
     if (isPending && character.toLowerCase() !== character.toUpperCase()) {
       isPending = false;
+      previous = character;
       return character.toUpperCase();
     }
-    if (isEnding(character, characters, at)) {
+    if (
+      isEnding(character, characters, at) ||
+      (OPENING_QUOTES.has(character) && COLONS.has(previous))
+    ) {
       isPending = true;
+    }
+    if (character.trim() !== "") {
+      previous = character;
     }
     return character;
   });

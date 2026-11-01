@@ -14,6 +14,7 @@ import {
 import { repairConstituentReadings } from "./constituent-repair.js";
 import { settleMeasureTones } from "./measure-tone.js";
 import { mergeWords, wordList } from "./merge-walk.js";
+import { withGivenNames } from "./given-names.js";
 import { countNameMass } from "./name-mass.js";
 import { nameLookupOf } from "./proper-noun.js";
 import { carryToTraditional } from "./traditional-carry.js";
@@ -50,18 +51,24 @@ export function mergeSources(sources: MergeSources): MergeResult {
     ranked.defaults,
     sources.reference?.characters ?? new Map(),
   );
+  // ── Given names the sources lack, entered as names ─────────
+  // Into the phrase corpus for their readings and into jieba for a count and
+  // the person tag, which is all a name the sources hold has either.
+  const givenNames = sources.givenNames ?? new Map<string, readonly string[]>();
   const phrase = new Map([
     ...sources.phrase,
     ...(sources.reference?.words ?? []),
+    ...givenNames,
   ]);
+  const jieba = withGivenNames(sources.jieba, givenNames);
 
   const wordSources: WordSources = {
     cedictByWord,
     cedictByHant,
     phrase,
-    jieba: sources.jieba,
+    jieba,
     nameMass: countNameMass(sources.jieba),
-    names: nameLookupOf(sources.jieba, cedictByWord),
+    names: nameLookupOf(sources.jieba, cedictByWord, givenNames),
     unihanReadings: sources.unihanReadings,
     traditional,
     defaults,
