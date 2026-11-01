@@ -5,32 +5,32 @@
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 221090,
-      "compressedBytes": 71787
+      "bytes": 221113,
+      "compressedBytes": 71820
     },
     "standard": {
       "entries": 66974,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1418970,
-      "compressedBytes": 391282
+      "bytes": 1418993,
+      "compressedBytes": 391206
     },
     "full": {
-      "entries": 461571,
+      "entries": 461572,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9380565,
-      "compressedBytes": 2450590
+      "bytes": 9380605,
+      "compressedBytes": 2450132
     }
   },
   "counts": {
     "file": "full.counts",
     "tier": "full",
-    "keys": 723168,
-    "bytes": 766863,
-    "compressedBytes": 250492
+    "keys": 723169,
+    "bytes": 766864,
+    "compressedBytes": 250373
   },
   "script": {
     "file": "script.map",

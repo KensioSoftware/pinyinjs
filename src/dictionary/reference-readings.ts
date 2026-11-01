@@ -128,6 +128,10 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["烜", ["xuān"]],
   ["伭", ["xuán"]], // a surname
   ["咉", ["yǎng"]], // 咉咽, water held back
+  ["徼", ["yāo"]], // a variant of 邀, in literary use
+  ["欹", ["yī"]], // a variant of 猗, in literary use
+  ["儗", ["yì"]], // 佁儗
+  ["圝", ["yóu"]], // 圝子, a decoy bird
 ]);
 
 /**
@@ -140,6 +144,7 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
  * icicle, and as a word it would take every given name 凌泽 apart.
  */
 const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
+  ["佁儗", ["chì", "yì"]],
   ["粢饭", ["cī", "fàn"]],
   ["道碴", ["dào", "zhǎ"]],
   ["螲𬠅", ["dié", "dāng"]],
@@ -156,6 +161,7 @@ const WORD_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["䩺靴", ["wēng", "xuē"]],
   ["蒠菜", ["xī", "cài"]],
   ["咉咽", ["yǎng", "yè"]],
+  ["圝子", ["yóu", "zi"]],
 ]);
 
 /**
