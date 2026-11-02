@@ -136,6 +136,9 @@ const CHARACTER_READINGS: ReadonlyMap<string, readonly string[]> = new Map([
   ["鲗", ["zé"]], // 鲗鱼涌, a place name in Hong Kong
   ["鰂", ["zé"]],
   ["䇲", ["zhé"]], // 䇲子, a coarse bamboo mat
+  ["茋", ["zhǐ"]], // a plant name
+  ["棁", ["zhuō"]], // the short post on a roof beam
+  ["梲", ["zhuō"]],
 ]);
 
 /**

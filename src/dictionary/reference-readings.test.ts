@@ -111,6 +111,9 @@ describe("readings a reference dictionary gives", () => {
     assertArrayEquals(readingsOf("䈅"), ["yù", "yuè"]);
     assertArrayEquals(readingsOf("鲗"), ["zéi", "zé"]);
     assertArrayEquals(readingsOf("䇲"), ["cè", "jiā", "zhé"]);
+    assertArrayEquals(readingsOf("茋"), ["dǐ", "zhǐ"]);
+    assertArrayEquals(readingsOf("棁"), ["zhuó", "zhuō"]);
+    assertArrayEquals(readingsOf("梲"), ["zhuó", "zhuō"]);
   });
 
   it("keeps a common character's everyday reading in words and sentences", () => {
