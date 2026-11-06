@@ -15,10 +15,7 @@ import { readDictionaryReading } from "./reading.js";
  * Strip the tone marks from a reading, for comparing two spellings.
  */
 function tonelessReading(reading: string): string {
-  return reading
-    .normalize("NFD")
-    .replaceAll(/[̀́̄̌]/gu, "")
-    .normalize("NFC");
+  return reading.normalize("NFD").replaceAll(/[̀́̄̌]/gu, "").normalize("NFC");
 }
 
 /**
