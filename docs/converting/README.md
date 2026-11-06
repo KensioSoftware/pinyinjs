@@ -571,6 +571,24 @@ The full tier holds 无干 and 干卿底事 as words, and the standard tier hold
 
 The same frames keep 干 as 干 in [script conversion](../script-conversion/).
 
+<a id="gan-as-dry"></a>
+
+### 干 as "dry"
+
+The rule selects `gān` when a 干 standing alone means dry:
+
+```ts
+convert(dictionary, "西北的冬天又干又冷"); // "xīběi de dōngtiān yòu gān yòu lěng"
+convert(dictionary, "衣服还没干"); // "yīfu hái méi gān"
+convert(dictionary, "他又干了一天"); // "tā yòu gànle yì tiān"
+```
+
+Words such as 干燥, 干净 and 晒干 already carry the dry reading. A 干 the decode leaves standing alone took the stored `gàn`, so 又干又冷 read `yòu gàn yòu lěng`. The rule matches five frames as characters. They are 又干又冷 (or 又冷又干), a degree word in front (很干, 太干了, 有点干), a drying verb in front with or without 不 or 得 (拧干, 晾不干, 烧干), a measure word in front and a noun after (一条干毛巾), and a wet thing as the subject with only adverbs between (衣服还没干, 河都干了, 皮肤容易干). That last 干 must end its clause or take a particle or a complement, which keeps 衣服干完了吗 out. The degree words leave out 这么, 那么 and 真, because 你那么干 and 我真干了 are the verb, and the wet things leave out 天, the seasons, 地 and 口, because 今天干什么, 冬天干什么, 认真地干 and 一口干完 end in them.
+
+A tagged word starting at the 干 keeps its own reading, so 很干练 stays `hěn gànliàn` and 一条干渠 stays `yì tiáo gànqú`. In 88,866 corpus lines and both CPP splits, the rule changed 7 readings in the full tier, 11 in the standard tier and 27 in the core tier. All are corrections except one in the core tier, 一条干渠, where that tier has no word 干渠.
+
+A 干 read `gān` here is written 乾 in [script conversion](../script-conversion/).
+
 <a id="zhi-as-a-measure-word"></a>
 
 ### 只 as a measure word
@@ -824,7 +842,7 @@ convert(dictionary, "他写了法律文书。"); // "Tā xiěle fǎlǜ wénshū.
 
 Over the 88,612 distinct Chinese sentences in Tatoeba, 12 contain 文书 or 文書. The rule changes five, all 中文书 or 中文書 and all corrections. 日文 stays lower case after the split, since jieba tags it as an ordinary noun.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG` and `LANGUAGE_WENSHU`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG` and `LANGUAGE_WENSHU`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 
