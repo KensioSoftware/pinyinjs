@@ -39,11 +39,12 @@ For example, 发 can become 發 or 髮. The readings of 头发 (`tóufà`) and �
 
 This can resolve a character even when the script-conversion tables do not contain the complete phrase.
 
-The `gān` reading alone does not separate 乾 (dry) from 干 (to concern). A word usually settles it, as in 干燥 and 干扰. A 干 standing alone takes 干 in the frames the [干 reading rule](../converting/#gan-as-to-concern) matches, and 乾 elsewhere:
+The `gān` reading alone does not separate 乾 (dry) from 干 (to concern). A word usually settles it, as in 干燥 and 干扰. A 干 standing alone takes 干 in the frames the [干 reading rule](../converting/#gan-as-to-concern) matches, and 乾 elsewhere, including the frames the [dry 干 rule](../converting/#gan-as-dry) reads `gān`:
 
 ```ts
 toScript(dictionary, tables, "这不干你的事", { to: "zh-Hant" }); // "這不干你的事"
 toScript(dictionary, tables, "与你无干", { to: "zh-Hant" }); // "與你無干"
+toScript(dictionary, tables, "西北的冬天又干又冷", { to: "zh-Hant" }); // "西北的冬天又乾又冷"
 ```
 
 里 has the same problem. The unit of distance and the neighbourhood are 里 in both scripts (公里, 邻里, 里程), and the locative after a noun is 裡. Words such as 这里 and 心里 carry their own 繁體 form. A 里 the decoder leaves standing alone takes 裡. It stays 里 after a numeral or a word like 几, 多 or 半, and beside a transliteration syllable that stands alone, as in 克里斯 and 齐里:

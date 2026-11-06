@@ -12,6 +12,7 @@ import { DOMINANT_READING } from "./dominant-rule.js";
 import { SEPARATED_COMPOUND } from "./split-rule.js";
 import { RETURNING_HUAN } from "./huan-rule.js";
 import { CONCERNING_GAN } from "./gan-rule.js";
+import { DRY_GAN } from "./dry-gan-rule.js";
 import { COUNTING_ZHI } from "./zhi-rule.js";
 import { POTENTIAL_LIAO } from "./liao-rule.js";
 import { OBTAINING_DE } from "./obtain-rule.js";
@@ -38,6 +39,7 @@ export { DOMINANT_READING } from "./dominant-rule.js";
 export { SEPARATED_COMPOUND } from "./split-rule.js";
 export { RETURNING_HUAN } from "./huan-rule.js";
 export { CONCERNING_GAN } from "./gan-rule.js";
+export { DRY_GAN } from "./dry-gan-rule.js";
 export { COUNTING_ZHI } from "./zhi-rule.js";
 export { POTENTIAL_LIAO } from "./liao-rule.js";
 export { OBTAINING_DE } from "./obtain-rule.js";
@@ -97,6 +99,7 @@ export const READING_RULES: readonly EdgeRule[] = [
   LOCATIVE_SHANG_PU,
   SPREADING_PU,
   CONCERNING_GAN,
+  DRY_GAN,
   COUNTING_ZHI,
   POTENTIAL_LIAO,
   RESULTATIVE_ZHAO,
