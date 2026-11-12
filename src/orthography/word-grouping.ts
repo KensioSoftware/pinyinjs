@@ -6,7 +6,7 @@
  * sit apart from the aspect and suffix rules.
  */
 import type { DecodedWord } from "../decode/word.js";
-export { ADDRESS_PREFIX } from "./address-grouping.js";
+export { ADDRESS_PREFIX, COUNTED_UNIT } from "./address-grouping.js";
 import { characterCount, toCharacters } from "../script/characters.js";
 import { divideAt, type GroupingRule } from "./rule.js";
 import { LONGEST_SPACED_WORD, SPACED_WORD_FORMS } from "./word-list.js";

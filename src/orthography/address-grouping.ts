@@ -3,7 +3,8 @@
  *
  * 老王 is one word and 老 王 is two, and only the prefix says which.
  */
-import { characterCount } from "../script/characters.js";
+import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
+import { characterCount, toCharacters } from "../script/characters.js";
 import type { GroupingRule } from "./rule.js";
 
 /**
@@ -56,3 +57,38 @@ export const ADDRESS_PREFIX: GroupingRule = {
  * A person and an organisation. Places are `PLACE_GENERICS`' business, and `nz`
  * is left out — both are measured out in `docs/orthography/`.
  */
+
+/**
+ * The money units the dictionary marks as surnames.
+ *
+ * 毛 is the surname Máo as well as a tenth of a yuan, and the dictionary flags
+ * the character standing alone as a proper noun. 五毛, 十毛 and 两块五毛 are
+ * money and take no capital.
+ */
+export const COUNTED_UNITS = new Set(["毛"]);
+
+/**
+ * 五毛 is `wǔ máo`: a unit counted by the number before it is no surname.
+ *
+ * The mirror of {@link ADDRESS_PREFIX}, taking the capital away where that one
+ * adds it. The word before has to be written in numerals only, so 毛泽东 and
+ * 姓毛 keep theirs.
+ */
+export const COUNTED_UNIT: GroupingRule = {
+  name: "counted-unit",
+  apply: (words) =>
+    words.map((word, at) => {
+      const before = words[at - 1];
+      if (
+        !COUNTED_UNITS.has(word.text) ||
+        !word.isProperNoun ||
+        before === undefined ||
+        !toCharacters(before.text).every((character) =>
+          QUANTITY_CHARACTERS.has(character),
+        )
+      ) {
+        return word;
+      }
+      return { ...word, isProperNoun: false };
+    }),
+};

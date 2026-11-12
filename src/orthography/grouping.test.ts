@@ -17,6 +17,7 @@ import { writeSyllable } from "../syllable/syllable.js";
 import {
   ADDRESS_PREFIX,
   applyGrouping,
+  COUNTED_UNIT,
   ASPECT_PARTICLES,
   NAME_PARTS,
   PLACE_GENERICS,
@@ -99,6 +100,35 @@ describe("word grouping", () => {
       assertArrayEquals(
         grouped([word("去", "qù", "v"), word("过", "guo", "ug")]),
         ["去过"],
+      );
+    });
+
+    it("attaches a 著 read zhe, whatever jieba tags it", () => {
+      // Given the 繁體 著, which jieba tags as the noun 著 zhù
+      // When the words are grouped
+      // Then it joins its verb as 着 does
+      assertArrayEquals(
+        grouped([word("看", "kàn", "v"), word("著", "zhe", "n")]),
+        ["看著"],
+      );
+      // And a 著 read zhù stays apart
+      assertArrayEquals(
+        grouped([word("看", "kàn", "v"), word("著", "zhù", "n")]),
+        ["看", "著"],
+      );
+    });
+
+    it("attaches 着 to a verb jieba tags zg, and 了 not", () => {
+      // Given 穿, which jieba gives the catch-all tag zg
+      // When the words are grouped
+      // Then 着 joins it and 了 after 很 does not
+      assertArrayEquals(
+        grouped([word("穿", "chuān", "zg"), word("着", "zhe", "uz")]),
+        ["穿着"],
+      );
+      assertArrayEquals(
+        grouped([word("很", "hěn", "zg"), word("了", "le", "ul")]),
+        ["很", "了"],
       );
     });
 
@@ -448,5 +478,33 @@ describe("the 称呼语 in front of a surname", () => {
       false,
       true,
     ]);
+  });
+});
+
+/** Whether each word is a proper noun once the counted-unit rule has run. */
+function unitCapitals(words: readonly DecodedWord[]): readonly boolean[] {
+  return COUNTED_UNIT.apply(words, dictionary).map((one) => one.isProperNoun);
+}
+
+describe("a unit counted by a number", () => {
+  it("takes the surname's capital off 毛 after a number", () => {
+    // Given 五毛, where the dictionary flags 毛 as the surname
+    // When the rule runs
+    // Then 毛 is no proper noun
+    assertArrayEquals(
+      unitCapitals([word("五", "wǔ", "m"), word("毛", "máo", "nr", true)]),
+      [false, false],
+    );
+  });
+
+  it("leaves 毛 its capital after anything but a number", () => {
+    // Given 姓毛 and a 毛 opening the run
+    // When the rule runs
+    // Then 毛 keeps its capital
+    assertArrayEquals(
+      unitCapitals([word("姓", "xìng", "v"), word("毛", "máo", "nr", true)]),
+      [false, true],
+    );
+    assertArrayEquals(unitCapitals([word("毛", "máo", "nr", true)]), [true]);
   });
 });

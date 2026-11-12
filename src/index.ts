@@ -223,6 +223,9 @@ export {
   TAXI_DI,
   VERBAL_CHANGYONG,
   LANGUAGE_WENSHU,
+  DURATIVE_ZHE,
+  PRICED_UNIT,
+  COMPOSED_PHRASE,
   VERBAL_DE_QUESHI,
   TEACHING_JIAO,
   VERBAL_READING,
@@ -364,6 +367,7 @@ export type { CapitalStyle } from "./orthography/capitals.js";
 export {
   applyGrouping,
   ASPECT_PARTICLES,
+  COUNTED_UNIT,
   GROUPING_RULES,
   NAME_PARTS,
   PLACE_GENERICS,
