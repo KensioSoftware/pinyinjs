@@ -68,7 +68,7 @@ The reading rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`,
 `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`,
 `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`,
 `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`,
-`POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG` and `LANGUAGE_WENSHU`.
+`POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG`, `LANGUAGE_WENSHU`, `DURATIVE_ZHE`, `PRICED_UNIT` and `COMPOSED_PHRASE`.
 `decodeRun` and `decodeRunScored` accept a custom rule list, including `[]` to
 disable rules. Rule helpers include `applyEdgeRules`, `wordEndingAt`,
 `wordsEndingAt`, `wordStartingAt`, `wordsStartingAt` and `tagOf`, with the types
@@ -274,6 +274,7 @@ See [orthography](../orthography/).
 | `applyGrouping`                                                                                          | 分词连写 over decoded words      |
 | `GROUPING_RULES`, `ASPECT_PARTICLES`, `SUFFIXES`, `PLACE_GENERICS`                                       | the rules                        |
 | `ADDRESS_PREFIX`                                                                                         | 老王 is `Lǎo Wáng`               |
+| `COUNTED_UNIT`                                                                                           | 五毛 is `wǔ máo`                 |
 | `NAME_PARTS`                                                                                             | 齐白石 is `Qí Báishí`            |
 | `AABB_REDUPLICATION`, `ABAB_REDUPLICATION`                                                               | the 重叠 hyphens                 |
 | `IDIOM_HYPHENS`, `HYPHENATED_IDIOMS`, `HYPHENATED_IDIOM_FORMS`                                           | the 成语 hyphen and its list     |

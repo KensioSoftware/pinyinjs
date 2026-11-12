@@ -28,6 +28,9 @@ convert(dictionary, "南京市", { grouping: false }); // "Nánjīngshì"
 The implemented rules cover:
 
 - the aspect particles 了, 着 and 过 attaching to a verb or adjective
+- 着 also attaching to a verb jieba gives its catch-all tag `zg` (穿着 is
+  `chuānzhe`), and the 繁體 著 attaching wherever it reads `zhe` (jieba tags it
+  as the noun 著 `zhù`)
 - a `k`-tagged suffix attaching to its stem
 - the generic half of an administrative place name, where the word is tagged
   `ns` **and** the part before the generic is itself a dictionary entry
@@ -248,6 +251,13 @@ convert(dictionary, "那是小李的书。"); // "Nà shì Xiǎo Lǐ de shū."
 ```
 
 The prefixes 老 and 小 are written separately and capitalised when they precede a single-character word marked as a proper noun.
+
+The dictionary also marks 毛 standing alone as a proper noun, the surname Máo. After a word written in numerals it is a tenth of a yuan and takes no capital:
+
+```ts
+convert(dictionary, "一斤四元五毛"); // "yì jīn sì yuán wǔ máo"
+convert(dictionary, "他姓毛"); // "tā xìng Máo"
+```
 
 大 is excluded because it often acts as an ordinary adjective. In 88,866 corpus lines, the 老 and 小 rule matched 38 forms of address across 12 distinct pairs, including 小王, 小李 and 老王.
 

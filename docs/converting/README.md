@@ -457,7 +457,7 @@ The rule selects neutral-tone 过 after a verb when it marks a past experience:
 ```ts
 convert(dictionary, "他去过法国。"); // "Tā qùguo Fǎguó."
 convert(dictionary, "我吃过饭了。"); // "Wǒ chīguo fàn le."
-convert(dictionary, "他经过我家"); // "tā jīngguò wǒjiā", the word
+convert(dictionary, "他经过我家"); // "tā jīngguò wǒ jiā", the word
 ```
 
 The default reading is `guò`. A verbal word ending immediately before 过 supports its use as an aspect marker, as in 去过, 见过 and 听说过. jieba tags 没 as a verb, and the rule makes an exception for it. In 考试没过 (failed the exam) 过 is the verb `guò`.
@@ -842,7 +842,50 @@ convert(dictionary, "他写了法律文书。"); // "Tā xiěle fǎlǜ wénshū.
 
 Over the 88,612 distinct Chinese sentences in Tatoeba, 12 contain 文书 or 文書. The rule changes five, all 中文书 or 中文書 and all corrections. 日文 stays lower case after the split, since jieba tags it as an ordinary noun.
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG` and `LANGUAGE_WENSHU`. `applyEdgeRules` applies a list to the candidate graph.
+<a id="durative-zhe"></a>
+
+### A verb and its durative 着
+
+jieba counts 看着, 想着 and 穿着 as words. Each is the verb with the durative 着 after it, the same shape as 吃着 and 拿着, which the decode already cut in two. The rule takes the pair apart where 着 reads neutral `zhe` and jieba tags the pair as a verb:
+
+```ts
+convert(dictionary, "它看着我。"); // "Tā kànzhe wǒ."
+convert(dictionary, "她穿着红衣服"); // "tā chuānzhe hóng yīfu"
+```
+
+Pairs read `zháo` or `zhuó` (睡着, 点着, 沉着) are kept, and so are the prepositions jieba tags `p` (随着, 沿着). Five verbs keep the pair because CC-CEDICT gives it a sense of its own (挨着 _near_, 有着, 活着 _alive_, 跟着 _immediately afterwards_ and 背着 _behind someone's back_). 穿着 is kept where it is the noun _attire_, after 的 or 以 or before a locative 上 (她的穿着很时髦). Where a tagged word starts at the 着 (着手 in 看着手机), or an untagged one ends at the verb (注意地看 in 注意地看著他), the rule leaves the decode as it was. The written pinyin is unchanged, since 分词连写 attaches the particle to its verb.
+
+<a id="priced-unit"></a>
+
+### A price and its unit
+
+jieba counts 一元, 三元, 五元, 七元 and 八元 as words, and 十元 and 六元 not, so a price came out as one word or two depending on the number. The rule cuts every number from 元. A lone 二 is kept, since 二元 is _binary_ and money says 两元 (四十二元 is cut). 毛 and 角 are cut from their number only where money is around them, which is 钱 after, 块 or 元 before (两块五毛), or a verb of paying or costing before (只要五毛, 花了三角). 三角, 八角 and 三毛 otherwise stay whole. 毛钱 and 角钱 after a number become the unit and 钱.
+
+只要 before a number counting something is 只 _only_ and 要 _costs_ or _wants_:
+
+```ts
+convert(dictionary, "晚上可能只要五元。"); // "Wǎnshang kěnéng zhǐ yào wǔ yuán."
+convert(dictionary, "只要你愿意"); // "zhǐyào nǐ yuànyì"
+```
+
+The number has to have a measure word or a unit of money after it (只要五元, 只要两分钟, 我只要一份). 只要一下雨就 is the conjunction, and 下雨 after the 一 keeps it whole.
+
+<a id="composed-phrase"></a>
+
+### 好多了, 太好了 and a pronoun's 家
+
+Three more words jieba counts are read as their characters.
+
+```ts
+convert(dictionary, "妈妈好多了。"); // "Māma hǎo duō le."
+convert(dictionary, "我家很大。"); // "Wǒ jiā hěn dà."
+```
+
+好多 before the 了 of a change is _much better_, 好 and 多. After 了 or 过 it is the amount a verb took (他吃了好多了), and before 了解 the 了 is no particle, and both keep 好多. 太好了 is always 太, 好 and 了. 我家, 他家, 你家, 她家, 它家, 您家 and 俺家 are the pronoun and 家. 咱家 is kept, since CC-CEDICT also gives it as _I_. A pronoun keeps its 家 where an abbreviation starts at the 家 (家小 in 我家小的).
+
+The corpus for all three rules is 219,704 distinct Han runs from Tatoeba, a zh.wikipedia sample, the CPP dev and test splits, and the Chinese Boost example sentences. The full tier changes 617 runs (323 for 着, 267 for 好多了, 太好了 and 家, 27 for prices and 只要). The standard tier changes 607, and the core tier holds none of the words. Three runs change a reading. Two are corrections, 他家种了十亩玉米 and 他家种了五公顷的玉米, where 种 becomes `zhòng` once 他家 is gone. In the third, 濕衣服貼著你的皮膚, 衣服 becomes `yīfú`. Over the 142,253 distinct lines, the written pinyin changes in 880, and 876 of those change only in spacing or capitals. The one left is 七千五百四十二元, written `sì shí'èr yuán` where it was `sìshí èryuán` (四十二个 was already `sì shí'èrgè`).
+
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG`, `LANGUAGE_WENSHU`, `DURATIVE_ZHE`, `PRICED_UNIT` and `COMPOSED_PHRASE`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

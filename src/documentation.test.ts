@@ -393,6 +393,35 @@ describe("the examples in docs/", () => {
       );
     });
 
+    it("writes 毛 after a number without the surname's capital, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "一斤四元五毛"),
+        "yì jīn sì yuán wǔ máo",
+      );
+      assertIdentical(convert(dictionary, "他姓毛"), "tā xìng Máo");
+    });
+
+    it("cuts a verb from its durative 着, as the page shows", () => {
+      assertIdentical(convert(dictionary, "它看着我。"), "Tā kànzhe wǒ.");
+      assertIdentical(
+        convert(dictionary, "她穿着红衣服"),
+        "tā chuānzhe hóng yīfu",
+      );
+    });
+
+    it("cuts a price from its unit and 只要 before it, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "晚上可能只要五元。"),
+        "Wǎnshang kěnéng zhǐ yào wǔ yuán.",
+      );
+      assertIdentical(convert(dictionary, "只要你愿意"), "zhǐyào nǐ yuànyì");
+    });
+
+    it("reads 好多了 and a pronoun's 家 as their characters, as the page shows", () => {
+      assertIdentical(convert(dictionary, "妈妈好多了。"), "Māma hǎo duō le.");
+      assertIdentical(convert(dictionary, "我家很大。"), "Wǒ jiā hěn dà.");
+    });
+
     it("keeps a function word its usual reading inside a pair nobody counted", () => {
       assertIdentical(
         convert(dictionary, "气球胀得太大，会破的"),
@@ -444,7 +473,7 @@ describe("the examples in docs/", () => {
     it("reads 过 toneless where it marks aspect and guò where it does not", () => {
       assertIdentical(convert(dictionary, "他去过法国。"), "Tā qùguo Fǎguó.");
       assertIdentical(convert(dictionary, "我吃过饭了。"), "Wǒ chīguo fàn le.");
-      assertIdentical(convert(dictionary, "他经过我家"), "tā jīngguò wǒjiā");
+      assertIdentical(convert(dictionary, "他经过我家"), "tā jīngguò wǒ jiā");
     });
 
     it("reads a reduplicated verb the way the page shows", () => {
@@ -525,7 +554,7 @@ describe("the examples in docs/", () => {
       );
       assertIdentical(
         convert(dictionary, "去那只要五分钟"),
-        "qù nà zhǐyào wǔ fēnzhōng",
+        "qù nà zhǐ yào wǔ fēnzhōng",
       );
     });
 
