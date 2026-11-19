@@ -383,6 +383,39 @@ describe("冲 where it is strong", () => {
     assertArrayEquals(readVerb("太冲了"), ["tài", "chòng", "le"]);
   });
 
+  it("reads chòng in 冲着 with someone after it", () => {
+    // Given 冲着 with the person it is aimed at after it
+    // When the run is decoded
+    // Then 冲 is the preposition, chòng
+    assertArrayEquals(readVerb("他冲着我来"), [
+      "tā",
+      "chòng",
+      "zhe",
+      "wǒ",
+      "lái",
+    ]);
+    // And without the rule it was rushing
+    assertArrayEquals(readVerb("他冲着我来", []), [
+      "tā",
+      "chōng",
+      "zhe",
+      "wǒ",
+      "lái",
+    ]);
+  });
+
+  it("leaves 冲着 rushing where it closes the clause or follows a direction", () => {
+    assertArrayEquals(readVerb("他冲着"), ["tā", "chōng", "zhe"]);
+    assertArrayEquals(readVerb("他冲着了"), ["tā", "chōng", "zhe", "le"]);
+    assertArrayEquals(readVerb("往上冲着来"), [
+      "wǎng",
+      "shàng",
+      "chōng",
+      "zhe",
+      "lái",
+    ]);
+  });
+
   it("leaves 冲 alone where it rushes", () => {
     assertArrayEquals(readVerb("很冲动"), ["hěn", "chōngdòng"]);
     assertArrayEquals(readVerb("冲来"), ["chōng", "lái"]);

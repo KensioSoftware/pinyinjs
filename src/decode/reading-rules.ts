@@ -22,6 +22,8 @@ import { LOCATIVE_SHANG_PU, SPREADING_PU } from "./pu-rule.js";
 import { RESULTATIVE_ZHAO } from "./zhao-rule.js";
 import { VERBAL_DE_QUESHI } from "./dique-rule.js";
 import { COMPASS_DONGXI } from "./dongxi-rule.js";
+import { TRADE_HANG } from "./hang-rule.js";
+import { HOUSEHOLD_RENJIA } from "./renjia-rule.js";
 import { VERBAL_CHANGYONG } from "./changyong-rule.js";
 import { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 import { DURATIVE_ZHE } from "./zhe-rule.js";
@@ -52,6 +54,8 @@ export { LOCATIVE_SHANG_PU, SPREADING_PU } from "./pu-rule.js";
 export { RESULTATIVE_ZHAO } from "./zhao-rule.js";
 export { VERBAL_DE_QUESHI } from "./dique-rule.js";
 export { COMPASS_DONGXI } from "./dongxi-rule.js";
+export { TRADE_HANG } from "./hang-rule.js";
+export { HOUSEHOLD_RENJIA } from "./renjia-rule.js";
 export { VERBAL_CHANGYONG } from "./changyong-rule.js";
 export { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 export { DURATIVE_ZHE } from "./zhe-rule.js";
@@ -118,6 +122,8 @@ export const READING_RULES: readonly EdgeRule[] = [
   MODAL_CAI,
   VERBAL_DE_QUESHI,
   COMPASS_DONGXI,
+  TRADE_HANG,
+  HOUSEHOLD_RENJIA,
   VERBAL_CHANGYONG,
   LANGUAGE_WENSHU,
   DURATIVE_ZHE,

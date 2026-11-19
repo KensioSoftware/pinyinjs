@@ -82,6 +82,7 @@ const SOUND: readonly DictionaryEntry[] = [
   entry("出息", "chū xi"),
   entry("管子", "guǎn zi"),
   entry("支吾", "zhī wu"),
+  entry("人家", "rén jia"),
   entry("西", "xī"),
   entry("子", "zǐ"),
   entry("夫", "fū"),
