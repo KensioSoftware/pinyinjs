@@ -631,21 +631,22 @@ convert(dictionary, "把桩钉进地里"); // "bǎ zhuāng dìng jìn dìlǐ"
 convert(dictionary, "树上结满了果实"); // "shù shàng jiē mǎnle guǒshí"
 convert(dictionary, "我们照了一张相"); // "wǒmen zhào le yì zhāng xiàng"
 convert(dictionary, "味道很冲"); // "wèidao hěn chòng"
+convert(dictionary, "他冲着我笑"); // "tā chòngzhe wǒ xiào"
 ```
 
 Each character is stored with the reading its compounds take most often (量 `liàng` from 数量 and 质量, 系 `xì` from 关系). A compound carries its own reading, so the default decides only the character standing alone, and in running text that is often the verb.
 
-| Character | Verb    | Selected where                                                                              | Left alone       |
-| --------- | ------- | ------------------------------------------------------------------------------------------- | ---------------- |
-| 量        | `liáng` | 了, 着, 一下 or 一次 follows, or a measurement (体温, 宽度), or 请 or 正在 comes before     | 词汇量, 信息量   |
-| 数        | `shǔ`   | 到, 了, 过 or 一下 follows, or 开始, 会 or 能 comes before                                  | 数十人, 数小时   |
-| 调        | `tiáo`  | a direction follows (调低, 调高, 调亮, 调快), or 过音 or 杯                                 | 调往广州         |
-| 系        | `jì`    | a complement (系好, 系紧, 系在) or what is tied (系领带, 系安全带) follows                  | 历史系           |
-| 转        | `zhuàn` | the clause goes round something (绕着, 围着) or 在 comes before, or 起来, 得 or laps follow | 天气转凉, 转火车 |
-| 钉        | `dìng`  | a complement (钉进, 钉在) or 十字架 follows, or 被 comes before                             | 一根钉           |
-| 结        | `jiē`   | the object within five words is fruit (果实, 桃)                                            | 结了婚, 结冰     |
-| 相        | `xiàng` | 照 comes before with only aspect, a count or 的 between                                     | 互相             |
-| 冲        | `chòng` | a degree adverb comes before and the clause ends                                            | 冲过来           |
+| Character | Verb    | Selected where                                                                                | Left alone       |
+| --------- | ------- | --------------------------------------------------------------------------------------------- | ---------------- |
+| 量        | `liáng` | 了, 着, 一下 or 一次 follows, or a measurement (体温, 宽度), or 请 or 正在 comes before       | 词汇量, 信息量   |
+| 数        | `shǔ`   | 到, 了, 过 or 一下 follows, or 开始, 会 or 能 comes before                                    | 数十人, 数小时   |
+| 调        | `tiáo`  | a direction follows (调低, 调高, 调亮, 调快), or 过音 or 杯                                   | 调往广州         |
+| 系        | `jì`    | a complement (系好, 系紧, 系在) or what is tied (系领带, 系安全带) follows                    | 历史系           |
+| 转        | `zhuàn` | the clause goes round something (绕着, 围着) or 在 comes before, or 起来, 得 or laps follow   | 天气转凉, 转火车 |
+| 钉        | `dìng`  | a complement (钉进, 钉在) or 十字架 follows, or 被 comes before                               | 一根钉           |
+| 结        | `jiē`   | the object within five words is fruit (果实, 桃)                                              | 结了婚, 结冰     |
+| 相        | `xiàng` | 照 comes before with only aspect, a count or 的 between                                       | 互相             |
+| 冲        | `chòng` | a degree adverb comes before and the clause ends, or 着 follows with more of the clause after | 冲过来, 往前冲着 |
 
 A tagged word holding the character with another reading keeps that reading, unless a commoner tagged word crosses it (冷气调高 holds 气调, and 冷气 is the word the decode takes). Each character also has the neighbours that make a compound the smaller tiers lack. The rule leaves the character alone beside one of them, so 我们联系上他们 keeps `xì` in the core tier, which holds no 联系.
 
@@ -801,6 +802,40 @@ The dictionary holds 东西 as `dōngxi`, the thing, and the compass sense in lo
 
 In 88,866 corpus lines the rule changed one reading in each of the standard and full tiers, and over both CPP splits it changed 20 in each, all corrections.
 
+<a id="yihang-as-a-trade"></a>
+
+### 一行 as a line of work
+
+The rule reads the 行 of 一行 as `háng` where it is a trade or a line of text:
+
+```ts
+convert(dictionary, "毕竟只有他干过这一行。"); // "Bìjìng zhǐyǒu tā gànguo zhè yì háng."
+convert(dictionary, "我们一行人到了。"); // "Wǒmen yìxíng rén dàole."
+```
+
+The dictionary holds 一行 as `yìxíng`, a party travelling together. The rule reads `háng` where 这, 那, 哪, 干, 做 or 爱 comes before the 一 (这一行, 干一行爱一行, 这一行字). A party is counted by what follows it. A 人, a 们 or a number after the 行 keeps `xíng` (这一行人, 他们一行三人). A tagged word starting at the 行 keeps its own reading, as in 这一行程.
+
+一 and 行 then read as words of their own and are written apart.
+
+In 88,866 corpus lines and both CPP splits, the rule changed one reading in each tier, 我干这一行已经很久了, a correction.
+
+<a id="renjia-as-a-household"></a>
+
+### 人家 as a household
+
+The dictionary holds 人家 as `rénjia`, the pronoun for somebody else. The rule reads `rénjiā`, a household, where the words before it count or describe households:
+
+```ts
+convert(dictionary, "别把人家当傻瓜。"); // "Bié bǎ rénjia dāng shǎguā."
+convert(dictionary, "这户人家很穷。"); // "Zhè hù rén jiā hěn qióng."
+```
+
+A household follows 户 (这户人家, 二十户人家), a word for how many (很多, 许多, 不少) or how well off (有钱, 穷, 富, 普通, 殷实), or a 的 (有的人家, 家境殷实的人家). The rule holds the 家 to `jiā` and keeps the 人 out of a word before it. 有钱人家 reads `yǒuqián rén jiā` and does not go through 有钱人. 好 is left out of the list because 他酒量好人家送他 has the pronoun after it. Longer words such as 大户人家 and 书香人家 carry `rénjiā` themselves.
+
+人 and 家 then read as words of their own and are written apart.
+
+The dictionary read `rénjiā` everywhere before. Over 88,866 corpus lines and both CPP splits, the stored reading and the rule together changed 31 readings of 人家 in the full tier and 33 in the standard tier. 27 of the full tier's are corrections. The four left wrong are households the rule does not see, two of them because the decode joins the 人 to a word before it (一户日本人家, 潜入他人家中). The core tier holds no 人家.
+
 <a id="pu-before-an-aspect-particle"></a>
 
 ### 铺 before an aspect particle
@@ -885,7 +920,7 @@ convert(dictionary, "我家很大。"); // "Wǒ jiā hěn dà."
 
 The corpus for all three rules is 219,704 distinct Han runs from Tatoeba, a zh.wikipedia sample, the CPP dev and test splits, and the Chinese Boost example sentences. The full tier changes 617 runs (323 for 着, 267 for 好多了, 太好了 and 家, 27 for prices and 只要). The standard tier changes 607, and the core tier holds none of the words. Three runs change a reading. Two are corrections, 他家种了十亩玉米 and 他家种了五公顷的玉米, where 种 becomes `zhòng` once 他家 is gone. In the third, 濕衣服貼著你的皮膚, 衣服 becomes `yīfú`. Over the 142,253 distinct lines, the written pinyin changes in 880, and 876 of those change only in spacing or capitals. The one left is 七千五百四十二元, written `sì shí'èr yuán` where it was `sìshí èryuán` (四十二个 was already `sì shí'èrgè`).
 
-Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `VERBAL_CHANGYONG`, `LANGUAGE_WENSHU`, `DURATIVE_ZHE`, `PRICED_UNIT` and `COMPOSED_PHRASE`. `applyEdgeRules` applies a list to the candidate graph.
+Applications can supply a custom rule list to `decodeRun`, including an empty list. The exported rules are `READING_RULES`, `MODAL_DE`, `PARTICLE_DE`, `POTENTIAL_DE`, `COMPLEMENT_DE`, `CALCULATING_SUAN`, `ASPECTUAL_PARTICLE`, `ADVERBIAL_DI`, `TAXI_DI`, `NOUN_HUA`, `TEACHING_JIAO`, `ATTESTED_ERHUA`, `COUNTED_MEASURE`, `COUNTED_GE`, `COUNTED_NAME`, `ADJECTIVAL_CHANG`, `PLAYING_TAN`, `EXPERIENTIAL_GUO`, `SEPARATED_COMPOUND`, `REDUPLICATED_VERB`, `RETURNING_HUAN`, `LOCATIVE_SHANG_PU`, `SPREADING_PU`, `CONCERNING_GAN`, `DRY_GAN`, `COUNTING_ZHI`, `POTENTIAL_LIAO`, `RESULTATIVE_ZHAO`, `OBTAINING_DE`, `VERBAL_READING`, `DOMINANT_READING`, `EASY_HAO`, `ADJECTIVAL_MEI`, `SUMMING_DOU`, `MODAL_CAI`, `VERBAL_DE_QUESHI`, `COMPASS_DONGXI`, `TRADE_HANG`, `HOUSEHOLD_RENJIA`, `VERBAL_CHANGYONG`, `LANGUAGE_WENSHU`, `DURATIVE_ZHE`, `PRICED_UNIT` and `COMPOSED_PHRASE`. `applyEdgeRules` applies a list to the candidate graph.
 
 ## The greedy baseline
 

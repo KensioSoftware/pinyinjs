@@ -38,6 +38,11 @@ export interface NeutralSenseWord {
  * 多少 is how-many and an amount, 地道 is a tunnel and the real thing. Choosing
  * for those would be trading one wrong answer for another.
  *
+ * 人家 is the exception, listed because a decode rule reads the other sense.
+ * The pronoun (别把人家当傻瓜) outnumbers the household two to one in the
+ * corpus lines, and the household is said after words a rule can see (户,
+ * 有钱 or a 的). See {@link import("../decode/renjia-rule.js").HOUSEHOLD_RENJIA}.
+ *
  * **No reading is written here**, only the word. The merge takes the neutral
  * sense CC-CEDICT already holds, so a source refresh that changes a word's
  * senses cannot leave a hand-typed reading behind — and `BUILD_ASSERTIONS`
@@ -65,6 +70,11 @@ export const NEUTRAL_SENSE_WORDS: readonly NeutralSenseWord[] = [
     displaces: "管子, the Warring States politician and the book",
   },
   { word: "支吾", displaces: "to resist, to withstand" },
+  {
+    word: "人家",
+    displaces:
+      "a household, which a decode rule reads where a 户 or a family's means count it",
+  },
 ];
 
 /**

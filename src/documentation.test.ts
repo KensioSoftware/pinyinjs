@@ -315,6 +315,26 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "天安门"), "Tiān'ānmén");
     });
 
+    it("reads 冲着, 一行 and 人家 the way the context rules page shows", () => {
+      assertIdentical(convert(dictionary, "他冲着我笑"), "tā chòngzhe wǒ xiào");
+      assertIdentical(
+        convert(dictionary, "毕竟只有他干过这一行。"),
+        "Bìjìng zhǐyǒu tā gànguo zhè yì háng.",
+      );
+      assertIdentical(
+        convert(dictionary, "我们一行人到了。"),
+        "Wǒmen yìxíng rén dàole.",
+      );
+      assertIdentical(
+        convert(dictionary, "别把人家当傻瓜。"),
+        "Bié bǎ rénjia dāng shǎguā.",
+      );
+      assertIdentical(
+        convert(dictionary, "这户人家很穷。"),
+        "Zhè hù rén jiā hěn qióng.",
+      );
+    });
+
     it("reads 铺 before an aspect particle the way the context rules page shows", () => {
       assertIdentical(
         convert(dictionary, "地板上铺着地毯。"),
