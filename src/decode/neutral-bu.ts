@@ -21,11 +21,12 @@ import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
 import type { Locale } from "../script/script.js";
 import type { Syllable } from "../syllable/syllable.js";
-import { NEUTRAL_TONE } from "../tone/tone.js";
 import {
   CROSS_COMPLEMENTS,
+  holdsWords,
   isReadResult,
   isWordComplement,
+  withToneless,
 } from "./bu-complements.js";
 import {
   AFTER_CLAUSE,
@@ -72,23 +73,6 @@ function isBetween(
 }
 
 /**
- * A word every tier but core holds.
- */
-const PROBE_WORD = "对不起";
-
-/**
- * Whether the dictionary holds words at all.
- *
- * The core tier holds characters only, and every 不 it decodes stands between
- * two characters. Without words to see, 固定不动 and 决定不开除 look the same
- * as 走不动 and 打不开, so the core tier takes only the results the 着 and 了
- * rules have already read.
- */
-function holdsWords(dictionary: Dictionary): boolean {
-  return dictionary.lookup(PROBE_WORD) !== undefined;
-}
-
-/**
  * Whether the 不 opening a word is the toneless one of a potential complement.
  *
  * A 不 standing alone takes its complement from the word after it, and one
@@ -117,18 +101,6 @@ function isComplementBu(
   return (
     (isReadResult(after) && before.partOfSpeech.startsWith("v")) ||
     (seesWords && isBetween(before, after.text, beyond))
-  );
-}
-
-/**
- * A reading with one syllable made toneless.
- */
-function withToneless(
-  reading: readonly Syllable[],
-  at: number,
-): readonly Syllable[] {
-  return reading.map((syllable, index) =>
-    index === at ? { ...syllable, tone: NEUTRAL_TONE } : syllable,
   );
 }
 

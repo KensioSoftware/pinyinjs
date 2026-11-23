@@ -89,7 +89,7 @@ The dictionary stores every 不 as `bù`, so the choice is made after decoding, 
 
 The core tier holds no words, and a 不 between two characters there could be in 走不动 or in 固定不动. It drops the tone only before a 着 or 了 that a rule has read as a result.
 
-國語 writes these 不 with a tone (對不起 is `duìbùqǐ` in the 國語辭典), so `locale: "zh-TW"` keeps it. `yiBu: false` keeps it as well, along with the rest of 一 and 不 sandhi. `applySandhi` given pinyin alone has no words to go on and leaves 不 as it finds it.
+國語 writes these 不 with a tone (對不起 is `duìbùqǐ` in the 國語辭典), so `locale: "zh-TW"` keeps it. `yiBu: false` keeps it as well, along with the rest of 一 and 不 sandhi. `applySandhi` given pinyin alone has no words to go on and leaves 不 as it finds it. A toneless 不 keeps the tone it had as its `originalTone`, so Gwoyeu Romatzyh writes 对不起 as `duey.buh.chii`.
 
 Over 88,866 corpus lines the change makes 1,045 不 toneless in the full tier, 954 in the standard tier and 26 in the core tier, and 44 over both CPP splits in the standard and full tiers. A sample of 50 from the full tier were all corrections.
 

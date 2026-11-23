@@ -75,8 +75,15 @@ describe("地方 and 地道 in context", () => {
 
   it("reads 地道 as a tunnel where it is dug, entered or counted", () => {
     // Given 地道 after a verb of digging or entering, a measure word, or
-    // before 里 standing alone
-    const runs = ["挖地道", "他们钻进地道里", "一条地道", "地道里很黑"];
+    // before 里 standing alone or the locative 里面
+    const runs = [
+      "挖地道",
+      "他们钻进地道里",
+      "他们进入地道",
+      "一条地道",
+      "地道里很黑",
+      "他躲在地道里面",
+    ];
 
     // When each is decoded
     // Then 地道 is dì dào
@@ -86,9 +93,17 @@ describe("地方 and 地道 in context", () => {
     );
   });
 
-  it("keeps the real thing where 口 starts a longer word", () => {
-    // Given 地道 before 口味 and 口音, which are words of their own
-    const runs = ["地道口味", "一口地道口音"];
+  it("keeps the real thing where nothing names a tunnel", () => {
+    // Given 地道 before 口味 and 口音, which are words of their own, after the
+    // 进 of 引进, and closing a clause, where the real thing is far commoner
+    // than the tunnel and 发现了地道 is left to it
+    const runs = [
+      "地道口味",
+      "一口地道口音",
+      "引进地道的川菜",
+      "这个菜很地道",
+      "敌军发现了地道",
+    ];
 
     // When each is decoded
     // Then 地道 keeps its neutral tone

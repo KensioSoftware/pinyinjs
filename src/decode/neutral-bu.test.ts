@@ -5,7 +5,8 @@ import { describe, it } from "vitest";
 
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary } from "../dictionary/source.js";
-import { convert } from "./convert.js";
+import { writeGwoyeu } from "../transcription/gwoyeu-spelling.js";
+import { convert, convertPieces } from "./convert.js";
 
 const dataDirectory = fileURLToPath(new URL("../../data", import.meta.url));
 const core = await loadDictionary(fileSource(dataDirectory), "core");
@@ -137,5 +138,16 @@ describe("toneless 不", () => {
       ],
       ["duìbùqǐ", "shuì bù zháo", "duìbùqǐ"],
     );
+  });
+
+  it("keeps the tone a toneless 不 had, for Gwoyeu Romatzyh to spell", () => {
+    // Given a 不 that loses its fourth tone in 对不起
+    // When it is converted and written in Gwoyeu Romatzyh
+    const written = convertPieces(full, "对不起").flatMap((piece) =>
+      piece.syllable === undefined ? [] : [writeGwoyeu(piece.syllable)],
+    );
+
+    // Then the dot comes before the fourth-tone spelling `buh`
+    assertArrayEquals(written, ["duey", ".buh", "chii"]);
   });
 });

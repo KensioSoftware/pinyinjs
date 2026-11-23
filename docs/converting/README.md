@@ -849,7 +849,7 @@ convert(dictionary, "中央和地方"); // "zhōngyāng hé dì fāng"
 convert(dictionary, "挖地道"); // "wā dì dào"
 ```
 
-地方 is the regions where a word for local government, its business or its culture follows (政府, 官员, 财政, 机构, 行政, 经济, 银行, 媒体, 文化, 口音, 方言 and others), where 中央, 部队 or 军队 stands on the other side of 和, 与, 及 or 到, and after 自治 or 天圆. 地道 is a tunnel after 挖, 掘, 钻, 进 or a measure word 条, and before 里, 口 or 内 standing alone. 地道口味 is still the real thing, because 口味 is a word. Longer words such as 地方性, 地方法院 and 地道战 carry the full tones themselves.
+地方 is the regions where a word for local government, its business or its culture follows (政府, 官员, 财政, 机构, 行政, 经济, 银行, 媒体, 文化, 口音, 方言 and others), where 中央, 部队 or 军队 stands on the other side of 和, 与, 及 or 到, and after 自治 or 天圆. 地道 is a tunnel after 挖, 钻进, 进, 进入 or a measure word 条, and before 里, 口 or 内 standing alone or the locative 里面. 地道口味 is still the real thing, because 口味 is a word, and so is 引进地道的川菜, whose 进 ends 引进. A 地道 closing a clause keeps the neutral tone (这个菜很地道), which leaves the tunnel of 敌军发现了地道 unread. Longer words such as 地方性, 地方法院 and 地道战 carry the full tones themselves.
 
 The rules hold 地 to `dì` and take the word apart, so 地 and 方 or 地 and 道 are written apart. 地方官员 does not go through the word 地方官.
 

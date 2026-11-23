@@ -2,11 +2,13 @@
  * The words that decide whether a 不 is toneless.
  *
  * What may follow 不 as a result, what may stand before it as a verb, and the
- * tests on a single word that read them. `neutral-bu.ts` puts them together
- * over a run.
+ * tests on a single word that read them, with the step that drops the tone.
+ * `neutral-bu.ts` puts them together over a run.
  */
+import type { Dictionary } from "../dictionary/dictionary.js";
 import { toCharacters } from "../script/characters.js";
 import type { Syllable } from "../syllable/syllable.js";
+import { NEUTRAL_TONE } from "../tone/tone.js";
 import { BU_CHARACTER } from "./sandhi-tones.js";
 import type { DecodedWord } from "./word.js";
 
@@ -122,5 +124,44 @@ export function isReadResult(word: DecodedWord): boolean {
     expected !== undefined &&
     syllable?.final === expected.final &&
     syllable.tone === expected.tone
+  );
+}
+
+/**
+ * A word every tier but core holds.
+ */
+const PROBE_WORD = "对不起";
+
+/**
+ * Whether the dictionary holds words at all.
+ *
+ * The core tier holds characters only, and every 不 it decodes stands between
+ * two characters. Without words to see, 固定不动 and 决定不开除 look the same
+ * as 走不动 and 打不开, so the core tier takes only the results the 着 and 了
+ * rules have already read.
+ */
+export function holdsWords(dictionary: Dictionary): boolean {
+  return dictionary.lookup(PROBE_WORD) !== undefined;
+}
+
+/**
+ * A reading with one syllable made toneless.
+ */
+export function withToneless(
+  reading: readonly Syllable[],
+  at: number,
+): readonly Syllable[] {
+  // The tone it had is kept, which Gwoyeu Romatzyh spells behind its dot:
+  // 对不起 is `duey.buh.chii`.
+  return reading.map((syllable, index) =>
+    index === at
+      ? {
+          ...syllable,
+          tone: NEUTRAL_TONE,
+          ...(syllable.tone !== undefined && {
+            originalTone: syllable.originalTone ?? syllable.tone,
+          }),
+        }
+      : syllable,
   );
 }

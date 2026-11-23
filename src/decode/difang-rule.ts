@@ -15,9 +15,9 @@ import {
   type EdgeContext,
   type EdgeRule,
   type EdgeVerdict,
-  startsLongerWord,
   wordsStartingAt,
 } from "./rules.js";
+import { isTunnelAt } from "./didao-frames.js";
 import { syllableOf } from "./verbal-frame.js";
 
 /** The word 地方, the same in both scripts. */
@@ -67,20 +67,6 @@ const JOINING = new Set(toCharacters("和与與及到同跟"));
 const REGION_BEFORE = new Set(["自治", "天圆", "天圓"]);
 
 /**
- * Characters before 地道 that dig it, go into it or count it as a tunnel:
- * 挖地道, 钻进地道, 一条地道.
- */
-const INTO_TUNNEL = new Set(toCharacters("挖掘钻鑽进進条條"));
-
-/**
- * Characters after 地道 that place something in a tunnel or at its mouth:
- * 地道里, 地道口.
- *
- * Only where they stand alone, since 地道口味 and 地道里脊 are the real thing.
- */
-const IN_TUNNEL = new Set(toCharacters("里裡裏口内內"));
-
-/**
  * Whether the 地方 between two positions is set against a counterpart, on
  * either side of a joining word, or follows a word that makes it a region.
  */
@@ -108,17 +94,6 @@ function isRegionalAt(context: EdgeContext, from: number, to: number): boolean {
   return (
     wordsStartingAt(context, to).some((word) => ADMINISTRATION.has(word)) ||
     isAgainstCounterpart(context.characters, from, to)
-  );
-}
-
-/**
- * Whether the 地道 between two positions is a tunnel.
- */
-function isTunnelAt(context: EdgeContext, from: number, to: number): boolean {
-  const { characters } = context;
-  return (
-    INTO_TUNNEL.has(characters[from - 1] ?? "") ||
-    (IN_TUNNEL.has(characters[to] ?? "") && !startsLongerWord(context, to))
   );
 }
 
