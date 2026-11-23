@@ -286,12 +286,18 @@ describe("the committed dictionary", () => {
     });
 
     it("leaves the words whose two senses are both current", () => {
-      // Not on the list, deliberately: 地方 is the place and the opposite of
-      // central, 大意 the gist and carelessness, 地道 a tunnel and the real
-      // thing. Choosing for these trades one wrong answer for another.
-      assertIdentical(full.reading("地方"), "dì fāng");
+      // Not on the list, deliberately: 大意 is the gist and carelessness.
+      // Choosing for it trades one wrong answer for another.
       assertIdentical(full.reading("大意"), "dà yì");
-      assertIdentical(full.reading("地道"), "dì dào");
+    });
+
+    it("holds 地方 and 地道 in their everyday senses", () => {
+      // The place and the real thing. A decode rule reads the regions and the
+      // tunnel, and the longer words carry the full tone themselves.
+      assertIdentical(full.reading("地方"), "dì fang");
+      assertIdentical(full.reading("地道"), "dì dao");
+      assertIdentical(full.reading("地方性"), "dì fāng xìng");
+      assertIdentical(full.reading("地道战"), "dì dào zhàn");
     });
 
     it("keeps the polyphone collocations apart", () => {

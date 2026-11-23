@@ -14,7 +14,7 @@
       "readings": "standard.entries",
       "frequencies": "standard.freq",
       "bytes": 1419045,
-      "compressedBytes": 391057
+      "compressedBytes": 391072
     },
     "full": {
       "entries": 461573,
@@ -22,7 +22,7 @@
       "readings": "full.entries",
       "frequencies": "full.freq",
       "bytes": 9380688,
-      "compressedBytes": 2450242
+      "compressedBytes": 2450311
     }
   },
   "counts": {

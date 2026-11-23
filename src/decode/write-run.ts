@@ -8,6 +8,7 @@
 import type { Dictionary } from "../dictionary/dictionary.js";
 import type { Locale } from "../script/script.js";
 import { charactersPerSyllable, groupingOf } from "./sandhi-input.js";
+import { neutraliseBu } from "./neutral-bu.js";
 import { applySandhi, type SandhiOptions } from "./sandhi.js";
 import type { ScoredWord } from "./word.js";
 import {
@@ -31,9 +32,20 @@ export function writeRun(
   // Sandhi runs across the whole run rather than within a word, since 不 in one
   // word assimilates to the tone starting the next, and what it needs beyond
   // the syllables is in `sandhi-input.ts`.
-  const readings = words.map((scored) =>
+  const read = words.map((scored) =>
     readingFor(dictionary, scored.word, locale),
   );
+  // 不 loses its tone in a potential complement, which only the words around
+  // it can say, so it is settled before sandhi would read it as `bù`.
+  const readings =
+    sandhi?.yiBu === false
+      ? read
+      : neutraliseBu(
+          dictionary,
+          words.map((scored) => scored.word),
+          read,
+          locale,
+        );
   const flattened = applySandhi(
     readings.flat(),
     sandhi,

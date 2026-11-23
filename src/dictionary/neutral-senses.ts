@@ -33,15 +33,23 @@ export interface NeutralSenseWord {
  * the headword, and whose full-tone sense is literary (生意 the life force),
  * technical (说法 expounding the dharma), legal (告诉 filing a complaint) or a
  * name (大方县, 金子 the Japanese surname). What is *not* listed is the larger
- * half of the 98 where both senses are current and common — 地方 is `dìfang` the
- * place and `dìfāng` the opposite of central, 大意 is the gist and carelessness,
- * 多少 is how-many and an amount, 地道 is a tunnel and the real thing. Choosing
- * for those would be trading one wrong answer for another.
+ * half of the 98 where both senses are current and common — 大意 is the gist
+ * and carelessness, 多少 is how-many and an amount. Choosing for those would be
+ * trading one wrong answer for another.
  *
- * 人家 is the exception, listed because a decode rule reads the other sense.
- * The pronoun (别把人家当傻瓜) outnumbers the household two to one in the
- * corpus lines, and the household is said after words a rule can see (户,
- * 有钱 or a 的). See {@link import("../decode/renjia-rule.js").HOUSEHOLD_RENJIA}.
+ * 人家, 地方 and 地道 are the exceptions, listed because a decode rule reads
+ * the other sense where the context names it.
+ *
+ * - The pronoun 人家 (别把人家当傻瓜) outnumbers the household two to one in
+ *   the corpus lines, and the household is said after words a rule can see
+ *   (户, 有钱 or a 的). See
+ *   {@link import("../decode/renjia-rule.js").HOUSEHOLD_RENJIA}.
+ * - 地方 the place (这个地方) is the everyday word, and the regional 地方 is
+ *   said before a word for government or administration (地方政府, 地方财政)
+ *   or beside 中央. See {@link import("../decode/difang-rule.js").REGIONAL_DIFANG}.
+ * - 地道 the real thing (地道的川菜) is the everyday word, and the tunnel is
+ *   dug, entered or walked through (挖地道, 钻进地道). See
+ *   {@link import("../decode/difang-rule.js").TUNNEL_DIDAO}.
  *
  * **No reading is written here**, only the word. The merge takes the neutral
  * sense CC-CEDICT already holds, so a source refresh that changes a word's
@@ -70,6 +78,8 @@ export const NEUTRAL_SENSE_WORDS: readonly NeutralSenseWord[] = [
     displaces: "管子, the Warring States politician and the book",
   },
   { word: "支吾", displaces: "to resist, to withstand" },
+  { word: "地方", displaces: "the regions, as against the centre" },
+  { word: "地道", displaces: "a tunnel dug underground" },
   {
     word: "人家",
     displaces:

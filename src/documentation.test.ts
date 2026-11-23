@@ -380,7 +380,7 @@ describe("the examples in docs/", () => {
     it("reads 着, 的确实 and 东西 the way the context rules page shows", () => {
       assertIdentical(
         convert(dictionary, "他着急得睡不着。"),
-        "Tā zháojí de shuì bù zháo.",
+        "Tā zháojí de shuì bu zháo.",
       );
       assertIdentical(convert(dictionary, "这谁管得着"), "zhè shéi guǎndezháo");
       assertIdentical(convert(dictionary, "我不着急"), "wǒ bù zháojí");
@@ -400,6 +400,19 @@ describe("the examples in docs/", () => {
         convert(dictionary, "这东西两块钱"),
         "zhè dōngxi liǎng kuài qián",
       );
+    });
+
+    it("reads 地方 and 地道 the way the context rules page shows", () => {
+      assertIdentical(
+        convert(dictionary, "这个地方的地道小吃"),
+        "zhège dìfang de dìdao xiǎochī",
+      );
+      assertIdentical(convert(dictionary, "地方政府"), "dì fāng zhèngfǔ");
+      assertIdentical(
+        convert(dictionary, "中央和地方"),
+        "zhōngyāng hé dì fāng",
+      );
+      assertIdentical(convert(dictionary, "挖地道"), "wā dì dào");
     });
 
     it("takes 文书 apart after a language name, as the page shows", () => {
@@ -767,7 +780,7 @@ describe("the examples in docs/", () => {
         "tā huòdéle guànjūn",
       );
       assertIdentical(convert(dictionary, "得了吧"), "déleba");
-      assertIdentical(convert(dictionary, "我受不了了"), "wǒ shòubùliǎo le");
+      assertIdentical(convert(dictionary, "我受不了了"), "wǒ shòubuliǎo le");
     });
 
     it("reads 得了 as dé le where it obtains an illness, a score or a prize", () => {
@@ -807,7 +820,7 @@ describe("the examples in docs/", () => {
       );
       assertIdentical(convert(dictionary, "得了吧"), "déleba");
       assertIdentical(convert(dictionary, "获得了"), "huòdéle");
-      assertIdentical(convert(dictionary, "受不了了"), "shòubùliǎo le");
+      assertIdentical(convert(dictionary, "受不了了"), "shòubuliǎo le");
     });
 
     it("reads 弹 as tán where it is playing", () => {
@@ -2360,6 +2373,31 @@ describe("the examples in docs/", () => {
       assertIdentical(convert(dictionary, "依靠"), "yīkào");
       assertIdentical(convert(dictionary, "部队"), "bùduì");
       assertIdentical(convert(dictionary, "全部是"), "quánbù shì");
+    });
+
+    it("writes 不 without a tone in a potential complement, as the page shows", () => {
+      assertIdentical(convert(dictionary, "对不起"), "duìbuqǐ");
+      assertIdentical(convert(dictionary, "差不多了。"), "Chàbuduō le.");
+      assertIdentical(
+        convert(dictionary, "他着急得睡不着。"),
+        "Tā zháojí de shuì bu zháo.",
+      );
+      assertIdentical(convert(dictionary, "我做不到"), "wǒ zuò budào");
+      assertIdentical(convert(dictionary, "是不是"), "shìbúshì");
+      assertIdentical(convert(dictionary, "迫不及待"), "pòbùjídài");
+      assertIdentical(convert(dictionary, "我想不去"), "wǒ xiǎng bú qù");
+      assertIdentical(
+        convert(dictionary, "我决定不去了"),
+        "wǒ juédìng bú qùle",
+      );
+      assertIdentical(
+        convert(dictionary, "出国不到一个月"),
+        "chūguó búdào yí gè yuè",
+      );
+      assertIdentical(
+        convert(dictionary, "對不起", { locale: "zh-TW" }),
+        "duìbùqǐ",
+      );
     });
 
     it("keeps a 一 that ends a word, as the page shows", () => {
