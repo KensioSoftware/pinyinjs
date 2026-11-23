@@ -66,6 +66,33 @@ The last line is the distinction. A 一 counting a 个 is a one-syllable word th
 
 This comes from the word boundaries the decoder found. Supply a `SandhiGrouping` to `applySandhi` where you know them.
 
+<a id="toneless-bu"></a>
+
+### 不 without a tone
+
+`convert` writes 不 with no tone in a potential complement, where it stands between a verb and the result the verb cannot reach. It does the same in words that grew out of one:
+
+```ts
+convert(dictionary, "对不起"); // "duìbuqǐ"
+convert(dictionary, "差不多了。"); // "Chàbuduō le."
+convert(dictionary, "他着急得睡不着。"); // "Tā zháojí de shuì bu zháo."
+convert(dictionary, "我做不到"); // "wǒ zuò budào"
+convert(dictionary, "是不是"); // "shìbúshì", a question keeps the tone
+convert(dictionary, "迫不及待"); // "pòbùjídài", so does a 成语
+```
+
+The dictionary stores every 不 as `bù`, so the choice is made after decoding, from the words around each 不, and before the sandhi above.
+
+- A word the dictionary holds with 不 second keeps it toneless when its third character is a result (了不得, 忍不住, 比不上, 买不起, 来不及, 说不定, 想不开, 看不见 and others). 差不多, 冷不丁 and 冷不防 are listed by name. A 成语 keeps the tone, and so does a word whose verb and result are the same character (是不是, 好不好).
+- A 不 the decode reads on its own is toneless where the 着 or 了 after it was read `zháo` or `liǎo` as a result, or where a verb comes before it and a result after it (住, 起, 及, 动, 完, 见, 到, 掉, 清, 惯, 下, 出, 开, 出来, 起来, 下来 or 下去).
+- A verb that takes a clause keeps the tone after it, so 我想不去 and 我决定不去了 read `bú qù`. 说 and 想 still take 出, 起, 出来 and 起来 as results (说不出来, 想不起来). 不到 before a count is "fewer than" and keeps its tone (出国不到一个月).
+
+The core tier holds no words, and a 不 between two characters there could be in 走不动 or in 固定不动. It drops the tone only before a 着 or 了 that a rule has read as a result.
+
+國語 writes these 不 with a tone (對不起 is `duìbùqǐ` in the 國語辭典), so `locale: "zh-TW"` keeps it. `yiBu: false` keeps it as well, along with the rest of 一 and 不 sandhi. `applySandhi` given pinyin alone has no words to go on and leaves 不 as it finds it.
+
+Over 88,866 corpus lines the change makes 1,045 不 toneless in the full tier, 954 in the standard tier and 26 in the core tier, and 44 over both CPP splits in the standard and full tiers. A sample of 50 from the full tier were all corrections.
+
 <a id="the-一-that-is-a-digit"></a>
 
 ### 一 in numbers and ordinals

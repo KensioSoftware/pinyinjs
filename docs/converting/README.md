@@ -424,7 +424,7 @@ The rule needs a verb before 得. A pronoun or a noun there leaves 得了 alone,
 
 Many verbs make a word with 得, such as 获得, 取得, 记得 and 觉得. The 了 after these marks aspect, so the rule leaves them alone. 来得 and 算得 are exceptions, since 来得了 and 这算得了什么 are potential complements. The core tier holds no words, so a fixed list of these verbs stands in for the dictionary there.
 
-The 了 after `liǎo` keeps its aspect reading, so 我受不了了 reads `shòubùliǎo le`.
+The 了 after `liǎo` keeps its aspect reading, so 我受不了了 reads `shòubuliǎo le`. The 不 has no tone (see [不 without a tone](../sandhi/#toneless-bu)).
 
 In 88,866 corpus lines, the rule changed 12 readings in the full tier, 14 in the standard tier and 15 in the core tier. All but one are corrections. In 你去办公室睡得了呗 the 得了 means "and be done with it", and neither reading was right. No sentence in either CPP split changed.
 
@@ -509,7 +509,7 @@ In 88,866 lines, the complete conditions matched three phrases, 请个假, 打�
 The halves also come apart around an aspect particle, a complement or a count. The rule reads the tail across those as well:
 
 ```ts
-convert(dictionary, "我睡不着觉。"); // "Wǒ shuì bù zháo jiào."
+convert(dictionary, "我睡不着觉。"); // "Wǒ shuì bu zháo jiào."
 convert(dictionary, "我只睡了三个小时觉。"); // "Wǒ zhǐ shuìle sān gè xiǎoshí jiào."
 convert(dictionary, "他请了假。"); // "Tā qǐngle jià."
 convert(dictionary, "我觉得很好。"); // "Wǒ juéde hěn hǎo.", 觉得 keeps its word
@@ -759,7 +759,7 @@ Over 139,893 distinct runs from Tatoeba and the Chinese Boost example sentences,
 The rule selects `zháo` for 着 after a verb and 不 or 得:
 
 ```ts
-convert(dictionary, "他着急得睡不着。"); // "Tā zháojí de shuì bù zháo."
+convert(dictionary, "他着急得睡不着。"); // "Tā zháojí de shuì bu zháo."
 convert(dictionary, "这谁管得着"); // "zhè shéi guǎndezháo"
 convert(dictionary, "我不着急"); // "wǒ bù zháojí"
 ```
@@ -835,6 +835,25 @@ A household follows 户 (这户人家, 二十户人家), a word for how many (�
 人 and 家 then read as words of their own and are written apart.
 
 The dictionary read `rénjiā` everywhere before. Over 88,866 corpus lines and both CPP splits, the stored reading and the rule together changed 31 readings of 人家 in the full tier and 33 in the standard tier. 27 of the full tier's are corrections. The four left wrong are households the rule does not see, two of them because the decode joins the 人 to a word before it (一户日本人家, 潜入他人家中). The core tier holds no 人家.
+
+<a id="difang-and-didao"></a>
+
+### 地方 and 地道 in their full tones
+
+The dictionary holds 地方 as `dìfang`, a place, and 地道 as `dìdao`, the real thing. Two rules read the full tones where the context names the other sense:
+
+```ts
+convert(dictionary, "这个地方的地道小吃"); // "zhège dìfang de dìdao xiǎochī"
+convert(dictionary, "地方政府"); // "dì fāng zhèngfǔ"
+convert(dictionary, "中央和地方"); // "zhōngyāng hé dì fāng"
+convert(dictionary, "挖地道"); // "wā dì dào"
+```
+
+地方 is the regions where a word for local government, its business or its culture follows (政府, 官员, 财政, 机构, 行政, 经济, 银行, 媒体, 文化, 口音, 方言 and others), where 中央, 部队 or 军队 stands on the other side of 和, 与, 及 or 到, and after 自治 or 天圆. 地道 is a tunnel after 挖, 掘, 钻, 进 or a measure word 条, and before 里, 口 or 内 standing alone. 地道口味 is still the real thing, because 口味 is a word. Longer words such as 地方性, 地方法院 and 地道战 carry the full tones themselves.
+
+The rules hold 地 to `dì` and take the word apart, so 地 and 方 or 地 and 道 are written apart. 地方官员 does not go through the word 地方官.
+
+Over 88,866 corpus lines, 313 readings of 地方 in the full tier lose the tone and 12 keep it through the rule, and all five changed 地道 are the real thing. Over both CPP splits the figures are 73 and 23. Most of what changes is the place. The regional 地方 the rule misses comes from encyclopedic text, before words it does not list (地方省税, 地方保安队, 地方琐事).
 
 <a id="pu-before-an-aspect-particle"></a>
 

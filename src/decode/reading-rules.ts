@@ -24,6 +24,7 @@ import { VERBAL_DE_QUESHI } from "./dique-rule.js";
 import { COMPASS_DONGXI } from "./dongxi-rule.js";
 import { TRADE_HANG } from "./hang-rule.js";
 import { HOUSEHOLD_RENJIA } from "./renjia-rule.js";
+import { REGIONAL_DIFANG, TUNNEL_DIDAO } from "./difang-rule.js";
 import { VERBAL_CHANGYONG } from "./changyong-rule.js";
 import { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 import { DURATIVE_ZHE } from "./zhe-rule.js";
@@ -56,6 +57,7 @@ export { VERBAL_DE_QUESHI } from "./dique-rule.js";
 export { COMPASS_DONGXI } from "./dongxi-rule.js";
 export { TRADE_HANG } from "./hang-rule.js";
 export { HOUSEHOLD_RENJIA } from "./renjia-rule.js";
+export { REGIONAL_DIFANG, TUNNEL_DIDAO } from "./difang-rule.js";
 export { VERBAL_CHANGYONG } from "./changyong-rule.js";
 export { LANGUAGE_WENSHU } from "./wenshu-rule.js";
 export { DURATIVE_ZHE } from "./zhe-rule.js";
@@ -124,6 +126,8 @@ export const READING_RULES: readonly EdgeRule[] = [
   COMPASS_DONGXI,
   TRADE_HANG,
   HOUSEHOLD_RENJIA,
+  REGIONAL_DIFANG,
+  TUNNEL_DIDAO,
   VERBAL_CHANGYONG,
   LANGUAGE_WENSHU,
   DURATIVE_ZHE,
