@@ -413,6 +413,14 @@ describe("the examples in docs/", () => {
         "zhōngyāng hé dì fāng",
       );
       assertIdentical(convert(dictionary, "挖地道"), "wā dì dào");
+      assertIdentical(
+        convert(dictionary, "这个地方的地道小吃", { locale: "zh-TW" }),
+        "zhège dìfāng de dìdào xiǎochī",
+      );
+      assertIdentical(
+        convert(dictionary, "地方政府", { locale: "zh-TW" }),
+        "dìfāng zhèngfǔ",
+      );
     });
 
     it("takes 文书 apart after a language name, as the page shows", () => {

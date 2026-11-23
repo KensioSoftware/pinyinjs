@@ -855,6 +855,13 @@ The rules hold 地 to `dì` and take the word apart, so 地 and 方 or 地 and �
 
 Over 88,866 corpus lines, 313 readings of 地方 in the full tier lose the tone and 12 keep it through the rule, and all five changed 地道 are the real thing. Over both CPP splits the figures are 73 and 23. Most of what changes is the place. The regional 地方 the rule misses comes from encyclopedic text, before words it does not list (地方省税, 地方保安队, 地方琐事).
 
+國語 reads 地方 as `dìfāng` and 地道 as `dìdào` in every sense. With `locale: "zh-TW"` both words keep their full tones. Neither rule runs, and the regions and the tunnel stay whole:
+
+```ts
+convert(dictionary, "这个地方的地道小吃", { locale: "zh-TW" }); // "zhège dìfāng de dìdào xiǎochī"
+convert(dictionary, "地方政府", { locale: "zh-TW" }); // "dìfāng zhèngfǔ"
+```
+
 <a id="pu-before-an-aspect-particle"></a>
 
 ### 铺 before an aspect particle

@@ -7,6 +7,10 @@
  * `neutral-senses.ts`. The full-tone senses are left to longer words the
  * dictionary holds (地方性, 地方法院, 地道战) and to the frames below, which
  * take the word apart so that 地 and 方 or 地 and 道 are read on their own.
+ *
+ * All of this is 普通话. 國語 reads 地方 as `dìfāng` and 地道 as `dìdào` in
+ * every sense, so a `zh-TW` decode leaves the frames out and
+ * {@link import("./locale-rules.js").taiwanReadingOf} gives the words back their full tones.
  */
 import { isSameSyllable } from "../dictionary/entry.js";
 import { toCharacters } from "../script/characters.js";
@@ -21,10 +25,10 @@ import { isTunnelAt } from "./didao-frames.js";
 import { syllableOf } from "./verbal-frame.js";
 
 /** The word 地方, the same in both scripts. */
-const DIFANG = "地方";
+export const DIFANG = "地方";
 
 /** The word 地道, the same in both scripts. */
-const DIDAO = "地道";
+export const DIDAO = "地道";
 
 /** The reading of 地 as the ground, which both full-tone senses keep. */
 const DI: Syllable = syllableOf("dì");

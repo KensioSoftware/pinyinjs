@@ -10,7 +10,8 @@ import { decodeRun, decodeRunScored } from "./decode.js";
 import { decodeGreedily } from "./greedy.js";
 import type { ResolvedHints } from "./hints.js";
 import type { DecodeContext } from "./lattice-slice.js";
-import { READING_RULES } from "./reading-rules.js";
+import { readingRulesFor } from "./locale-rules.js";
+import type { Locale } from "../script/script.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
 
 /**
@@ -19,13 +20,16 @@ import type { DecodedWord, ScoredWord } from "./word.js";
  *
  * The context is one argument here where the exported decoders keep `before`
  * and `after` apart, since nothing outside this package calls it and the two
- * are one claim about the text around the run.
+ * are one claim about the text around the run. The locale is here because
+ * some rules read a word apart only where 普通话 gives its parts a tone the
+ * whole word lacks.
  */
 export type Decode = (
   dictionary: Dictionary,
   run: string,
   context: DecodeContext,
   hints: ResolvedHints | undefined,
+  locale: Locale,
 ) => readonly ScoredWord[];
 
 /**
@@ -37,10 +41,11 @@ function unscored(
     run: string,
     context: DecodeContext,
     hints: ResolvedHints | undefined,
+    locale: Locale,
   ) => readonly DecodedWord[],
 ): Decode {
-  return (dictionary, run, context, hints) =>
-    decode(dictionary, run, context, hints).map((word) => ({
+  return (dictionary, run, context, hints, locale) =>
+    decode(dictionary, run, context, hints, locale).map((word) => ({
       word,
       confidence: [],
     }));
@@ -49,25 +54,26 @@ function unscored(
 /**
  * The lattice decoder, reporting nothing about its own confidence.
  */
-export const LATTICE: Decode = unscored((dictionary, run, context, hints) =>
-  decodeRun(
-    dictionary,
-    run,
-    READING_RULES,
-    context.before,
-    hints,
-    context.after,
-  ),
+export const LATTICE: Decode = unscored(
+  (dictionary, run, context, hints, locale) =>
+    decodeRun(
+      dictionary,
+      run,
+      readingRulesFor(locale),
+      context.before,
+      hints,
+      context.after,
+    ),
 );
 
 /**
  * The lattice decoder, with what each reading was chosen over.
  */
-export const SCORED: Decode = (dictionary, run, context, hints) =>
+export const SCORED: Decode = (dictionary, run, context, hints, locale) =>
   decodeRunScored(
     dictionary,
     run,
-    READING_RULES,
+    readingRulesFor(locale),
     context.before,
     hints,
     context.after,
