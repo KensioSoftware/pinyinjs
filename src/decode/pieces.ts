@@ -8,6 +8,7 @@
  */
 import type { ConvertedPiece, Written } from "./convert-options.js";
 import type { DecodedWord } from "./word.js";
+import { taiwanReadingOf } from "./locale-rules.js";
 import { markWord } from "../orthography/apostrophe.js";
 import { capitaliseWord } from "../orthography/capitals.js";
 import type { Dictionary } from "../dictionary/dictionary.js";
@@ -37,6 +38,9 @@ import type { ReadingConfidence } from "./confidence.js";
  * beside the entry says nothing about it. Replacing the reading there would
  * discard what the lattice worked out in favour of a reading of the wrong
  * syllable entirely.
+ *
+ * 地方 and 地道 have no delta and still read differently: see
+ * {@link taiwanReadingOf}.
  */
 export function readingFor(
   dictionary: Dictionary,
@@ -48,7 +52,7 @@ export function readingFor(
   }
   const entry = dictionary.lookup(word.text);
   if (entry?.taiwanReading === undefined) {
-    return word.reading;
+    return taiwanReadingOf(dictionary, word) ?? word.reading;
   }
   return isSameReading(entry.reading, word.reading)
     ? entry.taiwanReading

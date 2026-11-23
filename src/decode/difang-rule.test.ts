@@ -7,6 +7,7 @@ import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary } from "../dictionary/source.js";
 import { toCharacters } from "../script/characters.js";
 import { writeSyllable } from "../syllable/syllable.js";
+import { convert } from "./convert.js";
 import { decodeRun } from "./decode.js";
 import { REGIONAL_DIFANG, TUNNEL_DIDAO } from "./difang-rule.js";
 import { READING_RULES } from "./reading-rules.js";
@@ -110,6 +111,58 @@ describe("地方 and 地道 in context", () => {
     assertArrayEquals(
       runs.flatMap((run) => readingsAfterDi(run)),
       runs.flatMap(() => ["dì dao", "dì dao"]),
+    );
+  });
+});
+
+/** Each text converted for zh-TW in the standard and the full tier. */
+function inTaiwan(texts: readonly string[]): string[] {
+  return texts.flatMap((text) =>
+    [standard, full].map((dictionary) =>
+      convert(dictionary, text, { locale: "zh-TW" }),
+    ),
+  );
+}
+
+describe("地方 and 地道 in 國語", () => {
+  it("reads the place and the real thing with full tones", () => {
+    // Given 地方 and 地道 in their everyday senses, in both scripts
+    const texts = [
+      "这个地方很好。",
+      "這個地方很好。",
+      "他讲一口地道的俄语。",
+      "他講一口地道的俄語。",
+      "这个菜很地道",
+    ];
+
+    // When each is converted for zh-TW
+    // Then the 國語辭典's dìfāng and dìdào are kept
+    assertArrayEquals(
+      inTaiwan(texts),
+      [
+        "Zhège dìfāng hěn hǎo.",
+        "Zhège dìfāng hěn hǎo.",
+        "Tā jiǎng yìkǒu dìdào de Éyǔ.",
+        "Tā jiǎng yìkǒu dìdào de Éyǔ.",
+        "zhège cài hěn dìdào",
+      ].flatMap((reading) => [reading, reading]),
+    );
+  });
+
+  it("keeps the regions and the tunnel whole", () => {
+    // Given 地方 as the regions and 地道 as a tunnel, which 普通话 reads apart
+    const texts = ["地方政府", "中央和地方", "挖地道", "他躲在地道里面"];
+
+    // When each is converted for zh-TW
+    // Then each is one word, as in the everyday senses
+    assertArrayEquals(
+      inTaiwan(texts),
+      [
+        "dìfāng zhèngfǔ",
+        "zhōngyāng hé dìfāng",
+        "wā dìdào",
+        "tā duǒ zài dìdào lǐmiàn",
+      ].flatMap((reading) => [reading, reading]),
     );
   });
 });

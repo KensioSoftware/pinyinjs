@@ -80,7 +80,13 @@ export function convertWith(
         ? undefined
         : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length);
     return wordsOf(
-      decode(dictionary, run.text, contextAround(runs, read, at), within),
+      decode(
+        dictionary,
+        run.text,
+        contextAround(runs, read, at),
+        within,
+        locale,
+      ),
       dictionary,
       grouping,
     );
