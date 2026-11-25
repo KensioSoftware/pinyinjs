@@ -217,6 +217,34 @@ describe("a surname the words around it mark as a name", () => {
     ]);
   });
 
+  it("gains a capital across a gloss and borrows no flag from one", () => {
+    // Given a one-word run whose title is past a gloss, and two flagged
+    // nouns either side of one
+    const texts = ["我见了马(马)奶奶。", "这只熊(棕熊)毛很长。"];
+
+    // When each is converted
+    // Then the surname takes a capital and neither noun does
+    assertArrayEquals(convertAll(texts), [
+      "Wǒ jiànle Mǎ(mǎ)nǎinai.",
+      "Zhè zhī xióng(zōngxióng)máo hěn cháng.",
+    ]);
+  });
+
+  it("keeps a caller's reading inside a listed name", () => {
+    // Given 藏王 with 藏 asserted as cáng, by position and by word
+    const byPosition = convert(full, "我去藏王。", {
+      readings: [{ at: 2, reading: "cáng" }],
+    });
+    const byWord = convert(full, "我去藏王。", {
+      readings: [{ word: "藏王", reading: "cáng wáng" }],
+    });
+
+    // When it is converted
+    // Then the asserted reading stands, with the table's capital and spacing
+    assertIdentical(byPosition, "Wǒ qù Cángwáng.");
+    assertIdentical(byWord, "Wǒ qù Cángwáng.");
+  });
+
   it("capitalises a dynasty before 本", () => {
     // Given a Song edition and a Ming one, and 周 as this week
     const texts = ["这两本都是宋本。", "这是明本。", "这周本来很忙。"];

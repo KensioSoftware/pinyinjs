@@ -43,7 +43,8 @@ const SURNAME_LEADS = new Set([...ADDRESS_PREFIXES, "姓"]);
  * demonstrative counts it, since 两张老师的照片 is two photos.
  *
  * A run that is the character and nothing else keeps the capital, since there
- * is nothing to read it against.
+ * is nothing to read it against. It can still gain one from a title across a
+ * bracketed gloss.
  *
  * Runs before {@link import("./address-grouping.js").ADDRESS_PREFIX}, which
  * reads the flag this leaves on the surname.
@@ -51,12 +52,16 @@ const SURNAME_LEADS = new Set([...ADDRESS_PREFIXES, "姓"]);
 export const LONE_NAME: GroupingRule = {
   name: "lone-name",
   apply: (words, _dictionary, context) => {
-    if (words.length < 2) {
-      return words;
-    }
     const before = context?.before ?? [];
     const read = [...before, ...words, ...(context?.after ?? [])];
-    return words.map((word, at) => nameOf(read, at + before.length) ?? word);
+    return words.map((word, at) => {
+      const named = nameOf(read, at + before.length);
+      // A run of one word only gains a capital, from the runs across a gloss
+      // (马(mǎ)奶奶). Read alone it has nothing to lose one against.
+      return named === undefined || (words.length < 2 && !named.isProperNoun)
+        ? word
+        : named;
+    });
   },
 };
 

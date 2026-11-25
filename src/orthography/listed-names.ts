@@ -23,7 +23,12 @@
 import type { DecodedWord } from "../decode/word.js";
 import { characterCount } from "../script/characters.js";
 import { LISTED_NAMES } from "./listed-name-table.js";
-import { listedWords, type ListedWord } from "./listed-words.js";
+import {
+  hintedFrom,
+  keepingHinted,
+  listedWords,
+  type ListedWord,
+} from "./listed-words.js";
 import type { GroupingRule } from "./rule.js";
 
 /**
@@ -52,16 +57,20 @@ const LONGEST_LISTED = Math.max(
  */
 export const LISTED_NAME: GroupingRule = {
   name: "listed-name",
-  apply: (words) => {
+  apply: (words, _dictionary, context) => {
+    const hinted = context?.hinted ?? new Set<number>();
     const named: DecodedWord[] = [];
+    let offset = 0;
     for (let at = 0; at < words.length; at++) {
       const word = words[at];
       /* c8 ignore next 3 -- at stays inside the array */
       if (word === undefined) {
         continue;
       }
-      const matched = listedFrom(words, at);
+      const matched = listedFrom(words, at, hintedFrom(hinted, offset));
+      const consumed = words.slice(at, at + 1 + (matched?.consumed ?? 0));
       named.push(...(matched?.words ?? [word]));
+      offset += characterCount(consumed.map((one) => one.text).join(""));
       at += matched?.consumed ?? 0;
     }
     return named;
@@ -75,6 +84,7 @@ export const LISTED_NAME: GroupingRule = {
 function listedFrom(
   words: readonly DecodedWord[],
   at: number,
+  isHinted: (position: number) => boolean,
 ):
   | { readonly words: readonly DecodedWord[]; readonly consumed: number }
   | undefined {
@@ -85,12 +95,15 @@ function listedFrom(
       return undefined;
     }
     const listed = LISTED_WORDS.get(text);
-    if (listed !== undefined) {
-      const isKnown = words
-        .slice(at, end + 1)
-        .every((covered) => covered.isKnown);
+    const covered = words.slice(at, end + 1);
+    const written =
+      listed === undefined
+        ? undefined
+        : keepingHinted(listed, covered, isHinted);
+    if (written !== undefined) {
+      const isKnown = covered.every((one) => one.isKnown);
       return {
-        words: listed.map((word) => ({
+        words: written.map((word) => ({
           ...word,
           partOfSpeech: word.isProperNoun ? "nr" : "",
           isKnown,

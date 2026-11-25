@@ -1,11 +1,15 @@
 import { dictionaryOf, reading } from "#test/fixtures/decoder-dictionary.js";
-import { assertArrayEquals, assertThrowsError } from "@kensio/smartass";
+import {
+  assertArrayEquals,
+  assertIdentical,
+  assertThrowsError,
+} from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import type { DecodedWord } from "../decode/word.js";
 import { writeSyllable } from "../syllable/syllable.js";
 import { LISTED_NAMES } from "./listed-name-table.js";
-import { listedWords } from "./listed-words.js";
+import { keepingHinted, listedWords } from "./listed-words.js";
 import { LISTED_NAME } from "./listed-names.js";
 
 /**
@@ -77,6 +81,19 @@ describe("a listed name", () => {
     for (const [text, pinyin] of LISTED_NAMES) {
       listedWords(text, pinyin);
     }
+  });
+
+  it("leaves a hinted text alone where syllables do not match characters", () => {
+    // Given a decode of 藏王 read as one 儿化 syllable short of its characters
+    const listed = listedWords("藏王", "Zàngwáng");
+    const covered = [word("藏王", "cáng")];
+
+    // When a position inside it was hinted
+    // Then the table is not applied
+    assertIdentical(
+      keepingHinted(listed, covered, () => true),
+      undefined,
+    );
   });
 
   it("refuses pinyin that does not spell its text", () => {

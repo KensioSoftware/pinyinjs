@@ -7,6 +7,7 @@
  * side of it reads on as if it were not there: 门贾 runs on into 氏.
  */
 import type { GroupingContext } from "../orthography/rule.js";
+import { characterCount } from "../script/characters.js";
 import type { TextRun } from "./runs.js";
 import type { DecodedWord } from "./word.js";
 
@@ -37,6 +38,13 @@ export function runAfterGloss(
 
 /**
  * The words either side of a run across a gloss, for the grouping rules.
+ *
+ * A one-character word loses its proper-noun flag and its tag here. The
+ * dictionary flags 熊 and 毛 standing alone and jieba tags both `nr`, and
+ * only the words around such a character say whether it is a name. In
+ * 这只熊(棕熊)毛很长 neither is, and each would otherwise vouch for the other.
+ * A title such as the 氏 of 门贾(假)氏 is matched by its text and carries
+ * over as it is.
  */
 export function glossContext(
   runs: readonly TextRun[],
@@ -46,7 +54,18 @@ export function glossContext(
   const before = runAfterGloss(runs, at - 4) === at ? words[at - 4] : undefined;
   const after = runAfterGloss(runs, at);
   return {
-    before: before ?? [],
-    after: after === undefined ? [] : (words[after] ?? []),
+    before: unflagged(before ?? []),
+    after: unflagged(after === undefined ? [] : (words[after] ?? [])),
   };
+}
+
+/**
+ * The words with the flag and the tag taken off every one-character word.
+ */
+function unflagged(words: readonly DecodedWord[]): readonly DecodedWord[] {
+  return words.map((word) =>
+    characterCount(word.text) === 1
+      ? { ...word, isProperNoun: false, partOfSpeech: "" }
+      : word,
+  );
 }

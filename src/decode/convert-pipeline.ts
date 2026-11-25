@@ -23,7 +23,7 @@ import { surrounding, writeNumbers } from "./numbers.js";
 import { contextAround } from "./run-context.js";
 import type { Decode } from "./decoders.js";
 import { glossContext } from "./glosses.js";
-import { wordsOf } from "./run-words.js";
+import { hintedIn, wordsOf } from "./run-words.js";
 import { writeRun, rewrite } from "./write-run.js";
 
 /**
@@ -72,14 +72,16 @@ export function convertWith(
   // Decoded before anything is written, because a number's sandhi needs the
   // syllable after it, and because a Han run needs the number in front of it:
   // 2个人 is `liǎng gè rén` and 个人 on its own is the word `gèrén`.
+  const withinRuns = runs.map((run, at) =>
+    hints === undefined
+      ? undefined
+      : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length),
+  );
   const scored = runs.map((run, at) => {
     if (!run.isHan) {
       return [];
     }
-    const within =
-      hints === undefined
-        ? undefined
-        : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length);
+    const within = withinRuns[at];
     return decode(
       dictionary,
       run.text,
@@ -93,7 +95,10 @@ export function convertWith(
   // 贾 a surname.
   const ungrouped = scored.map((words) => words.map((one) => one.word));
   const decoded = scored.map((words, at) =>
-    wordsOf(words, dictionary, grouping, glossContext(runs, ungrouped, at)),
+    wordsOf(words, dictionary, grouping, {
+      ...glossContext(runs, ungrouped, at),
+      hinted: hintedIn(withinRuns[at], runs[at]),
+    }),
   );
 
   for (const [at, run] of runs.entries()) {

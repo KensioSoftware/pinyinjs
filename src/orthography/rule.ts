@@ -33,6 +33,8 @@ export interface GroupingContext {
   readonly before: readonly DecodedWord[];
   /** The words of the run after, across a gloss. */
   readonly after: readonly DecodedWord[];
+  /** The positions in the run whose reading a caller asserted. */
+  readonly hinted?: ReadonlySet<number>;
 }
 
 /**

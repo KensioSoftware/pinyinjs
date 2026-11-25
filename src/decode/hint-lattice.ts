@@ -64,7 +64,7 @@ export function hintsWithin(
 /**
  * Whether a hint's characters are what stands at a position.
  */
-function matchesAt(
+export function matchesAt(
   hint: WordHint,
   characters: readonly string[],
   at: number,
