@@ -290,7 +290,12 @@ A kinship term such as 妈妈 leaves 熊 alone. Children's stories call a mother
 
 Some surnames are ordinary words too common for the dictionary to flag (马 a horse, 严 strict, 张 a measure word). A title after one of them gives it a capital, and so does 本, 朝 or 代 after an unflagged dynasty such as 明. A number or a demonstrative in front cancels this (两张老师的照片 is two photos). The list is in `src/orthography/surnames.ts` and leaves out surnames that are also a preposition or a verb a title follows, such as 向 and 谢 (向老师问好, 谢老师).
 
-Sayings name historical figures the dictionary lacks, and their given names decode as ordinary words. 板桥 in 郑板桥嫁女 is a plank bridge, and 干 in 蒋干盗书 is a verb. A verb or a noun after a surname-like character marks a cloud or a fortune as often as a name (云是天空中的水汽团, 福生有基), so these names are listed in `src/orthography/personal-names.ts`. A listed name is written as a surname and a joined given name, each capitalised.
+Sayings name historical figures the dictionary lacks, and their given names decode as ordinary words. 板桥 in 郑板桥嫁女 is a plank bridge, and 干 in 蒋干盗书 is a verb. A verb or a noun after a surname-like character marks a cloud or a fortune as often as a name (云是天空中的水汽团, 福生有基), so these names are listed in `src/orthography/listed-names.ts` with the pinyin each is written in. The table sets readings as well as capitals. 藏王 is the ski resort Zaō, and the decode reads its 藏 as `cáng`:
+
+```ts
+convert(dictionary, "我去年冬天去藏王滑雪。"); // "Wǒ qùnián dōngtiān qù Zàngwáng huáxuě."
+convert(dictionary, "拜佛进了吕祖庙"); // "bàifó jìnle Lǚzǔ Miào"
+```
 
 A run made of the character alone keeps the capital. The rule is in `src/orthography/lone-name.ts` and runs with the other grouping rules, so `grouping: false` leaves every flagged character capitalised.
 

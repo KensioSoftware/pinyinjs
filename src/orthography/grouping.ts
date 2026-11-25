@@ -2,7 +2,7 @@ import type { Dictionary } from "../dictionary/dictionary.js";
 import type { DecodedWord } from "../decode/word.js";
 import { IDIOM_HYPHENS } from "./idioms.js";
 import { LONE_NAME } from "./lone-name.js";
-import { PERSONAL_NAME } from "./personal-names.js";
+import { LISTED_NAME } from "./listed-names.js";
 import { AABB_REDUPLICATION, ABAB_REDUPLICATION } from "./reduplication.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
 import type { GroupingRule } from "./rule.js";
@@ -91,7 +91,7 @@ import { joinBackwards, PLACE_GENERICS } from "./place-grouping.js";
 
 export { PLACE_GENERICS } from "./place-grouping.js";
 export { LONE_NAME } from "./lone-name.js";
-export { PERSONAL_NAME } from "./personal-names.js";
+export { LISTED_NAME } from "./listed-names.js";
 export const ASPECT_PARTICLES: GroupingRule = {
   name: "aspect-particles",
   apply: (words) => joinBackwards(words, attachesTo),
@@ -121,8 +121,8 @@ export const GROUPING_RULES: readonly GroupingRule[] = [
   PLACE_GENERICS,
   NAME_PARTS,
   SPACED_WORD_LIST,
-  PERSONAL_NAME,
   LONE_NAME,
+  LISTED_NAME,
   ADDRESS_PREFIX,
   COUNTED_UNIT,
   AABB_REDUPLICATION,

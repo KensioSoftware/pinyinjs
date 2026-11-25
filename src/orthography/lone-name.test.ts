@@ -167,13 +167,41 @@ describe("a surname the words around it mark as a name", () => {
     assertArrayEquals(convertAll(texts), [
       "Zhèng Bǎnqiáo jiànǚ",
       "Jiǎng Gàn dào shū",
-      "Xú Shù jìn cáo yíng",
+      "Xú Shù jìn Cáo yíng",
       "Yáng Wǔláng xuēfà",
       "Yán Sōng zuòshòu",
       "bā qín Mèng Huò",
     ]);
     // And the 繁體 writing reads the same
     assertIdentical(convert(full, "蔣幹盜書"), "Jiǎng Gàn dào shū");
+  });
+
+  it("writes the other listed names as the table gives them", () => {
+    // Given a family, a camp, a temple, two states and foreign names, some
+    // with a character the decode reads wrong for the name
+    const texts = [
+      "贾家的姑娘嫁贾家",
+      "拜佛进了吕祖庙",
+      "熟读王叔和",
+      "楚虽三户，亡秦必楚",
+      "尤巴有点夸张了。",
+      "这就是为什么吉雄会感冒。",
+      "这位是安田先生。",
+      "我去年冬天去藏王滑雪。",
+    ];
+
+    // When each is converted
+    // Then each name is capitalised, spaced and read as the table writes it
+    assertArrayEquals(convertAll(texts), [
+      "Jiǎ jiā de gūniang jià Jiǎ jiā",
+      "bàifó jìnle Lǚzǔ Miào",
+      "shúdú Wáng Shūhé",
+      "Chǔ suī sānhù, wáng Qín bì Chǔ",
+      "Yóubā yǒudiǎn kuāzhāngle.",
+      "Zhè jiùshì wèishénme Jíxióng huì gǎnmào.",
+      "Zhèwèi shì Āntián xiānsheng.",
+      "Wǒ qùnián dōngtiān qù Zàngwáng huáxuě.",
+    ]);
   });
 
   it("capitalises a dynasty before 本", () => {
