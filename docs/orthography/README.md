@@ -297,6 +297,8 @@ convert(dictionary, "我去年冬天去藏王滑雪。"); // "Wǒ qùnián dōng
 convert(dictionary, "拜佛进了吕祖庙"); // "bàifó jìnle Lǚzǔ Miào"
 ```
 
+A gloss in brackets is read past. In 贾(假)门贾(假)氏(事) the second 贾 is read before 氏, its title, and is written `Jiǎ(jiǎ)mén Jiǎ(jiǎ)shì(shì)`. The text either side of a bracketed Han gloss reads on as if the gloss were absent.
+
 A run made of the character alone keeps the capital. The rule is in `src/orthography/lone-name.ts` and runs with the other grouping rules, so `grouping: false` leaves every flagged character capitalised.
 
 Over the 88,866 corpus lines the rule changes 621. In a sample of 50 of them, 24 were ordinary words that lost a wrong capital (百兽之王, 一头熊, 往南飞, 他胸口很多毛). Six were names that lost a needed capital, such as 雲哲, 淑華 and the 梅 of a girl called May. The other 20 sat inside transliterated names the dictionary lacks. Those were already written wrong, as in `Ān Dé sēn` for 安德森, which now reads `Ān dé sēn`.

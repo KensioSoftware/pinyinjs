@@ -204,6 +204,19 @@ describe("a surname the words around it mark as a name", () => {
     ]);
   });
 
+  it("reads a surname's title across a bracketed gloss", () => {
+    // Given a saying whose puns are glossed in brackets, so the 氏 that names
+    // the second 贾 is in a run of its own
+    const texts = ["贾(假)门贾(假)氏(事)", "贾（假）门贾（假）氏（事）"];
+
+    // When each is converted
+    // Then both 贾 take a capital
+    assertArrayEquals(convertAll(texts), [
+      "Jiǎ(jiǎ)mén Jiǎ(jiǎ)shì(shì)",
+      "Jiǎ（jiǎ）mén Jiǎ（jiǎ）shì（shì）",
+    ]);
+  });
+
   it("capitalises a dynasty before 本", () => {
     // Given a Song edition and a Ming one, and 周 as this week
     const texts = ["这两本都是宋本。", "这是明本。", "这周本来很忙。"];

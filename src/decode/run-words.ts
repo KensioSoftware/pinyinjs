@@ -6,19 +6,23 @@
  * simply cut in different places.
  */
 import type { Dictionary } from "../dictionary/dictionary.js";
-import { applyGrouping } from "../orthography/grouping.js";
+import { applyGrouping, GROUPING_RULES } from "../orthography/grouping.js";
+import type { GroupingContext } from "../orthography/rule.js";
 import type { DecodedWord, ScoredWord } from "./word.js";
 
 /**
  * The words a Han run decodes to, with 分词连写 applied.
  *
  * Grouping rewrites word boundaries and never the readings behind them, so the
- * syllables — and the confidence beside them — survive it in order.
+ * syllables — and the confidence beside them — survive it in order. The
+ * context is the words of the runs this one reads on from, which the rules
+ * read and leave as they are.
  */
 export function wordsOf(
   decoded: readonly ScoredWord[],
   dictionary: Dictionary,
   isGrouped: boolean,
+  context?: GroupingContext,
 ): readonly ScoredWord[] {
   return isGrouped
     ? regroup(
@@ -26,6 +30,8 @@ export function wordsOf(
         applyGrouping(
           decoded.map((scored) => scored.word),
           dictionary,
+          GROUPING_RULES,
+          context,
         ),
       )
     : decoded;

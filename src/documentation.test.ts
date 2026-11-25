@@ -484,6 +484,10 @@ describe("the examples in docs/", () => {
         convert(dictionary, "拜佛进了吕祖庙"),
         "bàifó jìnle Lǚzǔ Miào",
       );
+      assertIdentical(
+        convert(dictionary, "贾(假)门贾(假)氏(事)"),
+        "Jiǎ(jiǎ)mén Jiǎ(jiǎ)shì(shì)",
+      );
     });
 
     it("cuts a verb from its durative 着, as the page shows", () => {

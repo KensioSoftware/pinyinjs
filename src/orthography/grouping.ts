@@ -5,7 +5,7 @@ import { LONE_NAME } from "./lone-name.js";
 import { LISTED_NAME } from "./listed-names.js";
 import { AABB_REDUPLICATION, ABAB_REDUPLICATION } from "./reduplication.js";
 import { NEUTRAL_TONE } from "../tone/tone.js";
-import type { GroupingRule } from "./rule.js";
+import type { GroupingContext, GroupingRule } from "./rule.js";
 import {
   ADDRESS_PREFIX,
   COUNTED_UNIT,
@@ -137,10 +137,11 @@ export function applyGrouping(
   words: readonly DecodedWord[],
   dictionary: Dictionary,
   rules: readonly GroupingRule[] = GROUPING_RULES,
+  context?: GroupingContext,
 ): readonly DecodedWord[] {
   let grouped = words;
   for (const rule of rules) {
-    grouped = rule.apply(grouped, dictionary);
+    grouped = rule.apply(grouped, dictionary, context);
   }
   return grouped;
 }

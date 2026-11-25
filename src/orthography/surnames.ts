@@ -1,6 +1,9 @@
 /**
  * Surname characters the dictionary does not flag, and the dynasties.
  */
+import type { DecodedWord } from "../decode/word.js";
+import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
+import { toCharacters } from "../script/characters.js";
 
 /**
  * Common surnames whose character stands alone as an ordinary word.
@@ -47,3 +50,37 @@ export const DYNASTY_WORDS: ReadonlySet<string> = new Set(["本", "朝", "代"])
  * dynasty.
  */
 export const COUNTING_WORDS: ReadonlySet<string> = new Set("这那哪每几這幾");
+
+/**
+ * Whether a number or a demonstrative counts the character.
+ */
+export function isCountedAt(
+  words: readonly DecodedWord[],
+  at: number,
+): boolean {
+  const before = words[at - 1];
+  return (
+    before !== undefined &&
+    (COUNTING_WORDS.has(before.text) ||
+      toCharacters(before.text).every((character) =>
+        QUANTITY_CHARACTERS.has(character),
+      ))
+  );
+}
+
+/**
+ * Whether the character is a dynasty, named by the word after it.
+ */
+export function isDynastyAt(
+  words: readonly DecodedWord[],
+  at: number,
+): boolean {
+  const word = words[at];
+  const after = words[at + 1];
+  return (
+    word !== undefined &&
+    after !== undefined &&
+    DYNASTIES.has(word.text) &&
+    DYNASTY_WORDS.has(after.text)
+  );
+}

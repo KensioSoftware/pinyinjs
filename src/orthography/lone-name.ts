@@ -9,8 +9,7 @@
  * bear far more often than any of them is a surname.
  */
 import type { DecodedWord } from "../decode/word.js";
-import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
-import { characterCount, toCharacters } from "../script/characters.js";
+import { characterCount } from "../script/characters.js";
 import { ADDRESS_PREFIXES } from "./address-grouping.js";
 import type { GroupingRule } from "./rule.js";
 import {
@@ -18,12 +17,7 @@ import {
   STORY_ANIMALS,
   SURNAME_TITLES,
 } from "./surname-titles.js";
-import {
-  COUNTING_WORDS,
-  DYNASTIES,
-  DYNASTY_WORDS,
-  UNFLAGGED_SURNAMES,
-} from "./surnames.js";
+import { isCountedAt, isDynastyAt, UNFLAGGED_SURNAMES } from "./surnames.js";
 
 /**
  * The words that say the character after them is a surname.
@@ -56,23 +50,39 @@ const SURNAME_LEADS = new Set([...ADDRESS_PREFIXES, "姓"]);
  */
 export const LONE_NAME: GroupingRule = {
   name: "lone-name",
-  apply: (words) =>
-    words.length < 2
-      ? words
-      : words.map((word, at) => {
-          if (characterCount(word.text) !== 1) {
-            return word;
-          }
-          if (word.isProperNoun) {
-            return isNamedAt(words, at)
-              ? word
-              : { ...word, isProperNoun: false };
-          }
-          return isUnflaggedNameAt(words, at)
-            ? { ...word, isProperNoun: true }
-            : word;
-        }),
+  apply: (words, _dictionary, context) => {
+    if (words.length < 2) {
+      return words;
+    }
+    const before = context?.before ?? [];
+    const read = [...before, ...words, ...(context?.after ?? [])];
+    return words.map((word, at) => nameOf(read, at + before.length) ?? word);
+  },
 };
+
+/**
+ * The character at a position with its capital settled, or undefined where it
+ * stays as it is.
+ *
+ * The words read include those of the runs either side of a gloss (see
+ * {@link import("./rule.js").GroupingContext}), so 门贾(假)氏 reads its 贾 as
+ * a surname.
+ */
+function nameOf(
+  words: readonly DecodedWord[],
+  at: number,
+): DecodedWord | undefined {
+  const word = words[at];
+  if (word === undefined || characterCount(word.text) !== 1) {
+    return undefined;
+  }
+  if (word.isProperNoun) {
+    return isNamedAt(words, at) ? undefined : { ...word, isProperNoun: false };
+  }
+  return isUnflaggedNameAt(words, at)
+    ? { ...word, isProperNoun: true }
+    : undefined;
+}
 
 /**
  * Whether an unflagged character is a surname before a title, or a dynasty.
@@ -86,34 +96,6 @@ function isUnflaggedNameAt(words: readonly DecodedWord[], at: number): boolean {
   return (
     (UNFLAGGED_SURNAMES.has(word.text) && isTitledAt(words, at)) ||
     isDynastyAt(words, at)
-  );
-}
-
-/**
- * Whether a number or a demonstrative counts the character.
- */
-function isCountedAt(words: readonly DecodedWord[], at: number): boolean {
-  const before = words[at - 1];
-  return (
-    before !== undefined &&
-    (COUNTING_WORDS.has(before.text) ||
-      toCharacters(before.text).every((character) =>
-        QUANTITY_CHARACTERS.has(character),
-      ))
-  );
-}
-
-/**
- * Whether the character is a dynasty, named by the word after it.
- */
-function isDynastyAt(words: readonly DecodedWord[], at: number): boolean {
-  const word = words[at];
-  const after = words[at + 1];
-  return (
-    word !== undefined &&
-    after !== undefined &&
-    DYNASTIES.has(word.text) &&
-    DYNASTY_WORDS.has(after.text)
   );
 }
 

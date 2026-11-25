@@ -14,7 +14,25 @@ export interface GroupingRule {
   readonly apply: (
     words: readonly DecodedWord[],
     dictionary: Dictionary,
+    context?: GroupingContext,
   ) => readonly DecodedWord[];
+}
+
+/**
+ * The words of the runs a run reads on from, which a rule may read and never
+ * rewrites.
+ *
+ * 贾(假)门贾(假)氏(事) is a saying with its puns glossed in brackets. Each
+ * gloss splits the Han into runs of its own, and the 氏 that makes the second
+ * 贾 a surname is two runs along. The runs either side of a bracketed gloss
+ * read on from each other (see `src/decode/glosses.ts`), and this carries their
+ * words to the rules.
+ */
+export interface GroupingContext {
+  /** The words of the run before, across a gloss. */
+  readonly before: readonly DecodedWord[];
+  /** The words of the run after, across a gloss. */
+  readonly after: readonly DecodedWord[];
 }
 
 /**
