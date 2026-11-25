@@ -22,7 +22,8 @@ import type { ConvertedPiece, ConvertOptions, Written } from "./pieces.js";
 import { surrounding, writeNumbers } from "./numbers.js";
 import { contextAround } from "./run-context.js";
 import type { Decode } from "./decoders.js";
-import { wordsOf } from "./run-words.js";
+import { glossContext } from "./glosses.js";
+import { hintedIn, wordsOf } from "./run-words.js";
 import { writeRun, rewrite } from "./write-run.js";
 
 /**
@@ -71,26 +72,34 @@ export function convertWith(
   // Decoded before anything is written, because a number's sandhi needs the
   // syllable after it, and because a Han run needs the number in front of it:
   // 2个人 is `liǎng gè rén` and 个人 on its own is the word `gèrén`.
-  const decoded = runs.map((run, at) => {
+  const withinRuns = runs.map((run, at) =>
+    hints === undefined
+      ? undefined
+      : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length),
+  );
+  const scored = runs.map((run, at) => {
     if (!run.isHan) {
       return [];
     }
-    const within =
-      hints === undefined
-        ? undefined
-        : hintsWithin(hints, starts[at] ?? 0, toCharacters(run.text).length);
-    return wordsOf(
-      decode(
-        dictionary,
-        run.text,
-        contextAround(runs, read, at),
-        within,
-        locale,
-      ),
+    const within = withinRuns[at];
+    return decode(
       dictionary,
-      grouping,
+      run.text,
+      contextAround(runs, read, at),
+      within,
+      locale,
     );
   });
+  // Grouped once every run is decoded, because a run either side of a
+  // bracketed gloss reads on from the other: the 氏 after 门贾(假) makes its
+  // 贾 a surname.
+  const ungrouped = scored.map((words) => words.map((one) => one.word));
+  const decoded = scored.map((words, at) =>
+    wordsOf(words, dictionary, grouping, {
+      ...glossContext(runs, ungrouped, at),
+      hinted: hintedIn(withinRuns[at], runs[at]),
+    }),
+  );
 
   for (const [at, run] of runs.entries()) {
     const words = decoded[at] ?? [];

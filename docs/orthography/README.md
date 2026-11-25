@@ -127,7 +127,7 @@ convert(dictionary, "你好，世界"); // "nǐ hǎo, shìjiè"
 
 Dictionary-marked proper nouns are capitalised. Sentence-initial capitalisation requires sentence punctuation in the input. A comma does not start a new sentence.
 
-Proper-noun flags come from jieba tags (`nr` for people, `ns` for places, `nt` for organisations and `nz` for other names). CC-CEDICT entries with lowercase readings can remove the flag. PinyinJS has no general name recogniser or surname list.
+Proper-noun flags come from jieba tags (`nr` for people, `ns` for places, `nt` for organisations and `nz` for other names). CC-CEDICT entries with lowercase readings can remove the flag. PinyinJS has no general name recogniser. A short list of common surnames gives a capital to a character before a title (see [a lone character is a name only beside one](#a-lone-character-is-a-name-only-beside-one)).
 
 Only definitions with their own meaning can remove a proper-noun flag. Cross-references are excluded from that check. For example, the capitalised reference from 长寿 to 长寿区 describes the district, while the lowercase entry for 长寿 describes longevity.
 
@@ -269,6 +269,10 @@ convert(dictionary, "天上的云很白。"); // "Tiānshàng de yún hěn bái.
 convert(dictionary, "我们往东走。"); // "Wǒmen wǎng dōng zǒu."
 convert(dictionary, "王先生来了。"); // "Wáng xiānsheng láile."
 convert(dictionary, "他们叫他吉姆。"); // "Tāmen jiào tā Jí mǔ."
+convert(dictionary, "马奶奶见了冯奶奶"); // "Mǎ nǎinai jiànle Féng nǎinai"
+convert(dictionary, "郑板桥嫁女"); // "Zhèng Bǎnqiáo jiànǚ"
+convert(dictionary, "这两本都是宋本。"); // "Zhè liǎng běn dōu shì Sòng běn."
+convert(dictionary, "我看见熊妈妈。"); // "Wǒ kànjiàn xióng māma."
 ```
 
 The dictionary flags 186 characters standing alone as proper nouns (毛, 云, 东, 江, 王 and 熊 among them). The flag says that the words a character begins are mostly names. In running text the same character is usually the ordinary word (hair, a cloud, east, a river, a king, a bear).
@@ -276,9 +280,24 @@ The dictionary flags 186 characters standing alone as proper nouns (毛, 云, �
 A one-character word keeps its capital where the words around it mark a name:
 
 - 老, 小 or 姓 in front of it (老王, 他姓毛)
-- a title after it, such as 先生, 老师 or 氏, directly or after a one-character given name (王先生, 李民先生)
+- a title after it, such as 先生, 老师, 氏 or a kinship term like 奶奶, directly or after a one-character given name (王先生, 王奶奶, 李民先生)
 - a proper noun beside it (李华)
 - a character beside it that jieba knows only inside names, tagged `nr`, `ns`, `nz` or `x` (吉姆, 李樱)
+
+- 本, 朝 or 代 after a dynasty (宋本, a Song edition)
+
+A kinship term such as 妈妈 leaves 熊 alone. Children's stories call a mother bear 熊妈妈.
+
+Some surnames are ordinary words too common for the dictionary to flag (马 a horse, 严 strict, 张 a measure word). A title after one of them gives it a capital, and so does 本, 朝 or 代 after an unflagged dynasty such as 明. A number or a demonstrative in front cancels this (两张老师的照片 is two photos). The list is in `src/orthography/surnames.ts` and leaves out surnames that are also a preposition or a verb a title follows, such as 向 and 谢 (向老师问好, 谢老师).
+
+Sayings name historical figures the dictionary lacks, and their given names decode as ordinary words. 板桥 in 郑板桥嫁女 is a plank bridge, and 干 in 蒋干盗书 is a verb. A verb or a noun after a surname-like character marks a cloud or a fortune as often as a name (云是天空中的水汽团, 福生有基), so these names are listed in `src/orthography/listed-names.ts` with the pinyin each is written in. The table sets readings as well as capitals. 藏王 is the ski resort Zaō, and the decode reads its 藏 as `cáng`:
+
+```ts
+convert(dictionary, "我去年冬天去藏王滑雪。"); // "Wǒ qùnián dōngtiān qù Zàngwáng huáxuě."
+convert(dictionary, "拜佛进了吕祖庙"); // "bàifó jìnle Lǚzǔ Miào"
+```
+
+A gloss in brackets is read past. In 贾(假)门贾(假)氏(事) the second 贾 is read before 氏, its title, and is written `Jiǎ(jiǎ)mén Jiǎ(jiǎ)shì(shì)`. The text either side of a bracketed Han gloss reads on as if the gloss were absent.
 
 A run made of the character alone keeps the capital. The rule is in `src/orthography/lone-name.ts` and runs with the other grouping rules, so `grouping: false` leaves every flagged character capitalised.
 

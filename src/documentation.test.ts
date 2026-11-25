@@ -463,6 +463,31 @@ describe("the examples in docs/", () => {
         convert(dictionary, "他们叫他吉姆。"),
         "Tāmen jiào tā Jí mǔ.",
       );
+      assertIdentical(
+        convert(dictionary, "马奶奶见了冯奶奶"),
+        "Mǎ nǎinai jiànle Féng nǎinai",
+      );
+      assertIdentical(convert(dictionary, "郑板桥嫁女"), "Zhèng Bǎnqiáo jiànǚ");
+      assertIdentical(
+        convert(dictionary, "这两本都是宋本。"),
+        "Zhè liǎng běn dōu shì Sòng běn.",
+      );
+      assertIdentical(
+        convert(dictionary, "我看见熊妈妈。"),
+        "Wǒ kànjiàn xióng māma.",
+      );
+      assertIdentical(
+        convert(dictionary, "我去年冬天去藏王滑雪。"),
+        "Wǒ qùnián dōngtiān qù Zàngwáng huáxuě.",
+      );
+      assertIdentical(
+        convert(dictionary, "拜佛进了吕祖庙"),
+        "bàifó jìnle Lǚzǔ Miào",
+      );
+      assertIdentical(
+        convert(dictionary, "贾(假)门贾(假)氏(事)"),
+        "Jiǎ(jiǎ)mén Jiǎ(jiǎ)shì(shì)",
+      );
     });
 
     it("cuts a verb from its durative 着, as the page shows", () => {
