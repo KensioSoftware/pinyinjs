@@ -792,13 +792,13 @@ The one 的确实 in 88,866 corpus lines and both CPP splits is 战争的确实�
 The rule takes the word 东西 apart where it names the two directions:
 
 ```ts
-convert(dictionary, "这条路是东西走向的。"); // "Zhè tiáo lù shì Dōng xī zǒuxiàng de."
+convert(dictionary, "这条路是东西走向的。"); // "Zhè tiáo lù shì dōng xī zǒuxiàng de."
 convert(dictionary, "这东西两块钱"); // "zhè dōngxi liǎng kuài qián"
 ```
 
 The dictionary holds 东西 as `dōngxi`, the thing, and the compass sense in longer words such as 东西方 and 各奔东西. The rule reads the directions before 走向 or 方向, before 两 and a side (东西两侧, 东西两端, 东西两厢), and before a 向 followed by 的 or the end of the run (东西向的街道). 把东西向他扔过去 is the thing.
 
-东 and 西 then read as words of their own and are written apart. A lone 东 is capitalised because the dictionary marks it as a proper noun (the surname Dong), as it does in 往东走.
+东 and 西 then read as words of their own and are written apart. The dictionary marks a lone 东 as a proper noun (the surname Dong), and it takes no capital here because nothing around it is a name. See [a lone character is a name only beside one](../orthography/#a-lone-character-is-a-name-only-beside-one).
 
 In 88,866 corpus lines the rule changed one reading in each of the standard and full tiers, and over both CPP splits it changed 20 in each, all corrections.
 

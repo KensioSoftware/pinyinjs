@@ -158,7 +158,7 @@ convert(dictionary, "这周我一直在工作"); // "zhè zhōu wǒ yìzhí zài
 convert(dictionary, "他很帅"); // "tā hěn shuài"
 ```
 
-The check retains 243 of 511 single-character flags. It remains imperfect when a common character frequently starts names. For example, 福 can still be capitalised in 清心的人有福了.
+The check retains 243 of 511 single-character flags. A common character can still pass it when it starts names often, as 福 and 毛 do. Such a character takes its capital only next to a name (see [a lone character is a name only beside one](#a-lone-character-is-a-name-only-beside-one)).
 
 A word that jieba tags as a name and CC-CEDICT does not hold at all has no lowercase sense to remove the flag. Such a word keeps it only if its first character passes the same check, or if it opens with a word that CC-CEDICT capitalises. 小姑娘, 老先生 and 黑狗 lose the flag. 梁山伯 keeps it on 梁, and 肯塔基州 keeps it on 肯塔基.
 
@@ -183,13 +183,13 @@ Each is entered at a count of 100, within the range jieba counts the given names
 
 `Lǐ Huá` is produced from two individually flagged characters because 李华 has no dictionary entry. The result follows dictionary tags, without recognising the full text as a person's name.
 
-Names whose characters lack the flag may remain lowercase. This affects 42 of the first hundred surnames in 百家姓:
+Names whose characters lack the flag may remain lowercase. This affects 42 of the first hundred surnames in 百家姓. 华 loses its capital as well, because the character beside it is no name:
 
 ```ts
 convert(dictionary, "李华"); // "Lǐ Huá"
-convert(dictionary, "钱华"); // "qián Huá", 钱 is not flagged
-convert(dictionary, "孙华"); // "sūn Huá"
-convert(dictionary, "錢華"); // "qián Huá", the same gap in 繁體
+convert(dictionary, "钱华"); // "qián huá", 钱 is not flagged
+convert(dictionary, "孙华"); // "sūn huá"
+convert(dictionary, "錢華"); // "qián huá", the same gap in 繁體
 ```
 
 Check name capitalisation when presenting converted text to readers.
@@ -260,6 +260,29 @@ convert(dictionary, "他姓毛"); // "tā xìng Máo"
 ```
 
 大 is excluded because it often acts as an ordinary adjective. In 88,866 corpus lines, the 老 and 小 rule matched 38 forms of address across 12 distinct pairs, including 小王, 小李 and 老王.
+
+### A lone character is a name only beside one
+
+```ts
+convert(dictionary, "这只小猫的毛是雪白的。"); // "Zhè zhī xiǎomāo de máo shì xuěbái de."
+convert(dictionary, "天上的云很白。"); // "Tiānshàng de yún hěn bái."
+convert(dictionary, "我们往东走。"); // "Wǒmen wǎng dōng zǒu."
+convert(dictionary, "王先生来了。"); // "Wáng xiānsheng láile."
+convert(dictionary, "他们叫他吉姆。"); // "Tāmen jiào tā Jí mǔ."
+```
+
+The dictionary flags 186 characters standing alone as proper nouns (毛, 云, 东, 江, 王 and 熊 among them). The flag says that the words a character begins are mostly names. In running text the same character is usually the ordinary word (hair, a cloud, east, a river, a king, a bear).
+
+A one-character word keeps its capital where the words around it mark a name:
+
+- 老, 小 or 姓 in front of it (老王, 他姓毛)
+- a title after it, such as 先生, 老师 or 氏, directly or after a one-character given name (王先生, 李民先生)
+- a proper noun beside it (李华)
+- a character beside it that jieba knows only inside names, tagged `nr`, `ns`, `nz` or `x` (吉姆, 李樱)
+
+A run made of the character alone keeps the capital. The rule is in `src/orthography/lone-name.ts` and runs with the other grouping rules, so `grouping: false` leaves every flagged character capitalised.
+
+Over the 88,866 corpus lines the rule changes 621. In a sample of 50 of them, 24 were ordinary words that lost a wrong capital (百兽之王, 一头熊, 往南飞, 他胸口很多毛). Six were names that lost a needed capital, such as 雲哲, 淑華 and the 梅 of a girl called May. The other 20 sat inside transliterated names the dictionary lacks. Those were already written wrong, as in `Ān Dé sēn` for 安德森, which now reads `Ān dé sēn`.
 
 ## Apostrophes (隔音符号)
 
