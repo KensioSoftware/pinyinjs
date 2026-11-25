@@ -9,10 +9,21 @@
  * bear far more often than any of them is a surname.
  */
 import type { DecodedWord } from "../decode/word.js";
-import { characterCount } from "../script/characters.js";
+import { QUANTITY_CHARACTERS } from "../numerals/characters.js";
+import { characterCount, toCharacters } from "../script/characters.js";
 import { ADDRESS_PREFIXES } from "./address-grouping.js";
 import type { GroupingRule } from "./rule.js";
-import { SURNAME_TITLES } from "./surname-titles.js";
+import {
+  FAMILY_TITLES,
+  STORY_ANIMALS,
+  SURNAME_TITLES,
+} from "./surname-titles.js";
+import {
+  COUNTING_WORDS,
+  DYNASTIES,
+  DYNASTY_WORDS,
+  UNFLAGGED_SURNAMES,
+} from "./surnames.js";
 
 /**
  * The words that say the character after them is a surname.
@@ -25,10 +36,17 @@ const SURNAME_LEADS = new Set([...ADDRESS_PREFIXES, "姓"]);
  * A lone character keeps its capital only where a name is meant.
  *
  * The character is a name when the words around it say so. That is 老, 小 or
- * 姓 in front of it (老王, 他姓毛), a title after it (王先生, or 李民先生 with
- * a given name between), or a name part next to it (李华 and 吉姆, which have
- * no entries of their own). Everywhere else it is the ordinary word, and
+ * 姓 in front of it (老王, 他姓毛), a title after it (王先生, 王奶奶, or
+ * 李民先生 with a given name between), or a name part next to it (李华 and
+ * 吉姆, which have no entries of their own). A dynasty is named by the word
+ * after it (宋本, a Song edition). Everywhere else it is the ordinary word, and
  * 小猫的毛 is `xiǎomāo de máo`.
+ *
+ * A title or a dynasty word also gives a capital to a character the dictionary
+ * does not flag, where that character is a common surname or a dynasty (马奶奶
+ * is `Mǎ nǎinai`). That is one of
+ * {@link UNFLAGGED_SURNAMES} or {@link DYNASTIES}, and only where no number or
+ * demonstrative counts it, since 两张老师的照片 is two photos.
  *
  * A run that is the character and nothing else keeps the capital, since there
  * is nothing to read it against.
@@ -41,14 +59,63 @@ export const LONE_NAME: GroupingRule = {
   apply: (words) =>
     words.length < 2
       ? words
-      : words.map((word, at) =>
-          !word.isProperNoun ||
-          characterCount(word.text) !== 1 ||
-          isNamedAt(words, at)
-            ? word
-            : { ...word, isProperNoun: false },
-        ),
+      : words.map((word, at) => {
+          if (characterCount(word.text) !== 1) {
+            return word;
+          }
+          if (word.isProperNoun) {
+            return isNamedAt(words, at)
+              ? word
+              : { ...word, isProperNoun: false };
+          }
+          return isUnflaggedNameAt(words, at)
+            ? { ...word, isProperNoun: true }
+            : word;
+        }),
 };
+
+/**
+ * Whether an unflagged character is a surname before a title, or a dynasty.
+ */
+function isUnflaggedNameAt(words: readonly DecodedWord[], at: number): boolean {
+  const word = words[at];
+  /* c8 ignore next 3 -- the caller passes an index inside the array */
+  if (word === undefined || isCountedAt(words, at)) {
+    return false;
+  }
+  return (
+    (UNFLAGGED_SURNAMES.has(word.text) && isTitledAt(words, at)) ||
+    isDynastyAt(words, at)
+  );
+}
+
+/**
+ * Whether a number or a demonstrative counts the character.
+ */
+function isCountedAt(words: readonly DecodedWord[], at: number): boolean {
+  const before = words[at - 1];
+  return (
+    before !== undefined &&
+    (COUNTING_WORDS.has(before.text) ||
+      toCharacters(before.text).every((character) =>
+        QUANTITY_CHARACTERS.has(character),
+      ))
+  );
+}
+
+/**
+ * Whether the character is a dynasty, named by the word after it.
+ */
+function isDynastyAt(words: readonly DecodedWord[], at: number): boolean {
+  const word = words[at];
+  const after = words[at + 1];
+  return (
+    word !== undefined &&
+    after !== undefined &&
+    DYNASTIES.has(word.text) &&
+    DYNASTY_WORDS.has(after.text)
+  );
+}
 
 /**
  * Whether the words around a lone character mark it a name.
@@ -59,10 +126,32 @@ function isNamedAt(words: readonly DecodedWord[], at: number): boolean {
   return (
     (before !== undefined &&
       (SURNAME_LEADS.has(before.text) || isNamePart(before))) ||
-    (after !== undefined &&
-      (SURNAME_TITLES.has(after.text) || isNamePart(after))) ||
-    isTitledGivenName(words.slice(at + 1, at + 3))
+    (after !== undefined && isNamePart(after)) ||
+    isTitledAt(words, at) ||
+    (!isCountedAt(words, at) && isDynastyAt(words, at))
   );
+}
+
+/**
+ * Whether a title follows the surname at a position.
+ *
+ * Directly (王先生), across the two words a title can decode as (王小二), or
+ * after a one-character given name (李民先生). A kinship term does not make a
+ * name of a story's animal, since 熊妈妈 is a mother bear.
+ */
+function isTitledAt(words: readonly DecodedWord[], at: number): boolean {
+  const surname = words[at];
+  const after = words[at + 1];
+  if (surname === undefined || after === undefined) {
+    return false;
+  }
+  const title = [after.text, after.text + (words[at + 2]?.text ?? "")].find(
+    (text) => SURNAME_TITLES.has(text),
+  );
+  if (title !== undefined) {
+    return !(FAMILY_TITLES.has(title) && STORY_ANIMALS.has(surname.text));
+  }
+  return isTitledGivenName(words.slice(at + 1, at + 3));
 }
 
 /**
