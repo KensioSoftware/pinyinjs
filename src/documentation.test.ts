@@ -394,7 +394,7 @@ describe("the examples in docs/", () => {
       );
       assertIdentical(
         convert(dictionary, "这条路是东西走向的。"),
-        "Zhè tiáo lù shì Dōng xī zǒuxiàng de.",
+        "Zhè tiáo lù shì dōng xī zǒuxiàng de.",
       );
       assertIdentical(
         convert(dictionary, "这东西两块钱"),
@@ -440,6 +440,29 @@ describe("the examples in docs/", () => {
         "yì jīn sì yuán wǔ máo",
       );
       assertIdentical(convert(dictionary, "他姓毛"), "tā xìng Máo");
+    });
+
+    it("capitalises a lone flagged character only beside a name, as the page shows", () => {
+      assertIdentical(
+        convert(dictionary, "这只小猫的毛是雪白的。"),
+        "Zhè zhī xiǎomāo de máo shì xuěbái de.",
+      );
+      assertIdentical(
+        convert(dictionary, "天上的云很白。"),
+        "Tiānshàng de yún hěn bái.",
+      );
+      assertIdentical(
+        convert(dictionary, "我们往东走。"),
+        "Wǒmen wǎng dōng zǒu.",
+      );
+      assertIdentical(
+        convert(dictionary, "王先生来了。"),
+        "Wáng xiānsheng láile.",
+      );
+      assertIdentical(
+        convert(dictionary, "他们叫他吉姆。"),
+        "Tāmen jiào tā Jí mǔ.",
+      );
     });
 
     it("cuts a verb from its durative 着, as the page shows", () => {
@@ -1191,7 +1214,7 @@ describe("the examples in docs/", () => {
       // names far more often than words and is a common word all the same.
       assertIdentical(
         convert(dictionary, "清心的人有福了"),
-        "qīngxīn de rén yǒu Fú le",
+        "qīngxīn de rén yǒu fú le",
       );
     });
 
@@ -1216,9 +1239,9 @@ describe("the examples in docs/", () => {
         assertNonNullable(entry);
         assertFalse(entry.isProperNoun);
       }
-      assertIdentical(convert(dictionary, "钱华"), "qián Huá");
-      assertIdentical(convert(dictionary, "孙华"), "sūn Huá");
-      assertIdentical(convert(dictionary, "錢華"), "qián Huá");
+      assertIdentical(convert(dictionary, "钱华"), "qián huá");
+      assertIdentical(convert(dictionary, "孙华"), "sūn huá");
+      assertIdentical(convert(dictionary, "錢華"), "qián huá");
 
       // The flag reads the same under either script, since a 繁體 character
       // takes the answer its 简体 character reached.

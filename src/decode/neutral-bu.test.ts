@@ -120,7 +120,7 @@ describe("toneless 不", () => {
       texts.map((text) => convert(core, text)),
       [
         "Wǒ shuì bu zháo.",
-        "Xíng xīng wéizhe gù dìng bú dòng de Héng xīng zhuàn.",
+        "Xíng xīng wéizhe gù dìng bú dòng de héng xīng zhuàn.",
       ],
     );
   });
