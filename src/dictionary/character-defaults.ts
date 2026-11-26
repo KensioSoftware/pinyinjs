@@ -18,6 +18,7 @@ import type { Syllable } from "../syllable/syllable.js";
 import { isSameReading } from "./entry.js";
 import { readAlignedReading, readDictionaryReading } from "./reading.js";
 import {
+  isVariantOfItself,
   pairScripts,
   type ScriptPairing,
   TraditionalTable,
@@ -63,6 +64,9 @@ export function buildCharacterDefaults(
   // phrase corpus are both 简体, so nothing else would count a vote for 髮.
   const pairings: ScriptPairing[] = [];
   for (const entry of cedict) {
+    if (isVariantOfItself(entry)) {
+      continue;
+    }
     const aligned = readAlignedReading(entry.simplified, entry.readings);
     pairings.push(...pairScripts(entry.simplified, entry.traditional, aligned));
   }

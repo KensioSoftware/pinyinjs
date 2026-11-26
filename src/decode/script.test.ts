@@ -13,6 +13,7 @@ import { describe, it } from "vitest";
 
 import { fileSource } from "../dictionary/node-source.js";
 import { loadDictionary, loadScriptTables } from "../dictionary/source.js";
+import { formsOf } from "../script/conversion.js";
 import { detectScript } from "../script/script.js";
 import {
   isUncertainChoice,
@@ -109,6 +110,39 @@ describe("script conversion", () => {
       assertIdentical(convert("只有", "zh-Hant"), "只有");
       assertIdentical(convert("面条", "zh-Hant"), "麵條");
       assertIdentical(convert("下面", "zh-Hant"), "下面");
+    });
+
+    it("converts the common words of characters 繁體 also writes unchanged", () => {
+      for (const [hans, hant] of [
+        ["以后", "以後"],
+        ["后来", "後來"],
+        ["皇后", "皇后"],
+        ["太后", "太后"],
+        ["头发", "頭髮"],
+        ["出发", "出發"],
+        ["于是", "於是"],
+        ["单于", "單于"],
+        ["广告", "廣告"],
+        ["茶几", "茶几"],
+        ["几乎", "幾乎"],
+      ] as const) {
+        assertIdentical(convert(hans, "zh-Hant"), hant);
+      }
+    });
+
+    it("leaves characters alone that CC-CEDICT lists variants of", () => {
+      // CC-CEDICT holds 陻 as a variant of 堙 and 獧 as a variant of 狷. Those
+      // entries used to tie with 堙 and 狷 themselves, and the tie went to the
+      // variant.
+      for (const [hans, hant] of [
+        ["堙没", "堙沒"],
+        ["狷介", "狷介"],
+        ["舟楫", "舟楫"],
+        ["玉卮", "玉卮"],
+        ["败衄", "敗衄"],
+      ] as const) {
+        assertIdentical(convert(hans, "zh-Hant"), hant);
+      }
     });
 
     it("keeps 里 apart from 裡 on word evidence", () => {
@@ -320,6 +354,37 @@ describe("script conversion", () => {
         assertIdentical(choice.evidence, "default");
         assertArrayEquals(choice.alternatives, [text]);
       }
+    });
+
+    it("names the unchanged form for characters 繁體 writes both ways", () => {
+      // 后 is 後 in 以后 and 后 in 皇后. The tables used to give 后 one 繁體 form,
+      // so a caller listing the forms of 后 never saw 后 itself.
+      for (const character of "丰于云价余冢几厂后尸帘广愿涂筑苹郁杰") {
+        assertArrayIncludes(
+          formsOf(tables.toTraditional.get(character)),
+          character,
+        );
+      }
+    });
+
+    it("leaves out the unchanged forms only one source attests", () => {
+      // OpenCC lists none of these as its own 繁體 form. CC-CEDICT writes some
+      // of them unchanged for archaic senses (听 as a smile, 离 as a beast).
+      for (const character of "凄发听圣苏弥烟瓮痒祢离纤汇") {
+        assertFalse(
+          formsOf(tables.toTraditional.get(character)).includes(character),
+        );
+      }
+    });
+
+    it("reports 后 in 以后 as a choice against 后", () => {
+      const hou = toScriptPieces(dictionary, tables, "以后", {
+        to: "zh-Hant",
+        from: "Hans",
+      }).choices[1];
+      assertNonNullable(hou);
+      assertIdentical(hou.to, "後");
+      assertArrayEquals(hou.alternatives, ["后"]);
     });
 
     it("credits the word where it overrode a one-form character", () => {

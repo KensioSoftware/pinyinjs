@@ -1,47 +1,47 @@
 {
   "tiers": {
     "core": {
-      "entries": 16975,
+      "entries": 16974,
       "keys": "core.keys",
       "readings": "core.entries",
       "frequencies": "core.freq",
-      "bytes": 221155,
-      "compressedBytes": 71965
+      "bytes": 221139,
+      "compressedBytes": 71920
     },
     "standard": {
-      "entries": 66975,
+      "entries": 66974,
       "keys": "standard.keys",
       "readings": "standard.entries",
       "frequencies": "standard.freq",
-      "bytes": 1419045,
-      "compressedBytes": 391072
+      "bytes": 1419017,
+      "compressedBytes": 391079
     },
     "full": {
       "entries": 461573,
       "keys": "full.keys",
       "readings": "full.entries",
       "frequencies": "full.freq",
-      "bytes": 9380688,
-      "compressedBytes": 2450311
+      "bytes": 9380027,
+      "compressedBytes": 2450178
     }
   },
   "counts": {
     "file": "full.counts",
     "tier": "full",
-    "keys": 723170,
-    "bytes": 766865,
-    "compressedBytes": 250517
+    "keys": 723111,
+    "bytes": 766805,
+    "compressedBytes": 250431
   },
   "script": {
     "file": "script.map",
-    "toTraditional": 5944,
-    "toSimplified": 6114,
+    "toTraditional": 5938,
+    "toSimplified": 6109,
     "traditionalWords": 2391,
-    "simplifiedWords": 663,
-    "hansOnly": 5818,
-    "hantOnly": 5566,
-    "bytes": 290169,
-    "compressedBytes": 99316
+    "simplifiedWords": 603,
+    "hansOnly": 5812,
+    "hantOnly": 5565,
+    "bytes": 289072,
+    "compressedBytes": 98659
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",

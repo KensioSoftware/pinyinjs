@@ -16,6 +16,10 @@ import { mergeSources } from "../../src/dictionary/merge.js";
 import { GIVEN_NAMES } from "../../src/dictionary/given-names.js";
 import { REFERENCE_READINGS } from "../../src/dictionary/reference-readings.js";
 import { buildScriptTables } from "../../src/dictionary/script-tables.js";
+import {
+  unchangedTraditional,
+  withUnchangedForms,
+} from "../../src/dictionary/unchanged-forms.js";
 import { KeyIndex } from "../../src/dictionary/key-index.js";
 import { buildWordCounts } from "../../src/dictionary/word-counts.js";
 import { COUNTS_FILE, SCRIPT_FILE } from "../../src/dictionary/source.js";
@@ -174,7 +178,17 @@ await mkdir(DATA_DIR, { recursive: true });
 
 // ── Script conversion, which is its own artifact ────────────
 report("building script conversion tables");
-const scriptTables = buildScriptTables(merged.entries);
+const simplifiedToTraditional = parseOpenCcTable(
+  await readSource(SOURCE_FILES.simplifiedToTraditional),
+);
+const characterTables = buildScriptTables(merged.entries);
+const scriptTables = {
+  ...characterTables,
+  toTraditional: withUnchangedForms(
+    characterTables.toTraditional,
+    unchangedTraditional(simplifiedToTraditional, sources.cedict),
+  ),
+};
 const scriptMap = writeScriptTables(scriptTables);
 const scriptBytes = Buffer.byteLength(scriptMap);
 const scriptCompressed = compressedSize(scriptMap);

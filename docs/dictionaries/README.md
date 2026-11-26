@@ -68,7 +68,7 @@ convert(dictionary, "我要去北京。"); // "Wǒ yào qù Běijīng."
 
 Use `core` when download size is the main constraint and character-level readings are sufficient.
 
-The table counts dictionary entries. `dictionary.size` counts searchable keys, including separate traditional spellings. The key counts are 16,982 for `core`, 98,001 for `standard` and 723,170 for `full`.
+The table counts dictionary entries. `dictionary.size` counts searchable keys, including separate traditional spellings. The key counts are 16,981 for `core`, 97,999 for `standard` and 723,111 for `full`.
 
 ## Querying directly
 
@@ -85,7 +85,7 @@ dictionary.lookup("重複")?.reading; // 重複 and 重覆 are both keys for 重
 dictionary.hasPrefix("银"); // true, does any word start with this?
 dictionary.readingsOf("行"); // xíng, háng, héng, hàng, likeliest first
 dictionary.frequencyOf("头发"); // 9, how common it is, 0 rarest to 15
-dictionary.size; // 723170, keys in the full tier, not entries
+dictionary.size; // 723111, keys in the full tier, not entries
 ```
 
 Both simplified and traditional spellings are searchable keys. Traditional words are looked up directly. See [scripts and locales](../scripts-and-locales/) for script handling and regional readings.
@@ -191,7 +191,7 @@ Word entries are decoded on first access. Loading the dictionary does not decode
 $ pinyinjs info
 tier       full
 data       the artifacts that shipped
-keys       723,170
+keys       723,111
 syllables  415 attested, 424 spellings in the inventory
 ```
 

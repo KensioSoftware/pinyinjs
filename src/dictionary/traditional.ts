@@ -2,6 +2,7 @@
  * Pairing a CC-CEDICT entry's two scripts up, character by character.
  */
 import { toCharacters } from "../script/characters.js";
+import type { CedictEntry } from "../sources/cedict.js";
 import type { ReadCharacters } from "./reading.js";
 import type { ScriptPairing } from "./variant-counts.js";
 
@@ -66,4 +67,25 @@ export function pairScripts(
   }
 
   return pairings;
+}
+
+/**
+ * A CC-CEDICT reference to a variant, capturing the 繁體 form it points at.
+ */
+const VARIANT_OF =
+  /^(?:old |archaic |ancient |erroneous |Japanese )?variant of ([^[|]+)/u;
+
+/**
+ * Whether a one-character entry calls its 繁體 form a variant of its 简体 one.
+ *
+ * `陻 堙 /variant of 堙[yin1]/` says 繁體 writes 堙 as standard and 陻 as a
+ * variant of it.
+ */
+export function isVariantOfItself(entry: CedictEntry): boolean {
+  if (entry.traditional === entry.simplified) {
+    return false;
+  }
+  return entry.definitions.some(
+    (definition) => VARIANT_OF.exec(definition)?.[1] === entry.simplified,
+  );
 }
