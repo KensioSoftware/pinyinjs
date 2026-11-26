@@ -40,8 +40,8 @@
     "simplifiedWords": 663,
     "hansOnly": 5818,
     "hantOnly": 5566,
-    "bytes": 290169,
-    "compressedBytes": 99316
+    "bytes": 290259,
+    "compressedBytes": 99418
   },
   "sources": [
     "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip",
