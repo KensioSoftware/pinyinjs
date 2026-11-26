@@ -1,17 +1,21 @@
 import {
   assertArrayLength,
+  assertFalse,
   assertIdentical,
   assertObjectMatches,
+  assertTrue,
   assertUndefined,
 } from "@kensio/smartass";
 import { describe, it } from "vitest";
 
 import { toCharacters } from "../script/characters.js";
+import { type CedictEntry, parseCedict } from "../sources/cedict.js";
 import type { UnihanReadings, UnihanVariants } from "../sources/unihan.js";
 import { readSyllable, type Syllable } from "../syllable/syllable.js";
 import type { ReadCharacters } from "./reading.js";
 import { readAlignedReading } from "./reading.js";
 import {
+  isVariantOfItself,
   pairScripts,
   type ScriptPairing,
   TraditionalTable,
@@ -82,6 +86,17 @@ function aligned(word: string, readings: readonly string[]): ReadCharacters[] {
  */
 function unihanOnly(): TraditionalTable {
   return TraditionalTable.build([], UNIHAN_VARIANTS, UNIHAN_READINGS);
+}
+
+/**
+ * The one entry a line of CC-CEDICT parses to.
+ */
+function cedictEntry(line: string): CedictEntry {
+  const [entry] = parseCedict(line);
+  if (entry === undefined) {
+    throw new Error(`not a CC-CEDICT line: ${line}`);
+  }
+  return entry;
 }
 
 describe("deriving 繁體 forms", () => {
@@ -335,6 +350,41 @@ describe("deriving 繁體 forms", () => {
       assertArrayLength(pairs, 2);
       assertObjectMatches(pairs[0], { hans: "头", hant: "頭" });
       assertUndefined(pairs[0].syllable);
+    });
+  });
+
+  describe("isVariantOfItself", () => {
+    it("finds an entry calling its 繁體 form a variant of its 简体 one", () => {
+      assertTrue(
+        isVariantOfItself(
+          cedictEntry("陻 堙 [yin1] /variant of 堙[yin1]/to block/"),
+        ),
+      );
+    });
+
+    it("finds the reference among other senses", () => {
+      assertTrue(
+        isVariantOfItself(
+          cedictEntry("獧 狷 [juan4] /nimble/variant of 狷[juan4]/rash/"),
+        ),
+      );
+    });
+
+    it("leaves a variant of a different character", () => {
+      // 裏 is a variant of 裡, which is a 繁體 form of 里 in its own right.
+      assertFalse(
+        isVariantOfItself(cedictEntry("裏 里 [li3] /variant of 裡|里[li3]/")),
+      );
+    });
+
+    it("leaves an entry written the same in both scripts", () => {
+      assertFalse(isVariantOfItself(cedictEntry("堙 堙 [yin1] /bury/to dam/")));
+    });
+
+    it("leaves an ordinary pairing", () => {
+      assertFalse(
+        isVariantOfItself(cedictEntry("後 后 [hou4] /back; behind/")),
+      );
     });
   });
 });

@@ -2264,7 +2264,7 @@ describe("the examples in docs/", () => {
     it("counts keys rather than entries", () => {
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(dictionary.size, 723_170);
+      assertIdentical(dictionary.size, 723_111);
     });
 
     it("returns undefined for a word it does not have", () => {
@@ -2299,7 +2299,7 @@ describe("the examples in docs/", () => {
       const core = await loadDictionary(fileSource(dataDirectory), "core");
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(core.size, 16_982);
+      assertIdentical(core.size, 16_981);
       assertIdentical(convert(core, "银行"), "yín xíng");
       assertIdentical(convert(core, "我要去北京。"), "Wǒ yào qù běi jīng.");
 
@@ -2309,7 +2309,7 @@ describe("the examples in docs/", () => {
       );
       // `Dictionary.size` counts keys and is a plain number getter; the
       // rule's Map and Set assertions do not apply to it.
-      assertIdentical(standard.size, 98_001);
+      assertIdentical(standard.size, 97_999);
       assertIdentical(convert(standard, "银行"), "yínháng");
       assertIdentical(convert(standard, "我要去北京。"), "Wǒ yào qù Běijīng.");
     });

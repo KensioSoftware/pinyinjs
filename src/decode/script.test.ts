@@ -130,6 +130,21 @@ describe("script conversion", () => {
       }
     });
 
+    it("leaves characters alone that CC-CEDICT lists variants of", () => {
+      // CC-CEDICT holds 陻 as a variant of 堙 and 獧 as a variant of 狷. Those
+      // entries used to tie with 堙 and 狷 themselves, and the tie went to the
+      // variant.
+      for (const [hans, hant] of [
+        ["堙没", "堙沒"],
+        ["狷介", "狷介"],
+        ["舟楫", "舟楫"],
+        ["玉卮", "玉卮"],
+        ["败衄", "敗衄"],
+      ] as const) {
+        assertIdentical(convert(hans, "zh-Hant"), hant);
+      }
+    });
+
     it("keeps 里 apart from 裡 on word evidence", () => {
       assertIdentical(convert("这里", "zh-Hant"), "這裡");
       assertIdentical(convert("公里", "zh-Hant"), "公里");
